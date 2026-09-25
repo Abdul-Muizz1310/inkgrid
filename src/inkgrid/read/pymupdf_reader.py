@@ -1,7 +1,12 @@
 """Read a PDF's text layer and drawings with PyMuPDF. The only module that imports pymupdf.
 
 PyMuPDF is not thread-safe, and neither is this module: parallelize across processes.
+
+`pymupdf.DrawItem` and `pymupdf.ImageInfo` exist only in the local stub, so annotations here are
+postponed and never evaluated at runtime.
 """
+
+from __future__ import annotations
 
 import importlib.metadata
 from collections.abc import Iterator
@@ -14,7 +19,7 @@ from inkgrid.errors import PasswordRequired, PdfOpenError, WrongPassword
 from inkgrid.model.canonical import sha256_hex
 from inkgrid.model.findings import Finding
 from inkgrid.model.page import PageModel, ReaderInfo, Reading, Source, expected_text_layer
-from inkgrid.read.page_findings import engine_warning_findings
+from inkgrid.read.page_findings import engine_warning_findings, page_findings
 from inkgrid.read.raw import (
     CurveItem,
     LineItem,
@@ -99,7 +104,7 @@ def _raw_lines(page: pymupdf.Page) -> tuple[RawLine, ...]:
     return tuple(lines)
 
 
-def _raw_item(item: "pymupdf.DrawItem") -> PathItem:  # stub-only alias
+def _raw_item(item: pymupdf.DrawItem) -> PathItem:
     match item:
         case ("l", p, q):
             return LineItem((p.x, p.y), (q.x, q.y))
@@ -133,23 +138,53 @@ def _raw_paths(page: pymupdf.Page) -> tuple[RawPath, ...]:
     )
 
 
-def _page_model(page: pymupdf.Page, number: int, first_id: int) -> PageModel:
+def _nonspace(text: str) -> int:
+    return sum(1 for ch in text if not ch.isspace())
+
+
+def _clipped_chars(page: pymupdf.Page) -> int:
+    """Characters present with clipping off and absent with it on: clipped or off the page."""
+    unclipped = page.get_text("text", flags=TEXT_FLAGS & ~pymupdf.TEXT_CLIP)
+    clipped = page.get_text("text", flags=TEXT_FLAGS)
+    return max(0, _nonspace(unclipped) - _nonspace(clipped))
+
+
+def _image_area_ratio(images: list[pymupdf.ImageInfo], width: float, height: float) -> float:
+    """The page area image placements cover, clipped to the page and capped at 1."""
+    covered = 0.0
+    for image in images:
+        x0, y0, x1, y1 = image["bbox"]
+        w = min(x1, width) - max(x0, 0.0)
+        h = min(y1, height) - max(y0, 0.0)
+        if w > 0 and h > 0:
+            covered += w * h
+    return min(1.0, covered / (width * height))
+
+
+def _page_model(
+    page: pymupdf.Page, number: int, first_id: int
+) -> tuple[PageModel, tuple[Finding, ...]]:
     out = build_words(_raw_lines(page), number, first_id)
-    rules = extract_rules(_raw_paths(page), number)
-    return PageModel(
+    paths = _raw_paths(page)
+    rules = extract_rules(paths, number)
+    images = page.get_image_info()
+    width, height = page.cropbox.width, page.cropbox.height
+    model = PageModel(
         number=number,
-        width=page.cropbox.width,
-        height=page.cropbox.height,
+        width=width,
+        height=height,
         rotation=_rotation(page.rotation),
         text_layer=expected_text_layer(len(out.words), out.unmapped_chars),
         invisible_chars=out.invisible_chars,
-        clipped_chars=0,
+        clipped_chars=_clipped_chars(page),
         unmapped_chars=out.unmapped_chars,
         hidden_chars=out.hidden_chars,
-        image_area_ratio=0.0,
+        image_area_ratio=_image_area_ratio(images, width, height),
         words=out.words,
         rules=rules,
     )
+    has_curves = any(isinstance(item, CurveItem) for path in paths for item in path.items)
+    return model, page_findings(model, has_image=bool(images), has_curves=has_curves)
 
 
 def read_pdf(data: bytes, *, file_name: str | None, password: str | None) -> Reading:
@@ -161,17 +196,19 @@ def read_pdf(data: bytes, *, file_name: str | None, password: str | None) -> Rea
         WrongPassword: `password` does not open the PDF.
     """
     pages: list[PageModel] = []
+    findings: list[Finding] = []
     with _quiet() as messages:
         doc = _open(data, password)
         try:
             next_id = 0
             for index in range(doc.page_count):
-                model = _page_model(doc.load_page(index), index + 1, next_id)
+                model, page_notes = _page_model(doc.load_page(index), index + 1, next_id)
                 next_id += len(model.words)
                 pages.append(model)
+                findings.extend(page_notes)
         finally:
             doc.close()
-    findings: tuple[Finding, ...] = engine_warning_findings(messages)
+    findings.extend(engine_warning_findings(messages))
     return Reading(
         source=Source(sha256=sha256_hex(data), pages=len(pages), file_name=file_name),
         reader=ReaderInfo(
@@ -180,5 +217,5 @@ def read_pdf(data: bytes, *, file_name: str | None, password: str | None) -> Rea
             mupdf=pymupdf.VersionFitz,
         ),
         pages=tuple(pages),
-        findings=findings,
+        findings=tuple(findings),
     )

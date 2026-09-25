@@ -9,6 +9,7 @@ import pytest
 
 import pdf_factory
 from inkgrid.cli import main
+from inkgrid.model.document import Document
 from inkgrid.model.page import Reading
 
 
@@ -194,3 +195,55 @@ def test_L13_password_that_is_not_utf8_exits_2(
     err = capsys.readouterr().err
     assert err.count("\n") == 1
     assert "not UTF-8" in err
+
+
+@pytest.mark.parametrize("make", pdf_factory.OPENABLE.values(), ids=pdf_factory.OPENABLE.keys())
+def test_CR1_read_prints_a_valid_document_for_every_fixture(
+    make: Callable[[], bytes], tmp_path: Path, capsysbinary: pytest.CaptureFixture[bytes]
+) -> None:
+    path = write_pdf(tmp_path, make())
+    assert main(["read", str(path)]) == 0
+    out, err = capsysbinary.readouterr()
+    assert err == b""
+    assert Document.model_validate_json(out).source.file_name == "in.pdf"
+
+
+def test_CR2_markdown_inspector_and_json_files(
+    tmp_path: Path, capsysbinary: pytest.CaptureFixture[bytes]
+) -> None:
+    path = write_pdf(tmp_path, pdf_factory.two_column())
+    md, html, out = tmp_path / "out.md", tmp_path / "out.html", tmp_path / "out.json"
+    argv = ["read", str(path), "--markdown", str(md), "--inspector", str(html), "-o", str(out)]
+    assert main(argv) == 0
+    assert capsysbinary.readouterr() == (b"", b"")
+    doc = Document.model_validate_json(out.read_bytes())
+    assert md.read_text(encoding="utf-8") == doc.to_markdown()
+    assert html.read_text(encoding="utf-8").startswith("<!doctype html>")
+
+
+def test_CR3_strict_exits_1_and_still_writes_the_json(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    path = write_pdf(tmp_path, pdf_factory.image_only())
+    out = tmp_path / "out.json"
+    assert main(["read", str(path), "--strict", "-o", str(out)]) == 1
+    assert Document.model_validate_json(out.read_bytes()).complete is False
+    err = capsys.readouterr().err
+    assert "no_text_layer" in err
+    assert "Traceback" not in err
+
+
+def test_CR4_a_missing_file_exits_2(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    assert main(["read", str(tmp_path / "absent.pdf")]) == 2
+    assert capsys.readouterr().err.startswith("inkgrid: ")
+
+
+def test_CR5_an_unwritable_markdown_path_exits_2(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    path = write_pdf(tmp_path, pdf_factory.simple_text())
+    target = tmp_path / "missing" / "out.md"
+    assert main(["read", str(path), "--markdown", str(target), "-o", str(tmp_path / "o.json")]) == 2
+    err = capsys.readouterr().err
+    assert err.count("\n") == 1
+    assert str(target) in err

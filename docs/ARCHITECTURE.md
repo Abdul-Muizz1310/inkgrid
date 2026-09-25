@@ -12,14 +12,16 @@ flowchart LR
     RAW --> RULES["read/rules<br/>rules from vector paths"]
     WORDS --> PM["model.Reading<br/>page model + findings"]
     RULES --> PM
-    PM -. "M1-M3" .-> CORE["core/<br/>furniture, layout, tables,<br/>prose, joins, links"]
-    CORE -. "M1" .-> DOC["model.Document<br/>inkgrid.document/1"]
+    PM --> CORE["core/<br/>furniture, lines, layout,<br/>prose, assemble"]
+    CORE --> DOC["model.Document<br/>inkgrid.document/1"]
+    CORE -. "M2-M3" .-> LATER["core/<br/>tables, joins, links"]
+    DOC --> INSP["render/inspector<br/>page images + boxes"]
+    DOC --> CLI["cli: inkgrid read, words"]
     PDF -. "M4" .-> VER["verify/<br/>PDFium re-read"]
     DOC -. "M4" .-> VER
-    PM --> CLI["cli: inkgrid words"]
 ```
 
-Solid arrows exist today (M0). Dotted arrows are the later milestones.
+Solid arrows exist today (M1). Dotted arrows are the later milestones.
 
 ## Layers
 
@@ -27,10 +29,10 @@ Solid arrows exist today (M0). Dotted arrows are the later milestones.
 |---|---|---|
 | `inkgrid.model` | frozen, validated values: geometry, the page model, the `Document` contract, findings | stdlib, pydantic |
 | `inkgrid.read` | the shell that reads PDFs; only `pymupdf_reader.py` imports pymupdf | `model`, pymupdf, camelot |
-| `inkgrid.core` | the pipeline stages, pure functions (from M1) | `model` |
+| `inkgrid.core` | the pipeline stages, pure functions | `model` |
 | `inkgrid.verify` | the independent re-read (from M4) | `model`, pypdfium2 |
-| `inkgrid.render` | the HTML inspector (from M1) | `model`, `read` |
-| `inkgrid.api` | `read_pages` (and `read`, `verify` later) | `model`, `core`, `read`, `verify` |
+| `inkgrid.render` | the HTML inspector | `model`, `read` |
+| `inkgrid.api` | `read` and `read_pages` (and `verify` from M4) | `model`, `core`, `read`, `verify` |
 | `inkgrid.cli` | the `inkgrid` command | `api`, `render`, `model` |
 
 `tests/test_architecture.py` checks every import against this table. Because `verify` may not import
@@ -73,3 +75,25 @@ pinned by a test.
 
 MuPDF's console output is silenced around each read and its display settings restored afterwards.
 PyMuPDF is not thread-safe, so parallelize across processes.
+
+## Building a document (M1)
+
+`core/pipeline.py` runs the stages in order. Each is a pure function over typed values
+([`specs/04-text-pipeline.md`](specs/04-text-pipeline.md)):
+
+1. **Furniture** (document-wide). Lines are keyed with digits masked and edge page numbers
+   stripped. A key that recurs in the top or bottom band on enough pages marks its lines as header,
+   footer, or page-number furniture, one line at a time.
+2. **Layout** (per page). Lines cluster by vertical overlap and split into fragments at wide gaps.
+   A gutter that persists over at least three lines, with prose on both sides, makes columns, read
+   left to right. Any other column-shaped run keeps row order, as a table candidate for M2.
+3. **Prose** (per page). A paragraph gap (1.75 x the page's median line gap), a size or weight
+   change, or a bullet or enumerator starts a block. Each block is then typed as footnote, heading,
+   list item, or paragraph, in that order.
+4. **Assembly.** Text is rendered from words by the two-transform rule, keys and heading levels are
+   derived, and the `Document` is constructed, which runs every invariant. A failure is a bug in
+   inkgrid, so it raises `InvariantError`.
+
+Every size rule is relative to the document's own body size, because body text in the measured fee
+schedules runs from 5.3 pt to 10.4 pt.
+

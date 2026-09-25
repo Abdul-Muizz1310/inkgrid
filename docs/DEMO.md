@@ -13,6 +13,7 @@ import pdf_factory
 open("superscript.pdf", "wb").write(pdf_factory.superscript())
 open("hidden.pdf", "wb").write(pdf_factory.hidden_text())
 open("table.pdf", "wb").write(pdf_factory.ruled_table())
+open("columns.pdf", "wb").write(pdf_factory.two_column())
 PY
 ```
 
@@ -46,7 +47,18 @@ uv run inkgrid words table.pdf --pretty | grep -A8 '"rules"'
 Say: the stroked lines, the thin filled rule, and the four edges of the stroked cell come back as
 rules. The grey background and the diagonal do not.
 
-## 5. Bad input fails loudly and briefly
+## 5. Two columns read in column order
+
+```bash
+uv run inkgrid read columns.pdf --markdown columns.md --inspector columns.html -o columns.json
+cat columns.md
+```
+
+Say: the page prints two prose columns side by side, and plain extraction interleaves them line by
+line. inkgrid reads the whole left column, then the right. Open `columns.html` to see every block
+drawn over the rendered page, numbered in reading order.
+
+## 6. Bad input fails loudly and briefly
 
 ```bash
 echo "not a pdf" > bad.pdf && uv run inkgrid words bad.pdf; echo "exit $?"

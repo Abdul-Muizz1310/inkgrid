@@ -3,6 +3,7 @@
 Every code's severity is fixed in one total mapping, so no producer can mislabel one.
 """
 
+from collections.abc import Iterable
 from enum import StrEnum
 from types import MappingProxyType
 from typing import Final, Self
@@ -90,3 +91,10 @@ class Finding(Frozen):
     ) -> Self:
         """Build a finding with the severity its code fixes."""
         return cls(code=code, severity=SEVERITY[code], page=page, block=block, detail=detail)
+
+
+def summarize(findings: Iterable[Finding]) -> str:
+    """The findings as `code on page N`, comma-separated, for one-line messages."""
+    return ", ".join(
+        f"{f.code.value} on page {f.page}" if f.page is not None else f.code.value for f in findings
+    )

@@ -4,7 +4,7 @@ from inkgrid.core.pipeline import build_document
 from inkgrid.errors import StrictModeError
 from inkgrid.model.config import Lexicon, Profile
 from inkgrid.model.document import Document, Lattice
-from inkgrid.model.findings import Severity
+from inkgrid.model.findings import Severity, summarize
 from inkgrid.model.page import Reading
 from inkgrid.read.pymupdf_reader import read_pdf
 from inkgrid.read.source import SourceLike, load_source
@@ -96,10 +96,6 @@ def read(
     )
     if strict and not doc.complete:
         errors = [f for f in doc.findings if f.severity is Severity.ERROR]
-        where = ", ".join(
-            f"{f.code.value} on page {f.page}" if f.page is not None else f.code.value
-            for f in errors
-        )
-        msg = f"strict mode: the document carries error findings: {where}"
+        msg = f"strict mode: the document carries error findings: {summarize(errors)}"
         raise StrictModeError(msg)
     return doc

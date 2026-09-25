@@ -1,4 +1,4 @@
-<p align="center"><em>The demo GIF arrives with the M1 inspector, which renders each page beside its blocks.</em></p>
+<p align="center"><em>A demo GIF of the inspector (<code>inkgrid read --inspector</code>) is still to be recorded.</em></p>
 
 <h1 align="center">inkgrid</h1>
 
@@ -16,9 +16,10 @@
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue"></a>
 </p>
 
-> **Status: pre-alpha (milestone M0 of M6).** Today inkgrid reads a PDF into a validated page
-> model: words, drawn rules, and page measurements. Blocks and reading order arrive in M1, tables in
-> M2, and independent verification in M4. The roadmap is in
+> **Status: pre-alpha (milestone M1 of M6).** Today inkgrid reads a PDF into a validated `Document`:
+> every word in exactly one block, in reading order, with running headers and footers set apart.
+> Tables arrive in M2, footnote links and table continuation in M3, and independent verification in
+> M4. The roadmap is in
 > [`docs/specs/00-design.md`](docs/specs/00-design.md) § 14.
 
 ## What it does
@@ -33,7 +34,7 @@ cell grids, with merged cells as spans and headers carried across page breaks, m
 Links record the relationships the page prints: footnote calls to their notes, and tables that
 continue onto the next page.
 
-M0 ships the foundation that everything else builds on:
+Shipped so far (M0 and M1):
 
 - **Words rebuilt from characters.** A superscript marker printed tight against a value stays its own
   word (`$0.40` and `2`, never `$0.402`). A font change in the middle of a word keeps it one word.
@@ -44,6 +45,16 @@ M0 ships the foundation that everything else builds on:
   - glyphs with no Unicode mapping, and Type 3 fonts, whose glyphs are pictures;
   - text in the layer that the page never shows: render modes 3 and 7, or fully transparent text.
     That is the shape of an OCR layer, or of hidden prompt injection.
+- **Reading order across columns.** Two prose columns read left column, then right. A gutter alone
+  does not make columns, because the narrowest table columns sit as close as a label and its text:
+  columns need a gutter that persists over several lines and prose on both sides. Tables and
+  hanging-indent lists keep row order.
+- **Running headers, footers, and page numbers** found by recurrence across pages and set apart as
+  furniture, line by line.
+- **Typed blocks:** headings with their section numbers and levels, paragraphs, list items, and
+  footnotes, with every line-end hyphen join recorded so it can be undone.
+- **Markdown and an HTML inspector.** The inspector draws every block over its rendered page, for
+  looking at a reading rather than trusting it.
 - **The full output contract,** `inkgrid.document/1`, with its invariants enforced: every word owned
   exactly once, cells that tile their grid exactly, and block text spelled from its own words in
   their order.
@@ -54,6 +65,9 @@ M0 ships the foundation that everything else builds on:
   white text on a white page, and text too small to read all read as visible. The independent
   verifier (M4) is where those checks belong.
 - **Left-to-right scripts only.** Right-to-left and bidirectional text is not reordered in v0.1.
+- **No tables yet.** Until M2, a table reads as rows of text, in row order.
+- **Lists set in the Symbol font read as paragraphs.** Their bullet is a private-use character, which
+  the reader drops as invisible.
 - **Untrusted PDFs belong in a separate process.** MuPDF parses in memory, and a library cannot bound
   its memory or time. Read hostile input in a worker process with resource limits.
 
@@ -78,7 +92,8 @@ inkgrid is not on PyPI yet. From a clone:
 
 ```bash
 uv sync --all-groups
-uv run inkgrid words path/to/file.pdf --pretty
+uv run inkgrid read path/to/file.pdf --pretty --markdown out.md --inspector out.html
+uv run inkgrid words path/to/file.pdf --pretty    # the raw page model, for debugging a reading
 ```
 
 From Python:
@@ -86,14 +101,18 @@ From Python:
 ```python
 import inkgrid
 
-reading = inkgrid.read_pages("fees.pdf")        # a path, bytes, or a binary stream
-for word in reading.words():
-    print(word.page, word.text, word.bbox, word.superscript)
-for finding in reading.findings:
+doc = inkgrid.read("fees.pdf")                  # a path, bytes, or a binary stream
+for block in doc.blocks:
+    print(block.id, block.kind, block.text)
+for finding in doc.findings:
     print(finding.severity, finding.code, finding.detail)
+print(doc.to_markdown())
+
+doc = inkgrid.read("fees.pdf", strict=True)     # raises StrictModeError on an error finding
 ```
 
-An encrypted PDF takes `password=`. On the command line, the password is read from stdin with
+`inkgrid.read_pages()` returns the raw page model (words, rules, measurements) for debugging. An
+encrypted PDF takes `password=`. On the command line, the password is read from stdin with
 `--password-stdin`, never from arguments, because arguments show up in the process list.
 
 ## Benchmarks / Evals

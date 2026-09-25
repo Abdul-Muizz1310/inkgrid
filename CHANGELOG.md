@@ -17,4 +17,10 @@ All notable changes to this project are documented here. The format follows
 - The output contract (`Document`, schema `inkgrid.document/1`) with validator-enforced
   invariants, and JSON Schemas for both contracts in `docs/schema/`.
 - `inkgrid.read_pages()`, and the `inkgrid words` command.
+- `inkgrid.read()`, which builds a validated `Document`: running headers, footers, and page numbers
+  as furniture; column-aware reading order; headings, paragraphs, list items, and footnotes; and the
+  partition proof. `strict=True` raises `StrictModeError` on an error-severity finding.
+- `Profile` and `Lexicon`, the versioned configuration a `Document` records.
+- `Document.to_markdown()`, the HTML inspector, and the `inkgrid read` command with `--markdown`,
+  `--inspector`, and `--strict`.
 - A layer-table test on the import graph, and CI across Linux, Windows, and macOS.

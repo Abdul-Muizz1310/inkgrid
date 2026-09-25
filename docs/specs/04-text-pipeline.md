@@ -172,7 +172,13 @@ The Lexicon grows in M2 (numbers, money, ranges).
      or a roman numeral are stripped.
    - The tokens join with single spaces.
 3. **Candidates** are lines whose median word centre lies in the top or bottom `furniture_band` of
-   the page's content height (the minimum to maximum y over all its words).
+   the page's content height (the minimum to maximum y over all its words), with two exceptions,
+   because a table printed near the page edge is content:
+   - a line of three or more fragments is column-shaped, a table row, and is never a candidate;
+   - a line whose key recurs in the same band of the same page at the same position (an `x0`,
+     `x1`, or centre within `furniture_x_tol`) is not a candidate there. The rows of a tier table
+     differ only in their digits and stack in one column; a running header prints once, and a page
+     number beside a stray note label sits apart from it.
 4. **Frequency.** A key is furniture when it occurs as a candidate on at least
    `max(2, ceil(furniture_share × pages))` distinct pages, where `pages` counts every page of the
    document.
@@ -180,10 +186,12 @@ The Lexicon grows in M2 (numbers, money, ranges).
    - An alphabetic key (one with a letter) is marked **wherever it occurs** on a page, in the band or
      not. The prototype's sparse last pages hold footers mid-page.
    - A numeric-only key (`#`, `# of #`, `- # -`) is marked only as a candidate, and only when its
-     line sits in that key's column: its `x0`, its `x1`, or its centre is within `furniture_x_tol`
-     of the median of the same measure over the key's candidate occurrences. A lone number is also
-     how a note label renders, so position decides. The three measures cover page numbers set
-     flush left, flush right (whose `x0` moves with the digit count, as JSE's do), or centred.
+     line sits in a column the key keeps: its `x0`, its `x1`, or its centre is within
+     `furniture_x_tol` of the same measure on candidate occurrences of the key on at least the
+     frequency threshold's number of pages (its own page included). A lone number is also how a
+     note label renders, so position decides. The three measures cover page numbers set flush left,
+     flush right (whose `x0` moves with the digit count, as JSE's do), or centred; counting pages
+     per position covers mirrored numbering, flush left on even pages and flush right on odd.
 6. **Role.**
    - `page_number` when the key has no letter;
    - otherwise `header` when the line's centre is in the upper half of the page, else `footer`.
@@ -201,6 +209,9 @@ Decisions are per line, never per block (L9). Non-horizontal words are never fur
 | FU7 | a mixed line (the footer key plus a body word on the same baseline) | the line's key differs, so it is not marked (per line, never partial) |
 | FU8 | no repeated edge lines | an empty result |
 | FU10 | right-aligned page numbers 1–12, so `x0` moves left by a digit's width from page 10 on | all twelve marked `page_number` |
+| FU11 | 3 pages, each with a running header and 5 tier rows `Tier N volume rate` in the bottom band | the header is furniture; no tier row is |
+| FU12 | a 3-column header row `Tier  Volume  Rate` at the top of every page | not furniture |
+| FU13 | 12 pages numbered flush left on even pages and flush right on odd pages | all twelve marked `page_number` |
 | FU9 | `line_key` on `Page 3 of 12`; `- 4 -`; `iv Annual civil fees`; `2026 Fee schedule 7`; `xiv`; `- ii -` | `Page # of`; `- # -`; `Annual civil fees`; `Fee schedule`; `#`; `- # -` |
 
 ---
@@ -377,7 +388,7 @@ document with no words at all has no blocks, which is valid: the partition of ze
 
 ## 7 · Acceptance
 
-- [ ] CF1–CF10, LN1–LN9, FU1–FU10, LY1–LY11, PB1–PB14, AS1–AS11, and PL1–PL5 pass.
+- [ ] CF1–CF10, LN1–LN9, FU1–FU13, LY1–LY11, PB1–PB14, AS1–AS11, and PL1–PL5 pass.
 - [ ] Every M0 fixture assembles to a valid `Document` (the M1 exit criterion, through
       `inkgrid read`; `05-read-and-inspector.md`).
 - [ ] The two-column fixture reads in column order (M1 exit criterion).

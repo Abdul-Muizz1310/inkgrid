@@ -131,3 +131,34 @@ def test_FU10_right_aligned_page_numbers_are_one_column() -> None:
         specs.append([*body(n), P(number, 540 - width, 750)])
     found = find_furniture(pages_of(specs), PROFILE)
     assert marked(found) == [(n, "page_number", str(n)) for n in range(1, 13)]
+
+
+def test_FU11_tier_rows_in_the_band_are_not_furniture() -> None:
+    specs = []
+    for n in range(1, 4):
+        rows = [
+            p
+            for k in range(5)
+            for p in text_line(["Tier", str(k), "volume", "rate"], x=72, y=700 + 12 * k)
+        ]
+        specs.append([*header("Acme Fee Guide"), *body(n), *rows])
+    found = find_furniture(pages_of(specs), PROFILE)
+    assert {f.key for f in found.lines} == {"Acme Fee Guide"}
+    assert [f.page for f in found.lines] == [1, 2, 3]
+
+
+def test_FU12_a_repeated_column_header_row_is_not_furniture() -> None:
+    columns = [P("Tier", 72, 40), P("Volume", 250, 40), P("Rate", 400, 40)]
+    specs = [[*columns, *body(n), *header(f"Page {n} of 3", y=750)] for n in range(1, 4)]
+    found = find_furniture(pages_of(specs), PROFILE)
+    assert {f.key for f in found.lines} == {"Page # of"}
+
+
+def test_FU13_mirrored_page_numbers_are_found() -> None:
+    specs = []
+    for n in range(1, 13):
+        number = str(n)
+        x = 72.0 if n % 2 == 0 else 540 - 5.0 * len(number)
+        specs.append([*body(n), P(number, x, 750)])
+    found = find_furniture(pages_of(specs), PROFILE)
+    assert marked(found) == [(n, "page_number", str(n)) for n in range(1, 13)]

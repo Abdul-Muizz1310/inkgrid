@@ -11,7 +11,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Literal
 
-from inkgrid.core.lines import Line, group_lines
+from inkgrid.core.lines import Line, fragments, group_lines
 from inkgrid.model.config import Profile
 from inkgrid.model.page import PageModel
 
@@ -20,6 +20,7 @@ DIGITS = re.compile(r"\d+")
 THREE_LETTERS = re.compile(r"[^\W\d_]{3}")
 ROMAN = re.compile(r"m{0,3}(cm|cd|d?c{0,3})(xc|xl|l?x{0,3})(ix|iv|v?i{0,3})", re.IGNORECASE)
 ROMAN_MAX = 6
+MAX_FRAGMENTS = 3  # a line of this many fragments is a table row, never furniture
 
 
 @dataclass(frozen=True, slots=True)
@@ -77,6 +78,15 @@ def _centre(line: Line) -> float:
     return statistics.median((w.bbox.y0 + w.bbox.y1) / 2 for w in line.words)
 
 
+def _band(line: Line, top: float, bottom: float, band: float) -> Literal["top", "bottom"] | None:
+    centre = _centre(line)
+    if centre <= top + band:
+        return "top"
+    if centre >= bottom - band:
+        return "bottom"
+    return None
+
+
 def _keyed(page: PageModel, profile: Profile) -> list[_Keyed]:
     lines = group_lines([w for w in page.words if w.horizontal], profile)
     if not lines:
@@ -84,9 +94,26 @@ def _keyed(page: PageModel, profile: Profile) -> list[_Keyed]:
     top = min(line.top for line in lines)
     bottom = max(line.bottom for line in lines)
     band = profile.furniture_band * (bottom - top)
+    placed = [(line, line_key(line), _band(line, top, bottom, band)) for line in lines]
+
+    def stacked(line: Line, key: str, where: str) -> bool:
+        """The key recurs in this band at this position: rows of a table, not furniture."""
+        return any(
+            other is not line and k == key and w == where and _aligned(other, line, tol)
+            for other, k, w in placed
+        )
+
+    tol = profile.furniture_x_tol
     return [
-        _Keyed(page, line, line_key(line), not top + band < _centre(line) < bottom - band)
-        for line in lines
+        _Keyed(
+            page,
+            line,
+            key,
+            where is not None
+            and len(fragments(line, profile)) < MAX_FRAGMENTS
+            and not stacked(line, key, where),
+        )
+        for line, key, where in placed
     ]
 
 
@@ -95,10 +122,18 @@ def _anchors(line: Line) -> tuple[float, float, float]:
     return (line.x0, line.x1, (line.x0 + line.x1) / 2)
 
 
-def _in_column(line: Line, column: Sequence[tuple[float, float, float]], tol: float) -> bool:
-    """True when the line is flush left, flush right, or centred with the key's occurrences."""
-    medians = [statistics.median(anchor[i] for anchor in column) for i in range(3)]
-    return any(abs(a - m) <= tol for a, m in zip(_anchors(line), medians, strict=True))
+def _aligned(a: Line, b: Line, tol: float) -> bool:
+    return any(abs(p - q) <= tol for p, q in zip(_anchors(a), _anchors(b), strict=True))
+
+
+def _in_column(k: _Keyed, others: Sequence[_Keyed], need: int, tol: float) -> bool:
+    """True when some anchor of the line recurs within `tol` on at least `need` pages."""
+    mine = _anchors(k.line)
+    for i in range(3):
+        pages = {o.page.number for o in others if abs(_anchors(o.line)[i] - mine[i]) <= tol}
+        if len(pages) >= need:
+            return True
+    return False
 
 
 def _role(key: str, line: Line, page: PageModel) -> Role:
@@ -111,11 +146,11 @@ def find_furniture(pages: Sequence[PageModel], profile: Profile) -> FoundFurnitu
     """Mark the lines whose key recurs at the page edges on enough pages."""
     keyed = [k for page in pages for k in _keyed(page, profile)]
     seen: defaultdict[str, set[int]] = defaultdict(set)
-    columns: defaultdict[str, list[tuple[float, float, float]]] = defaultdict(list)
+    candidates: defaultdict[str, list[_Keyed]] = defaultdict(list)
     for k in keyed:
         if k.candidate:
             seen[k.key].add(k.page.number)
-            columns[k.key].append(_anchors(k.line))
+            candidates[k.key].append(k)
     need = max(2, math.ceil(profile.furniture_share * len(pages)))
     keys = {key for key, on in seen.items() if len(on) >= need}
     lines = []
@@ -123,7 +158,7 @@ def find_furniture(pages: Sequence[PageModel], profile: Profile) -> FoundFurnitu
         if k.key not in keys:
             continue
         if not _has_letter(k.key) and not (
-            k.candidate and _in_column(k.line, columns[k.key], profile.furniture_x_tol)
+            k.candidate and _in_column(k, candidates[k.key], need, profile.furniture_x_tol)
         ):
             continue
         lines.append(FurnitureLine(k.page.number, k.line, _role(k.key, k.line, k.page), k.key))

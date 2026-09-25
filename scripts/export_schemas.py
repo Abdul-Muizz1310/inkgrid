@@ -8,6 +8,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from inkgrid.model.document import Document
 from inkgrid.model.page import Reading
 
 OUT = Path(__file__).resolve().parents[1] / "docs" / "schema"
@@ -15,7 +16,10 @@ OUT = Path(__file__).resolve().parents[1] / "docs" / "schema"
 
 def schemas() -> dict[str, dict[str, object]]:
     """Map each schema file name to the JSON Schema of the output it describes."""
-    return {"reading.schema.json": Reading.model_json_schema(mode="serialization")}
+    return {
+        "document.schema.json": Document.model_json_schema(mode="serialization"),
+        "reading.schema.json": Reading.model_json_schema(mode="serialization"),
+    }
 
 
 def main() -> int:

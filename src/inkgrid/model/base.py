@@ -20,4 +20,5 @@ class Frozen(BaseModel):
         serialize_by_alias=True,
         validate_by_alias=True,
         validate_by_name=True,
+        json_schema_serialization_defaults_required=True,
     )

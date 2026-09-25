@@ -1,0 +1,1474 @@
+{
+  "$defs": {
+    "Cell": {
+      "additionalProperties": false,
+      "description": "One cell of a grid, anchored at `(row, col)`, spanning `row_span` x `col_span` positions.\n\nA `carried` cell is a header copied onto a continuation page: it owns no words there.",
+      "properties": {
+        "carried": {
+          "default": false,
+          "title": "Carried",
+          "type": "boolean"
+        },
+        "col": {
+          "minimum": 0,
+          "title": "Col",
+          "type": "integer"
+        },
+        "col_span": {
+          "default": 1,
+          "exclusiveMinimum": 0,
+          "title": "Col Span",
+          "type": "integer"
+        },
+        "markers": {
+          "default": [],
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Markers",
+          "type": "array"
+        },
+        "row": {
+          "minimum": 0,
+          "title": "Row",
+          "type": "integer"
+        },
+        "row_span": {
+          "default": 1,
+          "exclusiveMinimum": 0,
+          "title": "Row Span",
+          "type": "integer"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        },
+        "word_ids": {
+          "default": [],
+          "items": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "title": "Word Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "row",
+        "col",
+        "row_span",
+        "col_span",
+        "text",
+        "word_ids",
+        "carried",
+        "markers"
+      ],
+      "title": "Cell",
+      "type": "object"
+    },
+    "Definition": {
+      "additionalProperties": false,
+      "description": "One glossary entry, split into its term and body.",
+      "properties": {
+        "body": {
+          "minLength": 1,
+          "title": "Body",
+          "type": "string"
+        },
+        "hyphen_joins": {
+          "default": [],
+          "items": {
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "minimum": 0,
+                "type": "integer"
+              }
+            ],
+            "type": "array"
+          },
+          "title": "Hyphen Joins",
+          "type": "array"
+        },
+        "id": {
+          "pattern": "^b[1-9][0-9]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "key": {
+          "pattern": "^k[0-9a-f]{16}(?::(?:[2-9]|[1-9][0-9]+))?$",
+          "title": "Key",
+          "type": "string"
+        },
+        "kind": {
+          "const": "definition",
+          "default": "definition",
+          "title": "Kind",
+          "type": "string"
+        },
+        "markers": {
+          "default": [],
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Markers",
+          "type": "array"
+        },
+        "regions": {
+          "items": {
+            "$ref": "#/$defs/Region"
+          },
+          "minItems": 1,
+          "title": "Regions",
+          "type": "array"
+        },
+        "term": {
+          "minLength": 1,
+          "title": "Term",
+          "type": "string"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        },
+        "word_ids": {
+          "items": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "minItems": 1,
+          "title": "Word Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "kind",
+        "id",
+        "key",
+        "regions",
+        "word_ids",
+        "text",
+        "markers",
+        "hyphen_joins",
+        "term",
+        "body"
+      ],
+      "title": "Definition",
+      "type": "object"
+    },
+    "Finding": {
+      "additionalProperties": false,
+      "description": "One notice, optionally pinned to a page (1-based) and a block id.",
+      "properties": {
+        "block": {
+          "anyOf": [
+            {
+              "pattern": "^b[1-9][0-9]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Block"
+        },
+        "code": {
+          "$ref": "#/$defs/FindingCode"
+        },
+        "detail": {
+          "title": "Detail",
+          "type": "string"
+        },
+        "page": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Page"
+        },
+        "severity": {
+          "$ref": "#/$defs/Severity"
+        }
+      },
+      "required": [
+        "code",
+        "severity",
+        "page",
+        "block",
+        "detail"
+      ],
+      "title": "Finding",
+      "type": "object"
+    },
+    "FindingCode": {
+      "description": "The closed set of finding codes. It grows only in a versioned, documented way.",
+      "enum": [
+        "no_text_layer",
+        "blank_page",
+        "partial_text_layer",
+        "ocr_text_layer",
+        "hidden_text",
+        "clipped_text",
+        "pdf_engine_warning",
+        "lattice_failed",
+        "lattice_disagrees",
+        "word_crosses_rule",
+        "header_not_found",
+        "call_unresolved",
+        "no_furniture_long_document"
+      ],
+      "title": "FindingCode",
+      "type": "string"
+    },
+    "Footnote": {
+      "additionalProperties": false,
+      "description": "A note definition; `label` is its printed number or symbol.",
+      "properties": {
+        "hyphen_joins": {
+          "default": [],
+          "items": {
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "minimum": 0,
+                "type": "integer"
+              }
+            ],
+            "type": "array"
+          },
+          "title": "Hyphen Joins",
+          "type": "array"
+        },
+        "id": {
+          "pattern": "^b[1-9][0-9]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "key": {
+          "pattern": "^k[0-9a-f]{16}(?::(?:[2-9]|[1-9][0-9]+))?$",
+          "title": "Key",
+          "type": "string"
+        },
+        "kind": {
+          "const": "footnote",
+          "default": "footnote",
+          "title": "Kind",
+          "type": "string"
+        },
+        "label": {
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "markers": {
+          "default": [],
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Markers",
+          "type": "array"
+        },
+        "regions": {
+          "items": {
+            "$ref": "#/$defs/Region"
+          },
+          "minItems": 1,
+          "title": "Regions",
+          "type": "array"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        },
+        "word_ids": {
+          "items": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "minItems": 1,
+          "title": "Word Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "kind",
+        "id",
+        "key",
+        "regions",
+        "word_ids",
+        "text",
+        "markers",
+        "hyphen_joins",
+        "label"
+      ],
+      "title": "Footnote",
+      "type": "object"
+    },
+    "Furniture": {
+      "additionalProperties": false,
+      "description": "A running header, footer, or page number.",
+      "properties": {
+        "hyphen_joins": {
+          "default": [],
+          "items": {
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "minimum": 0,
+                "type": "integer"
+              }
+            ],
+            "type": "array"
+          },
+          "title": "Hyphen Joins",
+          "type": "array"
+        },
+        "id": {
+          "pattern": "^b[1-9][0-9]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "key": {
+          "pattern": "^k[0-9a-f]{16}(?::(?:[2-9]|[1-9][0-9]+))?$",
+          "title": "Key",
+          "type": "string"
+        },
+        "kind": {
+          "const": "furniture",
+          "default": "furniture",
+          "title": "Kind",
+          "type": "string"
+        },
+        "markers": {
+          "default": [],
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Markers",
+          "type": "array"
+        },
+        "regions": {
+          "items": {
+            "$ref": "#/$defs/Region"
+          },
+          "minItems": 1,
+          "title": "Regions",
+          "type": "array"
+        },
+        "role": {
+          "enum": [
+            "header",
+            "footer",
+            "page_number"
+          ],
+          "title": "Role",
+          "type": "string"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        },
+        "word_ids": {
+          "items": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "minItems": 1,
+          "title": "Word Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "kind",
+        "id",
+        "key",
+        "regions",
+        "word_ids",
+        "text",
+        "markers",
+        "hyphen_joins",
+        "role"
+      ],
+      "title": "Furniture",
+      "type": "object"
+    },
+    "Grid": {
+      "additionalProperties": false,
+      "description": "A table's cell grid: row and column bands and the cells that tile them.",
+      "properties": {
+        "banner_rows": {
+          "default": [],
+          "items": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "title": "Banner Rows",
+          "type": "array"
+        },
+        "cells": {
+          "items": {
+            "$ref": "#/$defs/Cell"
+          },
+          "title": "Cells",
+          "type": "array"
+        },
+        "col_bands": {
+          "items": {
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              }
+            ],
+            "type": "array"
+          },
+          "title": "Col Bands",
+          "type": "array"
+        },
+        "header_rows": {
+          "minimum": 0,
+          "title": "Header Rows",
+          "type": "integer"
+        },
+        "n_cols": {
+          "exclusiveMinimum": 0,
+          "title": "N Cols",
+          "type": "integer"
+        },
+        "n_rows": {
+          "exclusiveMinimum": 0,
+          "title": "N Rows",
+          "type": "integer"
+        },
+        "row_bands": {
+          "items": {
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              }
+            ],
+            "type": "array"
+          },
+          "title": "Row Bands",
+          "type": "array"
+        },
+        "source": {
+          "enum": [
+            "lattice",
+            "corridor"
+          ],
+          "title": "Source",
+          "type": "string"
+        }
+      },
+      "required": [
+        "n_rows",
+        "n_cols",
+        "row_bands",
+        "col_bands",
+        "header_rows",
+        "banner_rows",
+        "source",
+        "cells"
+      ],
+      "title": "Grid",
+      "type": "object"
+    },
+    "Heading": {
+      "additionalProperties": false,
+      "description": "A title line. `level` 1 is the document's largest heading size.",
+      "properties": {
+        "hyphen_joins": {
+          "default": [],
+          "items": {
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "minimum": 0,
+                "type": "integer"
+              }
+            ],
+            "type": "array"
+          },
+          "title": "Hyphen Joins",
+          "type": "array"
+        },
+        "id": {
+          "pattern": "^b[1-9][0-9]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "key": {
+          "pattern": "^k[0-9a-f]{16}(?::(?:[2-9]|[1-9][0-9]+))?$",
+          "title": "Key",
+          "type": "string"
+        },
+        "kind": {
+          "const": "heading",
+          "default": "heading",
+          "title": "Kind",
+          "type": "string"
+        },
+        "level": {
+          "exclusiveMinimum": 0,
+          "title": "Level",
+          "type": "integer"
+        },
+        "markers": {
+          "default": [],
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Markers",
+          "type": "array"
+        },
+        "number": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Number"
+        },
+        "regions": {
+          "items": {
+            "$ref": "#/$defs/Region"
+          },
+          "minItems": 1,
+          "title": "Regions",
+          "type": "array"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        },
+        "word_ids": {
+          "items": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "minItems": 1,
+          "title": "Word Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "kind",
+        "id",
+        "key",
+        "regions",
+        "word_ids",
+        "text",
+        "markers",
+        "hyphen_joins",
+        "level",
+        "number"
+      ],
+      "title": "Heading",
+      "type": "object"
+    },
+    "Ledger": {
+      "additionalProperties": false,
+      "description": "Characters by disposition, and the proof that every word is owned exactly once.",
+      "properties": {
+        "clipped_chars": {
+          "minimum": 0,
+          "title": "Clipped Chars",
+          "type": "integer"
+        },
+        "content_chars": {
+          "minimum": 0,
+          "title": "Content Chars",
+          "type": "integer"
+        },
+        "furniture_chars": {
+          "minimum": 0,
+          "title": "Furniture Chars",
+          "type": "integer"
+        },
+        "invisible_chars": {
+          "minimum": 0,
+          "title": "Invisible Chars",
+          "type": "integer"
+        },
+        "partition": {
+          "const": "proved",
+          "default": "proved",
+          "title": "Partition",
+          "type": "string"
+        }
+      },
+      "required": [
+        "content_chars",
+        "furniture_chars",
+        "invisible_chars",
+        "clipped_chars",
+        "partition"
+      ],
+      "title": "Ledger",
+      "type": "object"
+    },
+    "Link": {
+      "additionalProperties": false,
+      "description": "A relationship the page prints: a footnote call, or a table continuing across pages.",
+      "properties": {
+        "from": {
+          "$ref": "#/$defs/LinkEnd"
+        },
+        "kind": {
+          "enum": [
+            "footnote_call",
+            "continuation"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "label": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Label"
+        },
+        "method": {
+          "anyOf": [
+            {
+              "enum": [
+                "superscript",
+                "parenthetical",
+                "named"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Method"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reason"
+        },
+        "status": {
+          "enum": [
+            "resolved",
+            "unresolved",
+            "rejected"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "to": {
+          "anyOf": [
+            {
+              "pattern": "^b[1-9][0-9]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "To"
+        }
+      },
+      "required": [
+        "kind",
+        "from",
+        "to",
+        "label",
+        "method",
+        "status",
+        "reason"
+      ],
+      "title": "Link",
+      "type": "object"
+    },
+    "LinkEnd": {
+      "additionalProperties": false,
+      "description": "Where a link starts: a block, and optionally a cell anchor inside a table.",
+      "properties": {
+        "block": {
+          "pattern": "^b[1-9][0-9]*$",
+          "title": "Block",
+          "type": "string"
+        },
+        "cell": {
+          "anyOf": [
+            {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Cell"
+        }
+      },
+      "required": [
+        "block",
+        "cell"
+      ],
+      "title": "LinkEnd",
+      "type": "object"
+    },
+    "ListItem": {
+      "additionalProperties": false,
+      "description": "A bulleted or enumerated item; `label` is the bullet or enumerator as printed.",
+      "properties": {
+        "hyphen_joins": {
+          "default": [],
+          "items": {
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "minimum": 0,
+                "type": "integer"
+              }
+            ],
+            "type": "array"
+          },
+          "title": "Hyphen Joins",
+          "type": "array"
+        },
+        "id": {
+          "pattern": "^b[1-9][0-9]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "key": {
+          "pattern": "^k[0-9a-f]{16}(?::(?:[2-9]|[1-9][0-9]+))?$",
+          "title": "Key",
+          "type": "string"
+        },
+        "kind": {
+          "const": "list_item",
+          "default": "list_item",
+          "title": "Kind",
+          "type": "string"
+        },
+        "label": {
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "markers": {
+          "default": [],
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Markers",
+          "type": "array"
+        },
+        "regions": {
+          "items": {
+            "$ref": "#/$defs/Region"
+          },
+          "minItems": 1,
+          "title": "Regions",
+          "type": "array"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        },
+        "word_ids": {
+          "items": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "minItems": 1,
+          "title": "Word Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "kind",
+        "id",
+        "key",
+        "regions",
+        "word_ids",
+        "text",
+        "markers",
+        "hyphen_joins",
+        "label"
+      ],
+      "title": "ListItem",
+      "type": "object"
+    },
+    "PageInfo": {
+      "additionalProperties": false,
+      "description": "One page's geometry and text-layer measurements (1-based `number`, unrotated CropBox).",
+      "properties": {
+        "clipped_chars": {
+          "minimum": 0,
+          "title": "Clipped Chars",
+          "type": "integer"
+        },
+        "height": {
+          "gt": 0,
+          "title": "Height",
+          "type": "number"
+        },
+        "hidden_chars": {
+          "minimum": 0,
+          "title": "Hidden Chars",
+          "type": "integer"
+        },
+        "image_area_ratio": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Image Area Ratio",
+          "type": "number"
+        },
+        "invisible_chars": {
+          "minimum": 0,
+          "title": "Invisible Chars",
+          "type": "integer"
+        },
+        "number": {
+          "exclusiveMinimum": 0,
+          "title": "Number",
+          "type": "integer"
+        },
+        "rotation": {
+          "enum": [
+            0,
+            90,
+            180,
+            270
+          ],
+          "title": "Rotation",
+          "type": "integer"
+        },
+        "text_layer": {
+          "enum": [
+            "full",
+            "partial",
+            "none"
+          ],
+          "title": "Text Layer",
+          "type": "string"
+        },
+        "unmapped_chars": {
+          "minimum": 0,
+          "title": "Unmapped Chars",
+          "type": "integer"
+        },
+        "width": {
+          "gt": 0,
+          "title": "Width",
+          "type": "number"
+        }
+      },
+      "required": [
+        "number",
+        "width",
+        "height",
+        "rotation",
+        "text_layer",
+        "invisible_chars",
+        "clipped_chars",
+        "unmapped_chars",
+        "hidden_chars",
+        "image_area_ratio"
+      ],
+      "title": "PageInfo",
+      "type": "object"
+    },
+    "Paragraph": {
+      "additionalProperties": false,
+      "description": "Running prose.",
+      "properties": {
+        "hyphen_joins": {
+          "default": [],
+          "items": {
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "minimum": 0,
+                "type": "integer"
+              }
+            ],
+            "type": "array"
+          },
+          "title": "Hyphen Joins",
+          "type": "array"
+        },
+        "id": {
+          "pattern": "^b[1-9][0-9]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "key": {
+          "pattern": "^k[0-9a-f]{16}(?::(?:[2-9]|[1-9][0-9]+))?$",
+          "title": "Key",
+          "type": "string"
+        },
+        "kind": {
+          "const": "paragraph",
+          "default": "paragraph",
+          "title": "Kind",
+          "type": "string"
+        },
+        "markers": {
+          "default": [],
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Markers",
+          "type": "array"
+        },
+        "regions": {
+          "items": {
+            "$ref": "#/$defs/Region"
+          },
+          "minItems": 1,
+          "title": "Regions",
+          "type": "array"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        },
+        "word_ids": {
+          "items": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "minItems": 1,
+          "title": "Word Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "kind",
+        "id",
+        "key",
+        "regions",
+        "word_ids",
+        "text",
+        "markers",
+        "hyphen_joins"
+      ],
+      "title": "Paragraph",
+      "type": "object"
+    },
+    "Producer": {
+      "additionalProperties": false,
+      "description": "The versions and settings that produced a document.",
+      "properties": {
+        "camelot": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Camelot"
+        },
+        "inkgrid": {
+          "title": "Inkgrid",
+          "type": "string"
+        },
+        "lattice": {
+          "enum": [
+            "combined",
+            "raster"
+          ],
+          "title": "Lattice",
+          "type": "string"
+        },
+        "lexicon": {
+          "minLength": 1,
+          "title": "Lexicon",
+          "type": "string"
+        },
+        "mupdf": {
+          "title": "Mupdf",
+          "type": "string"
+        },
+        "profile": {
+          "minLength": 1,
+          "title": "Profile",
+          "type": "string"
+        },
+        "pymupdf": {
+          "title": "Pymupdf",
+          "type": "string"
+        },
+        "pypdfium2": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Pypdfium2"
+        }
+      },
+      "required": [
+        "inkgrid",
+        "pymupdf",
+        "mupdf",
+        "camelot",
+        "pypdfium2",
+        "lexicon",
+        "profile",
+        "lattice"
+      ],
+      "title": "Producer",
+      "type": "object"
+    },
+    "Region": {
+      "additionalProperties": false,
+      "description": "The box a block occupies on one page.",
+      "properties": {
+        "bbox": {
+          "maxItems": 4,
+          "minItems": 4,
+          "prefixItems": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "Bbox",
+          "type": "array"
+        },
+        "page": {
+          "exclusiveMinimum": 0,
+          "title": "Page",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "page",
+        "bbox"
+      ],
+      "title": "Region",
+      "type": "object"
+    },
+    "Severity": {
+      "description": "How much a finding matters to a consumer.",
+      "enum": [
+        "info",
+        "warning",
+        "error"
+      ],
+      "title": "Severity",
+      "type": "string"
+    },
+    "Source": {
+      "additionalProperties": false,
+      "description": "Which file was read: its SHA-256, page count, and base name when read from a path.",
+      "properties": {
+        "file_name": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "File Name"
+        },
+        "pages": {
+          "exclusiveMinimum": 0,
+          "title": "Pages",
+          "type": "integer"
+        },
+        "sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        }
+      },
+      "required": [
+        "sha256",
+        "pages",
+        "file_name"
+      ],
+      "title": "Source",
+      "type": "object"
+    },
+    "Table": {
+      "additionalProperties": false,
+      "description": "A table on one page; its non-carried cells partition its words.",
+      "properties": {
+        "grid": {
+          "$ref": "#/$defs/Grid"
+        },
+        "hyphen_joins": {
+          "default": [],
+          "items": {
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "minimum": 0,
+                "type": "integer"
+              }
+            ],
+            "type": "array"
+          },
+          "title": "Hyphen Joins",
+          "type": "array"
+        },
+        "id": {
+          "pattern": "^b[1-9][0-9]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "key": {
+          "pattern": "^k[0-9a-f]{16}(?::(?:[2-9]|[1-9][0-9]+))?$",
+          "title": "Key",
+          "type": "string"
+        },
+        "kind": {
+          "const": "table",
+          "default": "table",
+          "title": "Kind",
+          "type": "string"
+        },
+        "markers": {
+          "default": [],
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Markers",
+          "type": "array"
+        },
+        "regions": {
+          "items": {
+            "$ref": "#/$defs/Region"
+          },
+          "minItems": 1,
+          "title": "Regions",
+          "type": "array"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        },
+        "word_ids": {
+          "items": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "minItems": 1,
+          "title": "Word Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "kind",
+        "id",
+        "key",
+        "regions",
+        "word_ids",
+        "text",
+        "markers",
+        "hyphen_joins",
+        "grid"
+      ],
+      "title": "Table",
+      "type": "object"
+    },
+    "Word": {
+      "additionalProperties": false,
+      "description": "One word of the text layer: a run of characters with no whitespace inside.",
+      "properties": {
+        "bbox": {
+          "maxItems": 4,
+          "minItems": 4,
+          "prefixItems": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "Bbox",
+          "type": "array"
+        },
+        "bold": {
+          "title": "Bold",
+          "type": "boolean"
+        },
+        "font": {
+          "title": "Font",
+          "type": "string"
+        },
+        "hidden": {
+          "title": "Hidden",
+          "type": "boolean"
+        },
+        "horizontal": {
+          "title": "Horizontal",
+          "type": "boolean"
+        },
+        "id": {
+          "minimum": 0,
+          "title": "Id",
+          "type": "integer"
+        },
+        "italic": {
+          "title": "Italic",
+          "type": "boolean"
+        },
+        "page": {
+          "exclusiveMinimum": 0,
+          "title": "Page",
+          "type": "integer"
+        },
+        "size": {
+          "ge": 0,
+          "title": "Size",
+          "type": "number"
+        },
+        "superscript": {
+          "title": "Superscript",
+          "type": "boolean"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "page",
+        "bbox",
+        "text",
+        "size",
+        "font",
+        "bold",
+        "italic",
+        "superscript",
+        "hidden",
+        "horizontal"
+      ],
+      "title": "Word",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "One PDF read into blocks, in reading order, with its links, findings and ledger.",
+  "properties": {
+    "blocks": {
+      "items": {
+        "discriminator": {
+          "mapping": {
+            "definition": "#/$defs/Definition",
+            "footnote": "#/$defs/Footnote",
+            "furniture": "#/$defs/Furniture",
+            "heading": "#/$defs/Heading",
+            "list_item": "#/$defs/ListItem",
+            "paragraph": "#/$defs/Paragraph",
+            "table": "#/$defs/Table"
+          },
+          "propertyName": "kind"
+        },
+        "oneOf": [
+          {
+            "$ref": "#/$defs/Heading"
+          },
+          {
+            "$ref": "#/$defs/Paragraph"
+          },
+          {
+            "$ref": "#/$defs/ListItem"
+          },
+          {
+            "$ref": "#/$defs/Footnote"
+          },
+          {
+            "$ref": "#/$defs/Definition"
+          },
+          {
+            "$ref": "#/$defs/Table"
+          },
+          {
+            "$ref": "#/$defs/Furniture"
+          }
+        ]
+      },
+      "title": "Blocks",
+      "type": "array"
+    },
+    "findings": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/Finding"
+      },
+      "title": "Findings",
+      "type": "array"
+    },
+    "ledger": {
+      "$ref": "#/$defs/Ledger"
+    },
+    "links": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/Link"
+      },
+      "title": "Links",
+      "type": "array"
+    },
+    "pages": {
+      "items": {
+        "$ref": "#/$defs/PageInfo"
+      },
+      "minItems": 1,
+      "title": "Pages",
+      "type": "array"
+    },
+    "producer": {
+      "$ref": "#/$defs/Producer"
+    },
+    "schema": {
+      "const": "inkgrid.document/1",
+      "default": "inkgrid.document/1",
+      "title": "Schema",
+      "type": "string"
+    },
+    "source": {
+      "$ref": "#/$defs/Source"
+    },
+    "words": {
+      "items": {
+        "$ref": "#/$defs/Word"
+      },
+      "title": "Words",
+      "type": "array"
+    }
+  },
+  "required": [
+    "schema",
+    "source",
+    "producer",
+    "pages",
+    "words",
+    "blocks",
+    "links",
+    "findings",
+    "ledger"
+  ],
+  "title": "Document",
+  "type": "object"
+}

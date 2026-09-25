@@ -74,6 +74,7 @@ import cycle.
 | MD3 | a document with only furniture | `""` |
 | MD4 | a heading of level 9 | six `#` |
 | MD5 | a definition `Member` / `a firm admitted to trading` | `**Member** a firm admitted to trading\n` |
+| MD6 | a 2 × 2 table `Fee 0.10` / `Rebate 0.20` | `Fee 0.10\nRebate 0.20\n` |
 
 ---
 
@@ -144,7 +145,7 @@ dark mode (`prefers-color-scheme`) and prints legibly. All document text is HTML
 
 ## 5 · Acceptance
 
-- [ ] RD1–RD10, MD1–MD5, CR1–CR5, and IN1–IN7 pass.
+- [ ] RD1–RD10, MD1–MD6, CR1–CR5, and IN1–IN7 pass.
 - [ ] `inkgrid read` emits a valid `Document` for every fixture, and the two-column fixture reads in
       column order (the M1 exit criteria).
 - [ ] `render/` imports only `model` and `read`; only `read/pymupdf_reader.py` imports pymupdf.

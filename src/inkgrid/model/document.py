@@ -13,6 +13,7 @@ from typing import Annotated, Final, Literal, Self
 
 from pydantic import Field, NonNegativeInt, PositiveInt, model_validator
 
+from inkgrid.model import export
 from inkgrid.model.base import Frozen
 from inkgrid.model.findings import BLOCK_ID, Finding, Severity
 from inkgrid.model.geometry import Interval, Rect
@@ -394,3 +395,25 @@ class Document(Frozen):
     def tables(self) -> tuple[Table, ...]:
         """The table blocks, in reading order."""
         return tuple(b for b in self.blocks if isinstance(b, Table))
+
+    def to_markdown(self) -> str:
+        """The document as Markdown: one fixed form per block kind; furniture is omitted."""
+        parts: list[str] = []
+        for block in self.blocks:
+            match block:
+                case Heading():
+                    parts.append(export.heading(block.level, block.text))
+                case Paragraph():
+                    parts.append(export.paragraph(block.text))
+                case ListItem():
+                    # Bullets are single characters; enumerators never are (`1.`, `a)`).
+                    parts.append(export.list_item(block.text, bullet=len(block.label) == 1))
+                case Footnote():
+                    parts.append(export.footnote(block.label, block.text))
+                case Definition():
+                    parts.append(export.definition(block.term, block.body))
+                case Table():
+                    parts.append(block.text)
+                case Furniture():
+                    pass
+        return export.join(parts)

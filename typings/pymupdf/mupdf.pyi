@@ -1,0 +1,3 @@
+"""Local type stub: the MuPDF binding's exception base, which is not a RuntimeError."""
+
+class FzErrorBase(Exception): ...

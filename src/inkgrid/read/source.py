@@ -22,13 +22,18 @@ class Loaded:
     file_name: str | None
 
 
+def _display_name(path: Path) -> str:
+    """The base name as valid Unicode: an undecodable byte becomes U+FFFD, never a surrogate."""
+    return os.fsencode(path.name).decode("utf-8", "replace")
+
+
 def _from_path(path: Path) -> Loaded:
     try:
         data = path.read_bytes()
     except OSError as exc:
-        msg = f"cannot read {path}: {exc.strerror or exc}"
+        msg = f"cannot read {_display_name(path)}: {exc.strerror or exc}"
         raise PdfOpenError(msg) from exc
-    return Loaded(data, path.name)
+    return Loaded(data, _display_name(path))
 
 
 def _from_stream(stream: BinaryIO) -> Loaded:

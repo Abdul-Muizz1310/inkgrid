@@ -1,4 +1,6 @@
 import io
+import os
+import sys
 from pathlib import Path
 
 import pytest
@@ -83,3 +85,12 @@ def test_load_source_unicode_path(tmp_path: Path) -> None:
     path = tmp_path / "fee schedule Z\u00fcrich.pdf"
     path.write_bytes(PDF)
     assert load_source(path).file_name == "fee schedule Z\u00fcrich.pdf"
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="Windows file names are always valid Unicode")
+def test_S7_undecodable_file_name_is_made_valid_unicode(tmp_path: Path) -> None:
+    path = tmp_path / os.fsdecode(b"Z\xfcrich.pdf")
+    path.write_bytes(PDF)
+    loaded = load_source(path)
+    assert loaded.file_name == "Z\ufffdrich.pdf"
+    loaded.file_name.encode("utf-8")

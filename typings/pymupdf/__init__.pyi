@@ -8,6 +8,8 @@ replaces the package's inline hints, so anything the reader uses must be declare
 from collections.abc import Iterator
 from typing import Literal, NotRequired, TypedDict, overload
 
+from pymupdf import mupdf as mupdf
+
 VersionBind: str
 VersionFitz: str
 TEXT_PRESERVE_WHITESPACE: int
@@ -49,6 +51,7 @@ class RawSpanDict(TypedDict):
     size: float
     flags: int
     char_flags: int
+    alpha: int
     bbox: Box
     chars: list[RawCharDict]
 
@@ -89,15 +92,23 @@ class ImageInfo(TypedDict):
     bbox: Box
     number: int
 
+# (xref, extension, type, basefont, name, encoding); type is e.g. "Type1", "TrueType", "Type3".
+type FontEntry = tuple[int, str, str, str, str, str]
+
 class Page:
     rotation: int
     cropbox: Rect
     @overload
-    def get_text(self, option: Literal["rawdict"], *, flags: int = ...) -> RawDict: ...
+    def get_text(
+        self, option: Literal["rawdict"], *, flags: int = ..., clip: Rect | None = ...
+    ) -> RawDict: ...
     @overload
-    def get_text(self, option: Literal["text"], *, flags: int = ...) -> str: ...
+    def get_text(
+        self, option: Literal["text"], *, flags: int = ..., clip: Rect | None = ...
+    ) -> str: ...
     def get_drawings(self) -> list[DrawingDict]: ...
     def get_image_info(self) -> list[ImageInfo]: ...
+    def get_fonts(self) -> list[FontEntry]: ...
 
 class Document:
     page_count: int
@@ -116,3 +127,4 @@ class _Tools:
 TOOLS: _Tools
 
 def open(*, stream: bytes, filetype: str) -> Document: ...
+def INFINITE_RECT() -> Rect: ...

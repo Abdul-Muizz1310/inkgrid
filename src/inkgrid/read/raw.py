@@ -20,12 +20,13 @@ class RawChar:
 
 @dataclass(frozen=True, slots=True)
 class RawSpan:
-    """A run of characters sharing font, size and flags."""
+    """A run of characters sharing font, size and flags. `alpha` is the fill opacity, 0-255."""
 
     font: str
     size: float
     flags: int
     char_flags: int
+    alpha: int
     chars: tuple[RawChar, ...]
 
 

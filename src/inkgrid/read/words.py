@@ -3,6 +3,10 @@
 A word is a maximal run of word characters within one span. Across a span boundary within one line
 it continues only when nothing separates the two runs and both share their superscript and hidden
 states: a font change mid-word stays one word, and `$0.40` followed by a raised `2` stays two.
+
+A span is hidden when its fill alpha is 0 or it is neither filled nor stroked (render modes 3 and 7,
+alpha-0 fills). Render modes 4-6 come back twice, the visible span and a clip copy; the copy is
+dropped so no word is doubled (W7).
 """
 
 import unicodedata
@@ -26,6 +30,8 @@ BOLD = 16
 CHAR_BOLD = 8
 CHAR_FILLED = 16
 CHAR_STROKED = 32
+CHAR_CLIPPED = 64
+BOX_DIGITS = 2
 
 ZERO_WIDTH_SPACE = "\u200b"
 REPLACEMENT = "\ufffd"
@@ -35,15 +41,42 @@ INVISIBLE_CATEGORIES = frozenset({"Cc", "Cf", "Co", "Cn"})
 class _Kind(Enum):
     SPACE = auto()
     INVISIBLE = auto()
+    SURROGATE = auto()
     WORD = auto()
 
 
 def _classify(cp: str) -> _Kind:
     if cp.isspace() or cp == ZERO_WIDTH_SPACE:
         return _Kind.SPACE
-    if unicodedata.category(cp) in INVISIBLE_CATEGORIES:
+    category = unicodedata.category(cp)
+    if category == "Cs":
+        return _Kind.SURROGATE
+    if category in INVISIBLE_CATEGORIES:
         return _Kind.INVISIBLE
     return _Kind.WORD
+
+
+def _is_clip_copy(span: RawSpan) -> bool:
+    return bool(span.char_flags & CHAR_CLIPPED) and span.alpha == 0
+
+
+def _signature(span: RawSpan) -> tuple[tuple[str, Box], ...]:
+    return tuple(
+        (
+            ch.c,
+            (
+                round(ch.bbox[0], BOX_DIGITS),
+                round(ch.bbox[1], BOX_DIGITS),
+                round(ch.bbox[2], BOX_DIGITS),
+                round(ch.bbox[3], BOX_DIGITS),
+            ),
+        )
+        for ch in span.chars
+    )
+
+
+def _is_hidden(span: RawSpan) -> bool:
+    return span.alpha == 0 or not (span.char_flags & (CHAR_FILLED | CHAR_STROKED))
 
 
 @dataclass
@@ -125,13 +158,16 @@ def build_words(lines: Sequence[RawLine], page: int, first_id: int) -> WordsOut:
     tokens: list[_Token] = []
     invisible = 0
     span_id = 0
+    drawn = {_signature(s) for line in lines for s in line.spans if not _is_clip_copy(s)}
     for line in lines:
         horizontal = _is_horizontal(line.direction)
         carry: _Token | None = None
         for span in line.spans:
+            if _is_clip_copy(span) and _signature(span) in drawn:
+                continue
             span_id += 1
             superscript = bool(span.flags & SUPERSCRIPT)
-            hidden = not (span.char_flags & (CHAR_FILLED | CHAR_STROKED))
+            hidden = _is_hidden(span)
             current: _Token | None = None
             at_start = True
             for char in span.chars:
@@ -146,6 +182,7 @@ def build_words(lines: Sequence[RawLine], page: int, first_id: int) -> WordsOut:
                     if kind is _Kind.INVISIBLE:
                         invisible += 1
                         continue
+                    text = REPLACEMENT if kind is _Kind.SURROGATE else cp
                     if current is None:
                         joins = (
                             at_start
@@ -157,7 +194,7 @@ def build_words(lines: Sequence[RawLine], page: int, first_id: int) -> WordsOut:
                         else:
                             current = _Token(superscript, hidden, horizontal)
                             tokens.append(current)
-                    current.add(cp, char.bbox, span_id, span)
+                    current.add(text, char.bbox, span_id, span)
                     at_start = False
             carry = current
     words = tuple(_to_word(t, first_id + i, page) for i, t in enumerate(tokens))

@@ -1,21 +1,23 @@
 from inkgrid.model.findings import FindingCode, Severity
-from inkgrid.read.page_findings import engine_warning_findings, page_findings
+from inkgrid.read.page_findings import PageSignals, engine_warning_findings, page_findings
 from model_builders import mk_page, mk_word
 
 
-def codes(**page: object) -> list[FindingCode]:
-    has_image = bool(page.pop("has_image", False))
-    has_curves = bool(page.pop("has_curves", False))
-    found = page_findings(mk_page(**page), has_image=has_image, has_curves=has_curves)
+def codes(signals: PageSignals | None = None, **page: object) -> list[FindingCode]:
+    found = page_findings(mk_page(**page), signals or PageSignals())
     return [f.code for f in found]
 
 
 def test_no_words_with_an_image_is_no_text_layer() -> None:
-    assert codes(text_layer="none", words=(), has_image=True) == [FindingCode.NO_TEXT_LAYER]
+    assert codes(PageSignals(has_image=True), text_layer="none", words=()) == [
+        FindingCode.NO_TEXT_LAYER
+    ]
 
 
 def test_no_words_with_curves_is_no_text_layer() -> None:
-    assert codes(text_layer="none", words=(), has_curves=True) == [FindingCode.NO_TEXT_LAYER]
+    assert codes(PageSignals(has_curves=True), text_layer="none", words=()) == [
+        FindingCode.NO_TEXT_LAYER
+    ]
 
 
 def test_no_words_and_nothing_drawn_is_blank() -> None:
@@ -60,9 +62,7 @@ def test_findings_come_in_the_fixed_order() -> None:
 
 def test_findings_name_their_page_and_count() -> None:
     (finding,) = page_findings(
-        mk_page(number=4, clipped_chars=7, words=(mk_word(page=4),)),
-        has_image=False,
-        has_curves=False,
+        mk_page(number=4, clipped_chars=7, words=(mk_word(page=4),)), PageSignals()
     )
     assert (finding.page, finding.severity) == (4, Severity.INFO)
     assert "7" in finding.detail
@@ -84,3 +84,34 @@ def test_engine_warnings_are_distinct_and_capped() -> None:
 
 def test_no_engine_warnings_no_findings() -> None:
     assert engine_warning_findings([]) == ()
+
+
+def test_no_words_but_engine_warnings_is_no_text_layer_not_blank() -> None:
+    signals = PageSignals(warnings=("library error: zlib error: invalid code lengths set",))
+    found = page_findings(mk_page(text_layer="none", words=()), signals)
+    assert [f.code for f in found] == [FindingCode.NO_TEXT_LAYER, FindingCode.PDF_ENGINE_WARNING]
+    assert all(f.page == 1 for f in found)
+
+
+def test_extraction_failure_is_an_unreadable_page() -> None:
+    signals = PageSignals(extraction_error="RuntimeError: cannot parse content")
+    found = page_findings(mk_page(text_layer="none", words=()), signals)
+    assert [f.code for f in found] == [FindingCode.UNREADABLE_PAGE, FindingCode.NO_TEXT_LAYER]
+    assert found[0].severity is Severity.ERROR
+    assert "cannot parse content" in found[0].detail
+
+
+def test_type3_characters_are_reported_with_their_count() -> None:
+    (finding,) = page_findings(mk_page(), PageSignals(type3_chars=3))
+    assert finding.code is FindingCode.TYPE3_FONT
+    assert "3" in finding.detail
+
+
+def test_page_engine_warnings_are_pinned_to_the_page() -> None:
+    found = page_findings(
+        mk_page(number=2, words=(mk_word(page=2),)), PageSignals(warnings=("w1", "w1", "w2"))
+    )
+    assert [(f.code, f.page, f.detail) for f in found] == [
+        (FindingCode.PDF_ENGINE_WARNING, 2, "w1"),
+        (FindingCode.PDF_ENGINE_WARNING, 2, "w2"),
+    ]

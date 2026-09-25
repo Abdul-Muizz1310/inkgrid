@@ -258,9 +258,8 @@ def repaired() -> bytes:
     return head + b"startxref" + tail.replace(offset, wrong, 1)
 
 
-def zero_pages() -> bytes:
-    """A hand-written PDF whose page tree is empty (`/Count 0`)."""
-    objects = [b"<< /Type /Catalog /Pages 2 0 R >>", b"<< /Type /Pages /Kids [] /Count 0 >>"]
+def _build(objects: list[bytes]) -> bytes:
+    """A hand-written PDF from numbered object bodies (object 1 is the catalog)."""
     out = bytearray(b"%PDF-1.7\n")
     offsets = []
     for number, body in enumerate(objects, start=1):
@@ -270,11 +269,111 @@ def zero_pages() -> bytes:
     out += b"xref\n0 %d\n0000000000 65535 f \n" % (len(objects) + 1)
     for offset in offsets:
         out += b"%010d 00000 n \n" % offset
-    out += b"trailer\n<< /Size %d /Root 1 0 R >>\nstartxref\n%d\n%%%%EOF\n" % (
-        len(objects) + 1,
-        xref,
-    )
+    trailer = b"trailer\n<< /Size %d /Root 1 0 R >>\nstartxref\n%d\n%%%%EOF\n"
+    out += trailer % (len(objects) + 1, xref)
     return bytes(out)
+
+
+def _stream(body: bytes, extra: bytes = b"") -> bytes:
+    return b"<< /Length %d %s>>\nstream\n" % (len(body), extra) + body + b"\nendstream"
+
+
+_CATALOG = b"<< /Type /Catalog /Pages 2 0 R >>"
+_ONE_PAGE = b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>"
+_PAGE = (
+    b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] "
+    b"/Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>"
+)
+_HELVETICA = b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>"
+_TEXT = b"BT /F1 12 Tf 72 700 Td (AB) Tj ET"
+
+
+def zero_pages() -> bytes:
+    """A hand-written PDF whose page tree is empty (`/Count 0`)."""
+    return _build([_CATALOG, b"<< /Type /Pages /Kids [] /Count 0 >>"])
+
+
+def count_mismatch() -> bytes:
+    """A page tree that declares two pages but holds one."""
+    tree = b"<< /Type /Pages /Kids [3 0 R] /Count 2 >>"
+    return _build([_CATALOG, tree, _PAGE, _stream(_TEXT), _HELVETICA])
+
+
+def broken_flate() -> bytes:
+    """One page whose content stream claims Flate compression but holds garbage."""
+    content = b"<< /Length 20 /Filter /FlateDecode >>\nstream\n\x78\x9cthis is not zlib!\nendstream"
+    return _build([_CATALOG, _ONE_PAGE, _PAGE, content, _HELVETICA])
+
+
+def nested_graphics_states() -> bytes:
+    """`AB` behind 10000 unclosed `q` operators, past MuPDF's nesting limit: extraction fails."""
+    return _build([_CATALOG, _ONE_PAGE, _PAGE, _stream(b"q " * 10000 + _TEXT), _HELVETICA])
+
+
+def null_page_kid() -> bytes:
+    """A page tree whose only kid is `null`: MuPDF counts one page and cannot load it."""
+    tree = b"<< /Type /Pages /Kids [null] /Count 1 >>"
+    return _build([_CATALOG, tree, _PAGE, _stream(_TEXT), _HELVETICA])
+
+
+def null_second_kid() -> bytes:
+    """A page tree of `/Count 2` whose second kid is `null`: page 1 loads, page 2 does not."""
+    tree = b"<< /Type /Pages /Kids [3 0 R null] /Count 2 >>"
+    return _build([_CATALOG, tree, _PAGE, _stream(_TEXT), _HELVETICA])
+
+
+def surrogate_tounicode() -> bytes:
+    """`AB` in a font whose ToUnicode map sends A to a lone surrogate (U+D800)."""
+    cmap = (
+        b"/CIDInit /ProcSet findresource begin 12 dict begin begincmap\n"
+        b"/CMapName /X def /CMapType 2 def\n"
+        b"1 begincodespacerange <00> <FF> endcodespacerange\n"
+        b"2 beginbfchar <41> <D800> <42> <0042> endbfchar\n"
+        b"endcmap CMapName currentdict /CMap defineresource pop end end"
+    )
+    font = b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /ToUnicode 6 0 R >>"
+    return _build([_CATALOG, _ONE_PAGE, _PAGE, _stream(_TEXT), font, _stream(cmap)])
+
+
+def type3_font() -> bytes:
+    """`aaa` in a Type 3 font whose glyph `/g1` has no Unicode meaning, then `plain`."""
+    page = (
+        b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] "
+        b"/Resources << /Font << /T3 5 0 R /F1 7 0 R >> >> /Contents 4 0 R >>"
+    )
+    content = b"BT /T3 12 Tf 72 700 Td (aaa) Tj ET BT /F1 12 Tf 72 650 Td (plain) Tj ET"
+    font = (
+        b"<< /Type /Font /Subtype /Type3 /FontBBox [0 0 750 750] /FontMatrix [0.001 0 0 0.001 0 0] "
+        b"/CharProcs << /g1 6 0 R >> /Encoding << /Type /Encoding /Differences [97 /g1] >> "
+        b"/FirstChar 97 /LastChar 97 /Widths [1000] /Resources << >> >>"
+    )
+    glyph = _stream(b"1000 0 0 0 750 750 d1 0 0 750 750 re f")
+    return _build([_CATALOG, _ONE_PAGE, page, _stream(content), font, glyph, _HELVETICA])
+
+
+def render_mode(mode: int) -> bytes:
+    """The word `mode<N>` drawn in text render mode N (0-7)."""
+    return _raw_content(b"BT /F1 10 Tf %d Tr 72 700 Td (mode%d) Tj ET" % (mode, mode))
+
+
+def alpha_zero() -> bytes:
+    """`seen` drawn normally and `ghost` drawn with fill opacity 0."""
+    doc = pymupdf.open()
+    page = _page(doc)
+    page.insert_text((72, 100), "seen", fontsize=10)
+    page.insert_text((72, 130), "ghost", fontsize=10, fill_opacity=0)
+    return _save(doc)
+
+
+def outside_crop() -> bytes:
+    """Text inside the CropBox, text in the MediaBox but outside the CropBox, and off-page text."""
+    doc = pymupdf.open()
+    page = _page(doc, (600, 800))
+    page.insert_text((100, 100), "insidecrop", fontsize=10)
+    page.insert_text((20, 30), "outsidecrop", fontsize=10)
+    page.insert_text((-300, 100), "offpage", fontsize=10)
+    doc.xref_set_key(page.xref, "CropBox", "[50 50 550 750]")
+    return _save(doc)
 
 
 OPENABLE: dict[str, Callable[[], bytes]] = {
@@ -296,4 +395,14 @@ OPENABLE: dict[str, Callable[[], bytes]] = {
     "multipage": multipage,
     "owner_only": owner_only,
     "repaired": repaired,
+    "count_mismatch": count_mismatch,
+    "broken_flate": broken_flate,
+    "surrogate_tounicode": surrogate_tounicode,
+    "nested_graphics_states": nested_graphics_states,
+    "null_second_kid": null_second_kid,
+    "type3_font": type3_font,
+    "render_mode_4": lambda: render_mode(4),
+    "render_mode_7": lambda: render_mode(7),
+    "alpha_zero": alpha_zero,
+    "outside_crop": outside_crop,
 }

@@ -20,11 +20,14 @@ def span(
     char_flags: int = 16,
     font: str = "Helvetica",
     size: float = 10.0,
+    alpha: int = 255,
 ) -> RawSpan:
     chars = tuple(
         RawChar(c, (x0 + i * w, y0, x0 + (i + 1) * w, y0 + h)) for i, c in enumerate(text)
     )
-    return RawSpan(font=font, size=size, flags=flags, char_flags=char_flags, chars=chars)
+    return RawSpan(
+        font=font, size=size, flags=flags, char_flags=char_flags, alpha=alpha, chars=chars
+    )
 
 
 def line(*spans: RawSpan, direction: tuple[float, float] = HORIZONTAL) -> RawLine:
@@ -168,3 +171,30 @@ def test_W17_touching_spans_split_exactly_on_whitespace(parts: list[str]) -> Non
     words = build_words([line(*spans)], page=1, first_id=0).words
     assert [w.text for w in words] == "".join(parts).split()
     assert [w.id for w in words] == list(range(len(words)))
+
+
+def test_W18_mode_7_clip_only_text_is_hidden() -> None:
+    out = build_words([line(span("secret", 72, char_flags=80, alpha=0))], page=1, first_id=0)
+    assert [(w.text, w.hidden) for w in out.words] == [("secret", True)]
+    assert out.hidden_chars == 6
+
+
+@pytest.mark.parametrize("same_line", [True, False], ids=["same-line", "own-line"])
+def test_W19_clip_copy_of_visible_text_is_not_a_second_word(same_line: bool) -> None:
+    visible = span("mode4", 72)
+    copy = span("mode4", 72, char_flags=80, alpha=0)
+    lines = [line(visible, copy)] if same_line else [line(visible), line(copy)]
+    out = build_words(lines, page=1, first_id=0)
+    assert [(w.text, w.hidden) for w in out.words] == [("mode4", False)]
+    assert out.hidden_chars == 0
+
+
+def test_W20_alpha_zero_fill_is_hidden() -> None:
+    out = build_words([line(span("ghost", 72, char_flags=16, alpha=0))], page=1, first_id=0)
+    assert [(w.text, w.hidden) for w in out.words] == [("ghost", True)]
+
+
+def test_W21_lone_surrogate_reads_as_replacement_character() -> None:
+    out = build_words([line(span("\ud800B", 72))], page=1, first_id=0)
+    assert [w.text for w in out.words] == ["\ufffdB"]
+    assert out.unmapped_chars == 1

@@ -32,6 +32,10 @@ The facts below were measured on PyMuPDF 1.28.2 on 2026-09-25/26, with probes ke
 | S4 | a text-mode file object (`read()` returns `str`) | `TypeError` |
 | S5 | `None`, `42` | `TypeError` |
 | S6 | empty input from any source | `PdfOpenError("empty input")` |
+| S7 | a path whose name is not valid UTF-8 (Linux bytes `Z\xfcrich.pdf`) | reads; `file_name` has U+FFFD for the undecodable byte |
+
+`file_name` is always valid Unicode. A name the file system cannot decode as UTF-8 keeps its
+readable characters, and U+FFFD stands in for each undecodable byte.
 
 A wrong *type* is a programming error, so it raises `TypeError`. A bad *file* is bad input, so it
 raises an `InkgridError`.
@@ -103,6 +107,8 @@ hidden_chars)`.
 **Character classes.** A character is:
 - *whitespace* if `c.isspace()`, or if it is U+200B (the zero-width space, which marks a word break);
 - *invisible* if its Unicode category is Cc, Cf, Co, or Cn and it is not whitespace;
+- a *surrogate* (category Cs) is a word character read as U+FFFD, and counted as unmapped. A
+  ToUnicode map can name a lone surrogate, which no UTF-8 output can hold;
 - otherwise a *word character*.
 
 **Rules.**
@@ -124,14 +130,27 @@ hidden_chars)`.
     lower-cased font name.
   - `italic` is set if `flags & 2`, or `"italic"` or `"oblique"` appears in the name.
   - `superscript` is `flags & 1`.
-  - `hidden` is set when `char_flags & (16 | 32) == 0`: the span is neither filled nor stroked
-    (render mode 3 or 7).
+  - `hidden` is set when the span's `alpha` is 0 or `char_flags & (16 | 32) == 0`. Measured on
+    PyMuPDF 1.28.2:
+    - render mode 3 gives `char_flags=0`, `alpha=0`;
+    - mode 7 gives `char_flags=80` (filled and clipped), `alpha=0`;
+    - an alpha-0 fill gives `char_flags=16`, `alpha=0`.
+
+    The M0 spec said "mode 3 or 7" from the flags alone. Mode 7 and alpha-0 text were then read as
+    visible; the final M0 review found it.
   - `horizontal` is the line direction `(1, 0)` within 1e-3.
 - **W5.** Counts:
   - `invisible_chars` counts invisible characters, which never appear in a word;
   - `unmapped_chars` counts U+FFFD characters, which stay in the word;
   - `hidden_chars` counts the word characters of hidden spans.
 - **W6.** Words are numbered from `first_id` in `rawdict` order (block, line, span, character).
+- **W7. Clip copies are not text.** Render modes 4-6 draw the text and also add it to the clip. MuPDF
+  returns such text twice:
+  - once as the visible span;
+  - once as a clip copy (`char_flags & 64`, `alpha=0`) with identical characters and boxes.
+
+  A clip copy that duplicates a visible span on the same page is dropped before words are built, so it
+  is never a second word. A clip copy with no visible twin (mode 7) is kept, as hidden text.
 
 **Why the superscript flag and not a size test.** MuPDF flags a character as superscript when its
 origin sits more than 0.1 × size above the origin of the line's first character. So a marker that
@@ -157,6 +176,10 @@ cases in M3 (design L7).
 | W-15 | fonts `Helvetica-Bold`, `Arial,BoldMT`, `Times-Italic`, `Foo-Oblique` | `bold` / `bold` / `italic` / `italic` |
 | W-16 | a span of only whitespace and invisible characters | no words |
 | W-17 | property: random spans of word characters and whitespace | every word character appears in exactly one word, in order; no word contains whitespace |
+| W-18 | a span with `char_flags=80`, `alpha=0` alone (mode 7) | hidden words |
+| W-19 | a visible span and its identical clip copy (`char_flags=80`, `alpha=0`) | one set of words, visible, no duplicates |
+| W-20 | a span with `char_flags=16`, `alpha=0` | hidden words |
+| W-21 | a span holding a lone surrogate before `B` | one word `\ufffdB`; `unmapped_chars=1` |
 
 ---
 
@@ -226,20 +249,38 @@ different thresholds on purpose.
 **Page-level measurements.**
 - `image_area_ratio` is the sum of image-placement areas from `get_image_info()`, each clipped to the
   page, divided by the page area and capped at 1.
-- `clipped_chars` is the count of non-whitespace characters in `get_text("text")` with `TEXT_CLIP`
-  cleared, minus the count with it set. These are characters inside clip paths or off the page.
+- `clipped_chars` is the word-character count of the page's text extracted with no clipping at all
+  (`TEXT_CLIP` cleared and `clip=INFINITE_RECT()`, then built into words by the same rules), minus
+  the word characters actually read.
+  - These are characters inside clip paths, outside the CropBox, or off the page.
+  - MuPDF drops text outside the CropBox under every flag setting unless given an infinite clip.
+  - The M0 spec's flag-only difference missed it; found by the final M0 review.
+- `type3_chars` is the character count of words whose font is a Type 3 font. PyMuPDF names such a
+  span's font `Type3 (<xref> 0 R)` for a Type 3 font listed by `get_fonts()`.
 
 **Findings, per page, in this order.**
-1. **No words.** If the page has an image or any curve item, `no_text_layer`; otherwise `blank_page`.
-   `text_layer` is `none`.
+0. `unreadable_page` (error), when the page loaded but its text or drawings could not be extracted.
+   The page then has no words and no rules.
+1. **No words.** If the page has an image, any curve item, or engine warnings while it was read (a
+   content stream that failed to decode), `no_text_layer`; otherwise `blank_page`. `text_layer` is
+   `none`.
 2. `partial_text_layer`, when `unmapped_chars > 0`; the detail gives the count.
 3. `ocr_text_layer`, when `hidden_chars ≥ 50%` of the page's word characters and
    `image_area_ratio ≥ 0.5`. Otherwise `hidden_text`, whenever `hidden_chars > 0`. The detail gives the
    count.
 4. `clipped_text`, when `clipped_chars > 0`.
+5. `type3_font`, when `type3_chars > 0`; the detail gives the count.
+6. `pdf_engine_warning` for each distinct MuPDF warning line raised while this page was read, pinned to
+   the page. After 20, a single finding says how many more there were.
 
-**Document level, after all pages.** One `pdf_engine_warning` for each distinct MuPDF warning line, in
-first-seen order. After 20, a single final finding says how many more there were.
+**Document level.**
+- Warnings raised while opening the file are document-level `pdf_engine_warning` findings, with the
+  same cap.
+- **A page tree that declares pages it cannot load.** Pages are read in order. At the first page that
+  cannot be loaded, reading stops. The `Reading` holds the pages before it, `source.pages` counts
+  them, and one document-level `unreadable_page` (error) says how many declared pages were not
+  loaded.
+- If not even page 1 loads, the file is not a readable PDF (`PdfOpenError`).
 
 | # | case (generated PDF fixture) | expected |
 |---|---|---|
@@ -259,12 +300,23 @@ first-seen order. After 20, a single final finding says how many more there were
 | X14 | CropBox `[50 50 550 750]` inside a 600 × 800 MediaBox | width 500, height 700; a word drawn at x = 100 reads at x = 50 |
 | X15 | a three-page document | word ids dense across pages; `source.pages=3` |
 | X16 | a file that makes MuPDF repair it but still opens | a `Reading` with `pdf_engine_warning` findings |
+| X17 | the same word in render modes 4, 5, and 6 | one visible word each, never two |
+| X18 | render mode 7 text; alpha-0 text (`fill_opacity=0`) | hidden words; `hidden_text` |
+| X19 | text outside the CropBox and text off the MediaBox | not in words; counted in `clipped_chars`; `clipped_text` |
+| X20 | a Type 3 font whose glyph `/g1` has no Unicode mapping | `type3_font` with its count |
+| X21 | a page tree with `/Count 2` and one kid | a one-page `Reading`; `unreadable_page` (error) at document level |
+| X22 | a content stream with a broken Flate filter | no words; `no_text_layer` (not `blank_page`); page-level `pdf_engine_warning` |
+| X23 | a ToUnicode map sending a code to a lone surrogate | the word reads U+FFFD; `partial_text_layer`; JSON serializes |
+| X24 | every reader output round-trips through JSON | holds for every fixture |
+| X25 | a content stream nesting graphics states past MuPDF's limit (10000 `q`) | the page stays, with no words; `unreadable_page` (error) and `no_text_layer` on page 1 |
+| X26 | a page tree whose only kid is `null` | `PdfOpenError`: not even page 1 loads |
+| X27 | a page tree `/Count 2` whose second kid is `null` | a one-page `Reading`; `unreadable_page` (error) at document level |
 
 ---
 
 ## 7 · Acceptance
 
-- [ ] S1–S6, O1–O10, W-1–W-17, R-1–R-14, and X1–X16 pass.
+- [ ] S1–S7, O1–O10, W-1–W-21, R-1–R-14, and X1–X27 pass.
 - [ ] Only `read/pymupdf_reader.py` imports `pymupdf`; `read/words.py` and `read/rules.py` import
       nothing outside `model` and the stdlib.
 - [ ] `mypy --strict` is clean, using local stubs in `typings/pymupdf/` for the parts of PyMuPDF the

@@ -121,3 +121,13 @@ def test_FU8_no_repeated_edge_lines_is_an_empty_result() -> None:
 def test_FU9_line_key(text: str, key: str) -> None:
     line = Line(place(text_line(text.split(), x=72, y=100)))
     assert line_key(line) == key
+
+
+def test_FU10_right_aligned_page_numbers_are_one_column() -> None:
+    specs = []
+    for n in range(1, 13):
+        number = str(n)
+        width = 5.0 * len(number)
+        specs.append([*body(n), P(number, 540 - width, 750)])
+    found = find_furniture(pages_of(specs), PROFILE)
+    assert marked(found) == [(n, "page_number", str(n)) for n in range(1, 13)]

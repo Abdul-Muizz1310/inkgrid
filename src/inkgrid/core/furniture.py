@@ -90,6 +90,17 @@ def _keyed(page: PageModel, profile: Profile) -> list[_Keyed]:
     ]
 
 
+def _anchors(line: Line) -> tuple[float, float, float]:
+    """Where a line sits across the page: its start, its end, and its centre."""
+    return (line.x0, line.x1, (line.x0 + line.x1) / 2)
+
+
+def _in_column(line: Line, column: Sequence[tuple[float, float, float]], tol: float) -> bool:
+    """True when the line is flush left, flush right, or centred with the key's occurrences."""
+    medians = [statistics.median(anchor[i] for anchor in column) for i in range(3)]
+    return any(abs(a - m) <= tol for a, m in zip(_anchors(line), medians, strict=True))
+
+
 def _role(key: str, line: Line, page: PageModel) -> Role:
     if not _has_letter(key):
         return "page_number"
@@ -100,20 +111,20 @@ def find_furniture(pages: Sequence[PageModel], profile: Profile) -> FoundFurnitu
     """Mark the lines whose key recurs at the page edges on enough pages."""
     keyed = [k for page in pages for k in _keyed(page, profile)]
     seen: defaultdict[str, set[int]] = defaultdict(set)
-    starts: defaultdict[str, list[float]] = defaultdict(list)
+    columns: defaultdict[str, list[tuple[float, float, float]]] = defaultdict(list)
     for k in keyed:
         if k.candidate:
             seen[k.key].add(k.page.number)
-            starts[k.key].append(k.line.x0)
+            columns[k.key].append(_anchors(k.line))
     need = max(2, math.ceil(profile.furniture_share * len(pages)))
     keys = {key for key, on in seen.items() if len(on) >= need}
     lines = []
     for k in keyed:
         if k.key not in keys:
             continue
-        if not _has_letter(k.key):
-            column = statistics.median(starts[k.key])
-            if not k.candidate or abs(k.line.x0 - column) > profile.furniture_x_tol:
-                continue
+        if not _has_letter(k.key) and not (
+            k.candidate and _in_column(k.line, columns[k.key], profile.furniture_x_tol)
+        ):
+            continue
         lines.append(FurnitureLine(k.page.number, k.line, _role(k.key, k.line, k.page), k.key))
     return FoundFurniture(tuple(lines), frozenset(w.id for f in lines for w in f.line.words))

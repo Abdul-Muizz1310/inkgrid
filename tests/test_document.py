@@ -757,3 +757,17 @@ def test_D45_a_page_model_is_not_a_page_info() -> None:
     page = mk_page(words=doc.words)
     with pytest.raises(ValidationError):
         Document(**{**dict(doc), "pages": (page,)})
+
+
+def test_D46_markers_are_the_superscript_words() -> None:
+    words = [W("$0.40", 72, 100), W("2", 100, 96, superscript=True)]
+    doc = build([B("paragraph", words)])
+    assert doc.blocks[0].markers == ("2",)
+    data = as_json(doc)
+    data["blocks"][0]["markers"] = []
+    with pytest.raises(ValidationError, match="markers"):
+        from_json(data)
+    plain = as_json(build([B("paragraph", line(["$0.40", "2"]))]))
+    plain["blocks"][0]["markers"] = ["2"]
+    with pytest.raises(ValidationError, match="markers"):
+        from_json(plain)

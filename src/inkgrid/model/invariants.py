@@ -164,6 +164,12 @@ def _check_text(doc: "Document", words: Sequence["Word"]) -> None:
                 "in order"
             )
         _check_kind_fields(block, words[block.word_ids[0]].text)
+        markers = tuple(words[w].text for w in block.word_ids if words[w].superscript)
+        if block.markers != markers:
+            _fail(
+                f"block {block.id} has markers {block.markers!r}, but its superscript words are "
+                f"{markers!r}"
+            )
 
 
 def _check_kind_fields(block: "Block", first: str) -> None:

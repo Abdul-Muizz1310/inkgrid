@@ -54,6 +54,7 @@ class W:
     x0: float
     y0: float
     page: int = 1
+    superscript: bool = False
 
     @property
     def box(self) -> Rect:
@@ -149,7 +150,7 @@ def build(
                     font="Helvetica",
                     bold=False,
                     italic=False,
-                    superscript=False,
+                    superscript=w.superscript,
                     hidden=False,
                     horizontal=True,
                 )
@@ -205,6 +206,7 @@ def build(
             "word_ids": ids,
             "text": text,
             "hyphen_joins": tuple((first + a, first + b) for a, b in spec.joins),
+            "markers": tuple(words[i].text for i in ids if words[i].superscript),
         }
         kinds: dict[str, type[Any]] = {
             "heading": Heading,

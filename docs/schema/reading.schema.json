@@ -1,0 +1,408 @@
+{
+  "$defs": {
+    "Finding": {
+      "additionalProperties": false,
+      "description": "One notice, optionally pinned to a page (1-based) and a block id.",
+      "properties": {
+        "block": {
+          "anyOf": [
+            {
+              "pattern": "^b[1-9][0-9]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Block"
+        },
+        "code": {
+          "$ref": "#/$defs/FindingCode"
+        },
+        "detail": {
+          "title": "Detail",
+          "type": "string"
+        },
+        "page": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Page"
+        },
+        "severity": {
+          "$ref": "#/$defs/Severity"
+        }
+      },
+      "required": [
+        "code",
+        "severity",
+        "detail"
+      ],
+      "title": "Finding",
+      "type": "object"
+    },
+    "FindingCode": {
+      "description": "The closed set of finding codes. It grows only in a versioned, documented way.",
+      "enum": [
+        "no_text_layer",
+        "blank_page",
+        "partial_text_layer",
+        "ocr_text_layer",
+        "hidden_text",
+        "clipped_text",
+        "pdf_engine_warning",
+        "lattice_failed",
+        "lattice_disagrees",
+        "word_crosses_rule",
+        "header_not_found",
+        "call_unresolved",
+        "no_furniture_long_document"
+      ],
+      "title": "FindingCode",
+      "type": "string"
+    },
+    "PageModel": {
+      "additionalProperties": false,
+      "description": "A page with its words and drawn rules.",
+      "properties": {
+        "clipped_chars": {
+          "minimum": 0,
+          "title": "Clipped Chars",
+          "type": "integer"
+        },
+        "height": {
+          "gt": 0,
+          "title": "Height",
+          "type": "number"
+        },
+        "hidden_chars": {
+          "minimum": 0,
+          "title": "Hidden Chars",
+          "type": "integer"
+        },
+        "image_area_ratio": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Image Area Ratio",
+          "type": "number"
+        },
+        "invisible_chars": {
+          "minimum": 0,
+          "title": "Invisible Chars",
+          "type": "integer"
+        },
+        "number": {
+          "exclusiveMinimum": 0,
+          "title": "Number",
+          "type": "integer"
+        },
+        "rotation": {
+          "enum": [
+            0,
+            90,
+            180,
+            270
+          ],
+          "title": "Rotation",
+          "type": "integer"
+        },
+        "rules": {
+          "items": {
+            "$ref": "#/$defs/Rule"
+          },
+          "title": "Rules",
+          "type": "array"
+        },
+        "text_layer": {
+          "enum": [
+            "full",
+            "partial",
+            "none"
+          ],
+          "title": "Text Layer",
+          "type": "string"
+        },
+        "unmapped_chars": {
+          "minimum": 0,
+          "title": "Unmapped Chars",
+          "type": "integer"
+        },
+        "width": {
+          "gt": 0,
+          "title": "Width",
+          "type": "number"
+        },
+        "words": {
+          "items": {
+            "$ref": "#/$defs/Word"
+          },
+          "title": "Words",
+          "type": "array"
+        }
+      },
+      "required": [
+        "number",
+        "width",
+        "height",
+        "rotation",
+        "text_layer",
+        "invisible_chars",
+        "clipped_chars",
+        "unmapped_chars",
+        "hidden_chars",
+        "image_area_ratio",
+        "words",
+        "rules"
+      ],
+      "title": "PageModel",
+      "type": "object"
+    },
+    "ReaderInfo": {
+      "additionalProperties": false,
+      "description": "The versions that produced a reading.",
+      "properties": {
+        "inkgrid": {
+          "title": "Inkgrid",
+          "type": "string"
+        },
+        "mupdf": {
+          "title": "Mupdf",
+          "type": "string"
+        },
+        "pymupdf": {
+          "title": "Pymupdf",
+          "type": "string"
+        }
+      },
+      "required": [
+        "inkgrid",
+        "pymupdf",
+        "mupdf"
+      ],
+      "title": "ReaderInfo",
+      "type": "object"
+    },
+    "Rule": {
+      "additionalProperties": false,
+      "description": "A drawn horizontal (`h`) or vertical (`v`) rule on one page.",
+      "properties": {
+        "at": {
+          "title": "At",
+          "type": "number"
+        },
+        "axis": {
+          "enum": [
+            "h",
+            "v"
+          ],
+          "title": "Axis",
+          "type": "string"
+        },
+        "end": {
+          "title": "End",
+          "type": "number"
+        },
+        "page": {
+          "exclusiveMinimum": 0,
+          "title": "Page",
+          "type": "integer"
+        },
+        "start": {
+          "title": "Start",
+          "type": "number"
+        },
+        "thickness": {
+          "ge": 0,
+          "title": "Thickness",
+          "type": "number"
+        }
+      },
+      "required": [
+        "page",
+        "axis",
+        "at",
+        "start",
+        "end",
+        "thickness"
+      ],
+      "title": "Rule",
+      "type": "object"
+    },
+    "Severity": {
+      "description": "How much a finding matters to a consumer.",
+      "enum": [
+        "info",
+        "warning",
+        "error"
+      ],
+      "title": "Severity",
+      "type": "string"
+    },
+    "Source": {
+      "additionalProperties": false,
+      "description": "Which file was read: its SHA-256, page count, and base name when read from a path.",
+      "properties": {
+        "file_name": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "File Name"
+        },
+        "pages": {
+          "exclusiveMinimum": 0,
+          "title": "Pages",
+          "type": "integer"
+        },
+        "sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        }
+      },
+      "required": [
+        "sha256",
+        "pages",
+        "file_name"
+      ],
+      "title": "Source",
+      "type": "object"
+    },
+    "Word": {
+      "additionalProperties": false,
+      "description": "One word of the text layer: a run of characters with no whitespace inside.",
+      "properties": {
+        "bbox": {
+          "maxItems": 4,
+          "minItems": 4,
+          "prefixItems": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "Bbox",
+          "type": "array"
+        },
+        "bold": {
+          "title": "Bold",
+          "type": "boolean"
+        },
+        "font": {
+          "title": "Font",
+          "type": "string"
+        },
+        "hidden": {
+          "title": "Hidden",
+          "type": "boolean"
+        },
+        "horizontal": {
+          "title": "Horizontal",
+          "type": "boolean"
+        },
+        "id": {
+          "minimum": 0,
+          "title": "Id",
+          "type": "integer"
+        },
+        "italic": {
+          "title": "Italic",
+          "type": "boolean"
+        },
+        "page": {
+          "exclusiveMinimum": 0,
+          "title": "Page",
+          "type": "integer"
+        },
+        "size": {
+          "ge": 0,
+          "title": "Size",
+          "type": "number"
+        },
+        "superscript": {
+          "title": "Superscript",
+          "type": "boolean"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "page",
+        "bbox",
+        "text",
+        "size",
+        "font",
+        "bold",
+        "italic",
+        "superscript",
+        "hidden",
+        "horizontal"
+      ],
+      "title": "Word",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Every page of one PDF as the text layer states it, with reader findings.",
+  "properties": {
+    "findings": {
+      "items": {
+        "$ref": "#/$defs/Finding"
+      },
+      "title": "Findings",
+      "type": "array"
+    },
+    "pages": {
+      "items": {
+        "$ref": "#/$defs/PageModel"
+      },
+      "minItems": 1,
+      "title": "Pages",
+      "type": "array"
+    },
+    "reader": {
+      "$ref": "#/$defs/ReaderInfo"
+    },
+    "schema": {
+      "const": "inkgrid.reading/1",
+      "default": "inkgrid.reading/1",
+      "title": "Schema",
+      "type": "string"
+    },
+    "source": {
+      "$ref": "#/$defs/Source"
+    }
+  },
+  "required": [
+    "source",
+    "reader",
+    "pages",
+    "findings"
+  ],
+  "title": "Reading",
+  "type": "object"
+}

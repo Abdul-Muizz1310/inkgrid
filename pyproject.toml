@@ -28,6 +28,9 @@ dependencies = [
     "pymupdf>=1.28.2,<2",
 ]
 
+[project.scripts]
+inkgrid = "inkgrid.cli:main"
+
 [project.urls]
 Homepage = "https://github.com/Abdul-Muizz1310/inkgrid"
 Source = "https://github.com/Abdul-Muizz1310/inkgrid"
@@ -122,6 +125,8 @@ filterwarnings = ["error"]
 [tool.coverage.run]
 branch = true
 source_pkgs = ["inkgrid"]
+# Measure `python -m inkgrid` runs that tests start in a subprocess (L9).
+patch = ["subprocess"]
 
 [tool.coverage.report]
 # The total and per-file floors (80%) are enforced by scripts/check_coverage_floors.py,

@@ -163,10 +163,14 @@ The Lexicon grows in M2 (numbers, money, ranges).
 `Line`, `role`, and key, plus the set of `word_ids`. The rules are design stage 1, made exact:
 
 1. **Lines** are `group_lines` over each page's horizontal words.
-2. **The key** of a line: every token (a word's text) has each digit run replaced by `#`. If some
-   token holds three letters in a row, leading and trailing tokens that are `#` or a well-formed roman
-   numeral (1–6 letters, any case, such as `iv` or `XII`, but not `civil`) are stripped. The tokens
-   join with single spaces.
+2. **The key** of a line: every token (a word's text) has each digit run replaced by `#`. A roman
+   numeral here is a well-formed one of 1–6 letters in any case, such as `iv` or `XII`, but not
+   `civil`.
+   - If no token holds a word (every token is `#`, a roman numeral, or has no letter at all), the
+     roman numerals become `#` as well: a roman page number is a page number.
+   - Otherwise, if some token holds three letters in a row, leading and trailing tokens that are `#`
+     or a roman numeral are stripped.
+   - The tokens join with single spaces.
 3. **Candidates** are lines whose median word centre lies in the top or bottom `furniture_band` of
    the page's content height (the minimum to maximum y over all its words).
 4. **Frequency.** A key is furniture when it occurs as a candidate on at least
@@ -194,7 +198,7 @@ Decisions are per line, never per block (L9). Non-horizontal words are never fur
 | FU6 | an alphabetic footer key that sits mid-page on a sparse last page | marked there too |
 | FU7 | a mixed line (the footer key plus a body word on the same baseline) | the line's key differs, so it is not marked (per line, never partial) |
 | FU8 | no repeated edge lines | an empty result |
-| FU9 | `line_key` on `Page 3 of 12`; `- 4 -`; `iv Annual civil fees`; `2026 Fee schedule 7` | `Page # of`; `- # -`; `Annual civil fees`; `Fee schedule` |
+| FU9 | `line_key` on `Page 3 of 12`; `- 4 -`; `iv Annual civil fees`; `2026 Fee schedule 7`; `xiv`; `- ii -` | `Page # of`; `- # -`; `Annual civil fees`; `Fee schedule`; `#`; `- # -` |
 
 ---
 

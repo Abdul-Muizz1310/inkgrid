@@ -264,6 +264,7 @@ a row, and none at either end.
     text stripped of `(`, `)`, and `.` at both ends. A heading's `number`, when set, equals its first
     word's text.
 8c. A definition's `text` equals `term + " " + body`.
+8d. A block's `markers` equal the texts of its superscript words, in `word_ids` order.
 
 **Regions.**
 9. Region pages are strictly increasing. Every region's page holds at least one of the block's words,
@@ -364,6 +365,7 @@ descriptions; each failure case starts from a valid document and breaks one thin
 | D43 | a grid with one position covered by no cell | `ValidationError` (invariant 13) |
 | D44 | a carried cell whose source is not a header cell of the parent; whose text differs from its source (`Rebate` for `Fee`) | `ValidationError` (invariant 17) |
 | D45 | a `Word` altered with `model_copy(update={"size": -3})`, placed in a `PageModel`; a `Document` given a `PageModel` as a page | `ValidationError` (no bypass) |
+| D46 | a paragraph with a superscript word but no markers; with a marker naming a word that is not superscript | `ValidationError` (invariant 8d) |
 
 ---
 

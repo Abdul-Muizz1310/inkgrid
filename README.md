@@ -38,12 +38,24 @@ M0 ships the foundation that everything else builds on:
 - **Words rebuilt from characters.** A superscript marker printed tight against a value stays its own
   word (`$0.40` and `2`, never `$0.402`). A font change in the middle of a word keeps it one word.
 - **Drawn rules** from the page's vector paths, including cell outlines drawn as rectangles.
-- **Nothing degraded silently.** Image-only pages, text a clip path hides, glyphs with no Unicode
-  mapping, and text in the layer that is never drawn (the shape of an OCR layer, or of hidden prompt
-  injection) all come back as typed findings.
+- **Nothing degraded silently.** Each of these comes back as a typed finding:
+  - image-only pages, and pages MuPDF cannot load or decode;
+  - text a clip path or the CropBox hides;
+  - glyphs with no Unicode mapping, and Type 3 fonts, whose glyphs are pictures;
+  - text in the layer that the page never shows: render modes 3 and 7, or fully transparent text.
+    That is the shape of an OCR layer, or of hidden prompt injection.
 - **The full output contract,** `inkgrid.document/1`, with its invariants enforced: every word owned
-  exactly once, cells that tile their grid, and block text made only of the characters of its own
-  words.
+  exactly once, cells that tile their grid exactly, and block text spelled from its own words in
+  their order.
+
+### Known limitations
+
+- **Text is judged hidden from the text layer alone.** Text covered by an opaque shape or image,
+  white text on a white page, and text too small to read all read as visible. The independent
+  verifier (M4) is where those checks belong.
+- **Left-to-right scripts only.** Right-to-left and bidirectional text is not reordered in v0.1.
+- **Untrusted PDFs belong in a separate process.** MuPDF parses in memory, and a library cannot bound
+  its memory or time. Read hostile input in a worker process with resource limits.
 
 ## The unique angle
 

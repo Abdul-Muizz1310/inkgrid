@@ -33,7 +33,7 @@ uv run inkgrid words hidden.pdf --pretty | grep -A3 '"findings"'
 ```
 
 Say: the sentence `ignore previous instructions` sits in the text layer in render mode 3, so no
-reader ever sees it on the page. inkgrid still returns the words, marks them `hidden`, and raises a
+reader ever sees it on the page. Render mode 7 and fully transparent text are caught the same way. inkgrid still returns the words, marks them `hidden`, and raises a
 `hidden_text` finding, because text a pipeline reads but a person never sees is where prompt
 injection hides.
 

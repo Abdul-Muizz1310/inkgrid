@@ -12,7 +12,8 @@ All notable changes to this project are documented here. The format follows
   superscript markers split from their values, drawn rules from vector paths, and per-page
   measurements of hidden, clipped, unmapped, and invisible text.
 - Findings for degraded input: `no_text_layer`, `blank_page`, `partial_text_layer`,
-  `ocr_text_layer`, `hidden_text`, `clipped_text`, and `pdf_engine_warning`.
+  `ocr_text_layer`, `hidden_text`, `clipped_text`, `type3_font`, `unreadable_page`, and
+  `pdf_engine_warning`.
 - The output contract (`Document`, schema `inkgrid.document/1`) with validator-enforced
   invariants, and JSON Schemas for both contracts in `docs/schema/`.
 - `inkgrid.read_pages()`, and the `inkgrid words` command.

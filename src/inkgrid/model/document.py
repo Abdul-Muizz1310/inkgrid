@@ -31,6 +31,10 @@ WordPair = tuple[NonNegativeInt, NonNegativeInt]
 """A hyphen join `(a, b)`: word a's final hyphen is dropped and b follows it with no space."""
 
 
+Lattice = Literal["combined", "raster"]
+"""How Camelot reads ruled tables (used from M2; recorded in `Producer.lattice`)."""
+
+
 class Region(Frozen):
     """The box a block occupies on one page."""
 
@@ -361,7 +365,7 @@ class Producer(Frozen):
     pypdfium2: str | None
     lexicon: NonEmpty
     profile: NonEmpty
-    lattice: Literal["combined", "raster"]
+    lattice: Lattice
 
 
 class Document(Frozen):

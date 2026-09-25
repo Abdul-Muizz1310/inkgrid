@@ -235,6 +235,76 @@ def multipage(n: int = 3) -> bytes:
     return _save(doc)
 
 
+TWO_COLUMN_TITLE = "Fee Schedule Overview"
+TWO_COLUMN_LEFT = [
+    "The exchange charges a fee",
+    "for every contract executed",
+    "on its order book during the",
+    "regular trading session and",
+    "for each order routed away",
+    "to another venue on behalf",
+    "of a member firm or its own",
+    "customers in any product.",
+]
+TWO_COLUMN_RIGHT = [
+    "Rebates are paid to members",
+    "that add displayed liquidity",
+    "in the monthly tiers shown",
+    "in the table below and are",
+    "credited on the invoice for",
+    "the month after the trading",
+    "activity that earned them",
+    "under this fee schedule.",
+]
+TWO_COLUMN_CLOSING = (
+    "Fees and rebates in this schedule take effect on the first trading day of each month."
+)
+
+
+def two_column() -> bytes:
+    """A bold 14 pt title, two 8-line prose columns at least 24 pt apart, and a closing line."""
+    doc = pymupdf.open()
+    page = _page(doc)
+    page.insert_text((72, 60), TWO_COLUMN_TITLE, fontsize=14, fontname="hebo")
+    left_width = max(pymupdf.get_text_length(t, fontsize=10) for t in TWO_COLUMN_LEFT)
+    right_x = 72 + left_width + 24
+    right_end = right_x + max(pymupdf.get_text_length(t, fontsize=10) for t in TWO_COLUMN_RIGHT)
+    assert 72 + pymupdf.get_text_length(TWO_COLUMN_CLOSING, fontsize=10) > right_end
+    for i, (left, right) in enumerate(zip(TWO_COLUMN_LEFT, TWO_COLUMN_RIGHT, strict=True)):
+        page.insert_text((72, 100 + 12 * i), left, fontsize=10)
+        page.insert_text((right_x, 100 + 12 * i), right, fontsize=10)
+    page.insert_text((72, 216), TWO_COLUMN_CLOSING, fontsize=10)
+    return _save(doc)
+
+
+FURNISHED_PAGES = 5
+FURNISHED_HEADER = "Acme Fee Guide"
+
+
+def furnished_body(page: int) -> list[str]:
+    """The paragraph on page `page` of `furnished`: its words differ from page to page."""
+    word = ("alpha", "bravo", "charlie", "delta", "echo")[page - 1]
+    return [f"The {word} tier charges members", f"a flat {word} fee on every", "contract executed."]
+
+
+def furnished(empty_page: int | None = None) -> bytes:
+    """5 pages with a running header, a `Page N of 5` footer, and a paragraph between them."""
+    doc = pymupdf.open()
+    for n in range(1, FURNISHED_PAGES + 1):
+        page = _page(doc)
+        page.insert_text((72, 50), FURNISHED_HEADER, fontsize=9)
+        if n != empty_page:
+            for i, text in enumerate(furnished_body(n)):
+                page.insert_text((72, 300 + 12 * i), text, fontsize=10)
+        page.insert_text((72, 760), f"Page {n} of {FURNISHED_PAGES}", fontsize=9)
+    return _save(doc)
+
+
+def furniture_only_page() -> bytes:
+    """`furnished` whose page 3 holds only its header and footer."""
+    return furnished(empty_page=3)
+
+
 def encrypted(user_pw: str = "u", owner_pw: str = "o") -> bytes:
     """AES-256 encryption with a user password."""
     doc = pymupdf.open()
@@ -405,4 +475,7 @@ OPENABLE: dict[str, Callable[[], bytes]] = {
     "render_mode_7": lambda: render_mode(7),
     "alpha_zero": alpha_zero,
     "outside_crop": outside_crop,
+    "two_column": two_column,
+    "furnished": furnished,
+    "furniture_only_page": furniture_only_page,
 }

@@ -363,6 +363,7 @@ document with no words at all has no blocks, which is valid: the partition of ze
 | AS8 | the ledger of FU1's document | furniture characters equal the header and footer word characters |
 | AS9 | headings at 18, 14, and 14 pt, and bold 10 pt | levels 1, 2, 2, and 3 |
 | AS10 | two headings with the same text on one page | keys `k…` and `k…:2`; a valid `Document` |
+| AS11 | a page with a `•` item, an `a)` item, and a 7 pt `(4)` note | a list item labelled `•`, one labelled `a)`, and a footnote labelled `4`, in a valid `Document` |
 | PL1 | `build_document` for every `OPENABLE` fixture | a valid `Document` |
 | PL2 | the `two_column` fixture | the title, then every left-column block, then every right-column block |
 | PL3 | the `furnished` fixture | header and footer furniture on every page; body text in paragraphs |
@@ -373,7 +374,7 @@ document with no words at all has no blocks, which is valid: the partition of ze
 
 ## 7 · Acceptance
 
-- [ ] CF1–CF10, LN1–LN9, FU1–FU9, LY1–LY11, PB1–PB14, AS1–AS10, and PL1–PL5 pass.
+- [ ] CF1–CF10, LN1–LN9, FU1–FU9, LY1–LY11, PB1–PB14, AS1–AS11, and PL1–PL5 pass.
 - [ ] Every M0 fixture assembles to a valid `Document` (the M1 exit criterion, through
       `inkgrid read`; `05-read-and-inspector.md`).
 - [ ] The two-column fixture reads in column order (M1 exit criterion).

@@ -73,12 +73,12 @@ ignore = ["COM812", "D105", "D107", "PLR0913", "TRY003"]
 # Test names carry the spec's uppercase case ids (test_G7_..., test_W-4 -> test_W4_...).
 "tests/**" = [
     "S101", "PLR2004", "D", "INP001", "SLF001", "FBT", "ANN401", "ARG", "S603", "S607", "PLC0415",
-    "N802", "S311",
+    "N802", "S311", "S105", "S106",
 ]
 # The design (00-design.md section 9) names these errors; the names are public API.
 "src/inkgrid/errors.py" = ["N818"]
 "scripts/**" = ["T20", "INP001", "D", "S603", "S607"]
-"typings/**" = ["D", "N", "FBT", "PLR0913", "A002", "ANN401"]
+"typings/**" = ["D", "N", "FBT", "PLR0913", "A001", "A002", "ANN401"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"

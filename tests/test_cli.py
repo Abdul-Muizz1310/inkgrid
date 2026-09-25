@@ -135,3 +135,62 @@ def test_cli_writes_utf8_on_cp1252_console(tmp_path: Path, monkeypatch: pytest.M
     reading = Reading.model_validate_json(raw)
     assert [w.text for w in reading.words()] == pdf_factory.EURO_TEXT.split()
     assert "\u0141".encode() in raw
+
+
+def test_L10_unwritable_output_exits_2(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    path = write_pdf(tmp_path, pdf_factory.simple_text())
+    target = tmp_path / "missing" / "out.json"
+    assert main(["words", str(path), "-o", str(target)]) == 2
+    err = capsys.readouterr().err
+    assert err.startswith("inkgrid: cannot write")
+    assert err.count("\n") == 1
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX pipe semantics")
+def test_L11_closed_pipe_ends_quietly(tmp_path: Path) -> None:
+    import pymupdf
+
+    doc = pymupdf.open()
+    for _ in range(4):
+        page = doc.new_page()
+        for row in range(60):
+            page.insert_text(
+                (20, 20 + row * 12), " ".join(f"w{row}x{i}" for i in range(14)), fontsize=8
+            )
+    path = write_pdf(tmp_path, doc.tobytes())
+    with subprocess.Popen(
+        [sys.executable, "-m", "inkgrid", "words", str(path)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    ) as proc:
+        assert proc.stdout is not None
+        assert proc.stderr is not None
+        proc.stdout.read(1)
+        proc.stdout.close()
+        err = proc.stderr.read()
+        code = proc.wait(timeout=120)
+    assert code == 0
+    assert err == b""
+
+
+def test_L12_password_is_read_as_utf8_whatever_the_locale(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    secret = "p\u00e4ssw\u00f6rd"
+    path = write_pdf(tmp_path, pdf_factory.encrypted(user_pw=secret))
+    stdin = io.TextIOWrapper(io.BytesIO(secret.encode("utf-8") + b"\n"), encoding="latin-1")
+    monkeypatch.setattr(sys, "stdin", stdin)
+    monkeypatch.setattr(sys, "stdout", io.TextIOWrapper(io.BytesIO(), encoding="utf-8"))
+    assert main(["words", str(path), "--password-stdin"]) == 0
+
+
+def test_L13_password_that_is_not_utf8_exits_2(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    path = write_pdf(tmp_path, pdf_factory.encrypted(user_pw="secret"))
+    stdin = io.TextIOWrapper(io.BytesIO(b"p\xe4ss\n"), encoding="latin-1")
+    monkeypatch.setattr(sys, "stdin", stdin)
+    assert main(["words", str(path), "--password-stdin"]) == 2
+    err = capsys.readouterr().err
+    assert err.count("\n") == 1
+    assert "not UTF-8" in err

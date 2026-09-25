@@ -45,8 +45,14 @@ inkgrid --version
 
 - `words` prints the `Reading` as canonical JSON to stdout, or writes it to `-o`. `--pretty` indents
   by 2 for reading; the canonical form is compact.
-- `--password-stdin` reads the password from the first line of stdin. There is no `--password`
-  flag, because a password in argv is visible in the process list.
+- `--password-stdin` reads the password from the first line of stdin, as bytes decoded as UTF-8, so a
+  non-ASCII password survives a console whose locale encoding differs. Bytes that are not UTF-8 are
+  a usage error (exit 2). There is no `--password` flag,
+  because a password in argv is visible in the process list.
+- An output file that cannot be written (a missing directory, no permission) is an input problem:
+  exit 2 with one line on stderr.
+- A reader that closes the pipe early (`inkgrid words f.pdf | head`) ends output quietly with exit 0:
+  no traceback. The output already produced was correct.
 - Exit codes:
   - 0: success;
   - 1: reserved for defects (`verify`, M4) and strict mode (M1);
@@ -65,6 +71,10 @@ inkgrid --version
 | L7 | `inkgrid --version` | prints the version; exit 0 |
 | L8 | no subcommand; an unknown one | exit 2 with usage |
 | L9 | `python -m inkgrid words fixture.pdf` | same as L1 |
+| L10 | `-o missing-dir/out.json` | exit 2; one line on stderr naming the path; no traceback |
+| L11 | stdout closed after the first bytes (a pipe to `head -c 1`) | exit 0; nothing on stderr |
+| L12 | `--password-stdin` with a UTF-8 non-ASCII password, under a Latin-1 locale stdin | exit 0 |
+| L13 | `--password-stdin` with bytes that are not UTF-8 | exit 2; stderr says the password is not UTF-8; no traceback |
 
 ---
 

@@ -6,6 +6,7 @@ and unreadable input. Output is always UTF-8 bytes, whatever the console's encod
 
 import argparse
 import importlib.metadata
+import os
 import sys
 from collections.abc import Sequence
 from pathlib import Path
@@ -39,35 +40,65 @@ def _parser() -> argparse.ArgumentParser:
 
 
 def _password_from_stdin() -> str:
-    """The first stdin line with only its line ending removed."""
-    line = sys.stdin.readline()
-    line = line.removesuffix("\n")
-    return line.removesuffix("\r")
+    """The first stdin line, read as UTF-8 bytes, with only its line ending removed.
+
+    Raises:
+        UnicodeDecodeError: the line is not UTF-8.
+    """
+    buffer = getattr(sys.stdin, "buffer", None)
+    line: str = sys.stdin.readline() if buffer is None else buffer.readline().decode("utf-8")
+    return line.removesuffix("\n").removesuffix("\r")
 
 
-def _emit(data: bytes, output: Path | None) -> None:
-    if output is not None:
-        output.write_bytes(data)
-        return
+def _write_stdout(data: bytes) -> None:
     buffer = getattr(sys.stdout, "buffer", None)
     if buffer is None:
         sys.stdout.write(data.decode("utf-8"))
+        sys.stdout.flush()
     else:
         sys.stdout.flush()
         buffer.write(data)
         buffer.flush()
 
 
+def _discard_stdout() -> None:
+    """Point stdout at the null device, so the interpreter's final flush cannot fail again."""
+    devnull = os.open(os.devnull, os.O_WRONLY)
+    try:
+        os.dup2(devnull, sys.stdout.fileno())
+    finally:
+        os.close(devnull)
+
+
+def _emit(data: bytes, output: Path | None) -> int:
+    if output is not None:
+        try:
+            output.write_bytes(data)
+        except OSError as exc:
+            sys.stderr.write(f"inkgrid: cannot write {output}: {exc.strerror or exc}\n")
+            return EXIT_USAGE
+        return EXIT_OK
+    try:
+        _write_stdout(data)
+    except BrokenPipeError:
+        # The reader stopped early (`inkgrid words f.pdf | head`); what it read was correct.
+        _discard_stdout()
+    return EXIT_OK
+
+
 def _words(args: argparse.Namespace) -> int:
-    password = _password_from_stdin() if args.password_stdin else None
+    try:
+        password = _password_from_stdin() if args.password_stdin else None
+    except UnicodeDecodeError:
+        sys.stderr.write("inkgrid: the password on stdin is not UTF-8\n")
+        return EXIT_USAGE
     try:
         reading = read_pages(args.pdf, password=password)
     except InkgridError as exc:
         sys.stderr.write(f"inkgrid: {exc}\n")
         return EXIT_USAGE
     text = reading.model_dump_json(indent=2) if args.pretty else reading.model_dump_json()
-    _emit(text.encode("utf-8") + b"\n", args.output)
-    return EXIT_OK
+    return _emit(text.encode("utf-8") + b"\n", args.output)
 
 
 def main(argv: Sequence[str] | None = None) -> int:

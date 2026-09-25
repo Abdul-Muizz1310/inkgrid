@@ -35,3 +35,49 @@ class RawLine:
 
     direction: tuple[float, float]
     spans: tuple[RawSpan, ...]
+
+
+Point = tuple[float, float]
+
+
+@dataclass(frozen=True, slots=True)
+class LineItem:
+    """A straight segment from `p` to `q`."""
+
+    p: Point
+    q: Point
+
+
+@dataclass(frozen=True, slots=True)
+class RectItem:
+    """An axis-aligned rectangle item (`re`)."""
+
+    rect: Box
+
+
+@dataclass(frozen=True, slots=True)
+class QuadItem:
+    """A quadrilateral item (`qu`); PyMuPDF returns closed four-segment paths this way."""
+
+    corners: tuple[Point, Point, Point, Point]
+
+
+@dataclass(frozen=True, slots=True)
+class CurveItem:
+    """A Bezier curve item (`c`). Never a rule; its presence marks drawn content."""
+
+
+type PathItem = LineItem | RectItem | QuadItem | CurveItem
+
+
+@dataclass(frozen=True, slots=True)
+class RawPath:
+    """One drawing path: how it is painted, and its items."""
+
+    kind: str
+    width: float | None
+    color: tuple[float, ...] | None
+    stroke_opacity: float | None
+    fill: tuple[float, ...] | None
+    fill_opacity: float | None
+    items: tuple[PathItem, ...]

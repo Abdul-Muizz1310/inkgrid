@@ -21,6 +21,11 @@ def test_P1_word_text_rejects_whitespace_and_invisible(text: str) -> None:
         mk_word(text=text)
 
 
+def test_P2b_lone_surrogate_is_rejected() -> None:
+    with pytest.raises(ValidationError, match="U\\+D800"):
+        mk_word(text="a\ud800")
+
+
 def test_P2_replacement_character_is_legal() -> None:
     assert mk_word(text="\ufffd").text == "\ufffd"
 

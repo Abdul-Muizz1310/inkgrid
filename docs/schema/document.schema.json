@@ -2,7 +2,7 @@
   "$defs": {
     "Cell": {
       "additionalProperties": false,
-      "description": "One cell of a grid, anchored at `(row, col)`, spanning `row_span` x `col_span` positions.\n\nA `carried` cell is a header copied onto a continuation page: it owns no words there.",
+      "description": "One cell of a grid, anchored at `(row, col)`, spanning `row_span` x `col_span` positions.\n\nA blank cell (no words, text \"\") is part of a table's shape. A `carried` cell is a header copied\nonto a continuation page: it owns no words there, and `source` names the parent-table cells it\ncopies.",
       "properties": {
         "carried": {
           "default": false,
@@ -40,6 +40,26 @@
           "title": "Row Span",
           "type": "integer"
         },
+        "source": {
+          "default": [],
+          "items": {
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "minimum": 0,
+                "type": "integer"
+              }
+            ],
+            "type": "array"
+          },
+          "title": "Source",
+          "type": "array"
+        },
         "text": {
           "title": "Text",
           "type": "string"
@@ -62,6 +82,7 @@
         "text",
         "word_ids",
         "carried",
+        "source",
         "markers"
       ],
       "title": "Cell",
@@ -222,8 +243,10 @@
         "partial_text_layer",
         "ocr_text_layer",
         "hidden_text",
+        "type3_font",
         "clipped_text",
         "pdf_engine_warning",
+        "unreadable_page",
         "lattice_failed",
         "lattice_disagrees",
         "word_crosses_rule",

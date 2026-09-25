@@ -9,6 +9,7 @@ from collections import Counter
 from collections.abc import Sequence
 from typing import TYPE_CHECKING, NoReturn
 
+from inkgrid.model.canonical import assign_keys
 from inkgrid.model.page import expected_text_layer
 
 if TYPE_CHECKING:
@@ -38,14 +39,25 @@ def check_text_shape(text: str, where: str) -> None:
             previous_blank = False
 
 
-def text_matches_words(text: str, word_texts: Sequence[str], joins: int) -> bool:
-    """True when `text` uses exactly the words' characters, minus one hyphen per join."""
-    want = Counter("".join(word_texts))
-    want["-"] -= joins
-    if want["-"] < 0:
-        return False
-    got = Counter(ch for ch in text if ch not in (TEXT_SPACE, TEXT_BREAK))
-    return +want == got
+def spelled(word_texts: Sequence[str], joined: Sequence[bool]) -> str:
+    """The words' characters in order, with each joined word's final hyphen removed."""
+    return "".join(t[:-1] if j else t for t, j in zip(word_texts, joined, strict=True))
+
+
+def text_matches_words(text: str, word_texts: Sequence[str], joined: Sequence[bool]) -> bool:
+    """True when the non-whitespace characters of `text`, in order, spell the words.
+
+    `joined[i]` marks word i as the first half of a hyphen join, whose final hyphen is dropped.
+    Ordered, not a multiset: words `12` and `34` can never read as `13 24` (invariant 7).
+    """
+    return spelled(word_texts, joined) == "".join(
+        ch for ch in text if ch not in (TEXT_SPACE, TEXT_BREAK)
+    )
+
+
+def strip_label(text: str) -> str:
+    """A footnote label as the page prints it, without its brackets and full stop."""
+    return text.strip("().")
 
 
 def _fail(msg: str) -> NoReturn:
@@ -101,6 +113,14 @@ def _check_identity(doc: "Document") -> None:
         keys.add(block.key)
 
 
+def _check_keys(doc: "Document") -> None:
+    """Keys are derived from content, so they are checked after the content itself (8a)."""
+    expected = assign_keys([(block.kind, block.text) for block in doc.blocks])
+    for block, key in zip(doc.blocks, expected, strict=True):
+        if block.key != key:
+            _fail(f"block {block.id} has key {block.key}, but its content key is {key}")
+
+
 def _check_links(doc: "Document", by_id: dict[str, "Block"]) -> None:
     order = {block.id: index for index, block in enumerate(doc.blocks)}
     for link in doc.links:
@@ -136,9 +156,24 @@ def _check_text(doc: "Document", words: Sequence["Word"]) -> None:
                 _fail(f"hyphen join ({a}, {b}): word {a} does not end in a hyphen")
             if not words[b].text[:1].islower():
                 _fail(f"hyphen join ({a}, {b}): word {b} does not start with a lower-case letter")
+        firsts = {a for a, _ in block.hyphen_joins}
         texts = [words[w].text for w in block.word_ids]
-        if not text_matches_words(block.text, texts, len(block.hyphen_joins)):
-            _fail(f"text of block {block.id} does not use exactly the characters of its words")
+        if not text_matches_words(block.text, texts, [w in firsts for w in block.word_ids]):
+            _fail(
+                f"text of block {block.id} does not spell exactly the characters of its words, "
+                "in order"
+            )
+        _check_kind_fields(block, words[block.word_ids[0]].text)
+
+
+def _check_kind_fields(block: "Block", first: str) -> None:
+    """Labels and numbers are the block's own first word, never a guess (invariant 8b)."""
+    if block.kind == "list_item" and block.label != first:
+        _fail(f"list item {block.id} has label {block.label!r}, but its first word is {first!r}")
+    if block.kind == "footnote" and block.label != strip_label(first):
+        _fail(f"footnote {block.id} has label {block.label!r}, but its first word is {first!r}")
+    if block.kind == "heading" and block.number is not None and block.number != first:
+        _fail(f"heading {block.id} has number {block.number!r}, but its first word is {first!r}")
 
 
 def _check_regions(doc: "Document", words: Sequence["Word"]) -> None:
@@ -167,24 +202,42 @@ def _check_cells(table: "Table", words: Sequence["Word"]) -> None:
             if not rect.contains_point(x, y):
                 _fail(f"word {w} lies outside cell ({cell.row}, {cell.col}) of table {table.id}")
         members = set(cell.word_ids)
-        inside = sum(1 for a, b in joins if a in members and b in members)
+        firsts = {a for a, b in joins if a in members and b in members}
         texts = [words[w].text for w in cell.word_ids]
-        if not text_matches_words(cell.text, texts, inside):
+        if not text_matches_words(cell.text, texts, [w in firsts for w in cell.word_ids]):
             _fail(
-                f"text of cell ({cell.row}, {cell.col}) in table {table.id} does not use "
-                "exactly the characters of its words"
+                f"text of cell ({cell.row}, {cell.col}) in table {table.id} does not spell "
+                "exactly the characters of its words, in order"
             )
 
 
-def _check_carried(doc: "Document") -> None:
-    continued = {
-        link.from_.block
+def _check_carried(doc: "Document", by_id: dict[str, "Block"]) -> None:
+    parents = {
+        link.from_.block: link.to
         for link in doc.links
-        if link.kind == "continuation" and link.status == "resolved"
+        if link.kind == "continuation" and link.status == "resolved" and link.to is not None
     }
     for table in doc.tables():
-        if any(cell.carried for cell in table.grid.cells) and table.id not in continued:
+        carried = [cell for cell in table.grid.cells if cell.carried]
+        if not carried:
+            continue
+        parent_id = parents.get(table.id)
+        if parent_id is None:
             _fail(f"table {table.id} has carried cells but no resolved continuation link from it")
+        parent = by_id[parent_id]
+        if parent.kind != "table":
+            _fail(f"table {table.id} continues {parent_id}, which is not a table")
+        header = {
+            (c.row, c.col): c.text for c in parent.grid.cells if c.row < parent.grid.header_rows
+        }
+        for cell in carried:
+            where = f"carried cell ({cell.row}, {cell.col}) of table {table.id}"
+            for anchor in cell.source:
+                if anchor not in header:
+                    _fail(f"{where} names {anchor}, not a header cell of table {parent_id}")
+            copied = " ".join(header[anchor] for anchor in cell.source)
+            if cell.text != copied:
+                _fail(f"{where} reads {cell.text!r}, but its source prints {copied!r}")
 
 
 def _check_findings(doc: "Document", by_id: dict[str, "Block"]) -> None:
@@ -227,6 +280,7 @@ def check_document(doc: "Document") -> None:
     _check_regions(doc, words)
     for table in doc.tables():
         _check_cells(table, words)
-    _check_carried(doc)
+    _check_carried(doc, by_id)
+    _check_keys(doc)
     _check_findings(doc, by_id)
     _check_ledger(doc, words)

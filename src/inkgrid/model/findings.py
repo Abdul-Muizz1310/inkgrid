@@ -30,8 +30,10 @@ class FindingCode(StrEnum):
     PARTIAL_TEXT_LAYER = "partial_text_layer"
     OCR_TEXT_LAYER = "ocr_text_layer"
     HIDDEN_TEXT = "hidden_text"
+    TYPE3_FONT = "type3_font"
     CLIPPED_TEXT = "clipped_text"
     PDF_ENGINE_WARNING = "pdf_engine_warning"
+    UNREADABLE_PAGE = "unreadable_page"
     LATTICE_FAILED = "lattice_failed"
     LATTICE_DISAGREES = "lattice_disagrees"
     WORD_CROSSES_RULE = "word_crosses_rule"
@@ -47,8 +49,10 @@ SEVERITY: Final = MappingProxyType(
         FindingCode.PARTIAL_TEXT_LAYER: Severity.WARNING,
         FindingCode.OCR_TEXT_LAYER: Severity.WARNING,
         FindingCode.HIDDEN_TEXT: Severity.WARNING,
+        FindingCode.TYPE3_FONT: Severity.WARNING,
         FindingCode.CLIPPED_TEXT: Severity.INFO,
         FindingCode.PDF_ENGINE_WARNING: Severity.INFO,
+        FindingCode.UNREADABLE_PAGE: Severity.ERROR,
         FindingCode.LATTICE_FAILED: Severity.WARNING,
         FindingCode.LATTICE_DISAGREES: Severity.WARNING,
         FindingCode.WORD_CROSSES_RULE: Severity.WARNING,

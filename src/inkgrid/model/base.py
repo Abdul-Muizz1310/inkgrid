@@ -21,4 +21,7 @@ class Frozen(BaseModel):
         validate_by_alias=True,
         validate_by_name=True,
         json_schema_serialization_defaults_required=True,
+        # Nested instances are validated again: a value altered with model_copy(update=...) cannot
+        # slip into another model, and a subclass instance cannot pose as its parent type.
+        revalidate_instances="always",
     )

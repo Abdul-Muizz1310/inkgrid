@@ -39,8 +39,8 @@ def continuation_doc() -> Document:
         row_bands=[(80, 100), (100, 120)],
         col_bands=[(100, 200), (200, 300)],
         cells=[
-            C(0, 0, carried_text="Fee"),
-            C(0, 1, carried_text="Cap"),
+            C(0, 0, carried_text="Fee", source=((0, 0),)),
+            C(0, 1, carried_text="Cap", source=((0, 1),)),
             C(1, 0, [0]),
             C(1, 1, [1]),
         ],
@@ -327,16 +327,8 @@ def test_D18_carried_cell_owns_no_words_and_has_text() -> None:
 
 
 def test_D19_table_word_in_no_cell() -> None:
-    def drop_cell(d: dict[str, Any]) -> None:
-        d["blocks"][0]["grid"]["cells"].pop(3)
-
     with pytest.raises(ValidationError, match="in no cell"):
-        broken(build([table_2x2()]), drop_cell)
-
-
-def test_D19_uncarried_cell_must_own_a_word() -> None:
-    with pytest.raises(ValidationError, match="at least one word"):
-        broken(build([table_2x2()]), cell_change(3, word_ids=[]))
+        broken(build([table_2x2()]), cell_change(3, word_ids=[], text=""))
 
 
 def test_D19_word_in_two_cells() -> None:
@@ -352,9 +344,10 @@ def test_D19_cell_word_from_outside_the_table() -> None:
 
 def test_D20_cell_word_outside_its_cell() -> None:
     def swap(d: dict[str, Any]) -> None:
-        cells = d["blocks"][0]["grid"]["cells"]
-        cells[0].update(word_ids=[1], text="Cap")
-        cells[1].update(word_ids=[0], text="Fee")
+        block = d["blocks"][0]
+        block.update(word_ids=[1, 0, 2, 3], text="Cap Fee\n$0.40 $25")
+        block["grid"]["cells"][0].update(word_ids=[1], text="Cap")
+        block["grid"]["cells"][1].update(word_ids=[0], text="Fee")
 
     with pytest.raises(ValidationError, match="outside cell"):
         broken(build([table_2x2()]), swap)
@@ -571,3 +564,196 @@ def test_D33_random_partitions_validate_and_doubling_fails(groups: list[list[str
 
         with pytest.raises(ValidationError, match="word 0 is in blocks"):
             broken(doc, double)
+
+
+# --- D34-D45: the invariants the final M0 review found untested or too weak ----------------
+
+
+def two_page_doc() -> Document:
+    return build([B("paragraph", [*line(["alpha"], page=1), *line(["beta"], page=2)])], pages=2)
+
+
+def test_D34_page_count_and_numbering() -> None:
+    def count(d: dict[str, Any]) -> None:
+        d["source"]["pages"] = 3
+
+    def numbering(d: dict[str, Any]) -> None:
+        d["pages"][1]["number"] = 1
+
+    with pytest.raises(ValidationError, match="source says 3 pages"):
+        broken(two_page_doc(), count)
+    with pytest.raises(ValidationError, match="page number 1 at position 2"):
+        broken(two_page_doc(), numbering)
+
+
+def test_D35_word_ids_and_pages() -> None:
+    def gap(d: dict[str, Any]) -> None:
+        d["words"][1]["id"] = 2
+
+    def backwards(d: dict[str, Any]) -> None:
+        d["words"][0]["page"] = 2
+        d["words"][1]["page"] = 1
+
+    def beyond(d: dict[str, Any]) -> None:
+        d["words"][1]["page"] = 3
+
+    with pytest.raises(ValidationError, match="word id 2 where 1 was expected"):
+        broken(two_page_doc(), gap)
+    with pytest.raises(ValidationError, match="after a word on page 2"):
+        broken(two_page_doc(), backwards)
+    with pytest.raises(ValidationError, match="page 3 of 2"):
+        broken(two_page_doc(), beyond)
+
+
+def test_D36_text_layer_matches_the_words() -> None:
+    doc = build([B("paragraph", line(["alpha"]))], pages=2)
+
+    def none_with_words(d: dict[str, Any]) -> None:
+        d["pages"][0]["text_layer"] = "none"
+
+    def unmapped_but_full(d: dict[str, Any]) -> None:
+        d["pages"][0]["unmapped_chars"] = 1
+
+    with pytest.raises(ValidationError, match="text_layer"):
+        broken(doc, none_with_words)
+    with pytest.raises(ValidationError, match="text_layer"):
+        broken(doc, unmapped_but_full)
+
+
+@pytest.mark.parametrize(
+    ("index", "text"), [(0, "FeeX"), (2, "04.$0")], ids=["extra-char", "scrambled"]
+)
+def test_D37_cell_text_must_be_its_words_in_order(index: int, text: str) -> None:
+    with pytest.raises(ValidationError, match="text of cell"):
+        broken(build([table_2x2()]), cell_change(index, text=text))
+
+
+def test_D38_block_text_is_checked_in_order() -> None:
+    with pytest.raises(ValidationError, match="characters"):
+        build([B("paragraph", line(["12", "34"]), text="13 24")])
+
+
+def test_D39_joins_are_unique_applied_and_adjacent() -> None:
+    with pytest.raises(ValidationError, match="twice"):
+        hyphen_doc(["execu-", "tions"], "executions", [(0, 1), (0, 1)])
+    with pytest.raises(ValidationError, match="characters"):
+        hyphen_doc(["execu-", "tions"], "execu- tions", [(0, 1)])
+    with pytest.raises(ValidationError, match="follow"):
+        build(
+            [
+                B(
+                    "paragraph",
+                    line(["execu-", "big", "tions"]),
+                    text="executions big",
+                    joins=[(0, 2)],
+                )
+            ]
+        )
+
+
+def test_D40_keys_are_content_derived() -> None:
+    doc = build([B("paragraph", line(["alpha"])), B("paragraph", line(["beta"], y=120))])
+
+    def fake(d: dict[str, Any]) -> None:
+        d["blocks"][0]["key"] = "k0000000000000000"
+
+    def suffixed(d: dict[str, Any]) -> None:
+        d["blocks"][0]["key"] += ":7"
+
+    with pytest.raises(ValidationError, match="key"):
+        broken(doc, fake)
+    with pytest.raises(ValidationError, match="key"):
+        broken(doc, suffixed)
+
+
+@pytest.mark.parametrize(
+    "spec",
+    [
+        B("list_item", line(["\u2022", "item"]), fields={"label": "-"}),
+        B("footnote", line(["1", "note"]), fields={"label": "9"}),
+        B("heading", line(["2.1", "Fees"]), fields={"level": 1, "number": "3"}),
+        B("definition", line(["Term", "body", "text"]), fields={"term": "Term", "body": "other"}),
+    ],
+    ids=["list-label", "footnote-label", "heading-number", "definition-split"],
+)
+def test_D41_kind_fields_come_from_the_text(spec: B) -> None:
+    with pytest.raises(ValidationError, match=r"label|number|term"):
+        build([spec])
+
+
+def test_D41_valid_kind_fields() -> None:
+    doc = build(
+        [
+            B("list_item", line(["\u2022", "item"]), fields={"label": "\u2022"}),
+            B("footnote", line(["(1)", "note"], y=120), fields={"label": "1"}),
+            B("heading", line(["2.1", "Fees"], y=140), fields={"level": 1, "number": "2.1"}),
+            B(
+                "definition",
+                line(["Term", "body", "text"], y=160),
+                fields={"term": "Term", "body": "body text"},
+            ),
+        ]
+    )
+    assert [b.kind for b in doc.blocks] == ["list_item", "footnote", "heading", "definition"]
+
+
+def test_D42_blank_cells_are_representable() -> None:
+    blank_corner = B(
+        "table",
+        [W("Fee", 110, 105), W("Cap", 210, 105), W("$0.40", 110, 125)],
+        row_bands=[(100, 120), (120, 140)],
+        col_bands=[(100, 200), (200, 300)],
+        cells=[C(0, 0, [0]), C(0, 1, [1]), C(1, 0, [2]), C(1, 1, [])],
+    )
+    blank_merged = B(
+        "table",
+        [W("$0.10", 210, 105), W("$0.11", 210, 125)],
+        row_bands=[(100, 120), (120, 140)],
+        col_bands=[(100, 200), (200, 300)],
+        cells=[C(0, 0, [], row_span=2), C(0, 1, [0]), C(1, 1, [1])],
+    )
+    doc = build([blank_corner, B("paragraph", line(["gap"], y=200)), blank_merged])
+    assert doc.tables()[0].grid.cells[3].text == ""
+    assert doc.tables()[1].grid.cells[0].row_span == 2
+
+
+def test_D43_every_position_is_covered() -> None:
+    spec = B(
+        "table",
+        [W("Fee", 110, 105), W("Cap", 210, 105), W("$0.40", 110, 125)],
+        row_bands=[(100, 120), (120, 140)],
+        col_bands=[(100, 200), (200, 300)],
+        cells=[C(0, 0, [0]), C(0, 1, [1]), C(1, 0, [2])],
+    )
+    with pytest.raises(ValidationError, match=r"position \(1, 1\) is covered by no cell"):
+        build([spec])
+
+
+def test_D44_carried_cells_copy_the_parent_header() -> None:
+    def not_header(d: dict[str, Any]) -> None:
+        d["blocks"][1]["grid"]["cells"][0]["source"] = [[1, 0]]
+        d["blocks"][1]["grid"]["cells"][0]["text"] = "$0.40"
+
+    def invented(d: dict[str, Any]) -> None:
+        d["blocks"][1]["grid"]["cells"][0]["text"] = "Rebate"
+
+    with pytest.raises(ValidationError, match="header"):
+        broken(continuation_doc(), not_header)
+    with pytest.raises(ValidationError, match="carried"):
+        broken(continuation_doc(), invented)
+
+
+def test_D45_altered_copies_cannot_slip_in() -> None:
+    doc = paragraph_doc()
+    bad = doc.words[0].model_copy(update={"size": -3.0})
+    with pytest.raises(ValidationError):
+        Document(**{**dict(doc), "words": (bad, *doc.words[1:])})
+
+
+def test_D45_a_page_model_is_not_a_page_info() -> None:
+    from model_builders import mk_page
+
+    doc = paragraph_doc()
+    page = mk_page(words=doc.words)
+    with pytest.raises(ValidationError):
+        Document(**{**dict(doc), "pages": (page,)})

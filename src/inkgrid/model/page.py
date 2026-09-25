@@ -16,7 +16,8 @@ from inkgrid.model.geometry import Rect
 
 ReadingSchema = Literal["inkgrid.reading/1"]
 READING_SCHEMA: Final[ReadingSchema] = "inkgrid.reading/1"
-INVISIBLE_CATEGORIES = frozenset({"Cc", "Cf", "Co", "Cn"})
+# A word never holds these: invisible code points, and lone surrogates (not valid UTF-8).
+FORBIDDEN_CATEGORIES = frozenset({"Cc", "Cf", "Co", "Cn", "Cs"})
 
 PositiveCoord = Annotated[Coord, Field(gt=0)]
 NonNegativeCoord = Annotated[Coord, Field(ge=0)]
@@ -45,7 +46,7 @@ class Word(Frozen):
             msg = "word text is empty"
             raise ValueError(msg)
         for ch in text:
-            if ch.isspace() or unicodedata.category(ch) in INVISIBLE_CATEGORIES:
+            if ch.isspace() or unicodedata.category(ch) in FORBIDDEN_CATEGORIES:
                 msg = f"word text contains U+{ord(ch):04X}, which a word may not hold"
                 raise ValueError(msg)
         return text

@@ -98,8 +98,10 @@ illegal state cannot be represented (negative-space programming).
 | `partial_text_layer` | warning | characters without a Unicode mapping (they appear as U+FFFD) |
 | `ocr_text_layer` | warning | most of the page's text is invisible (render mode 3) over an image: it is OCR output, so G1 does not hold for it |
 | `hidden_text` | warning | invisible text that is not an OCR layer: the text layer says something the page does not show |
+| `type3_font` | warning | words drawn in a Type 3 font, whose Unicode mapping MuPDF may have guessed from the raw character code |
 | `clipped_text` | info | characters removed by clip paths or the page boundary |
-| `pdf_engine_warning` | info | a message MuPDF emitted while reading |
+| `pdf_engine_warning` | info | a message MuPDF emitted while reading; pinned to the page it came from when it came from one |
+| `unreadable_page` | error | a page the page tree declares could not be loaded, or its text could not be extracted |
 | `lattice_failed` | warning | Camelot raised on a page (M2) |
 | `lattice_disagrees` | warning | our rules saw a ruled region where Camelot returned no grid (M2) |
 | `word_crosses_rule` | warning | a word's box crosses a drawn cell boundary (M2) |
@@ -107,9 +109,17 @@ illegal state cannot be represented (negative-space programming).
 | `call_unresolved` | warning | a footnote call with no note found (M3) |
 | `no_furniture_long_document` | info | more than 8 pages and no furniture: confirm, do not assume (M1) |
 
-`blank_page` and `hidden_text` are additions to the design's initial list. They exist because
-`no_text_layer` is an error, and a genuinely empty page is not an error. Hidden text is a known way to
-smuggle instructions into text pipelines, so it must never be silent (G4).
+`blank_page`, `hidden_text`, `type3_font`, and `unreadable_page` are additions to the design's
+initial list:
+
+- `blank_page` exists because `no_text_layer` is an error, and a genuinely empty page is not.
+- Hidden text is a known way to smuggle instructions into text pipelines, so it must never be silent
+  (G4).
+- A Type 3 font's glyph names often map to nothing. MuPDF then falls back to the raw character code,
+  which is a silent guess. The design folded this into `partial_text_layer`, but `text_layer` counts
+  only U+FFFD, so it gets its own code.
+- `unreadable_page` covers pages that exist in the page tree but cannot be read at all. Found by the
+  final M0 review.
 
 - `Finding(code, severity, page, block, detail)` is frozen. `page` is `None` or an integer of at least 1;
   `block` is `None` or a block id; `detail` is free text. A validator requires `severity ==
@@ -136,7 +146,8 @@ This is what the reader produces (`02-reader.md`) and what `inkgrid words` print
   `bold`, `italic`, `superscript`, `hidden` (in the text layer but not drawn), and `horizontal` (set on
   a left-to-right horizontal line).
   - `text` is non-empty and contains no whitespace (`str.isspace`) and no character in Unicode
-    categories Cc, Cf, Co, or Cn. U+FFFD is legal: it is how an unmapped glyph appears.
+    categories Cc, Cf, Co, Cn, or Cs (a lone surrogate cannot be serialized as UTF-8). U+FFFD is
+    legal: it is how an unmapped glyph appears.
 - `Rule`: `page`, `axis` (`"h"` or `"v"`), `at` (the line's y for `h`, its x for `v`), `start < end`
   (its extent along the other axis), and `thickness` (≥ 0). It provides `length` and `rect`, the
   thickened bounding box.
@@ -163,6 +174,7 @@ This is what the reader produces (`02-reader.md`) and what `inkgrid words` print
 |---|---|---|
 | P1 | `Word` text `"a b"`, `""`, `"a\tb"`, `"a b"`, `"a​b"` (Cf), `""` (Co) | `ValidationError` |
 | P2 | `Word` text `"�"` | legal |
+| P2b | `Word` text holding a lone surrogate `\ud800` | `ValidationError` |
 | P3 | `Word` with `size=-1`, `page=0`, `id=-1` | `ValidationError` |
 | P4 | `Rule` with `start == end`, axis `"x"`, `thickness=-1` | `ValidationError` |
 | P5 | `PageModel` holding a word from page 2 as page 1 | `ValidationError` |
@@ -203,8 +215,10 @@ stage builds against a fixed contract. Its field list is `00-design.md` § 8.1, 
 - `Grid`: `n_rows` and `n_cols` (≥ 1), `row_bands` and `col_bands` (`Interval`s), `header_rows`
   (`0..n_rows`), `banner_rows` (sorted, unique row indices), `source` (`lattice` or `corridor`), and
   `cells`.
-- `Cell`: `row`, `col` (≥ 0), `row_span`, `col_span` (≥ 1), `text`, `word_ids`, `carried`, and
-  `markers`.
+- `Cell`: `row`, `col` (≥ 0), `row_span`, `col_span` (≥ 1), `text`, `word_ids`, `carried`,
+  `source`, and `markers`. An empty cell (no words, text `""`) is legal: blank cells, including
+  blank merged cells, are part of a table's shape. `source` lists the parent-table anchors a carried
+  cell copies (non-empty exactly when `carried`).
 - `Link`: `kind` (`footnote_call` or `continuation`), `from` (`{block, cell}`, where `cell` is a
   `(row, col)` anchor or `None`; the Python attribute is `from_`, and JSON uses `"from"`), `to`,
   `label`, `method` (`superscript`, `parenthetical`, or `named`), `status` (`resolved`, `unresolved`,
@@ -235,11 +249,21 @@ stage builds against a fixed contract. Its field list is `00-design.md` § 8.1, 
 
 **Text (G1 at the model level).** `text` may contain only `" "` and `"\n"` as whitespace, never two in
 a row, and none at either end.
-7. The non-whitespace characters of `text`, as a multiset, equal the characters of the block's words
-   minus one `"-"` per hyphen join. For a table this is checked against the non-carried cells'
-   `text`, which excludes carried cells.
+7. **In order**, the non-whitespace characters of `text` equal the concatenation of the block's
+   words' texts in `word_ids` order, with the final `"-"` of word `a` removed for each hyphen join
+   `(a, b)`. An ordered check, not a multiset: `12` and `34` can never read as `13 24`. For a table,
+   `word_ids` order is the non-carried cells' words in `(row, col)` order, and `text` excludes carried
+   cells.
 8. Each hyphen join `(a, b)` names two different words of the block, where `a` ends in `"-"` and is
-   longer than one character, and `b` starts with a lower-case letter.
+   longer than one character, `b` starts with a lower-case letter, and `b` immediately follows `a` in
+   `word_ids`. No pair appears twice.
+
+**Derived fields are re-derived.**
+8a. Each block's `key` equals `assign_keys` over the document's `(kind, text)` pairs in order.
+8b. A list item's `label` equals its first word's text. A footnote's `label` equals its first word's
+    text stripped of `(`, `)`, and `.` at both ends. A heading's `number`, when set, equals its first
+    word's text.
+8c. A definition's `text` equals `term + " " + body`.
 
 **Regions.**
 9. Region pages are strictly increasing. Every region's page holds at least one of the block's words,
@@ -252,14 +276,19 @@ a row, and none at either end.
 12. `header_rows ≤ n_rows`, and every banner row is in `[0, n_rows)`.
 
 **Cells.**
-13. Cells are sorted by `(row, col)` and tile the grid: every span is at least 1 and stays within
-    bounds, and no position is covered twice.
-14. A carried cell has non-empty text and owns no words. A non-carried cell's words are table words.
-    The non-carried cells' word sets are disjoint, and their union is the table's `word_ids`.
+13. Cells are sorted by `(row, col)` and tile the grid **exactly**: every span is at least 1 and stays
+    within bounds, and every position is covered by exactly one cell. The check runs per row over
+    column intervals, so its cost is bounded by the grid's own size.
+14. A carried cell has non-empty text, owns no words, and names its `source`. A non-carried cell's
+    words are table words; the non-carried cells' word sets are disjoint and their union is the
+    table's `word_ids`. A non-carried cell with no words has text `""`.
 15. The center of every word of a non-carried cell lies inside the cell's rectangle, computed from the
     bands and tested half-open.
 16. A cell's text satisfies invariant 7 against its own words and the block's joins inside it.
-17. A table with carried cells is the `from` of a resolved `continuation` link.
+17. A table with carried cells is the `from` of a resolved `continuation` link. Each carried cell's
+    `source` anchors are cells of that link's `to` table in its header rows (`row < header_rows`), and
+    its text equals their texts joined by single spaces, in the order listed: a carried header
+    is only ever the parent's printed header.
 
 **Links.**
 18. `from.block` exists; `from.cell`, if set, is a cell anchor of that block, which must be a table.
@@ -277,6 +306,11 @@ a row, and none at either end.
 
 Serialization is `model_dump_json()` in declaration order, using aliases. That output is canonical:
 parsing it and dumping again returns the same bytes.
+
+**No bypass.** Models re-validate nested instances (`revalidate_instances="always"`). So a value
+altered with `model_copy(update=…)` fails validation the moment it is placed inside another model, and
+a `PageModel` passed where a `PageInfo` is expected is rejected, since its extra fields are forbidden,
+rather than carried along silently.
 
 ### Test cases
 
@@ -303,7 +337,7 @@ descriptions; each failure case starts from a valid document and breaks one thin
 | D16 | a cell with `row_span=0`; a cell past the grid edge; two cells covering one position; cells unsorted | `ValidationError` |
 | D17 | a merged cell `row_span=2` covering two rows, holding its words | valid |
 | D18 | a carried cell with words; a carried cell with empty text | `ValidationError` |
-| D19 | a table word in no cell; a word in two cells; a cell word from outside the table | `ValidationError` |
+| D19 | a table word in no cell (its cell emptied); a word in two cells; a cell word from outside the table | `ValidationError` |
 | D20 | a cell word whose center lies outside the cell's rectangle | `ValidationError` |
 | D21 | carried cells and no continuation link | `ValidationError` |
 | D22 | links: unknown `from` block; unknown `to`; `resolved` without `to`; `unresolved` with `to`; `rejected` without a reason | `ValidationError` |
@@ -318,12 +352,24 @@ descriptions; each failure case starts from a valid document and breaks one thin
 | D31 | JSON round trip of D15, D26 | equal, byte-identical second dump; `"from"` is the JSON key |
 | D32 | `Document.model_json_schema()` | equals the committed `docs/schema/document.schema.json` |
 | D33 | property: a random partition of N words into paragraphs (valid text) | validates; moving one word into two blocks fails |
+| D34 | `source.pages=2` with one page; page numbers `[1, 1]` | `ValidationError` (invariant 1) |
+| D35 | word ids `[0, 2]`; a page-1 word after a page-2 word; a word on page 3 of 2 | `ValidationError` (invariant 2) |
+| D36 | a page with words but `text_layer="none"`; with `unmapped_chars=1` but `"full"` | `ValidationError` (invariant 3) |
+| D37 | a cell whose text has an extra character; whose text is its word scrambled (`04.$0` for `$0.40`) | `ValidationError` (invariant 16) |
+| D38 | words `12` and `34` with block text `13 24` | `ValidationError` (invariant 7 is ordered) |
+| D39 | a join listed twice; a join recorded but not applied (`execu- tions`); a join between non-adjacent words | `ValidationError` (invariant 8) |
+| D40 | a key `k0000000000000000` that is not content-derived; a first key ending `:7` | `ValidationError` (8a) |
+| D41 | a list-item label that is not its first word; a footnote label unrelated to it; a heading number that is not its first word; a definition whose text is not `term body` | `ValidationError` (8b, 8c) |
+| D42 | a 2 × 2 table with one blank cell; a blank merged cell spanning two rows | valid |
+| D43 | a grid with one position covered by no cell | `ValidationError` (invariant 13) |
+| D44 | a carried cell whose source is not a header cell of the parent; whose text differs from its source (`Rebate` for `Fee`) | `ValidationError` (invariant 17) |
+| D45 | a `Word` altered with `model_copy(update={"size": -3})`, placed in a `PageModel`; a `Document` given a `PageModel` as a page | `ValidationError` (no bypass) |
 
 ---
 
 ## 6 · Acceptance
 
-- [ ] G1–G21, C1–C6, F1–F4, P1–P16, and D1–D33 pass.
+- [ ] G1–G21, C1–C6, F1–F4, P1–P16 (and P2b), and D1–D45 pass.
 - [ ] The model package imports only stdlib and pydantic (import-graph test).
 - [ ] `docs/schema/reading.schema.json` and `docs/schema/document.schema.json` are generated by
       `scripts/export_schemas.py` and committed; the schema tests fail if a model changes without them.

@@ -79,6 +79,7 @@ class C:
     row_span: int = 1
     col_span: int = 1
     carried_text: str | None = None
+    source: tuple[tuple[int, int], ...] = ()
 
 
 @dataclass
@@ -112,7 +113,7 @@ def joined_text(texts: Sequence[str], joins: Sequence[tuple[int, int]]) -> str:
 def _table_text(cells: Sequence[Cell]) -> str:
     rows: dict[int, list[str]] = {}
     for cell in sorted(cells, key=lambda c: (c.row, c.col)):
-        if not cell.carried:
+        if not cell.carried and cell.text:
             rows.setdefault(cell.row, []).append(cell.text)
     return "\n".join(" ".join(parts) for _, parts in sorted(rows.items()))
 
@@ -134,7 +135,7 @@ def build(
     """Assemble a valid Document: ids, keys, regions, text, pages and ledger are derived."""
     words: list[Word] = []
     furniture_ids: set[int] = set()
-    specs: list[tuple[B, tuple[int, ...], str, Grid | None]] = []
+    specs: list[tuple[B, tuple[int, ...], str, Grid | None, int]] = []
     for spec in blocks:
         first = len(words)
         for w in spec.words:
@@ -169,9 +170,12 @@ def build(
                     else " ".join(spec.words[i].text for i in c.words),
                     word_ids=tuple(ids[i] for i in c.words),
                     carried=c.carried_text is not None,
+                    source=c.source,
                 )
                 for c in spec.cells
             )
+            # A table reads its words cell by cell in (row, col) order.
+            ids = tuple(w for c in sorted(cells, key=lambda c: (c.row, c.col)) for w in c.word_ids)
             grid = Grid(
                 n_rows=len(spec.row_bands),
                 n_cols=len(spec.col_bands),
@@ -189,18 +193,18 @@ def build(
                 if spec.text is not None
                 else joined_text([w.text for w in spec.words], spec.joins)
             )
-        specs.append((spec, ids, text, grid))
+        specs.append((spec, ids, text, grid, first))
 
-    keys = assign_keys([(spec.kind, text) for spec, _, text, _ in specs])
+    keys = assign_keys([(spec.kind, text) for spec, _, text, _, _ in specs])
     built: list[Any] = []
-    for index, ((spec, ids, text, grid), key) in enumerate(zip(specs, keys, strict=True), 1):
+    for index, ((spec, ids, text, grid, first), key) in enumerate(zip(specs, keys, strict=True), 1):
         common: dict[str, Any] = {
             "id": f"b{index}",
             "key": key,
             "regions": _regions(spec.words),
             "word_ids": ids,
             "text": text,
-            "hyphen_joins": tuple((ids[a], ids[b]) for a, b in spec.joins),
+            "hyphen_joins": tuple((first + a, first + b) for a, b in spec.joins),
         }
         kinds: dict[str, type[Any]] = {
             "heading": Heading,

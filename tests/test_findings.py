@@ -9,8 +9,10 @@ EXPECTED_ORDER = [
     "partial_text_layer",
     "ocr_text_layer",
     "hidden_text",
+    "type3_font",
     "clipped_text",
     "pdf_engine_warning",
+    "unreadable_page",
     "lattice_failed",
     "lattice_disagrees",
     "word_crosses_rule",
@@ -27,7 +29,7 @@ def test_F1_every_code_has_a_severity() -> None:
 
 def test_F1_severity_table_matches_spec() -> None:
     errors = {c for c, s in SEVERITY.items() if s is Severity.ERROR}
-    assert errors == {FindingCode.NO_TEXT_LAYER}
+    assert errors == {FindingCode.NO_TEXT_LAYER, FindingCode.UNREADABLE_PAGE}
     assert SEVERITY[FindingCode.HIDDEN_TEXT] is Severity.WARNING
     assert SEVERITY[FindingCode.BLANK_PAGE] is Severity.INFO
 

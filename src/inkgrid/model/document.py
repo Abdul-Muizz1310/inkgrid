@@ -41,7 +41,9 @@ class Region(Frozen):
 class Cell(Frozen):
     """One cell of a grid, anchored at `(row, col)`, spanning `row_span` x `col_span` positions.
 
-    A `carried` cell is a header copied onto a continuation page: it owns no words there.
+    A blank cell (no words, text "") is part of a table's shape. A `carried` cell is a header copied
+    onto a continuation page: it owns no words there, and `source` names the parent-table cells it
+    copies.
     """
 
     row: NonNegativeInt
@@ -51,6 +53,7 @@ class Cell(Frozen):
     text: str
     word_ids: tuple[NonNegativeInt, ...] = ()
     carried: bool = False
+    source: tuple[Anchor, ...] = ()
     markers: tuple[NonEmpty, ...] = ()
 
     @model_validator(mode="after")
@@ -63,9 +66,16 @@ class Cell(Frozen):
             if not self.text:
                 msg = f"{where}: a carried cell must have text"
                 raise ValueError(msg)
-        elif not self.word_ids:
-            msg = f"{where}: a cell that is not carried owns at least one word"
-            raise ValueError(msg)
+            if not self.source:
+                msg = f"{where}: a carried cell must name its source cells"
+                raise ValueError(msg)
+        else:
+            if self.source:
+                msg = f"{where}: only a carried cell has a source"
+                raise ValueError(msg)
+            if not self.word_ids and self.text:
+                msg = f"{where}: a cell with no words has no text"
+                raise ValueError(msg)
         if len(set(self.word_ids)) != len(self.word_ids):
             msg = f"{where}: lists a word twice"
             raise ValueError(msg)
@@ -118,21 +128,31 @@ class Grid(Frozen):
             raise ValueError(msg)
 
     def _check_tiling(self) -> None:
+        """Every position is covered by exactly one cell; checked per row over column intervals."""
         anchors = [(c.row, c.col) for c in self.cells]
         if anchors != sorted(set(anchors)):
             msg = "cells must be sorted by (row, col) with unique anchors"
             raise ValueError(msg)
-        covered: set[tuple[int, int]] = set()
+        rows: list[list[tuple[int, int]]] = [[] for _ in range(self.n_rows)]
         for cell in self.cells:
             if cell.row + cell.row_span > self.n_rows or cell.col + cell.col_span > self.n_cols:
                 msg = f"cell ({cell.row}, {cell.col}) runs past the grid bounds"
                 raise ValueError(msg)
             for r in range(cell.row, cell.row + cell.row_span):
-                for c in range(cell.col, cell.col + cell.col_span):
-                    if (r, c) in covered:
-                        msg = f"position ({r}, {c}) is covered twice"
-                        raise ValueError(msg)
-                    covered.add((r, c))
+                rows[r].append((cell.col, cell.col + cell.col_span))
+        for r, spans in enumerate(rows):
+            at = 0
+            for start, end in sorted(spans):
+                if start < at:
+                    msg = f"position ({r}, {start}) is covered twice"
+                    raise ValueError(msg)
+                if start > at:
+                    msg = f"position ({r}, {at}) is covered by no cell"
+                    raise ValueError(msg)
+                at = end
+            if at < self.n_cols:
+                msg = f"position ({r}, {at}) is covered by no cell"
+                raise ValueError(msg)
 
     def cell_rect(self, cell: Cell) -> Rect:
         """The rectangle a cell covers, from its first to its last band."""
@@ -162,13 +182,19 @@ class BlockBase(Frozen):
             msg = f"block {self.id} lists a word twice (duplicate word id)"
             raise ValueError(msg)
         check_text_shape(self.text, f"block {self.id}")
-        members = set(self.word_ids)
+        position = {word: index for index, word in enumerate(self.word_ids)}
+        if len(set(self.hyphen_joins)) != len(self.hyphen_joins):
+            msg = f"block {self.id}: a hyphen join is listed twice"
+            raise ValueError(msg)
         for a, b in self.hyphen_joins:
             if a == b:
                 msg = f"block {self.id}: a hyphen join needs two different words, got ({a}, {b})"
                 raise ValueError(msg)
-            if a not in members or b not in members:
+            if a not in position or b not in position:
                 msg = f"block {self.id}: hyphen join ({a}, {b}) names a word outside the block"
+                raise ValueError(msg)
+            if position[b] != position[a] + 1:
+                msg = f"block {self.id}: in hyphen join ({a}, {b}), word {b} must follow word {a}"
                 raise ValueError(msg)
         pages = [r.page for r in self.regions]
         if any(q <= p for p, q in pairwise(pages)):
@@ -212,6 +238,13 @@ class Definition(BlockBase):
     term: NonEmpty
     body: NonEmpty
 
+    @model_validator(mode="after")
+    def _text_is_term_and_body(self) -> Self:
+        if self.text != f"{self.term} {self.body}":
+            msg = f"definition {self.id}: text must be the term, a space, then the body"
+            raise ValueError(msg)
+        return self
+
 
 class Table(BlockBase):
     """A table on one page; its non-carried cells partition its words."""
@@ -241,6 +274,10 @@ class Table(BlockBase):
         missing = sorted(members - seen.keys())
         if missing:
             msg = f"word {missing[0]} of table {self.id} is in no cell"
+            raise ValueError(msg)
+        in_cells = tuple(word for cell in self.grid.cells for word in cell.word_ids)
+        if self.word_ids != in_cells:
+            msg = f"table {self.id} must list its words cell by cell in (row, col) order"
             raise ValueError(msg)
         return self
 

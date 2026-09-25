@@ -1,5 +1,6 @@
 """Typed, frozen values shared by every inkgrid package. Imports only stdlib and pydantic."""
 
+from inkgrid.model.config import Lexicon, Profile
 from inkgrid.model.document import (
     Block,
     Cell,
@@ -36,6 +37,7 @@ __all__ = [
     "Heading",
     "Interval",
     "Ledger",
+    "Lexicon",
     "Link",
     "LinkEnd",
     "ListItem",
@@ -43,6 +45,7 @@ __all__ = [
     "PageModel",
     "Paragraph",
     "Producer",
+    "Profile",
     "ReaderInfo",
     "Reading",
     "Rect",

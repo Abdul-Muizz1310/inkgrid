@@ -1,12 +1,12 @@
 """inkgrid: exact tables and text from born-digital PDFs.
 
-M0 exposes the raw page model through `read_pages`; the full `Document` contract is defined and
-validated here and is produced by `read()` from milestone M1 on.
+`read()` turns a PDF into a validated `Document`; `read_pages()` returns the raw page model, for
+debugging a reading.
 """
 
 import importlib.metadata
 
-from inkgrid.api import read_pages
+from inkgrid.api import read, read_pages
 from inkgrid.errors import (
     InkgridError,
     InvariantError,
@@ -28,6 +28,7 @@ from inkgrid.model import (
     Heading,
     Interval,
     Ledger,
+    Lexicon,
     Link,
     LinkEnd,
     ListItem,
@@ -35,6 +36,7 @@ from inkgrid.model import (
     PageModel,
     Paragraph,
     Producer,
+    Profile,
     Reading,
     Rect,
     Region,
@@ -61,6 +63,7 @@ __all__ = [
     "Interval",
     "InvariantError",
     "Ledger",
+    "Lexicon",
     "Link",
     "LinkEnd",
     "ListItem",
@@ -70,6 +73,7 @@ __all__ = [
     "PasswordRequired",
     "PdfOpenError",
     "Producer",
+    "Profile",
     "Reading",
     "Rect",
     "Region",
@@ -80,5 +84,6 @@ __all__ = [
     "Word",
     "WrongPassword",
     "__version__",
+    "read",
     "read_pages",
 ]

@@ -95,6 +95,11 @@ class ImageInfo(TypedDict):
 # (xref, extension, type, basefont, name, encoding); type is e.g. "Type1", "TrueType", "Type3".
 type FontEntry = tuple[int, str, str, str, str, str]
 
+class Pixmap:
+    width: int
+    height: int
+    def tobytes(self, output: str = "png") -> bytes: ...
+
 class Page:
     rotation: int
     cropbox: Rect
@@ -109,6 +114,8 @@ class Page:
     def get_drawings(self) -> list[DrawingDict]: ...
     def get_image_info(self) -> list[ImageInfo]: ...
     def get_fonts(self) -> list[FontEntry]: ...
+    def set_rotation(self, rotation: int) -> None: ...
+    def get_pixmap(self, *, dpi: int) -> Pixmap: ...
 
 class Document:
     page_count: int

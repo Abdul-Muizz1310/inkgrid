@@ -294,3 +294,28 @@ def read_pdf(data: bytes, *, file_name: str | None, password: str | None) -> Rea
         pages=tuple(pages),
         findings=tuple(findings),
     )
+
+
+def render_pages(data: bytes, password: str | None, dpi: int) -> tuple[bytes | None, ...]:
+    """Each page as PNG, unrotated to match the page model; None for a page MuPDF cannot render.
+
+    Rendering stops at the first page that cannot load, as `read_pdf` does. The rotation change is
+    made on the in-memory document only.
+    """
+    images: list[bytes | None] = []
+    with _quiet():
+        doc = _open(data, password)
+        try:
+            for index in range(doc.page_count):
+                try:
+                    page = doc.load_page(index)
+                except LOAD_ERRORS:
+                    break
+                try:
+                    page.set_rotation(0)
+                    images.append(page.get_pixmap(dpi=dpi).tobytes("png"))
+                except MUPDF_ERRORS:
+                    images.append(None)
+        finally:
+            doc.close()
+    return tuple(images)

@@ -109,8 +109,10 @@ inkgrid read IN.pdf [-o OUT.json] [--pretty] [--markdown OUT.md] [--inspector OU
 
 It is for looking, not for gates (R-12 of the prototype: "review is by looking").
 
-- **`render_pages(data, password, dpi) -> tuple[bytes, ...]`** (in `read/pymupdf_reader.py`) renders
-  each page as PNG, unrotated, so the image matches the page model's coordinates.
+- **`render_pages(data, password, dpi) -> tuple[bytes | None, ...]`** (in `read/pymupdf_reader.py`)
+  renders each page as PNG, unrotated, so the image matches the page model's coordinates. A page
+  MuPDF cannot render (a damaged content stream) gives `None`, and the reading stops at the first
+  page that cannot load, as the reader does.
 - **`inspector_html(doc, pages_png) -> str`** builds the page from the document and one PNG per page.
   It raises `ValueError` when the count of images differs from the count of pages.
 - **`build_inspector(doc, source, password=None) -> str`** loads the source, checks that its SHA-256
@@ -140,12 +142,15 @@ dark mode (`prefers-color-scheme`) and prints legibly. All document text is HTML
 | IN5 | `inspector_html` with 2 images for a 3-page document | `ValueError` |
 | IN6 | `build_inspector` with a different PDF than the document's | `ValueError` naming the mismatch |
 | IN7 | `render_pages` on `rotated` | one PNG whose pixel size matches the unrotated page at the dpi |
+| IN8 | `build_inspector` on `nested_graphics_states` | HTML whose page section says the page could not be rendered, with no `<image>` |
+| IN9 | `render_pages` on `null_second_kid` | one image: rendering stops where loading stops |
+| IN10 | a document with a heading, list item, footnote, definition, and footer | one card each, naming the level, label, term, and role |
 
 ---
 
 ## 5 · Acceptance
 
-- [ ] RD1–RD10, MD1–MD6, CR1–CR5, and IN1–IN7 pass.
+- [ ] RD1–RD10, MD1–MD6, CR1–CR5, and IN1–IN10 pass.
 - [ ] `inkgrid read` emits a valid `Document` for every fixture, and the two-column fixture reads in
       column order (the M1 exit criteria).
 - [ ] `render/` imports only `model` and `read`; only `read/pymupdf_reader.py` imports pymupdf.

@@ -1,0 +1,135 @@
+[build-system]
+requires = ["uv_build>=0.12.19,<0.13"]
+build-backend = "uv_build"
+
+[project]
+name = "inkgrid"
+version = "0.1.0.dev0"
+description = "Exact tables and text from born-digital PDFs, read from the text layer and drawn rules, and verified by a second PDF engine."
+readme = "README.md"
+requires-python = ">=3.12"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Abdul-Muizz Anwar", email = "abdulmuizz1310@outlook.com" }]
+keywords = ["pdf", "tables", "text-extraction", "pymupdf", "camelot", "document-parsing"]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Text Processing",
+    "Typing :: Typed",
+]
+dependencies = [
+    "pydantic>=2.11,<3",
+    "pymupdf>=1.28.2,<2",
+]
+
+[project.urls]
+Homepage = "https://github.com/Abdul-Muizz1310/inkgrid"
+Source = "https://github.com/Abdul-Muizz1310/inkgrid"
+Issues = "https://github.com/Abdul-Muizz1310/inkgrid/issues"
+Changelog = "https://github.com/Abdul-Muizz1310/inkgrid/blob/main/CHANGELOG.md"
+
+[dependency-groups]
+test = [
+    "coverage>=7.16.1",
+    "hypothesis>=6.168.1",
+    "pytest>=9.1.1",
+    "pytest-cov>=7.1.0",
+]
+lint = ["ruff>=0.16.9"]
+typecheck = ["mypy>=2.3.1"]
+dev = [
+    { include-group = "test" },
+    { include-group = "lint" },
+    { include-group = "typecheck" },
+]
+
+[tool.uv]
+required-version = ">=0.12.19,<0.13"
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests", "tests/support"]
+
+[tool.ruff.format]
+# Specs and docs use code fences as prose (aligned comments, illustrative fragments).
+exclude = ["*.md"]
+
+[tool.ruff.lint]
+# Ruff >= 0.16 enables a large default rule set; `select` would REPLACE it, so extend.
+extend-select = [
+    "E", "W", "I", "N", "UP", "B", "A", "C4", "SIM", "RET", "PIE", "PERF", "FURB",
+    "RUF", "PT", "PTH", "S", "FBT", "ARG", "T20", "ERA", "TRY", "EM", "D", "PL",
+    "ANN401", "INP", "SLF", "TID",
+]
+ignore = ["COM812", "D105", "D107", "PLR0913", "TRY003"]
+
+[tool.ruff.lint.per-file-ignores]
+# Test names carry the spec's uppercase case ids (test_G7_..., test_W-4 -> test_W4_...).
+"tests/**" = [
+    "S101", "PLR2004", "D", "INP001", "SLF001", "FBT", "ANN401", "ARG", "S603", "S607", "PLC0415",
+    "N802",
+]
+# The design (00-design.md section 9) names these errors; the names are public API.
+"src/inkgrid/errors.py" = ["N818"]
+"scripts/**" = ["T20", "INP001", "D", "S603", "S607"]
+"typings/**" = ["D", "N", "FBT", "PLR0913", "A002", "ANN401"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "all"
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+files = ["src"]
+mypy_path = "typings"
+warn_unreachable = true
+enable_error_code = [
+    "ignore-without-code",
+    "redundant-expr",
+    "truthy-bool",
+    "possibly-undefined",
+    "deprecated",
+    "exhaustive-match",
+    "unused-awaitable",
+]
+
+[tool.pytest]
+minversion = "9.0"
+strict = true
+testpaths = ["tests"]
+pythonpath = ["tests/support"]
+markers = ["slow: builds distributions or runs subprocesses; run with -m slow"]
+addopts = [
+    "-ra",
+    "--import-mode=importlib",
+    "-m", "not slow",
+    "--cov",
+    "--cov-branch",
+    "--cov-report=term-missing:skip-covered",
+    "--cov-report=json",
+]
+filterwarnings = ["error"]
+
+[tool.coverage.run]
+branch = true
+source_pkgs = ["inkgrid"]
+
+[tool.coverage.report]
+# The total and per-file floors (80%) are enforced by scripts/check_coverage_floors.py,
+# so a single-file TDD run does not fail on whole-suite coverage.
+show_missing = true
+skip_covered = true
+exclude_also = [
+    "if TYPE_CHECKING:",
+    "@(typing\\.)?overload",
+    "assert_never\\(",
+]

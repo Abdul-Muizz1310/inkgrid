@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# Environments
+.venv/
+
+# Build artifacts
+dist/
+build/
+
+# Test and tool caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
+.coverage
+coverage.json
+coverage.xml
+htmlcov/
+
+# Local secrets (inkgrid reads none; see .env.example)
+.env
+.env.*
+!.env.example
+
+# Plan-execution scratch (self-ignoring, listed for clarity)
+.superpowers/
+
+# Editor / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

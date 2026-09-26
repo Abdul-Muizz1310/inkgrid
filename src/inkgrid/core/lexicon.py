@@ -56,4 +56,3 @@ def is_value(text: str) -> bool:
     if YEAR.fullmatch(text):
         return False
     return VALUE.fullmatch(text) is not None
-

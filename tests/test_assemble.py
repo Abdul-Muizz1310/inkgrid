@@ -2,11 +2,12 @@ from collections.abc import Sequence
 
 import pytest
 
-from inkgrid.core.assemble import assemble, block_text
+from inkgrid.core.assemble import assemble
 from inkgrid.core.furniture import FoundFurniture
 from inkgrid.core.lines import Line, group_lines
 from inkgrid.core.pipeline import build_document
 from inkgrid.core.prose import ProtoBlock
+from inkgrid.core.text import block_text
 from inkgrid.errors import InvariantError
 from inkgrid.model.config import Lexicon, Profile
 from inkgrid.model.document import Document

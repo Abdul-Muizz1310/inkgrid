@@ -8,6 +8,7 @@ Encryption adds a random salt, so `encrypted()` and `owner_only()` differ call t
 from __future__ import annotations
 
 from collections.abc import Callable
+from itertools import pairwise
 
 import pymupdf
 
@@ -262,6 +263,63 @@ def ruled_grid_pages(n: int = 3) -> bytes:
     doc = pymupdf.open()
     for _ in range(n):
         _draw_grid(_page(doc), RULED_GRID_CELLS)
+    return _save(doc)
+
+
+TABLE_BEFORE = ["The fees below apply to every order", "executed on the book this month."]
+TABLE_AFTER = ["Rebates are credited on the invoice", "for the month after the trading."]
+
+
+def table_between_paragraphs() -> bytes:
+    """A paragraph, `ruled_grid`'s table, and a paragraph, top to bottom."""
+    doc = pymupdf.open()
+    page = _page(doc)
+    for i, text in enumerate(TABLE_BEFORE):
+        page.insert_text((72, 60 + 12 * i), text, fontsize=10)
+    _draw_grid(page, RULED_GRID_CELLS)
+    for i, text in enumerate(TABLE_AFTER):
+        page.insert_text((72, 220 + 12 * i), text, fontsize=10)
+    return _save(doc)
+
+
+BOXED_PARAGRAPH = [
+    "Members must notify the exchange",
+    "in writing before they change",
+    "their clearing arrangements.",
+]
+
+
+def boxed_paragraph() -> bytes:
+    """A paragraph inside a drawn box: a 1 x 1 grid that is not a table."""
+    doc = pymupdf.open()
+    page = _page(doc)
+    shape = page.new_shape()
+    shape.draw_rect(pymupdf.Rect(60, 80, 360, 140))
+    shape.finish(color=BLACK, width=0.8)
+    shape.commit()
+    for i, text in enumerate(BOXED_PARAGRAPH):
+        page.insert_text((72, 100 + 12 * i), text, fontsize=10)
+    return _save(doc)
+
+
+LABEL = "Sensitivity: C1 Public"
+
+
+def labelled_page() -> bytes:
+    """3 pages, each with a paragraph and, at its foot, a 3 x 3 box holding a furniture label."""
+    doc = pymupdf.open()
+    for n in range(3):
+        page = _page(doc)
+        word = ("alpha", "bravo", "charlie")[n]
+        page.insert_text((72, 100), f"The {word} schedule lists every fee.", fontsize=10)
+        shape = page.new_shape()
+        xs, ys = (0, 7, 134, 595), (750, 755, 772, 781)
+        for x0, x1 in pairwise(xs):
+            for y0, y1 in pairwise(ys):
+                shape.draw_rect(pymupdf.Rect(x0, y0, x1, y1))
+        shape.finish(color=BLACK, width=0.5)
+        shape.commit()
+        page.insert_text((12, 767), LABEL, fontsize=7)
     return _save(doc)
 
 
@@ -622,6 +680,9 @@ OPENABLE: dict[str, Callable[[], bytes]] = {
     "landscape": landscape,
     "ruled_grid": ruled_grid,
     "ruled_landscape": ruled_landscape,
+    "table_between_paragraphs": table_between_paragraphs,
+    "boxed_paragraph": boxed_paragraph,
+    "labelled_page": labelled_page,
     "spaced_paragraphs": spaced_paragraphs,
     "furnished": furnished,
     "furniture_only_page": furniture_only_page,

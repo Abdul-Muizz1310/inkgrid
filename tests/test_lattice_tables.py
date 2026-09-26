@@ -1,8 +1,8 @@
 from collections.abc import Mapping, Sequence
 
 import pdf_factory
-from inkgrid.core.assemble import block_text
 from inkgrid.core.tables.lattice import ProtoTable, TableStage, lattice_tables
+from inkgrid.core.text import block_text
 from inkgrid.model.config import Profile
 from inkgrid.model.findings import FindingCode
 from inkgrid.model.geometry import Rect

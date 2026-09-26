@@ -196,3 +196,16 @@ def turn_rect(rect: Rect, rotation: Rotation, width: float, height: float) -> Re
     x0, y0 = turn_point(rect.x0, rect.y0, rotation, width, height)
     x1, y1 = turn_point(rect.x1, rect.y1, rotation, width, height)
     return Rect(min(x0, x1), min(y0, y1), max(x0, x1), max(y0, y1))
+
+
+def unturn_rect(rect: Rect, rotation: Rotation, width: float, height: float) -> Rect:
+    """A rectangle of the turned page, back on the unrotated page (`width` x `height`)."""
+    match rotation:
+        case 0:
+            return rect
+        case 90:
+            return turn_rect(rect, 270, height, width)
+        case 180:
+            return turn_rect(rect, 180, width, height)
+        case 270:
+            return turn_rect(rect, 90, height, width)

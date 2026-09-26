@@ -44,9 +44,10 @@ tables Camelot does not read).
 
 A *piece* is a fragment (`04` § 2): words of one line closer than `fragment_gap_em` × size.
 `is_value_piece(words) -> bool` decides whether a piece is a value cell that can make a row a value row.
-Superscript words are left out first (note marks). The piece is a value piece when its remaining text
-`is_value` and contains a strong value token (`06` § 1), or when it has at most 4 tokens and its first
-token is a strong value (`$5,000 per month`, `0.10 per contract`).
+Superscript words are left out first (note marks). The piece is a value piece when its remaining text,
+as a whole, `is_strong_value` (`06` § 1: a value with a currency, unit, magnitude, decimal part, or
+grouping, so `CHF 250` and `5 bp` count though neither token does alone), or when it has at most 4
+tokens and its first token is a strong value (`$5,000 per month`, `0.10 per contract`).
 
 `is_value_like(words)` is looser: the remaining text `is_value` (weak values included: `1 – 150`, `62`,
 `Free`, `-`). It guards row folding (§ 2).
@@ -54,6 +55,7 @@ token is a strong value (`$5,000 per month`, `0.10 per contract`).
 | # | case | expected |
 |---|---|---|
 | VP1 | `0.25 bp`, `CHF 0.50`, `$5,000 per month`, `0.10 per contract`, `-0.15bp`, `£30,000` + a superscript `****` | value pieces |
+| VP4 | `CHF 250`, `5 bp`, `500 CHF`, `10 %` | value pieces: the currency or unit makes the whole piece a strong value |
 | VP2 | `Section 2.1`, `Tier 1`, `1 – 150`, `Free`, `-`, `The fee is CHF 1.00 per trade`, `62` | not value pieces |
 | VP3 | `is_value_like` on `1 – 150`, `62`, `Free`, `-`; on `Tier 1`, `Commitment` | true; false |
 
@@ -234,7 +236,7 @@ and assembly places corridor tables among the page's blocks exactly as ruled tab
 
 ## 8 · Acceptance
 
-- [ ] VP1–VP3, RW1–RW7, EX1–EX17, CB1–CB3, CG1–CG6, NT1–NT4, and CP1–CP5 pass.
+- [ ] VP1–VP4, RW1–RW7, EX1–EX17, CB1–CB3, CG1–CG6, NT1–NT4, and CP1–CP5 pass.
 - [ ] The seven fee schedules read without error; SIX, LSE, and Euronext gain their unruled tables, and
       a sample of them, rendered in the inspector, reads as the page prints.
 - [ ] Every M0, M1, and M2a case still passes.

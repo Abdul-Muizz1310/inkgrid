@@ -47,7 +47,8 @@ def is_value_piece(words: Sequence[Word]) -> bool:
     tokens = _tokens(words)
     if not tokens:
         return False
-    if is_value(" ".join(tokens)) and any(is_strong_value(t) for t in tokens):
+    # Judged on the whole piece: `CHF 250` is money though neither `CHF` nor `250` is strong alone.
+    if is_strong_value(" ".join(tokens)):
         return True
     return len(tokens) <= MAX_QUALIFIED_TOKENS and is_strong_value(tokens[0])
 

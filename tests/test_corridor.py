@@ -521,3 +521,8 @@ def test_CG6_a_part_whose_widest_word_is_not_its_last_stays_in_its_cells() -> No
     for table in doc.tables():
         for cell in table.grid.cells:
             assert all(w in table.word_ids for w in cell.word_ids)
+
+
+@pytest.mark.parametrize("text", ["CHF 250", "5 bp", "500 CHF", "10 %"])
+def test_VP4_integer_money_with_a_separate_code_or_unit_is_a_value_piece(text: str) -> None:
+    assert is_value_piece(words(text))

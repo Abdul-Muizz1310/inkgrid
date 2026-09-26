@@ -413,7 +413,7 @@ class Document(Frozen):
                 case Definition():
                     parts.append(export.definition(block.term, block.body))
                 case Table():
-                    parts.append(block.text)
+                    parts.append(export.table(block.text))
                 case Furniture():
                     pass
         return export.join(parts)

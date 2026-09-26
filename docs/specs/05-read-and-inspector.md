@@ -63,9 +63,14 @@ import cycle.
   - furniture: omitted.
 - **Layout:** blocks are separated by one blank line, the output ends with one newline, and page
   breaks are not marked. A document with no rendered block is `""`.
-- **Escaping:** a paragraph whose text starts with `#`, `>`, `-`, `+`, or `*` gets a backslash before
-  that character. One whose text starts with digits followed by `.` or `)` gets a backslash before
-  that `.` or `)`. Markdown then never reinterprets printed text as structure.
+- **Escaping.** Printed text must not turn into Markdown structure:
+  - the opening of a paragraph, of a bullet item's text after its bullet, and of a footnote's text
+    after its label gets a backslash before a leading `#`, `>`, `-`, `+`, or `*`, and before the
+    `.` or `)` after leading digits;
+  - a `<` that would open an HTML tag (followed by a letter, `/`, `!`, or `?`) becomes `\<`, in
+    every block;
+  - other inline markup (`*`, `_`, `[`, backticks) passes through as printed, so text that looks
+    like emphasis can render as emphasis. The JSON is the canonical text; Markdown is a view of it.
 
 | # | case | expected |
 |---|---|---|
@@ -74,6 +79,7 @@ import cycle.
 | MD3 | a document with only furniture | `""` |
 | MD4 | a heading of level 9 | six `#` |
 | MD5 | a definition `Member` / `a firm admitted to trading` | `**Member** a firm admitted to trading\n` |
+| MD7 | a `•` item `# of trades`; a footnote `3 - see below`; a paragraph `Use <script> here`; a heading `Fees <b>` | `- \# of trades`; `[^3]: \- see below`; `Use \<script> here`; `## Fees \<b>` |
 | MD6 | a 2 × 2 table `Fee 0.10` / `Rebate 0.20` | `Fee 0.10\nRebate 0.20\n` |
 
 ---
@@ -150,7 +156,7 @@ dark mode (`prefers-color-scheme`) and prints legibly. All document text is HTML
 
 ## 5 · Acceptance
 
-- [ ] RD1–RD10, MD1–MD6, CR1–CR5, and IN1–IN10 pass.
+- [ ] RD1–RD10, MD1–MD7, CR1–CR5, and IN1–IN10 pass.
 - [ ] `inkgrid read` emits a valid `Document` for every fixture, and the two-column fixture reads in
       column order (the M1 exit criteria).
 - [ ] `render/` imports only `model` and `read`; only `read/pymupdf_reader.py` imports pymupdf.

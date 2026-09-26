@@ -54,3 +54,20 @@ def test_MD6_a_table_renders_as_its_text() -> None:
         cells=[C(0, 0, [0]), C(0, 1, [1]), C(1, 0, [2]), C(1, 1, [3])],
     )
     assert build([table]).to_markdown() == "Fee 0.10\nRebate 0.20\n"
+
+
+def test_MD7_block_openings_and_tags_are_escaped_everywhere() -> None:
+    doc = build(
+        [
+            B("list_item", line([BULLET, "#", "of", "trades"], y=100), fields={"label": BULLET}),
+            B("footnote", line(["3", "-", "see", "below"], y=120), fields={"label": "3"}),
+            B("paragraph", line(["Use", "<script>", "here"], y=140)),
+            B("heading", line(["Fees", "<b>"], y=160), fields={"level": 2}),
+        ]
+    )
+    assert doc.to_markdown().split("\n\n") == [
+        "- \\# of trades",
+        "[^3]: \\- see below",
+        "Use \\<script> here",
+        "## Fees \\<b>\n",
+    ]

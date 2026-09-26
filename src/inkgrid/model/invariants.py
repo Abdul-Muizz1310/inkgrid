@@ -10,11 +10,12 @@ from collections.abc import Sequence
 from typing import TYPE_CHECKING, NoReturn
 
 from inkgrid.model.canonical import assign_keys
+from inkgrid.model.geometry import turn_point
 from inkgrid.model.page import expected_text_layer
 
 if TYPE_CHECKING:
     from inkgrid.model.document import Block, Document, Table
-    from inkgrid.model.page import Word
+    from inkgrid.model.page import PageInfo, Word
 
 TEXT_SPACE = " "
 TEXT_BREAK = "\n"
@@ -197,14 +198,16 @@ def _check_regions(doc: "Document", words: Sequence["Word"]) -> None:
                 _fail(f"word {w} lies outside block {block.id}'s region on page {region.page}")
 
 
-def _check_cells(table: "Table", words: Sequence["Word"]) -> None:
+def _check_cells(table: "Table", words: Sequence["Word"], pages: Sequence["PageInfo"]) -> None:
     joins = table.hyphen_joins
+    frame = table.grid.frame
     for cell in table.grid.cells:
         if cell.carried:
             continue
         rect = table.grid.cell_rect(cell)
         for w in cell.word_ids:
-            x, y = words[w].bbox.center
+            page = pages[words[w].page - 1]
+            x, y = turn_point(*words[w].bbox.center, frame, page.width, page.height)
             if not rect.contains_point(x, y):
                 _fail(f"word {w} lies outside cell ({cell.row}, {cell.col}) of table {table.id}")
         members = set(cell.word_ids)
@@ -285,7 +288,7 @@ def check_document(doc: "Document") -> None:
     _check_text(doc, words)
     _check_regions(doc, words)
     for table in doc.tables():
-        _check_cells(table, words)
+        _check_cells(table, words, doc.pages)
     _check_carried(doc, by_id)
     _check_keys(doc)
     _check_findings(doc, by_id)

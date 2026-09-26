@@ -16,7 +16,7 @@ from pydantic import Field, NonNegativeInt, PositiveInt, model_validator
 from inkgrid.model import export
 from inkgrid.model.base import Frozen
 from inkgrid.model.findings import BLOCK_ID, Finding, Severity
-from inkgrid.model.geometry import Interval, Rect
+from inkgrid.model.geometry import Interval, Rect, Rotation
 from inkgrid.model.invariants import check_document, check_text_shape
 from inkgrid.model.page import PageInfo, Source, Word
 
@@ -98,6 +98,9 @@ class Grid(Frozen):
     header_rows: NonNegativeInt
     banner_rows: tuple[NonNegativeInt, ...] = ()
     source: Literal["lattice", "corridor"]
+    # The rotation from the unrotated page to the frame the bands are measured in: a table on a page
+    # read upright in its screen frame keeps that frame (docs/specs/06-ruled-tables.md section 6).
+    frame: Rotation = 0
     cells: tuple[Cell, ...]
 
     @model_validator(mode="after")

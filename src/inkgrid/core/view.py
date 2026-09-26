@@ -4,28 +4,12 @@ The page model's coordinates are unrotated, so a landscape page (text upright on
 `/Rotate`) holds nothing but vertical words. Layout needs the frame the reader sees.
 """
 
-from inkgrid.model.geometry import Rect
+from inkgrid.model.geometry import turn_rect
 from inkgrid.model.page import PageModel, Word
 
 
-def _turn(x: float, y: float, page: PageModel) -> tuple[float, float]:
-    """A point of the unrotated page, as shown on screen (PyMuPDF's rotation_matrix)."""
-    width, height = page.width, page.height
-    match page.rotation:
-        case 90:
-            return height - y, x
-        case 180:
-            return width - x, height - y
-        case 270:
-            return y, width - x
-        case 0:
-            return x, y
-
-
 def _turned(word: Word, page: PageModel) -> Word:
-    x0, y0 = _turn(word.bbox.x0, word.bbox.y0, page)
-    x1, y1 = _turn(word.bbox.x1, word.bbox.y1, page)
-    box = Rect(min(x0, x1), min(y0, y1), max(x0, x1), max(y0, y1))
+    box = turn_rect(word.bbox, page.rotation, page.width, page.height)
     # The reader flags only the direction (1, 0) as horizontal: turning flips which words are.
     return word.model_copy(update={"bbox": box, "horizontal": not word.horizontal})
 

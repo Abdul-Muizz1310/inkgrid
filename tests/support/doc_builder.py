@@ -98,6 +98,7 @@ class B:
     header_rows: int = 0
     banner_rows: tuple[int, ...] = ()
     grid_source: str = "corridor"
+    frame: int = 0
 
 
 def joined_text(texts: Sequence[str], joins: Sequence[tuple[int, int]]) -> str:
@@ -185,6 +186,7 @@ def build(
                 header_rows=spec.header_rows,
                 banner_rows=spec.banner_rows,
                 source=spec.grid_source,
+                frame=spec.frame,
                 cells=cells,
             )
             text = spec.text if spec.text is not None else _table_text(cells)

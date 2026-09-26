@@ -478,6 +478,17 @@
           "title": "Col Bands",
           "type": "array"
         },
+        "frame": {
+          "default": 0,
+          "enum": [
+            0,
+            90,
+            180,
+            270
+          ],
+          "title": "Frame",
+          "type": "integer"
+        },
         "header_rows": {
           "minimum": 0,
           "title": "Header Rows",
@@ -527,6 +538,7 @@
         "header_rows",
         "banner_rows",
         "source",
+        "frame",
         "cells"
       ],
       "title": "Grid",

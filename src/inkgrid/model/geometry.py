@@ -10,6 +10,7 @@ from __future__ import annotations
 import math
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
+from typing import Literal
 
 from pydantic import GetCoreSchemaHandler
 from pydantic_core import CoreSchema, core_schema
@@ -166,3 +167,32 @@ class Interval:
     ) -> CoreSchema:
         """Validate from `[start, end]` (or an instance); serialize to that array."""
         return _array_schema(cls, 2, lambda i: [i.start, i.end])
+
+
+Rotation = Literal[0, 90, 180, 270]
+
+
+def turn_point(
+    x: float, y: float, rotation: Rotation, width: float, height: float
+) -> tuple[float, float]:
+    """A point of the unrotated page (`width` x `height`), as a page turned by `rotation` shows it.
+
+    The mapping is PyMuPDF's `rotation_matrix`, measured: 90 gives (h - y, x), 180 gives
+    (w - x, h - y), and 270 gives (y, w - x).
+    """
+    match rotation:
+        case 0:
+            return x, y
+        case 90:
+            return height - y, x
+        case 180:
+            return width - x, height - y
+        case 270:
+            return y, width - x
+
+
+def turn_rect(rect: Rect, rotation: Rotation, width: float, height: float) -> Rect:
+    """A rectangle of the unrotated page, as the turned page shows it."""
+    x0, y0 = turn_point(rect.x0, rect.y0, rotation, width, height)
+    x1, y1 = turn_point(rect.x1, rect.y1, rotation, width, height)
+    return Rect(min(x0, x1), min(y0, y1), max(x0, x1), max(y0, y1))

@@ -771,3 +771,31 @@ def test_D46_markers_are_the_superscript_words() -> None:
     plain["blocks"][0]["markers"] = ["2"]
     with pytest.raises(ValidationError, match="markers"):
         from_json(plain)
+
+
+def screen_word(text: str, x: float, y: float) -> W:
+    """A word whose centre shows at screen (x, y) on a /Rotate 90 page of 612 x 792."""
+    unrotated_x, unrotated_y = y, 792 - x  # the inverse of (x, y) -> (792 - y, x)
+    return W(text, unrotated_x - 2.5 * len(text), unrotated_y - 5)
+
+
+def test_D47_a_turned_grid_is_checked_in_its_frame() -> None:
+    table = B(
+        "table",
+        [
+            screen_word("Fee", 150, 110),
+            screen_word("Cap", 250, 110),
+            screen_word("0.40", 150, 130),
+            screen_word("25", 250, 130),
+        ],
+        row_bands=[(100, 120), (120, 140)],
+        col_bands=[(100, 200), (200, 300)],
+        cells=[C(0, 0, [0]), C(0, 1, [1]), C(1, 0, [2]), C(1, 1, [3])],
+        header_rows=1,
+        frame=90,
+    )
+    data = as_json(build([table]))
+    assert from_json(data).blocks[0].grid.frame == 90
+    data["blocks"][0]["grid"]["frame"] = 0
+    with pytest.raises(ValidationError, match="outside cell"):
+        from_json(data)

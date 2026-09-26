@@ -116,14 +116,16 @@ The term is its words' rendered text; the body is the rest of the paragraph's.
 
 A table **dissolves** into blocks when it has exactly 2 columns and each of its rows is one of:
 
-- a **banner** row, one cell spanning both columns: a heading block with its text;
+- a **banner** row, one cell spanning both columns and holding no more words than a heading may
+  (`heading_max_words`): a heading block with its text;
 - a **note** row: the first cell is one word, either a `note_label` (`1`, `(3)`, `*`) or a word that some
   superscript word of the document spells (`X2`, where a table prints `EMDI^X2`), and the second cell is
   prose: a footnote block labelled with that word;
 - a **term** row, only in a definitions scope (§ 1): the first cell holds at most 8 words and no value, and
   the second cell is prose: a definition block, whose term is the first cell and whose body is the second.
 
-A cell is **prose** when it holds at least 3 words, is not a value, and its first word is not a strong value
+A row without words is passed over, and at least one note or term row must remain. A cell spanning
+rows keeps the table whole. A cell is **prose** when it holds at least 3 words, is not a value, and its first word is not a strong value
 (`€1.20 per contract` is a fee, not prose). Any other row keeps the table whole: a fee table like
 `Tier 1 | Participant adds …` outside a scope stays a table. The blocks take the table's place in reading
 order, row by row, and each owns its row's words, so no word changes stage (the table stage claimed them).

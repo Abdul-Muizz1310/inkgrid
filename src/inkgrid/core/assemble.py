@@ -4,6 +4,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 
 from inkgrid.core.furniture import FoundFurniture, FurnitureLine
+from inkgrid.core.order import heading_level, heading_sizes, reading_order
 from inkgrid.core.prose import ProtoBlock
 from inkgrid.core.tables.grid import table_parts
 from inkgrid.core.tables.proto import ProtoTable
@@ -32,10 +33,6 @@ from inkgrid.model.geometry import Rect
 from inkgrid.model.page import PageInfo, PageModel, Reading, Word
 
 
-def _level(size: float, sizes: Sequence[float]) -> int:
-    return 1 + sum(1 for s in sizes if s > round(size * 2) / 2)
-
-
 def _regions(words: Sequence[Word]) -> tuple[Region, ...]:
     pages = sorted({w.page for w in words})
     return tuple(
@@ -61,35 +58,6 @@ def _page_info(page: PageModel) -> PageInfo:
 Item = ProtoBlock | FurnitureLine | ProtoTable
 
 
-def _overlaps(block: ProtoBlock, table: ProtoTable) -> bool:
-    """True when the block and the table share some horizontal extent."""
-    x0 = min(line.x0 for line in block.lines)
-    x1 = max(line.x1 for line in block.lines)
-    return x0 < table.bbox.x1 and x1 > table.bbox.x0
-
-
-def _slot(blocks: Sequence[ProtoBlock], table: ProtoTable) -> int:
-    """Where a table goes among a page's blocks: within the column it shares with them."""
-    beside = [i for i, b in enumerate(blocks) if _overlaps(b, table)]
-    below = [i for i in beside if blocks[i].lines[0].top >= table.bbox.y0]
-    if below:
-        return below[0]
-    return beside[-1] + 1 if beside else len(blocks)
-
-
-def _with_tables(blocks: Sequence[ProtoBlock], tables: Sequence[ProtoTable]) -> list[Item]:
-    """Content in reading order, each table before the first block below it in its column."""
-    before: dict[int, list[ProtoTable]] = {}
-    for table in sorted(tables, key=lambda t: t.bbox.y0):
-        before.setdefault(_slot(blocks, table), []).append(table)
-    out: list[Item] = []
-    for index, block in enumerate(blocks):
-        out += before.get(index, [])
-        out.append(block)
-    out += before.get(len(blocks), [])
-    return out
-
-
 def _ordered(
     reading: Reading,
     pages: Sequence[Sequence[ProtoBlock]],
@@ -103,7 +71,7 @@ def _ordered(
             (f for f in furniture.lines if f.page == page.number), key=lambda f: f.line.top
         )
         out += [f for f in edge if f.role == "header"]
-        out += _with_tables(blocks, page_tables)
+        out += reading_order(blocks, page_tables)
         out += [f for f in edge if f.role != "header"]
     return out
 
@@ -169,7 +137,7 @@ def _prose_block(
 ) -> Block:
     match item.kind:
         case "heading":
-            level = _level(item.size, sizes)
+            level = heading_level(item.size, sizes)
             return Heading.model_validate({**common, "level": level, "number": item.number})
         case "list_item":
             return ListItem.model_validate({**common, "label": item.label})
@@ -201,9 +169,7 @@ def assemble(
     per_page = tables if tables is not None else [() for _ in reading.pages]
     items = _ordered(reading, pages, per_page, furniture)
     infos = tuple(_page_info(page) for page in reading.pages)
-    sizes = sorted(
-        {round(b.size * 2) / 2 for b in items if isinstance(b, ProtoBlock) and b.kind == "heading"}
-    )
+    sizes = heading_sizes(items)
     words = tuple(w for page in reading.pages for w in page.words)
     parts = [_parts(item, words, infos) for item in items]
     keys = assign_keys([(p.kind, p.text) for p in parts])

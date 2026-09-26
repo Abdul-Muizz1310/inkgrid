@@ -186,7 +186,9 @@ furniture). It returns the proto tables, the ids of the words they claim, and fi
    once a row with several cells has been counted: a caption above the column headers belongs to the header,
    a section banner below them does not. A row's cells are the cells that start in it. When the run would
    cover every row, the table has no value rows to tell headers from: it has 1 header row when the first
-   row's words are all bold, else none. With no header rows, the table raises `header_not_found` (info).
+   row's words are all bold, else none. The header then extends down to the last row any header cell spans,
+   so no merged header cell crosses into the body (HTML ends a `rowspan` at its row group). With no header
+   rows, the table raises `header_not_found` (info).
 5. **Banner rows** are the rows, anywhere, that are full-width and hold no value.
 6. **`word_crosses_rule`** (warning): one finding per table, with the count, when any claimed word's box
    extends more than 1 pt past its own cell's left or right edge into a neighbouring cell. A merged cell
@@ -210,6 +212,7 @@ furniture). It returns the proto tables, the ids of the words they claim, and fi
 | LT12 | header `Tier 1 \| Fee (47)`, then data `{CK} $0.00 \| $5,000 per month` | header rows 1 |
 | LT13 | a 2 x 2 grid: a full-width title, then two cells of prose (6 lines of 7 words each); the same with one cell of short values; the same with cells of 4 lines | no table; one table; one table |
 | LT14 | a header cell of rotated text: `Maker` then `fee`, bottom to top | cell text `Maker fee` |
+| LT15 | `Description` spanning rows 0-1 beside `Fee`; row 1 holds `$5`; row 2 `Order \| $6` | header rows 2; the HTML's `<thead>` holds both rows |
 | LT10 | a table of text only, with a bold first row; the same with a regular first row | header rows 1; header rows 0 |
 | LT9 | two lines of text in one cell, the first ending `execu-` and the second `tions` | cell text `executions`, one join |
 
@@ -304,6 +307,6 @@ before testing it against the cell rectangle.
 
 ## 9 · Acceptance
 
-- [ ] VL1–VL5, LC1, CM1–CM9, LP1, GS1–GS3, LT1–LT14, TP1–TP8, EX1–EX5, and AP1–AP6 pass.
+- [ ] VL1–VL5, LC1, CM1–CM9, LP1, GS1–GS3, LT1–LT15, TP1–TP8, EX1–EX5, and AP1–AP6 pass.
 - [ ] The seven fee schedules read without error, with Camelot's tables claimed as in § 0.
 - [ ] Every M0 and M1 case still passes.

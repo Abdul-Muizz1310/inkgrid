@@ -95,6 +95,12 @@ def _roles(cells: Sequence[ProtoCell], n_rows: int) -> tuple[int, tuple[int, ...
     if header == n_rows:
         first = [w for c in cells if c.cell.row == 0 for w in c.words]
         header = 1 if first and all(w.bold for w in first) else 0
+    # Reach down to the last row a header cell spans: HTML ends a rowspan at its row group.
+    while 0 < header < n_rows:
+        reach = max(c.cell.row + c.cell.row_span for c in cells if c.cell.row < header)
+        if reach <= header:
+            break
+        header = min(reach, n_rows)
     return header, banners
 
 

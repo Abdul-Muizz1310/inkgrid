@@ -254,3 +254,15 @@ def test_LT14_rotated_text_in_a_cell_reads_in_its_own_order() -> None:
     (table,) = stage.tables
     first = next(c for c in table.cells if (c.cell.row, c.cell.col) == (0, 0))
     assert block_text(first.lines)[0] == "Maker fee"
+
+
+def test_LT15_the_header_reaches_down_to_its_merged_cells() -> None:
+    cells = {
+        "Description": (72, 100, 172, 140),  # spans rows 0-1
+        "Fee": (172, 100, 272, 120),
+        "$5": (172, 120, 272, 140),
+        "Order": (72, 140, 172, 160),
+        "$6": (172, 140, 272, 160),
+    }
+    (table,) = run(cells)[0].tables
+    assert table.header_rows == 2

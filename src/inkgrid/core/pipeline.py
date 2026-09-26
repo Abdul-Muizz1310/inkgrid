@@ -4,6 +4,7 @@ from collections import defaultdict
 
 from inkgrid.core.assemble import assemble
 from inkgrid.core.furniture import find_furniture
+from inkgrid.core.glossary import glossary
 from inkgrid.core.layout import Region, layout
 from inkgrid.core.lines import body_size
 from inkgrid.core.prose import ProtoBlock, line_gaps, page_blocks
@@ -72,6 +73,9 @@ def build_document(
     pages: list[tuple[ProtoBlock, ...]] = [
         page_blocks(page, lexicon, profile, body, gaps) for page in regions
     ]
+    # Glossaries and note lists, document-wide: a definitions section runs across pages.
+    marks = frozenset(w.text for w in reading.words() if w.superscript)
+    pages, tables = glossary(pages, tables, marks=marks, profile=profile)
     return assemble(
         reading,
         pages,

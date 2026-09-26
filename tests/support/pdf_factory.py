@@ -589,6 +589,70 @@ LANDSCAPE_PARAGRAPHS = [
 ]
 
 
+def _write(
+    page: pymupdf.Page, x: float, y: float, text: str, *, size: float = 10, bold: bool = False
+) -> float:
+    """Text in an embedded Helvetica (curly quotes need it), returning where it ends."""
+    font = pymupdf.Font("hebo" if bold else "helv")
+    writer = pymupdf.TextWriter(page.rect)
+    writer.append((x, y), text, font=font, fontsize=size)
+    writer.write_text(page)
+    return x + font.text_length(text, fontsize=size)
+
+
+def definitions_section() -> bytes:
+    """A `Definitions` section: a quoted, a bold, and a hanging entry; then `Fees` ends it."""
+    doc = pymupdf.open()
+    page = _page(doc)
+    _write(page, 72, 90, "Definitions", size=14, bold=True)
+    _write(
+        page,
+        72,
+        120,
+        "\u201cABBO\u201d means the best bid or offer that other exchanges disseminate.",
+    )
+    end = _write(page, 72, 150, "Admission Fee:", bold=True)
+    _write(page, end + 2.8, 150, "The fee an issuer pays for its securities to be admitted.")
+    _write(page, 72, 180, "Access")
+    _write(page, 190, 180, "Connection of a physical data line to the Exchange network")
+    _write(page, 190, 192, "or a technical connection to the Exchange system.")
+    _write(page, 72, 230, "Fees", size=14, bold=True)
+    _write(page, 72, 260, "\u201cFee\u201d applies to every trade on the order book.")
+    return _save(doc)
+
+
+def legend_grid() -> bytes:
+    """A ruled table whose `EMDI` carries a raised `X2`, then a ruled `Legend` grid for it."""
+    doc = pymupdf.open()
+    page = _page(doc)
+    shape = page.new_shape()
+    table = [(72, 80, 222, 104), (222, 80, 372, 104), (72, 104, 222, 128), (222, 104, 372, 128)]
+    table += [(72, 128, 222, 152), (222, 128, 372, 152)]
+    legend = [(72, 200, 522, 224), (72, 224, 192, 248), (192, 224, 522, 248)]
+    legend += [(72, 248, 192, 272), (192, 248, 522, 272)]
+    for x0, y0, x1, y1 in table + legend:
+        shape.draw_rect(pymupdf.Rect(x0, y0, x1, y1))
+    shape.finish(color=BLACK, width=0.8)
+    shape.commit()
+    for text, x, y in (("Connection", 76, 95), ("Price", 226, 95), ("6,000", 226, 119)):
+        page.insert_text((x, y), text, fontsize=9, fontname="helv")
+    for text, x, y in (("EOBI", 76, 143), ("7,200", 226, 143)):
+        page.insert_text((x, y), text, fontsize=9, fontname="helv")
+    page.insert_text((76, 119), "EMDI", fontsize=9, fontname="helv")
+    raised = 76 + pymupdf.get_text_length("EMDI", fontname="helv", fontsize=9) + 0.3
+    page.insert_text((raised, 115.5), "X2", fontsize=5.5, fontname="helv")
+    page.insert_text((76, 215), "Legend", fontsize=9, fontname="hebo")
+    page.insert_text((76, 239), "Tier A", fontsize=9, fontname="helv")
+    page.insert_text(
+        (196, 239), "Metro areas of Amsterdam, Frankfurt and London", fontsize=9, fontname="helv"
+    )
+    page.insert_text((76, 263), "X2", fontsize=9, fontname="helv")
+    page.insert_text(
+        (196, 263), "Connection rebate: the monthly fees are reduced", fontsize=9, fontname="helv"
+    )
+    return _save(doc)
+
+
 def landscape() -> bytes:
     """A `/Rotate 90` page whose bold title and two paragraphs are upright on screen."""
     doc = pymupdf.open()
@@ -901,6 +965,8 @@ OPENABLE: dict[str, Callable[[], bytes]] = {
     "landscape": landscape,
     "unruled_table": unruled_table,
     "chained_edge": chained_edge,
+    "definitions_section": definitions_section,
+    "legend_grid": legend_grid,
     "centred_span": centred_span,
     "centred_values": centred_values,
     "ruled_and_unruled": ruled_and_unruled,

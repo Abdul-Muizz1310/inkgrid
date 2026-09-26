@@ -66,9 +66,12 @@ def cell_lines(words: Sequence[Word], profile: Profile) -> tuple[Line, ...]:
 
 def table_roles(cells: Sequence[ProtoCell], n_rows: int) -> tuple[int, tuple[int, ...], bool]:
     """Header rows, banner rows, and whether the table holds no value to tell headers from."""
+    by_row: list[list[ProtoCell]] = [[] for _ in range(n_rows)]
+    for c in cells:
+        if c.words:
+            by_row[c.cell.row].append(c)
     rows: list[tuple[bool, bool, bool]] = []  # (has words, has a value, full width)
-    for r in range(n_rows):
-        holding = [c for c in cells if c.cell.row == r and c.words]
+    for holding in by_row:
         values = any(is_value_cell(c) for c in holding)
         rows.append((bool(holding), values, len(holding) == 1 and holding[0].cell.col == 0))
     banners = tuple(r for r, (has, values, full) in enumerate(rows) if has and full and not values)

@@ -1,11 +1,21 @@
-import pytest
+import math
+import time
+from unittest.mock import Mock
 
+import pytest
+from hypothesis import given
+from hypothesis import strategies as st
+
+import inkgrid.core.tables.corridor as corridor_module
 import pdf_factory
 from inkgrid.core.layout import Region
 from inkgrid.core.lines import fragments, group_lines
 from inkgrid.core.tables.corridor import (
     CorridorStage,
     Row,
+    _blanks,
+    _boundary,
+    _row,
     _split,
     columns,
     corridor_table,
@@ -16,6 +26,7 @@ from inkgrid.core.tables.corridor import (
 )
 from inkgrid.core.tables.proto import ProtoTable
 from inkgrid.model.config import Profile
+from inkgrid.model.findings import FindingCode
 from inkgrid.model.page import Rule, Word
 from lattice_builder import read_with_tables
 from layout_builder import P, place, text_line
@@ -174,6 +185,41 @@ def six_rows(y: float = 120) -> list[P]:
 def test_CB1_columns_come_from_the_value_rows() -> None:
     rows = rows_of(six_rows())
     assert len(columns(rows)) == 4
+
+
+def voted(lo: float, hi: float, rows: list[Row]) -> float:
+    """Section 4's vote, scored the slow way: every candidate against every row and every edge."""
+    blanks = [_blanks(row, lo, hi) for row in rows]
+    candidates = [(lo + hi) / 2, *((a + b) / 2 for row in blanks for a, b in row)]
+    edges = [e for row in rows for w in row.words for e in (w.bbox.x0, w.bbox.x1)]
+
+    def score(x: float) -> tuple[int, float]:
+        votes = sum(1 if any(a <= x <= b for a, b in row) else -1 for row in blanks if row)
+        return votes, min((abs(x - e) for e in edges), default=0.0)
+
+    return max(candidates, key=score)
+
+
+row_words = st.lists(
+    st.tuples(st.integers(60, 420), st.integers(1, 6)),
+    min_size=1,
+    max_size=5,
+    unique_by=lambda t: t[0],
+)
+
+
+@given(st.lists(row_words, min_size=1, max_size=6), st.integers(60, 400), st.integers(2, 80))
+def test_CB4_the_boundary_is_the_votes_winner(
+    rows: list[list[tuple[int, int]]], lo: int, width: int
+) -> None:
+    built = [
+        _row(
+            group_lines(place([P("w" * n, x, 100 + 20 * r, size=9) for x, n in words]), PROFILE),
+            PROFILE,
+        )
+        for r, words in enumerate(rows)
+    ]
+    assert _boundary(lo, lo + width, built) == voted(lo, lo + width, built)
 
 
 def test_CB2_a_long_label_keeps_its_column() -> None:
@@ -517,6 +563,56 @@ def test_EX17_the_downward_rows_never_run_into_the_next_table() -> None:
     assert len(tables) == 2
     assert [len(t.shape.row_edges) - 1 for t in tables] == [3, 3]
     assert tables[1].header_rows == 1
+
+
+def long_table(n: int, *, fused: bool = False) -> list[P]:
+    """`n` rows 12 pt apart: a label and three right-aligned fees; `fused` ends it in CG4's pair."""
+    ps: list[P] = []
+    for i in range(n):
+        y = 100 + 12 * i
+        ps += text_line([f"Band{i}"], x=72, y=y, size=9)
+        for c in range(3):
+            ps += right(f"{i % 97}.{i % 10}0", 250 + 90 * c, y)
+    if fused:  # `$1,000 per month` bridges `0.10` and `0.20` into one column
+        y = 100 + 12 * n
+        ps += (
+            text_line(["Label"], x=72, y=y, size=9) + right("0.10", 218, y) + right("0.20", 250, y)
+        )
+        ps += text_line(["Other"], x=72, y=y + 12, size=9)
+        ps += text_line(["$1,000", "per", "month"], x=180, y=y + 12, size=9)
+    return ps
+
+
+def test_EX18_a_fusing_row_ends_the_table_and_is_reported() -> None:
+    result = stage(long_table(4, fused=True))
+    (table,) = result.tables
+    assert len(table.shape.row_edges) - 1 == 5  # the four bands and `Label`
+    assert [texts_of(region) for region in result.regions] == [["Other $1,000 per month"]]
+    (left,) = [f for f in result.findings if f.code is FindingCode.TABLE_LEFT_AS_TEXT]
+    assert left.page == 1
+    assert left.detail.startswith("1 row of a table left as text")
+
+
+def test_EX19_a_refused_table_costs_a_few_attempts_not_one_per_row(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    spy = Mock(wraps=corridor_module.corridor_table)
+    monkeypatch.setattr(corridor_module, "corridor_table", spy)
+    (table,) = stage(long_table(200, fused=True)).tables
+    assert len(table.shape.row_edges) - 1 == 201
+    assert spy.call_count <= 4 * math.log2(200)
+
+
+def test_EX20_a_long_table_costs_about_its_length() -> None:
+    def timed(n: int) -> float:
+        ps = long_table(n)
+        started = time.perf_counter()
+        (table,) = stage(ps).tables
+        assert len(table.shape.row_edges) - 1 == n
+        return time.perf_counter() - started
+
+    # Linear work triples with the rows; quadratic work would grow ninefold.
+    assert timed(3000) < 4 * timed(1000)
 
 
 def test_CG6_a_part_whose_widest_word_is_not_its_last_stays_in_its_cells() -> None:

@@ -25,8 +25,8 @@ All notable changes to this project are documented here. The format follows
   header and banner rows, and the findings `lattice_failed`, `lattice_disagrees`,
   `word_crosses_rule`, and `header_not_found`. `Table.to_markdown()`, `Table.to_html()`, and
   `Table.to_rows()`; `lattice="vector"` alongside `combined` and `raster`; `inkgrid read --lattice`.
-- Unruled tables (M2b): whitespace-corridor grids with voted boundaries, header and banner rows, and
-  `header_not_found`; currency codes are now the ISO 4217 list, so `LPS2` or `SEC 31` is no value.
+- Unruled tables (M2b): whitespace-corridor grids with voted boundaries, header and banner rows,
+  `header_not_found`, and `table_left_as_text` for rows no grid holds without fusing two values; currency codes are now the ISO 4217 list, so `LPS2` or `SEC 31` is no value.
 - `Document.to_markdown()`, the HTML inspector, and the `inkgrid read` command with `--markdown`,
   `--inspector`, and `--strict`.
 - A layer-table test on the import graph, and CI across Linux, Windows, and macOS.

@@ -171,8 +171,14 @@ In each size run:
 6. **Downward**, it takes following rows while each has at least 2 pieces side by side, holds no value
    piece, and aligns; but when a value row follows the rows it took, those rows lead into the next table
    and it gives them back.
-7. **Acceptance:** at least 2 rows. A size run can hold several tables: after one, the search resumes at
-   the first row after it.
+7. **Acceptance:** at least 2 rows, and a grid that holds them safely (§ 5). When the rows make none,
+   the table ends before the rows that break it: the extent is tried whole, then with 1, 2, 4, … of its
+   value rows while they grid, and the count is halved back between the last that gridded and the first
+   that did not, so a refusal costs a few attempts, never one per row. The rows of a refused extent
+   (2 rows and 2 columns, read as a table) that end in no table are left as text, with one
+   `table_left_as_text` (warning) per stretch of them, naming how many and the first: never silently
+   (G4). A size run can hold several tables: after one, the search resumes at the first row after it;
+   after none, at the next value row.
 
 | # | case | expected |
 |---|---|---|
@@ -193,6 +199,9 @@ In each size run:
 | EX16 | a bold banner wrapped onto two lines, both starting at column 0, between value rows | in the table: one banner row |
 | EX17 | a table, then a second header on the same columns, then that table's value rows | two tables; the second header heads the second |
 | EX10 | 10 pt headings 25 pt apart around a 9 pt table whose rows are 15 pt apart | the table's header and rows stay apart |
+| EX18 | four value rows, then CG4's pair: `Label \| 0.10 \| 0.20`, and `Other \| $1,000 per month` bridging those two values | a table of the four rows and `Label`; `Other` is text, with one `table_left_as_text` on the page |
+| EX19 | 200 value rows ending in CG4's pair | a table of 201 rows, in at most 4 log2(200) attempts to grid |
+| EX20 | tables of 1,000 and 3,000 value rows | the longer costs less than 4 times the shorter (linear work triples; quadratic grows ninefold) |
 
 ---
 
@@ -206,7 +215,11 @@ In each size run:
     wide (narrower gaps are word spacing, not column space); a row with no blank abstains;
   - the candidates are the corridor's midpoint and the midpoint of every blank;
   - a candidate scores +1 for each row with a blank that contains it, and −1 for each row whose blanks
-    all miss it; the best score wins, and a tie goes to the candidate farthest from any word.
+    all miss it; the best score wins, and a tie goes to the candidate farthest from any word, then to
+    the first candidate.
+
+  Scores are counted by bisection over the sorted blank ends and word edges, so a table of n rows costs
+  n log n, not n²; CB4 checks the result against scoring every candidate on every row.
 
   So a long label in a value-free row (`Securities in the uncleared market …`) stays in its column, a
   header's own column break wins inside a wide data corridor, and a spanning header whose only blanks are
@@ -220,6 +233,7 @@ In each size run:
 | CB1 | value rows `a) Poster \| - \| 1.00 bp \| -` and `b) Aggressor \| CHF 0.50 \| 0.55 bp \| -` | 4 columns |
 | CB2 | a value-free row whose label reaches 20 pt into the corridor | the boundary sits past the label, and the label stays in column 0 |
 | CB3 | a header word centred across a corridor, with no blank in every row | the boundary at the corridor's midpoint; the word's cell spans both columns |
+| CB4 | any rows of words and any corridor (property) | the same boundary as scoring every candidate against every row and every word edge |
 
 ---
 
@@ -287,7 +301,7 @@ and assembly places corridor tables among the page's blocks exactly as ruled tab
 
 ## 8 · Acceptance
 
-- [ ] VP1–VP4, RW1–RW18, EX1–EX17, CB1–CB3, CG1–CG9, NT1–NT4, and CP1–CP5 pass.
+- [ ] VP1–VP4, RW1–RW18, EX1–EX20, CB1–CB4, CG1–CG9, NT1–NT4, and CP1–CP5 pass.
 - [ ] The seven fee schedules read without error; SIX, LSE, and Euronext gain their unruled tables, and
       a sample of them, rendered in the inspector, reads as the page prints.
 - [ ] Every M0, M1, and M2a case still passes.

@@ -63,7 +63,8 @@ Shipped so far (M0, M1, and M2a):
 - **Unruled tables from whitespace.** Tables set without column rules (SIX, LSE, Euronext) come from
   the whitespace between the value rows' cells, which stays put however a column is aligned. Every row
   votes on where each boundary sits, wrapped lines join their row, a drawn row rule ends a row, and two
-  values never share a cell.
+  values never share a cell: rows that could only be read by fusing two values stay text, with a
+  `table_left_as_text` warning.
 - **Markdown and an HTML inspector.** The inspector draws every block over its rendered page, for
   looking at a reading rather than trusting it.
 - **The full output contract,** `inkgrid.document/1`, with its invariants enforced: every word owned

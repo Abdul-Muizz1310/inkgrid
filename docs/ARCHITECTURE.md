@@ -93,10 +93,11 @@ PyMuPDF is not thread-safe, so parallelize across processes.
    in. A word belongs to the cell whose half-open rectangle holds its centre, so the claim is a
    partition. A grid is a table only with two rows, two columns, and two cells holding words.
    After layout, **unruled tables** claim theirs ([`specs/07-unruled-tables.md`](specs/07-unruled-tables.md)):
-   each run of stacked regions is split by type size, lines fold into rows by pitch (a drawn rule
-   always ends a row), columns come from the value rows' pieces, every row votes on the boundaries,
-   and cells are cut at the boundaries, never holding two values. The lines no table takes go back
-   to prose.
+   each run of stacked regions is split by type size, lines fold into rows anchored on their value
+   lines (a drawn rule always ends a row), columns come from the value rows' pieces, every row votes
+   on the boundaries, and cells are cut at the boundaries, never holding two values. A table ends
+   before the rows that would fuse two values; rows that read as a table but that no grid holds
+   stay text, with `table_left_as_text`. The lines no table takes go back to prose.
 3. **Prose** (per page). A paragraph gap, a size or weight change, or a bullet or enumerator starts
    a block. The paragraph gap is 1.75 x the line gap of the text's size: the lower quartile of the
    document's line-to-line gaps at that size, clamped at 0 because MuPDF's line boxes overlap at

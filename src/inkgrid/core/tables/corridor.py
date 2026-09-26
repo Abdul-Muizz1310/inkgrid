@@ -23,7 +23,7 @@ from inkgrid.core.tables.proto import (
 )
 from inkgrid.core.tables.shape import GridShape, ShapeCell
 from inkgrid.model.config import Profile
-from inkgrid.model.findings import Finding
+from inkgrid.model.findings import Finding, FindingCode
 from inkgrid.model.geometry import Rect, Rotation
 from inkgrid.model.page import Rule, Word
 
@@ -348,16 +348,24 @@ def is_value_row(row: Row) -> bool:
     return len(row.pieces) >= MIN_PIECES and any(is_value_piece(p.words) for p in row.pieces[1:])
 
 
-def columns(rows: Sequence[Row]) -> tuple[Span, ...]:
-    """The value rows' piece extents, merged where they overlap: the table's columns."""
-    spans = sorted((p.x0, p.x1) for row in rows if is_value_row(row) for p in row.pieces)
+def _merged(spans: Sequence[Span], row: Row) -> tuple[Span, ...]:
+    """The columns `spans` with a value row's pieces merged in where they overlap."""
     merged: list[list[float]] = []
-    for x0, x1 in spans:
+    for x0, x1 in sorted([*spans, *((p.x0, p.x1) for p in row.pieces)]):
         if merged and x0 <= merged[-1][1]:
             merged[-1][1] = max(merged[-1][1], x1)
         else:
             merged.append([x0, x1])
     return tuple((a, b) for a, b in merged)
+
+
+def columns(rows: Sequence[Row]) -> tuple[Span, ...]:
+    """The value rows' piece extents, merged where they overlap: the table's columns."""
+    spans: tuple[Span, ...] = ()
+    for row in rows:
+        if is_value_row(row):
+            spans = _merged(spans, row)
+    return spans
 
 
 def _blanks(row: Row, lo: float, hi: float) -> list[Span]:
@@ -375,16 +383,37 @@ def _blanks(row: Row, lo: float, hi: float) -> list[Span]:
     return [(a, b) for a, b in out if b - a >= MIN_BLANK_EM * row.size]
 
 
+def _joined(blanks: Sequence[Span]) -> list[Span]:
+    """A row's blanks with touching ones joined, so no point lies in two of them."""
+    out: list[Span] = []
+    for a, b in blanks:
+        if out and a <= out[-1][1]:
+            out[-1] = (out[-1][0], max(out[-1][1], b))
+        else:
+            out.append((a, b))
+    return out
+
+
 def _boundary(lo: float, hi: float, rows: Sequence[Row]) -> float:
-    """Where the rows vote the boundary inside the corridor [lo, hi] (spec 07 section 4)."""
+    """Where the rows vote the boundary inside the corridor [lo, hi] (spec 07 section 4).
+
+    A candidate's votes are the rows whose blanks hold it less the rows whose blanks do not, and
+    its clearance is its distance to the nearest word edge; both are counted by bisection, so a
+    long table costs n log n, not n squared.
+    """
     blanks = [_blanks(row, lo, hi) for row in rows]
-    candidates = [(lo + hi) / 2, *((a + b) / 2 for row in blanks for a, b in row)]
-    edges = [e for row in rows for w in row.words for e in (w.bbox.x0, w.bbox.x1)]
+    candidates = dict.fromkeys([(lo + hi) / 2, *((a + b) / 2 for row in blanks for a, b in row)])
+    spans = [span for row in blanks for span in _joined(row)]
+    starts = sorted(a for a, _ in spans)
+    ends = sorted(b for _, b in spans)
+    voters = sum(1 for row in blanks if row)
+    edges = sorted(e for row in rows for w in row.words for e in (w.bbox.x0, w.bbox.x1))
 
     def score(x: float) -> tuple[int, float]:
-        votes = sum(1 if any(a <= x <= b for a, b in row) else -1 for row in blanks if row)
-        clearance = min((abs(x - e) for e in edges), default=0.0)
-        return votes, clearance
+        holding = bisect.bisect_right(starts, x) - bisect.bisect_left(ends, x)
+        at = bisect.bisect_left(edges, x)
+        clearance = min((abs(x - e) for e in edges[max(at - 1, 0) : at + 1]), default=0.0)
+        return 2 * holding - voters, clearance
 
     return max(candidates, key=score)
 
@@ -554,15 +583,23 @@ def _size_runs(lines: Sequence[Line], profile: Profile) -> list[list[Line]]:
     return runs
 
 
-def _extent(run: Sequence[Row], start: int, first: int) -> tuple[int, int, tuple[Span, ...]]:
-    """The rows (lo, hi) of the table whose first value row is `first`, and its columns."""
-    members = [first]
+def _extent(
+    run: Sequence[Row], start: int, first: int, take: int
+) -> tuple[int, int, tuple[Span, ...], int]:
+    """The rows (lo, hi) of the table whose first value row is `first`, and its columns.
+
+    It takes at most `take` value rows, and says how many it took.
+    """
+    taken = 1
     last = first
+    spans = _merged((), run[first])
     tol = 0.5 * run[first].size
     for k in range(first + 1, len(run)):
+        if taken == take:
+            break
         if not is_value_row(run[k]):
             continue
-        between = [run[j] for j in range(last + 1, k)]
+        between = run[last + 1 : k]
         # A row of several pieces holding no value at all (not even `Free` or `-`) before more
         # values is the next table's column header.
         if any(
@@ -570,13 +607,10 @@ def _extent(run: Sequence[Row], start: int, first: int) -> tuple[int, int, tuple
             for row in between
         ):
             break
-        spans = columns([run[j] for j in [*members, k]])
-        if all(_fits(row, spans, tol) for row in between):
-            members.append(k)
-            last = k
-        else:
+        grown = _merged(spans, run[k])
+        if not all(_fits(row, grown, tol) for row in between):
             break
-    spans = columns([run[j] for j in members])
+        taken, last, spans = taken + 1, k, grown
     hi = last
     while hi + 1 < len(run) and _side_by_side(run[hi + 1]):
         below = run[hi + 1]
@@ -592,26 +626,91 @@ def _extent(run: Sequence[Row], start: int, first: int) -> tuple[int, int, tuple
         if _has_value_piece(above) or not _fits(above, spans, tol):
             break
         lo -= 1
-    return lo, hi, spans
+    return lo, hi, spans, taken
+
+
+Found = tuple[int, int, ProtoTable]  # a table's first and last rows in its run, and the table
+
+
+def _grown(
+    run: Sequence[Row], start: int, first: int, profile: Profile, *, page: int, frame: Rotation
+) -> tuple[Found | None, tuple[int, int] | None]:
+    """The table from `first` with the most value rows that grid, and its extent if refused.
+
+    The whole extent is tried first. When it is refused, value rows are taken 1, 2, 4, ... while
+    the rows make a grid, then halved back between the last count that did and the first that did
+    not (spec 07 section 3 item 7): a refusal costs a few attempts, not one per row. An extent is
+    refused when it reads as a table (2 rows, 2 columns) but no grid holds it safely.
+    """
+    best: Found | None = None
+
+    def attempt(take: int) -> tuple[int, tuple[int, int] | None]:
+        nonlocal best
+        lo, hi, spans, taken = _extent(run, start, first, take)
+        table = corridor_table(run[lo : hi + 1], spans, profile, page=page, frame=frame)
+        if table is not None:
+            best = (lo, hi, table)
+        elif len(spans) >= MIN_COLUMNS and hi - lo + 1 >= MIN_ROWS:
+            return taken, (lo, hi)
+        return taken, None
+
+    whole, refused = attempt(len(run))
+    if refused is None:
+        return best, None
+    good, bad, take = 0, whole, 1
+    while take < bad:
+        taken, wide = attempt(take)
+        if wide is not None:
+            bad = taken
+            break
+        good, take = taken, 2 * take
+    while bad - good > 1:
+        mid = (good + bad) // 2
+        if attempt(mid)[1] is None:
+            good = mid
+        else:
+            bad = mid
+    return best, refused
 
 
 def _run_tables(
     run: Sequence[Row], profile: Profile, *, page: int, frame: Rotation
-) -> list[tuple[int, int, ProtoTable]]:
-    """Every table in one size run, as (first row, last row, table)."""
-    found: list[tuple[int, int, ProtoTable]] = []
+) -> tuple[list[Found], list[list[int]]]:
+    """Every table in one size run, and the runs of rows that read as a table but are in none."""
+    found: list[Found] = []
+    refused: set[int] = set()
     start = 0
     while True:
         first = next((k for k in range(start, len(run)) if is_value_row(run[k])), None)
         if first is None:
-            return found
-        lo, hi, spans = _extent(run, start, first)
-        table = corridor_table(run[lo : hi + 1], spans, profile, page=page, frame=frame)
-        if table is None:
+            break
+        best, wide = _grown(run, start, first, profile, page=page, frame=frame)
+        if wide is not None:
+            refused.update(range(wide[0], wide[1] + 1))
+        if best is None:
             start = first + 1
             continue
-        found.append((lo, hi, table))
-        start = hi + 1
+        found.append(best)
+        start = best[1] + 1
+    claimed = {k for lo, hi, _ in found for k in range(lo, hi + 1)}
+    stretches: list[list[int]] = []
+    for k in sorted(refused - claimed):
+        if stretches and stretches[-1][-1] == k - 1:
+            stretches[-1].append(k)
+        else:
+            stretches.append([k])
+    return found, stretches
+
+
+def _left_as_text(rows: Sequence[Row], page: int) -> Finding:
+    """The warning for rows that read as a table but that no grid holds (never silent, G4)."""
+    n = len(rows)
+    first = " ".join(w.text for w in rows[0].lines[0].words)
+    detail = (
+        f"{n} row{'s' if n > 1 else ''} of a table left as text, from `{first[:60]}`: no grid holds"
+        f" {'them' if n > 1 else 'it'} without fusing two values or two rows"
+    )
+    return Finding.of(FindingCode.TABLE_LEFT_AS_TEXT, detail, page=page)
 
 
 def _leftover(group: Sequence[Region], claimed: set[int]) -> list[Region]:
@@ -657,10 +756,12 @@ def corridor_tables(
         # Fold each size run on its own: the headings' pitch must not set the table's.
         for lines in _size_runs([line for region in group for line in region.lines], profile):
             run = fold_rows(lines, profile, rules=rules)
-            for lo, hi, table in _run_tables(run, profile, page=page, frame=frame):
+            found, left = _run_tables(run, profile, page=page, frame=frame)
+            for lo, hi, table in found:
                 tables.append(table)
                 findings.extend(missing_header(table))
                 claimed |= {id(line) for row in run[lo : hi + 1] for line in row.lines}
+            findings.extend(_left_as_text([run[k] for k in stretch], page) for stretch in left)
         out.extend(_leftover(group, claimed) if claimed else group)
         i = j
     return CorridorStage(tuple(tables), tuple(out), tuple(findings))

@@ -105,8 +105,8 @@ PyMuPDF is not thread-safe, so parallelize across processes.
    is never broken by its gap. Each block is then typed as footnote, heading,
    list item, or paragraph, in that order.
    Then **glossaries and note lists** ([`specs/08-notes-and-glossaries.md`](specs/08-notes-and-glossaries.md)),
-   document-wide: a definitions heading opens a scope that runs to the next heading of its level,
-   across pages. A paragraph in it that opens with a term (quoted, bold, or hanging) becomes a
+   document-wide: a definitions heading opens a scope that runs, across pages, to the next heading
+   of the same or a higher level. A paragraph in it that opens with a term (quoted, bold, or hanging) becomes a
    definition; outside it only a quoted term with a defining verb does. A two-column grid of labels or
    terms beside prose becomes footnote and definition blocks in the table's place, its words keeping
    their stage.

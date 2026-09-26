@@ -16,10 +16,10 @@
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue"></a>
 </p>
 
-> **Status: pre-alpha (milestone M2a of M6).** Today inkgrid reads a PDF into a validated `Document`:
+> **Status: pre-alpha (milestone M2b of M6).** Today inkgrid reads a PDF into a validated `Document`:
 > every word in exactly one block, in reading order, with running headers and footers set apart, and
-> ruled tables as explicit cell grids. Unruled tables arrive in M2b, note lists and glossaries in M2c,
-> footnote links and table continuation in M3, and independent verification in M4. The roadmap is in
+> tables, ruled or not, as explicit cell grids. Note lists and glossaries arrive in M2c, footnote links
+> and table continuation in M3, and independent verification in M4. The roadmap is in
 > [`docs/specs/00-design.md`](docs/specs/00-design.md) § 14.
 
 ## What it does
@@ -60,6 +60,10 @@ Shipped so far (M0, M1, and M2a):
   around columns of running text is not a table.
   Tables export as GFM Markdown, HTML with `colspan`/`rowspan`, and dense rows that flag every
   repeated value.
+- **Unruled tables from whitespace.** Tables set without column rules (SIX, LSE, Euronext) come from
+  the whitespace between the value rows' cells, which stays put however a column is aligned. Every row
+  votes on where each boundary sits, wrapped lines join their row, a drawn row rule ends a row, and two
+  values never share a cell.
 - **Markdown and an HTML inspector.** The inspector draws every block over its rendered page, for
   looking at a reading rather than trusting it.
 - **The full output contract,** `inkgrid.document/1`, with its invariants enforced: every word owned
@@ -72,8 +76,11 @@ Shipped so far (M0, M1, and M2a):
   white text on a white page, and text too small to read all read as visible. The independent
   verifier (M4) is where those checks belong.
 - **Left-to-right scripts only.** Right-to-left and bidirectional text is not reordered in v0.1.
-- **Only ruled tables so far.** A table drawn without rules (whitespace columns, or cell fills alone)
-  reads as rows of text until M2b.
+- **Unruled tables have no row spans.** A label centred beside several rows splits across them
+  (`Charge per` / `executed order`), and a label whose value is centred beside it needs the rows to be
+  set apart by more than the label's own line pitch.
+- **A table needs a value.** A table of text alone with no ruled grid reads as paragraphs, and a
+  caption set directly above a table can join it as its first row.
 - **Lists set in the Symbol font read as paragraphs.** Their bullet is a private-use character, which
   the reader drops as invisible.
 - **Untrusted PDFs belong in a separate process.** MuPDF parses in memory, and a library cannot bound

@@ -8,7 +8,7 @@ a box around a paragraph or a furniture label is not a table.
 from collections.abc import Sequence
 from dataclasses import dataclass
 
-from inkgrid.core.lexicon import is_value
+from inkgrid.core.lexicon import is_strong_value, is_value
 from inkgrid.core.lines import Line, group_lines
 from inkgrid.core.tables.shape import GridShape, ShapeCell, grid_shape
 from inkgrid.model.config import Profile
@@ -65,8 +65,10 @@ class TableStage:
     findings: tuple[Finding, ...]
 
 
-def _text(cell: ProtoCell) -> str:
-    return " ".join(w.text for w in cell.words)
+def _is_value_cell(cell: ProtoCell) -> bool:
+    """A value cell, reading past note marks (superscripts) and qualifiers around the value."""
+    tokens = [w.text for w in cell.words if not w.superscript]
+    return is_value(" ".join(tokens)) or any(is_strong_value(t) for t in tokens)
 
 
 def _roles(cells: Sequence[ProtoCell], n_rows: int) -> tuple[int, tuple[int, ...]]:
@@ -74,7 +76,7 @@ def _roles(cells: Sequence[ProtoCell], n_rows: int) -> tuple[int, tuple[int, ...
     rows: list[tuple[bool, bool, bool]] = []  # (has words, has a value, full width)
     for r in range(n_rows):
         holding = [c for c in cells if c.cell.row == r and c.words]
-        values = any(is_value(_text(c)) for c in holding)
+        values = any(_is_value_cell(c) for c in holding)
         rows.append((bool(holding), values, len(holding) == 1 and holding[0].cell.col == 0))
     banners = tuple(r for r, (has, values, full) in enumerate(rows) if has and full and not values)
     header, columns = 0, False

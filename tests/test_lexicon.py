@@ -1,6 +1,13 @@
 import pytest
 
-from inkgrid.core.lexicon import enumerator, is_bullet, is_value, note_label, section_number
+from inkgrid.core.lexicon import (
+    enumerator,
+    is_bullet,
+    is_strong_value,
+    is_value,
+    note_label,
+    section_number,
+)
 from inkgrid.model.config import Lexicon
 
 LEXICON = Lexicon()
@@ -74,6 +81,8 @@ def test_VL1_numbers_are_values(text: str) -> None:
         "0.45bp*",
         "12%",
         "CHF 25",
+        "$575/port/month",
+        "0.10/contract",
     ],
 )
 def test_VL2_money_and_units_are_values(text: str) -> None:
@@ -92,3 +101,25 @@ def test_VL3_negatives_ranges_and_placeholders_are_values(text: str) -> None:
 )
 def test_VL4_labels_are_not_values(text: str) -> None:
     assert not is_value(text)
+
+
+@pytest.mark.parametrize(
+    ("token", "strong"),
+    [
+        ("$0.00", True),
+        ("0.0030", True),
+        ("5,000", True),
+        ("12%", True),
+        ("0.25bp", True),
+        ("R0.00", True),
+        ("1", False),
+        ("12", False),
+        ("(47)", False),
+        ("\u2014", False),
+        ("n/a", False),
+        ("2026", False),
+        ("1-5", False),
+    ],
+)
+def test_VL5_strong_values_carry_a_unit_decimal_or_grouping(token: str, strong: bool) -> None:
+    assert is_strong_value(token) is strong

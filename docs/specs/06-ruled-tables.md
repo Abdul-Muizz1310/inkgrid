@@ -51,7 +51,8 @@ decides structure. The grammar, matched against the whole text after trimming:
   optional decimal part. `1,234.5`, `1.234,5`, `1 234`, `1'234`, `0.40`, `12`.
 - **value:** a number with, in order, optional pieces around it: a currency before it (a symbol from
   `$ € £ ¥ ₹ ₣ R`, or a three-letter upper-case code), a magnitude after it (`k`, `m`, `mn`, `bn`, `K`, `M`,
-  `B`), a unit (`%`, `bp`, `bps`, `‰`, or a currency symbol or code), and trailing note marks (`*`, `†`, `‡`).
+  `B`), a unit (`%`, `bp`, `bps`, `‰`, or a currency symbol or code), a per-unit suffix (`/port/month`,
+  `/contract`), and trailing note marks (`*`, `†`, `‡`).
   One space may separate a currency or unit from the number. `$0.40`, `R 0.00`, `0.13 EUR`, `20,000 €`,
   `€1.4bn`, `-0.15bp`, `0.45bp*`, `12%`.
 - **parenthesized:** a value inside `(` `)`, the accounting negative: `(47)`, `($0.10)`.
@@ -59,12 +60,17 @@ decides structure. The grammar, matched against the whole text after trimming:
 - **placeholder:** exactly `—`, `–`, `-`, `n/a`, `N/A`, `nil`, or `free` in any case.
 - **Not values:** a bare year from 1900 to 2099 (labels such as `2026` head columns), and anything with a
   letter beyond the pieces above (`Tier 1`, `Monthly`, `0.10 per contract`).
+- **Strong values.** `is_strong_value(token)` is a value with a currency, a unit, a magnitude, a decimal part,
+  or thousands grouping: `$0.00`, `0.0030`, `5,000`, `12%`, `0.25bp`. A bare integer (`1`, `12`), a
+  parenthesized one (`(47)`, a note reference), a placeholder, and an integer range are weak: header cells
+  hold `Tier 1`, `Fee (47)`, and `Fee - Tier`.
 
 | # | case | expected |
 |---|---|---|
 | VL1 | `0.40`, `1,234.5`, `1.234,5`, `1 234`, `1'234`, `−` + `0.10`, `12` | values |
-| VL2 | `$0.40`, `R 0.00`, `0.13 EUR`, `20,000 €`, `€1.4bn`, `-0.15bp`, `0.45bp*`, `12%`, `CHF 25` | values |
+| VL2 | `$0.40`, `R 0.00`, `0.13 EUR`, `20,000 €`, `€1.4bn`, `-0.15bp`, `0.45bp*`, `12%`, `CHF 25`, `$575/port/month`, `0.10/contract` | values |
 | VL3 | `(47)`, `($0.10)`, `0.10 - 0.20`, `1–5`, `—`, `n/a`, `Free` | values |
+| VL5 | `is_strong_value` on `$0.00`, `0.0030`, `5,000`, `12%`, `0.25bp`, `R0.00`; on `1`, `12`, `(47)`, `—`, `n/a`, `2026`, `1-5` | strong; weak |
 | VL4 | `2026`, `Tier 1`, `Monthly`, `0.10 per contract`, `ZAR (Ex VAT)`, `` (empty), `1.2.3` | not values |
 
 ---
@@ -166,8 +172,10 @@ furniture). It returns the proto tables, the ids of the words they claim, and fi
 3. **Cell text.** A cell's words form lines (`group_lines`), read top to bottom and left to right, and the
    text rule of `04` § 6 applies within the cell: one space between words and lines, and recorded hyphen
    joins.
-4. **Header rows** are the leading run of rows that each hold at least one word and no value cell
-   (`is_value` of the cell's text). A full-width row, whose only cell with words is its first, ends the run
+4. **Header rows** are the leading run of rows that each hold at least one word and no value cell. A cell
+   is a value cell when its text without its superscript words `is_value`, or when one of those words
+   `is_strong_value`: a fee with a note mark (`$0.0030` and a raised `1`), a code (`{CK} $0.00`), or a
+   qualifier (`$5,000 per month`) is still a value. A full-width row, whose only cell with words is its first, ends the run
    once a row with several cells has been counted: a caption above the column headers belongs to the header,
    a section banner below them does not. A row's cells are the cells that start in it. When the run would
    cover every row, the table has no value rows to tell headers from: it has 1 header row when the first
@@ -191,6 +199,8 @@ furniture). It returns the proto tables, the ids of the words they claim, and fi
 | LT6 | a table whose first row holds values | header rows 0; `header_not_found` |
 | LT7 | a word straddling a drawn column rule by 3 pt | `word_crosses_rule` with count 1 |
 | LT8 | a page Camelot read that returned no grid | `lattice_disagrees` on that page |
+| LT11 | a first data row whose fee `$0.0030` carries a superscript `1` | header rows 1 |
+| LT12 | header `Tier 1 \| Fee (47)`, then data `{CK} $0.00 \| $5,000 per month` | header rows 1 |
 | LT10 | a table of text only, with a bold first row; the same with a regular first row | header rows 1; header rows 0 |
 | LT9 | two lines of text in one cell, the first ending `execu-` and the second `tions` | cell text `executions`, one join |
 
@@ -281,6 +291,6 @@ before testing it against the cell rectangle.
 
 ## 9 · Acceptance
 
-- [ ] VL1–VL4, LC1, CM1–CM9, LP1, GS1–GS3, LT1–LT10, TP1–TP6, EX1–EX5, and AP1–AP6 pass.
+- [ ] VL1–VL5, LC1, CM1–CM9, LP1, GS1–GS3, LT1–LT12, TP1–TP6, EX1–EX5, and AP1–AP6 pass.
 - [ ] The seven fee schedules read without error, with Camelot's tables claimed as in § 0.
 - [ ] Every M0 and M1 case still passes.

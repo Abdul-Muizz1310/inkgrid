@@ -7,7 +7,7 @@ from inkgrid.model.config import Profile
 from inkgrid.model.findings import FindingCode
 from inkgrid.model.geometry import Rect
 from inkgrid.model.page import Word
-from layout_builder import CHAR_EM, P, place
+from layout_builder import CHAR_EM, P, place, text_line
 from model_builders import mk_page
 
 PROFILE = Profile()
@@ -186,4 +186,34 @@ def test_LT10_a_table_of_text_has_a_header_only_when_bold() -> None:
         frame=0,
         read=True,
     )
+    assert stage.tables[0].header_rows == 1
+
+
+def test_LT11_a_note_mark_on_a_fee_does_not_make_it_a_header() -> None:
+    cells = {
+        "Service": (72, 100, 222, 120),
+        "Fee": (222, 100, 372, 120),
+        "Adding": (72, 120, 222, 140),
+        "$0.0030": (222, 120, 372, 140),
+    }
+    mark = P("1", 330, 122, size=5, superscript=True)
+    (table,) = run(cells, extra=[mark])[0].tables
+    assert table.header_rows == 1
+
+
+def test_LT12_qualified_fees_are_values_and_numbered_labels_are_not() -> None:
+    words = [
+        *text_line(["Tier", "1"], x=80, y=105, size=9),
+        *text_line(["Fee", "(47)"], x=230, y=105, size=9),
+        *text_line(["{CK}", "$0.00"], x=80, y=125, size=9),
+        *text_line(["$5,000", "per", "month"], x=230, y=125, size=9),
+    ]
+    grid = [
+        Rect(72, 100, 222, 120),
+        Rect(222, 100, 372, 120),
+        Rect(72, 120, 222, 140),
+        Rect(222, 120, 372, 140),
+    ]
+    placed = place(words)
+    stage = lattice_tables(mk_page(words=placed), [grid], placed, PROFILE, frame=0, read=True)
     assert stage.tables[0].header_rows == 1

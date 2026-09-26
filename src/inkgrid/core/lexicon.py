@@ -15,10 +15,17 @@ _SYMBOL = "[$\u20ac\u00a3\u00a5\u20b9\u20a3R]"
 _CURRENCY = rf"(?:{_SYMBOL}|[A-Z]{{3}})"
 _MAGNITUDE = "(?:bn|mn|k|m|K|M|B)"
 _UNIT = rf"(?:%|bps|bp|\u2030|{_SYMBOL}|[A-Z]{{3}})"
-_VALUE = rf"{_SIGN}?(?:{_CURRENCY} ?)?{_NUMBER}{_MAGNITUDE}?(?: ?{_UNIT})?[*\u2020\u2021]*"
+_PER_UNIT = "(?:/[A-Za-z]+)*"
+_VALUE = (
+    rf"{_SIGN}?(?:{_CURRENCY} ?)?{_NUMBER}{_MAGNITUDE}?(?: ?{_UNIT})?{_PER_UNIT}[*\u2020\u2021]*"
+)
 VALUE = re.compile(
     rf"{_VALUE}|\( ?{_VALUE} ?\)|{_VALUE} ?(?:-|\u2013|to) ?{_VALUE}"
     "|\u2014|\u2013|-|(?i:n/a|nil|free)"
+)
+# A value no label looks like: a currency, a unit, a magnitude, a decimal part, or grouping.
+STRONG_MARK = re.compile(
+    rf"{_SYMBOL}|[A-Z]{{3}}|%|bps?|\u2030|\d[.,'\u00a0\u202f]\d|\d{_MAGNITUDE}(?![A-Za-z])"
 )
 NOTE_MARK = re.compile("\\d{1,3}|[*\u2020\u2021\u00a7\u00b6#]{1,3}")
 
@@ -56,3 +63,12 @@ def is_value(text: str) -> bool:
     if YEAR.fullmatch(text):
         return False
     return VALUE.fullmatch(text) is not None
+
+
+def is_strong_value(token: str) -> bool:
+    """True for a value no label looks like: money, a unit, a decimal, or a grouped number.
+
+    Bare and parenthesized integers, placeholders, and integer ranges are weak: header cells hold
+    `Tier 1`, `Fee (47)`, and `Fee - Tier`.
+    """
+    return is_value(token) and STRONG_MARK.search(token) is not None

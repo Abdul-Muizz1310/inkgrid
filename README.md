@@ -154,9 +154,10 @@ the output, so its independence is structural. Details:
 
 Python 3.12+, PyMuPDF 1.28 (text layer and drawings), Pydantic v2 (frozen, validated models), uv
 with the `uv_build` backend, Ruff, mypy `--strict`, pytest 9 with Hypothesis, and GitHub Actions.
-Camelot 2.0 reads ruled tables (`lattice="combined"`, `"vector"`, or `"raster"`; `vector` measured
-about 5x faster with the same grids on our fee schedules). From M4, pypdfium2 powers the independent
-verifier.
+Camelot 2.0 reads ruled tables. The default engine is `lattice="combined"`, because it never fused or
+split a cell across 42 measured fee schedules. `"vector"` is about twice as fast end to end, but it
+malformed cells on 3% of their ruled pages, mostly tables drawn as Word draws borders. `"raster"` is
+also available. From M4, pypdfium2 powers the independent verifier.
 
 ## Deployment
 

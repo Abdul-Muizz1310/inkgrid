@@ -24,12 +24,22 @@ table exports of § 7. M2 is split in three: **M2a** ruled tables (this spec), *
 Camelot 2.0.0 ran over the seven M1 fee schedules (304 pages) with each engine; the record is
 `knowledge/research/RR-0015-camelot-engines-on-fee-schedules.md`.
 
-- **Engines.** `vector` matched `combined` on every page's table shapes and, wherever their cell edges
-  differed, was right or `combined` was wrong (a banner split in four, a header merged, a cover page and a
-  fill-only table read as grids). `vector` is about 5x faster (Cboe: 1.8 s against 8.2 s for 24 pages).
-  `raster` alone found 25 of PHLX's 50 tables.
-- **The default stays `combined`**, because DR-0022 accepted it and only the owner can supersede that
-  decision. `vector` becomes a third allowed setting, and the measurement goes to the owner.
+- **Engines, first pass.** On these seven documents `vector` matched `combined` on every page's table
+  shapes, looked right where their cell edges differed, and was about 5x faster (Cboe: 1.8 s against
+  8.2 s for 24 pages). `raster` alone found 25 of PHLX's 50 tables.
+- **Engines, measured end to end (M2b; `knowledge/research/RR-0016-lattice-engines-end-to-end.md`).**
+  The whole pipeline ran with each engine over 42 fee schedules (974 pages, 502 of them ruled). The
+  documents agreed cell for cell on 467 ruled pages. The other 35 were each rendered with both grids and
+  judged by eye: `combined` was right on 25, `vector` on 9, and 1 was ambiguous. `vector` malformed data
+  on 15 pages: two values, or a header and a value, in one cell (7); one cell's words split across two
+  cells (6); a value stretched over the wrong rows (2). It also left 3 header rows outside their tables,
+  missed 5 tables, and built a table from a cover page's invisible rules. `combined` malformed none.
+  Its own faults were 4 tables it missed (3 of which the corridor stage read with the same cells) and
+  empty rows or columns added at fill and image edges. On 30 synthetic drawing styles the two agreed on 27;
+  on the other 3, `combined` added empty rows and columns.
+- **The default stays `combined`**, as DR-0022 accepted, and the measurement confirms it: accuracy, not
+  speed, decides, and `vector` fuses and splits cells on tables drawn as Word draws borders. AP2 pins the
+  default. `vector` stays a setting for speed on documents known to draw plain strokes.
 - **Pages.** "At least 2 horizontal and 2 vertical rules" selected exactly the pages Camelot found grids on,
   for 6 of 7 documents.
 - **Frames.** SIX has no ruled tables. Its only grid, on all 70 pages, is a 3 x 3 box around a furniture

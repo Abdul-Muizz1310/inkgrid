@@ -34,7 +34,7 @@ cell grids, with merged cells as spans and headers carried across page breaks, m
 Links record the relationships the page prints: footnote calls to their notes, and tables that
 continue onto the next page.
 
-Shipped so far (M0, M1, and M2a):
+Shipped so far (M0, M1, M2a, and M2b):
 
 - **Words rebuilt from characters.** A superscript marker printed tight against a value stays its own
   word (`$0.40` and `2`, never `$0.402`). A font change in the middle of a word keeps it one word.
@@ -82,6 +82,10 @@ Shipped so far (M0, M1, and M2a):
   set apart by more than the label's own line pitch.
 - **A table needs a value.** A table of text alone with no ruled grid reads as paragraphs, and a
   caption set directly above a table can join it as its first row.
+- **A table beside a prose column can come apart.** Lines are grouped across the whole page before
+  columns are found, so on a two-column page a prose line level with two table rows can chain them
+  into one line. Those rows read as interleaved text, and the unruled stage reports them with
+  `table_left_as_text`.
 - **Lists set in the Symbol font read as paragraphs.** Their bullet is a private-use character, which
   the reader drops as invisible.
 - **Untrusted PDFs belong in a separate process.** MuPDF parses in memory, and a library cannot bound

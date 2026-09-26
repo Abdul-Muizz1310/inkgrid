@@ -56,7 +56,7 @@ def build_document(
         )
         found += stage.findings
         rest = [w for w in words if w.id not in stage.claimed]
-        # Unruled tables come from layout's rows regions; the other lines go back to prose.
+        # Unruled tables come from runs of stacked regions; the other lines go back to prose.
         unruled = corridor_tables(
             layout(rest, profile, body) if rest else (),
             profile,

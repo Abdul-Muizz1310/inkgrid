@@ -76,7 +76,7 @@ pinned by a test.
 MuPDF's console output is silenced around each read and its display settings restored afterwards.
 PyMuPDF is not thread-safe, so parallelize across processes.
 
-## Building a document (M1, M2a)
+## Building a document (M1, M2a, M2b)
 
 `core/pipeline.py` runs the stages in order. Each is a pure function over typed values
 ([`specs/04-text-pipeline.md`](specs/04-text-pipeline.md)):

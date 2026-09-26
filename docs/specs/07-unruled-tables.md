@@ -29,8 +29,9 @@ tables Camelot does not read).
   the fusion L2 forbids, so a line whose value falls in a column that already holds one in its row always
   starts a new row.
 - **Layout's `rows` regions are not tables.** A rows region runs on past a table into the headings and
-  paragraphs below, and one table can straddle two adjacent rows regions. The corridor stage finds
-  tables inside runs of adjacent rows regions.
+  paragraphs below, and one table can straddle two adjacent rows regions. The sketch looked for tables
+  inside runs of adjacent rows regions; the implementation looks inside runs of stacked regions of any
+  kind (§ 3), because a two-row table, or one whose labels read as prose, lands in a prose region.
 - **Result of the sketch:** SIX 100 tables (the prototype measured 121), LSE 8, Euronext 33. By eye, all
   sampled ones are tables; 23 of SIX's are a header row over a single value row.
 - **Not in M2b: the rule-grid fallback** of design § 5.2 (a lattice built from our own vector rules when
@@ -138,7 +139,7 @@ its lines top to bottom; its size is the median size of its words. Rows are anch
 
 ---
 
-## 3 · Table extent (`table_runs`)
+## 3 · Table extent (`corridor_tables`)
 
 A *candidate* is the lines of a maximal run of adjacent regions of one page that stack: each region's first
 line starts below the top of the previous region's last line. Side-by-side prose columns start level, so

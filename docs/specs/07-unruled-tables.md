@@ -75,19 +75,23 @@ its lines top to bottom; its size is the median size of its words. Rows are anch
 - **Every other line of a single piece joins the value row whose value line is nearest its centre**, when
   that distance is at most half the row pitch and at most 1.5 × the median line height, no drawn rule
   lies between them, and the line is bold, or not, as every piece of the value line it lies over is (a
-  line or piece is bold when half its characters are in bold words). A label wraps within its own column, so a value-free line with pieces side by side
-  is a header or a descriptor row and never attaches; and the height cap keeps a caption from joining a
-  value line that sits far away when a run holds only a few, widely spaced value lines. The weight keeps
+  line or piece is bold when half its characters are in bold words). A label wraps within its own
+  column, so a value-free line with pieces side by side is a header, a descriptor row, or the wrap of
+  every cell above (below), and never joins a value line by distance; and the height cap keeps a caption
+  from joining a value line that sits far away when a run holds only a few, widely spaced value lines. The weight keeps
   a bold caption set at ordinary leading over a regular value line (Euronext's `OPTION 2` over
   `Monthly subscription fee €6,000`) a row of its own, while a bold row label in a column of its own
   (Euronext's `REQUESTOR` beside `Total value executed above €100,000: €0`) joins its value row, and so
   does a bold label wrapped onto its value line (`INTERMEDIARY AUTHORISED` / `TO RESPOND €10 per million`).
-- **A one-piece line that wraps the value row above it joins it**, even beyond half a pitch from the value:
-  when its pitch from that row's lowest line is at most 0.8 × the row pitch and 1.5 × the median line height
-  (closer than a row), it continues the row (below), and no drawn rule lies between. A label that wraps twice under a value set on its first line
-  (LSE's `Post trade – not OTBD` / `only***`) stays whole. So a label split around its centred value
-  (LSE), or wrapped onto three lines, joins its value's row, while a header or a banner, farther than half
-  a pitch, stays a row of its own.
+- **A line that wraps the value row above it joins it**, even beyond half a pitch from the value: when
+  its pitch from that row's lowest line is at most 0.8 × the row pitch and 1.5 × the median line height
+  (closer than a row), it continues the row (below), each of its pieces is bold, or not, as every piece
+  of the row it lies under, and no drawn rule lies between. A label that wraps twice under a value set on
+  its first line (LSE's `Post trade – not OTBD` / `only***`) stays whole, and so do cells that wrap
+  together (Euronext's `Total value executed equal` / `to or below €100,000:` beside `0.15 bps,` / `min
+  €2.5 per executed order`); a bold header set close under regular cells stays a row of its own. So a
+  label split around its centred value (LSE), or wrapped onto three lines, joins its value's row, while
+  a header or a banner, farther than half a pitch, stays a row of its own.
 - **A lone value line that wraps a value-free row above it joins that row**: a value row of one line and
   one piece, closer than a row to a line of a row that joined no value (as above), continuing it. So a
   banner's second line `€250,000 (monthly)` stays in its banner (Euronext).
@@ -127,6 +131,8 @@ its lines top to bottom; its size is the median size of its words. Rows are anch
 | RW14 | a bold one-piece caption `OPTION 2` 9 pt above a regular value line `Monthly fee` / `6,000`, in rows 20 pt apart | the caption is a row of its own |
 | RW15 | a bold `REQUESTOR` in a column of its own, 7 pt below a regular value line `Total below` / `1`, in rows 20 pt apart | it joins that value row |
 | RW16 | a bold `INTERMEDIARY AUTHORISED` 8 pt above a line of a bold `TO RESPOND` and a regular `€10 per million` | the label's first line joins that value row |
+| RW17 | a value row `Total value equal` / `0.15 bps,` over a line wrapping both cells, 9 pt below, in rows 20 pt apart | one row of two lines |
+| RW18 | a bold header `Tier` / `Charge` 9 pt under a regular value row, in rows 20 pt apart | the header is a row of its own |
 | RW6 | 9 pt rows at a 12 pt pitch, whose boxes overlap by 0.4 pt, under a bold header | one row each |
 | RW5 | in rows 20 pt apart, `151 – 500` 5 pt above `501 – 1,000` in the same column | two rows |
 
@@ -281,7 +287,7 @@ and assembly places corridor tables among the page's blocks exactly as ruled tab
 
 ## 8 · Acceptance
 
-- [ ] VP1–VP4, RW1–RW16, EX1–EX17, CB1–CB3, CG1–CG9, NT1–NT4, and CP1–CP5 pass.
+- [ ] VP1–VP4, RW1–RW18, EX1–EX17, CB1–CB3, CG1–CG9, NT1–NT4, and CP1–CP5 pass.
 - [ ] The seven fee schedules read without error; SIX, LSE, and Euronext gain their unruled tables, and
       a sample of them, rendered in the inspector, reads as the page prints.
 - [ ] Every M0, M1, and M2a case still passes.

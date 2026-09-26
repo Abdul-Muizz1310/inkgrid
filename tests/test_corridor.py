@@ -662,3 +662,22 @@ def test_RW16_a_bold_label_wrapped_onto_its_value_line_joins_it() -> None:
     value += text_line(["\u20ac10", "per", "million"], x=282, y=168, size=9)  # Euronext p25
     rows = rows_of(value_rows(100, 3) + label + value + value_rows(188, 2))
     assert row_texts(rows)[3] == ["INTERMEDIARY AUTHORISED", "TO RESPOND \u20ac10 per million"]
+
+
+def test_RW17_cells_wrapped_together_join_their_value_row() -> None:
+    row = text_line(["Total", "value", "equal"], x=72, y=160, size=9)
+    row += text_line(["0.15", "bps,"], x=282, y=160, size=9)
+    wrap = text_line(["to", "or", "below", "\u20ac100,000:"], x=72, y=169, size=9)
+    wrap += text_line(["min", "\u20ac2.5", "per", "executed", "order"], x=282, y=169, size=9)
+    rows = rows_of(value_rows(100, 3) + row + wrap + value_rows(180, 2))  # Euronext p37
+    assert row_texts(rows)[3] == [
+        "Total value equal 0.15 bps,",
+        "to or below \u20ac100,000: min \u20ac2.5 per executed order",
+    ]
+
+
+def test_RW18_a_bold_header_under_a_value_row_is_a_row_of_its_own() -> None:
+    header = text_line(["Tier"], x=72, y=149, size=9, bold=True)
+    header += text_line(["Charge"], x=282, y=149, size=9, bold=True)
+    rows = rows_of(value_rows(100, 3) + header + value_rows(160, 2))
+    assert row_texts(rows)[2:4] == [["Row2 0.25"], ["Tier Charge"]]

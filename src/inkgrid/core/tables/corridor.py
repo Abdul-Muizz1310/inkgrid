@@ -120,6 +120,17 @@ def _ruled_between(a: Line, b: Line, rules: Sequence[Rule]) -> bool:
     )
 
 
+def _same_weight(line: Line, row: Sequence[Line], profile: Profile) -> bool:
+    """True when each piece of the line is bold, or not, as every piece of the row it lies under."""
+    theirs = [q for other in row for q in fragments(other, profile)]
+    return all(
+        p.bold == q.bold
+        for p in fragments(line, profile)
+        for q in theirs
+        if p.x0 < q.x1 and q.x0 < p.x1
+    )
+
+
 def _fold_by_pitch(
     lines: Sequence[Line], profile: Profile, rules: Sequence[Rule]
 ) -> list[list[Line]]:
@@ -187,8 +198,7 @@ def _nearest_row(
             anchor = lines[anchors[k]]
             distance = abs(_centre(anchor) - _centre(line))
             nearer = best is None or distance < best[0]
-            under = [p for p in fragments(anchor, profile) if p.x0 < line.x1 and line.x0 < p.x1]
-            alike = all(p.bold == line.bold for p in under)
+            alike = _same_weight(line, [anchor], profile)
             if distance <= reach and nearer and alike and not _ruled_between(anchor, line, rules):
                 best = (distance, owner[anchors[k]])
     return None if best is None else best[1]
@@ -206,7 +216,8 @@ def _wrapped_row(
 ) -> int | None:
     """The value row directly above that this line wraps: close under its last line, continuing it.
 
-    Closer than a row: within 0.8 x the row pitch and 1.5 line heights of the row's last line.
+    Closer than a row: within 0.8 x the row pitch and 1.5 line heights of the row's last line. A
+    wrap is set in the weight of the pieces it lies under: a bold header under regular cells is not.
     """
     above = [g for g, members in enumerate(groups) if all(lines[i].top < line.top for i in members)]
     if not above:
@@ -215,7 +226,8 @@ def _wrapped_row(
     members = [lines[i] for i in groups[row]]
     last = max(members, key=lambda other: other.top)
     close = line.top - last.top <= min(WRAP_PITCH * pitch, HEIGHT_REACH * height)
-    if close and _continues(members, line, profile) and not _ruled_between(last, line, rules):
+    continues = _continues(members, line, profile) and _same_weight(line, members, profile)
+    if close and continues and not _ruled_between(last, line, rules):
         return row
     return None
 
@@ -292,7 +304,7 @@ def fold_rows(
     for i, line in enumerate(lines):
         if valued[i]:
             continue
-        # A label wraps within its column: a line of pieces side by side is a row of its own.
+        # A label wraps within its column: pieces side by side wrap only the row above, by cell.
         single = len(fragments(line, profile)) == 1
         row = (
             _nearest_row(
@@ -301,7 +313,7 @@ def fold_rows(
             if single
             else None
         )
-        if row is None and single:
+        if row is None:
             row = _wrapped_row(
                 line, lines, groups, pitch=pitch, height=height, profile=profile, rules=rules
             )

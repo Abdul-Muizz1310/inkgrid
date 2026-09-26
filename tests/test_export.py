@@ -1,6 +1,7 @@
 import pdf_factory
 from doc_builder import B, C, W, build, line
 from inkgrid.model.document import Table
+from inkgrid.model.export import GridCell, table_html
 from lattice_builder import read_with_tables
 
 BULLET = "\u2022"
@@ -99,6 +100,23 @@ def test_EX2_html_carries_the_spans() -> None:
     assert '<th colspan="2">Rate</th>' in html
     assert '<td rowspan="2">Equity</td>' in html
     assert html.count("<th>") + html.count("<th ") == 2
+
+
+def test_EX6_an_empty_cell_crossing_the_header_is_split_at_it() -> None:
+    cells = [
+        GridCell(0, 0, 1, 1, "Tier"),
+        GridCell(0, 1, 1, 1, "Fee"),
+        GridCell(0, 2, 3, 1, ""),  # empty, spanning the header row and both body rows
+        GridCell(1, 0, 1, 1, "Band"),
+        GridCell(1, 1, 1, 1, "$5"),
+        GridCell(2, 0, 1, 1, "Other"),
+        GridCell(2, 1, 1, 1, "$6"),
+    ]
+    assert table_html(3, 1, (), cells) == (
+        "<table><thead><tr><th>Tier</th><th>Fee</th><th></th></tr></thead>"
+        '<tbody><tr><td>Band</td><td>$5</td><td rowspan="2"></td></tr>'
+        "<tr><td>Other</td><td>$6</td></tr></tbody></table>"
+    )
 
 
 def test_EX3_dense_rows_flag_every_copy() -> None:

@@ -122,7 +122,21 @@ def table_html(
     banner_rows: Sequence[int],
     cells: Sequence[GridCell],
 ) -> str:
-    """A `<table>`: header rows in `<thead>`, spans as `colspan`/`rowspan`, all text escaped."""
+    """A `<table>`: header rows in `<thead>`, spans as `colspan`/`rowspan`, all text escaped.
+
+    A cell that starts in the header and spans into the body (an empty one: the header reaches down
+    past any cell with text) is split at the header's end, since HTML ends a `rowspan` there.
+    """
+    placed: list[GridCell] = []
+    for cell in cells:
+        end = cell.row + cell.row_span
+        if cell.row < header_rows < end:
+            placed.append(
+                GridCell(cell.row, cell.col, header_rows - cell.row, cell.col_span, cell.text)
+            )
+            placed.append(GridCell(header_rows, cell.col, end - header_rows, cell.col_span, ""))
+        else:
+            placed.append(cell)
     parts = ["<table>"]
     for r in range(n_rows):
         if r == 0 and header_rows:
@@ -131,7 +145,7 @@ def table_html(
             parts.append("<tbody>")
         tag = "th" if r < header_rows else "td"
         parts.append('<tr class="banner">' if r in banner_rows else "<tr>")
-        for cell in (c for c in cells if c.row == r):
+        for cell in sorted((c for c in placed if c.row == r), key=lambda c: c.col):
             spans = (f' colspan="{cell.col_span}"' if cell.col_span > 1 else "") + (
                 f' rowspan="{cell.row_span}"' if cell.row_span > 1 else ""
             )

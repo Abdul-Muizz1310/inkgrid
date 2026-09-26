@@ -270,3 +270,18 @@ def test_LT15_the_header_reaches_down_to_its_merged_cells() -> None:
     }
     (table,) = run(cells)[0].tables
     assert table.header_rows == 2
+
+
+def test_LT16_an_empty_cell_spanning_the_body_does_not_make_it_header() -> None:
+    cells = {
+        "Tier": (72, 100, 172, 120),
+        "Fee": (172, 100, 272, 120),
+        "Band": (72, 120, 172, 140),
+        "$5": (172, 120, 272, 140),
+        "Other": (72, 140, 172, 160),
+        "$6": (172, 140, 272, 160),
+    }
+    sliver = Rect(272, 100, 280, 160)  # an empty column past the last, spanning every row (JSE p20)
+    stage, _ = run(cells, grids=[[*(Rect(*b) for b in cells.values()), sliver]])
+    (table,) = stage.tables
+    assert table.header_rows == 1

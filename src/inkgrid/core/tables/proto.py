@@ -85,9 +85,10 @@ def table_roles(cells: Sequence[ProtoCell], n_rows: int) -> tuple[int, tuple[int
     if text_only:
         first = [w for c in cells if c.cell.row == 0 for w in c.words]
         header = 1 if first and all(w.bold for w in first) else 0
-    # Reach down to the last row a header cell spans: HTML ends a rowspan at its row group.
+    # Reach down to the last row a header cell spans: HTML ends a rowspan at its row group. An
+    # empty cell holds no header text, so it never reaches (the HTML splits it at the header).
     while 0 < header < n_rows:
-        reach = max(c.cell.row + c.cell.row_span for c in cells if c.cell.row < header)
+        reach = max(c.cell.row + c.cell.row_span for c in cells if c.cell.row < header and c.words)
         if reach <= header:
             break
         header = min(reach, n_rows)

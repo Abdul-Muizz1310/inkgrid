@@ -199,9 +199,11 @@ furniture). It returns the proto tables, the ids of the words they claim, and fi
    once a row with several cells has been counted: a caption above the column headers belongs to the header,
    a section banner below them does not. A row's cells are the cells that start in it. When the run would
    cover every row, the table has no value rows to tell headers from: it has 1 header row when the first
-   row's words are all bold, else none. The header then extends down to the last row any header cell spans,
-   so no merged header cell crosses into the body (HTML ends a `rowspan` at its row group). With no header
-   rows, the table raises `header_not_found` (info).
+   row's words are all bold, else none. The header then extends down to the last row any header cell with
+   words spans, so no merged header text crosses into the body (HTML ends a `rowspan` at its row group). An
+   empty cell never extends it: a sliver column past a table's edge, spanning every row, would otherwise make
+   the whole table its header (seen on JSE and Nasdaq Copenhagen pages). With no header rows, the table
+   raises `header_not_found` (info).
 5. **Banner rows** are the rows, anywhere, that are full-width and hold no value.
 6. **`word_crosses_rule`** (warning): one finding per table, with the count, when any claimed word's box
    extends more than 1 pt past its own cell's left or right edge into a neighbouring cell. A merged cell
@@ -227,6 +229,7 @@ furniture). It returns the proto tables, the ids of the words they claim, and fi
 | LT13 | a 2 x 2 grid: a full-width title, then two cells of prose (6 lines of 7 words each); the same with one cell of short values; the same with cells of 4 lines | no table; one table; one table |
 | LT14 | a header cell of rotated text: `Maker` then `fee`, bottom to top | cell text `Maker fee` |
 | LT15 | `Description` spanning rows 0-1 beside `Fee`; row 1 holds `$5`; row 2 `Order \| $6` | header rows 2; the HTML's `<thead>` holds both rows |
+| LT16 | `Tier \| Fee` over two value rows, and an empty cell past the last column spanning all three rows | header rows 1 |
 | LT10 | a table of text only, with a bold first row; the same with a regular first row | header rows 1; header rows 0, and a `header_not_found` that says the table holds no values |
 | LT9 | two lines of text in one cell, the first ending `execu-` and the second `tions` | cell text `executions`, one join |
 
@@ -278,7 +281,9 @@ before testing it against the cell rectangle.
   its first position, and the positions it covers are empty (L1). `|` in text becomes `\|`, and tag openings
   are escaped as in `05` § 2.
 - **`Table.to_html()`**: a `<table>` with `<thead>` for the header rows, `<tbody>` for the rest,
-  `colspan`/`rowspan` for merged cells, `class="banner"` on banner rows, and every string HTML-escaped.
+  `colspan`/`rowspan` for merged cells, `class="banner"` on banner rows, and every string HTML-escaped. An
+  empty cell that starts in the header and spans into the body is split at the header's end: its header
+  part in `<thead>`, and an empty cell for the rest at the start of `<tbody>`, so every row stays whole.
 - **`Table.to_rows()`**: dense rows, a tuple per grid row of `DenseCell(text, row, col, copy)`. Every
   position is filled; a position covered by a merged cell repeats its text with `copy=True`, so a consumer
   that expands spans can always tell a copy from a printed value (L1).
@@ -292,6 +297,7 @@ before testing it against the cell rectangle.
 | EX3 | `to_rows` on LT1's table | 4 rows of 3; the positions covered by `Rate` and `Equity` repeat them with `copy=True`; nothing else is a copy |
 | EX4 | a cell text `a \| b <b>` | Markdown `a \\| b \\<b>`; HTML `a \| b &lt;b&gt;` |
 | EX5 | the inspector on `ruled_grid` | one `<rect class="cell">` per cell |
+| EX6 | `table_html` on LT16's cells, header rows 1 | `<th></th>` in the header row, then `<td rowspan="2"></td>` in the first body row |
 
 ---
 
@@ -322,6 +328,6 @@ before testing it against the cell rectangle.
 
 ## 9 · Acceptance
 
-- [ ] VL1–VL6, LC1, CM1–CM10, LP1, GS1–GS3, LT1–LT15, TP1–TP9, EX1–EX5, and AP1–AP6 pass.
+- [ ] VL1–VL6, LC1, CM1–CM10, LP1, GS1–GS3, LT1–LT16, TP1–TP9, EX1–EX6, and AP1–AP6 pass.
 - [ ] The seven fee schedules read without error, with Camelot's tables claimed as in § 0.
 - [ ] Every M0 and M1 case still passes.

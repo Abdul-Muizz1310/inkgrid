@@ -175,8 +175,11 @@ def test_LT10_a_table_of_text_has_a_header_only_when_bold() -> None:
         "Order": (72, 120, 172, 140),
         "Entry": (172, 120, 272, 140),
     }
-    (plain,) = run(cells)[0].tables
+    stage, _ = run(cells)
+    (plain,) = stage.tables
     assert plain.header_rows == 0
+    (missing,) = stage.findings
+    assert "no values" in missing.detail
     words = place([centred(t, b, bold=t in {"Service", "Detail"}) for t, b in cells.items()])
     stage = lattice_tables(
         mk_page(words=words),

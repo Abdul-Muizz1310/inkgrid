@@ -78,8 +78,8 @@ def _cell_lines(words: Sequence[Word], profile: Profile) -> tuple[Line, ...]:
     return (*across, Line(turned)) if turned else across
 
 
-def _roles(cells: Sequence[ProtoCell], n_rows: int) -> tuple[int, tuple[int, ...]]:
-    """Header rows and banner rows, from which rows hold values and which run full width."""
+def _roles(cells: Sequence[ProtoCell], n_rows: int) -> tuple[int, tuple[int, ...], bool]:
+    """Header rows, banner rows, and whether the table holds no value to tell headers from."""
     rows: list[tuple[bool, bool, bool]] = []  # (has words, has a value, full width)
     for r in range(n_rows):
         holding = [c for c in cells if c.cell.row == r and c.words]
@@ -92,7 +92,8 @@ def _roles(cells: Sequence[ProtoCell], n_rows: int) -> tuple[int, tuple[int, ...
             break
         columns = columns or not full
         header += 1
-    if header == n_rows:
+    text_only = header == n_rows
+    if text_only:
         first = [w for c in cells if c.cell.row == 0 for w in c.words]
         header = 1 if first and all(w.bold for w in first) else 0
     # Reach down to the last row a header cell spans: HTML ends a rowspan at its row group.
@@ -101,7 +102,7 @@ def _roles(cells: Sequence[ProtoCell], n_rows: int) -> tuple[int, tuple[int, ...
         if reach <= header:
             break
         header = min(reach, n_rows)
-    return header, banners
+    return header, banners, text_only
 
 
 def _ruled_layout(cells: Sequence[ProtoCell], n_cols: int, profile: Profile) -> bool:
@@ -178,10 +179,15 @@ def lattice_tables(
             continue
         if _ruled_layout(cells, n_cols, profile):
             continue
-        header, banners = _roles(cells, n_rows)
+        header, banners, text_only = _roles(cells, n_rows)
         table = ProtoTable(page.number, shape, tuple(cells), header, banners, frame)
         if header == 0:
-            detail = "the table's first rows hold values, so no header row was found"
+            detail = (
+                "the table holds no values and its first row is not bold, "
+                "so no header row was found"
+                if text_only
+                else "the table's first rows hold values, so no header row was found"
+            )
             findings.append(Finding.of(FindingCode.HEADER_NOT_FOUND, detail, page=page.number))
         crossing = _crossing(cells, table.bbox)
         if crossing:

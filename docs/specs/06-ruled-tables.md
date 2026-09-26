@@ -194,8 +194,9 @@ furniture). It returns the proto tables, the ids of the words they claim, and fi
    extends more than 1 pt past its own cell's left or right edge into a neighbouring cell. A merged cell
    has no interior rule, so words inside it never cross. Vertical overhang is ordinary: MuPDF's line boxes
    span the font's full ascent and descent, so they reach past tight rows.
-7. **`lattice_disagrees`** (warning): Camelot read the page and returned no grid at all. (A page whose grids
-   were all rejected is not a disagreement: Camelot saw the rules.) The rule-grid fallback of design § 5.2
+7. **`lattice_disagrees`** (warning): Camelot read the page without failing and returned no grid at all.
+   (A page whose grids were all rejected is not a disagreement: Camelot saw the rules. A page Camelot
+   failed on already carries `lattice_failed`.) The rule-grid fallback of design § 5.2
    arrives with M2b; until then the page's words stay for prose.
 
 | # | case | expected |
@@ -213,7 +214,7 @@ furniture). It returns the proto tables, the ids of the words they claim, and fi
 | LT13 | a 2 x 2 grid: a full-width title, then two cells of prose (6 lines of 7 words each); the same with one cell of short values; the same with cells of 4 lines | no table; one table; one table |
 | LT14 | a header cell of rotated text: `Maker` then `fee`, bottom to top | cell text `Maker fee` |
 | LT15 | `Description` spanning rows 0-1 beside `Fee`; row 1 holds `$5`; row 2 `Order \| $6` | header rows 2; the HTML's `<thead>` holds both rows |
-| LT10 | a table of text only, with a bold first row; the same with a regular first row | header rows 1; header rows 0 |
+| LT10 | a table of text only, with a bold first row; the same with a regular first row | header rows 1; header rows 0, and a `header_not_found` that says the table holds no values |
 | LT9 | two lines of text in one cell, the first ending `execu-` and the second `tions` | cell text `executions`, one join |
 
 ---
@@ -252,6 +253,7 @@ before testing it against the cell rectangle.
 | TP5 | a `Document` whose table has `frame = 90`, with a word moved out of its cell (JSON) | `ValidationError` (invariant 15) |
 | TP7 | `ruled_columns`: a page frame with a rule under its header and a rule between two columns of prose | no table; the left column's blocks, then the right column's |
 | TP8 | `table_in_right_column`: three left-column paragraphs; in the right column a paragraph, a ruled table, a paragraph | left, left, left, right, table, right |
+| TP9 | Camelot failing on page 1 of `ruled_grid` (injected) | `lattice_failed` on page 1 and no `lattice_disagrees` |
 | TP6 | the SIX-like `labelled_page`: a boxed furniture label on 3 pages | no table |
 
 ---
@@ -307,6 +309,6 @@ before testing it against the cell rectangle.
 
 ## 9 · Acceptance
 
-- [ ] VL1–VL5, LC1, CM1–CM9, LP1, GS1–GS3, LT1–LT15, TP1–TP8, EX1–EX5, and AP1–AP6 pass.
+- [ ] VL1–VL5, LC1, CM1–CM9, LP1, GS1–GS3, LT1–LT15, TP1–TP9, EX1–EX5, and AP1–AP6 pass.
 - [ ] The seven fee schedules read without error, with Camelot's tables claimed as in § 0.
 - [ ] Every M0 and M1 case still passes.

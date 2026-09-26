@@ -1,5 +1,7 @@
 import json
+from typing import Any
 
+import camelot
 import pytest
 from pydantic import ValidationError
 
@@ -77,3 +79,13 @@ def test_TP8_a_table_reads_within_its_column() -> None:
     right = [" ".join(p) for p in pdf_factory.RIGHT_COLUMN_RIGHT]
     order = [b.text if b.kind != "table" else "TABLE" for b in doc.blocks]
     assert order == [*left, right[0], "TABLE", right[1]]
+
+
+def test_TP9_a_failed_page_is_not_also_a_disagreement(monkeypatch: pytest.MonkeyPatch) -> None:
+    def broken(*args: Any, **kwargs: Any) -> Any:
+        msg = "rendering failed"
+        raise RuntimeError(msg)
+
+    monkeypatch.setattr(camelot, "read_pdf", broken)
+    doc = build(pdf_factory.ruled_grid())
+    assert [(f.code.value, f.page) for f in doc.findings] == [("lattice_failed", 1)]

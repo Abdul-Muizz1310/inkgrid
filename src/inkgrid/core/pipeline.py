@@ -11,7 +11,7 @@ from inkgrid.core.tables.lattice import ProtoTable, lattice_tables
 from inkgrid.core.view import upright
 from inkgrid.model.config import Lexicon, Profile
 from inkgrid.model.document import Document, Lattice
-from inkgrid.model.findings import Finding
+from inkgrid.model.findings import Finding, FindingCode
 from inkgrid.model.geometry import Rect, turn_rect
 from inkgrid.model.lattice import LatticeReading
 from inkgrid.model.page import Reading
@@ -34,7 +34,11 @@ def build_document(
     by_page: defaultdict[int, list[list[Rect]]] = defaultdict(list)
     for grid in grids.grids if grids is not None else ():
         by_page[grid.page].append(list(grid.cells))
-    lattice_read = set(grids.pages) if grids is not None else set()
+    # Pages Camelot read without failing: a failed page already carries lattice_failed.
+    failed = (
+        {f.page for f in grids.findings if f.code is FindingCode.LATTICE_FAILED} if grids else set()
+    )
+    lattice_read = set(grids.pages) - failed if grids is not None else set()
     found: list[Finding] = list(grids.findings) if grids is not None else []
     regions: list[tuple[Region, ...]] = []
     tables: list[tuple[ProtoTable, ...]] = []

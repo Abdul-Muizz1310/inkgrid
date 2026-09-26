@@ -58,7 +58,11 @@ def build_document(
         rest = [w for w in words if w.id not in stage.claimed]
         # Unruled tables come from layout's rows regions; the other lines go back to prose.
         unruled = corridor_tables(
-            layout(rest, profile, body) if rest else (), profile, page=page.number, frame=frame
+            layout(rest, profile, body) if rest else (),
+            profile,
+            page=page.number,
+            frame=frame,
+            rules=view.rules,
         )
         found += unruled.findings
         tables.append((*stage.tables, *unruled.tables))

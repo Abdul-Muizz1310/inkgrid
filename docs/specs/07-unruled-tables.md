@@ -68,6 +68,12 @@ top to bottom; its size is the median size of its words.
   row above when its pitch is at most 0.8 × the median pitch of the lines given, **unless** it holds a
   value-like piece that overlaps horizontally a value-like piece already in that row. Then it starts a new
   row: two values in one column are two rows, never one cell (L2).
+- **A drawn rule ends a row.** A line never joins the row above across a horizontal rule of the page
+  that lies between the centre of the line before it and its own centre and overlaps it horizontally.
+  Euronext rules its rows while centring each value beside a two-line label, so the first label line of
+  a row sits tight under the row above; the rule, not the pitch, says where it belongs. (This is the
+  part of design § 5.2's rule grid that unruled reading needs: rules as row boundaries. Pages read
+  upright in a turned frame carry no rules, `04` § 2a, and fold by pitch alone.)
 - Pitch, not gap, because MuPDF's line boxes span the font's full ascent and descent (1.38 em for base-14
   Helvetica), so rows set at ordinary leading overlap and their gaps are negative, like a wrap's. Measured
   pitch over the block's median: SIX wraps 0.76, rows 1.0; LSE wraps 0.28–0.55, rows 1.0.
@@ -78,6 +84,7 @@ top to bottom; its size is the median size of its words.
 | RW2 | three lines 0.5 pt apart, each with a value right-aligned in the same column (Euronext) | three rows |
 | RW3 | a two-line label with its value centred between the lines, 4.9 pt above the second (LSE) | one row of three lines |
 | RW4 | lines 9 pt apart in a block whose median gap is 9 pt | one row each |
+| RW7 | a row's value, then the next row's first label line 1 pt below, a drawn rule between them, and its value below | the label line starts the next row |
 | RW6 | 9 pt rows at a 12 pt pitch, whose boxes overlap by 0.4 pt, under a bold header | one row each |
 | RW5 | `151 – 500` 0 pt above `501 – 1,000`, in the same column | two rows |
 
@@ -85,7 +92,11 @@ top to bottom; its size is the median size of its words.
 
 ## 3 · Table extent (`table_runs`)
 
-A *candidate* is the lines of a maximal run of adjacent `rows` regions of one page, in order. Its lines
+A *candidate* is the lines of a maximal run of adjacent regions of one page that stack: each starts at or
+below the bottom of the one before (give or take 0.5 pt). Side-by-side prose columns never stack, so they
+are never one candidate. Layout's `rows` regions hold most tables, but a table of two rows, or one whose
+label column reads as prose, lands in a prose region (layout needs `column_min_lines` rows to see a
+gutter). A candidate without a table passes through unchanged. Its lines
 are split into *size runs* wherever a line's size differs from the previous line's by more than
 `size_change_ratio` × the smaller of the two, and each size run is folded into rows (§ 2) on its own, so
 the pitch of the headings around a table never sets the pitch its rows are measured by.
@@ -120,6 +131,8 @@ In each size run:
 | EX7 | a table whose last row starts the next rows region | one table |
 | EX8 | two tables in one size run, a value-free, unaligned line between them | two tables |
 | EX9 | a header row over a single value row | a table of 2 rows |
+| EX11 | a two-row table (`First 1,000 executed orders \| €0.60` over `Subsequent executed orders \| €0.30`) in a prose region | one table |
+| EX12 | two prose columns side by side whose lines hold values at the same heights | never one candidate: no table across the columns |
 | EX10 | 10 pt headings 25 pt apart around a 9 pt table whose rows are 15 pt apart | the table's header and rows stay apart |
 
 ---
@@ -191,8 +204,9 @@ In each size run:
 
 ## 7 · Pipeline
 
-Per page, after layout: the corridor stage runs on each run of adjacent `rows` regions, claims the words
-of its tables' rows, and returns the other lines as `rows` regions in their places. Prose runs on those,
+Per page, after layout: the corridor stage runs on each candidate (§ 3) with the page's horizontal rules,
+claims the words of its tables' rows, and returns the other lines as regions of their own kind in their
+places. Prose runs on those,
 and assembly places corridor tables among the page's blocks exactly as ruled tables (`06` § 6).
 
 | # | case | expected |
@@ -207,7 +221,7 @@ and assembly places corridor tables among the page's blocks exactly as ruled tab
 
 ## 8 · Acceptance
 
-- [ ] VP1–VP3, RW1–RW6, EX1–EX10, CB1–CB3, CG1–CG5, NT1–NT4, and CP1–CP5 pass.
+- [ ] VP1–VP3, RW1–RW7, EX1–EX12, CB1–CB3, CG1–CG5, NT1–NT4, and CP1–CP5 pass.
 - [ ] The seven fee schedules read without error; SIX, LSE, and Euronext gain their unruled tables, and
       a sample of them, rendered in the inspector, reads as the page prints.
 - [ ] Every M0, M1, and M2a case still passes.

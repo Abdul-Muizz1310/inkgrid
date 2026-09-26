@@ -25,7 +25,7 @@ from inkgrid.core.tables.shape import GridShape, ShapeCell
 from inkgrid.model.config import Profile
 from inkgrid.model.findings import Finding
 from inkgrid.model.geometry import Rect, Rotation
-from inkgrid.model.page import Word
+from inkgrid.model.page import Rule, Word
 
 Span = tuple[float, float]
 
@@ -33,6 +33,7 @@ MAX_QUALIFIED_TOKENS = 4  # `$5,000 per month`: a value and a few words qualifyi
 WRAP_PITCH = 0.8  # a line whose pitch is at most this share of the block's typical pitch wraps
 MIN_BLANK_EM = 0.5  # narrower gaps are word spacing, not column space
 MIN_PIECES = MIN_COLUMNS = MIN_ROWS = 2
+STACK = 0.5  # pt a region may start above the previous one's bottom and still stack under it
 MAX_HEADER_ROWS = 3  # rows above the first value row a table may take: header, caption, banner
 RIGHT_PAD = 0.01  # pt past the rightmost word, so its centre sits inside the last band
 
@@ -98,11 +99,24 @@ def _clash(line: Line, row: Sequence[Line], profile: Profile) -> bool:
     return any(a.x0 < b.x1 and b.x0 < a.x1 for a in mine for b in theirs)
 
 
-def fold_rows(lines: Sequence[Line], profile: Profile) -> tuple[Row, ...]:
+def _ruled_between(prev: Line, line: Line, rules: Sequence[Rule]) -> bool:
+    """True when a drawn horizontal rule lies between two lines' centres, across the line."""
+    upper = (prev.top + prev.bottom) / 2
+    lower = (line.top + line.bottom) / 2
+    return any(
+        rule.axis == "h" and upper < rule.at < lower and rule.start < line.x1 and line.x0 < rule.end
+        for rule in rules
+    )
+
+
+def fold_rows(
+    lines: Sequence[Line], profile: Profile, *, rules: Sequence[Rule] = ()
+) -> tuple[Row, ...]:
     """Consecutive lines as table rows: a wrap joins its row, but two values never share one.
 
     A wrap is told by its pitch (top to top), not its gap: MuPDF's boxes span the font's full
-    ascent and descent, so rows at ordinary leading overlap like wraps do (spec 07 section 2).
+    ascent and descent, so rows at ordinary leading overlap like wraps do. A drawn horizontal rule
+    between two lines always ends the row (spec 07 section 2).
     """
     if not lines:
         return ()
@@ -111,7 +125,11 @@ def fold_rows(lines: Sequence[Line], profile: Profile) -> tuple[Row, ...]:
     groups: list[list[Line]] = [[lines[0]]]
     for prev, line in pairwise(lines):
         current = groups[-1]
-        if line.top - prev.top <= wrap and not _clash(line, current, profile):
+        if (
+            line.top - prev.top <= wrap
+            and not _clash(line, current, profile)
+            and not _ruled_between(prev, line, rules)
+        ):
             current.append(line)
         else:
             groups.append([line])
@@ -368,26 +386,33 @@ def _leftover(group: Sequence[Region], claimed: set[int]) -> list[Region]:
 
 
 def corridor_tables(
-    regions: Sequence[Region], profile: Profile, *, page: int, frame: Rotation
+    regions: Sequence[Region],
+    profile: Profile,
+    *,
+    page: int,
+    frame: Rotation,
+    rules: Sequence[Rule] = (),
 ) -> CorridorStage:
-    """Unruled tables in each run of adjacent `rows` regions; the other lines go back to prose."""
+    """Unruled tables in each run of stacked regions; the other lines go back to prose.
+
+    `rules` are the page's drawn rules, in the regions' frame; horizontal ones end rows.
+    """
     tables: list[ProtoTable] = []
     out: list[Region] = []
     findings: list[Finding] = []
     i = 0
     while i < len(regions):
-        if regions[i].kind != "rows":
-            out.append(regions[i])
-            i += 1
-            continue
-        j = i
-        while j < len(regions) and regions[j].kind == "rows":
+        # A candidate is a run of regions that stack; side-by-side columns never do (section 3).
+        j = i + 1
+        while (
+            j < len(regions) and regions[j].lines[0].top >= regions[j - 1].lines[-1].bottom - STACK
+        ):
             j += 1
         group = regions[i:j]
         claimed: set[int] = set()
         # Fold each size run on its own: the headings' pitch must not set the table's.
         for lines in _size_runs([line for region in group for line in region.lines], profile):
-            run = fold_rows(lines, profile)
+            run = fold_rows(lines, profile, rules=rules)
             for lo, hi, table in _run_tables(run, profile, page=page, frame=frame):
                 tables.append(table)
                 findings.extend(missing_header(table))

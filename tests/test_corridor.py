@@ -14,7 +14,7 @@ from inkgrid.core.tables.corridor import (
 )
 from inkgrid.core.tables.proto import ProtoTable
 from inkgrid.model.config import Profile
-from inkgrid.model.page import Word
+from inkgrid.model.page import Rule, Word
 from layout_builder import P, place, text_line
 
 PROFILE = Profile()
@@ -393,3 +393,57 @@ def test_EX10_the_headings_pitch_does_not_set_the_tables() -> None:
     (table,) = stage(ps).tables
     assert len(table.shape.row_edges) - 1 == 3
     assert table.header_rows == 1
+
+
+def test_RW7_a_drawn_rule_ends_a_row() -> None:
+    # Two rows of three lines 5 pt apart; without the rule, `above` would fold into the first row.
+    ps = [
+        P("Requestor", 72, 100, size=9),
+        P("\u20ac2", 300, 105, size=9),
+        P("below", 72, 110, size=9),
+    ]
+    ps += [P("above", 72, 115, size=9), P("\u20ac0", 300, 120, size=9), P("limit", 72, 125, size=9)]
+    ps += [
+        p
+        for n in range(6)
+        for p in (
+            P(f"Other{n}", 72, 140 + 15 * n, size=9),
+            P(f"\u20ac{n}", 300, 140 + 15 * n, size=9),
+        )
+    ]
+    rule = Rule(page=1, axis="h", at=117, start=60, end=320, thickness=0.5)
+    ruled = fold_rows(group_lines(place(ps), PROFILE), PROFILE, rules=(rule,))
+    assert row_texts(ruled)[:2] == [
+        ["Requestor", "\u20ac2", "below"],
+        ["above", "\u20ac0", "limit"],
+    ]
+    unruled = fold_rows(group_lines(place(ps), PROFILE), PROFILE)
+    assert row_texts(unruled)[0] == ["Requestor", "\u20ac2", "below", "above"]
+
+
+def test_EX11_a_two_row_table_in_a_prose_region_is_found() -> None:
+    ps = text_line(["First", "1,000", "executed", "orders"], x=72, y=100, size=9) + right(
+        "\u20ac0.60", 404, 100
+    )
+    ps += text_line(["Subsequent", "executed", "orders"], x=72, y=112, size=9) + right(
+        "\u20ac0.30", 404, 112
+    )
+    words = place(ps)
+    region = Region("prose", group_lines(words, PROFILE))
+    (table,) = corridor_tables([region], PROFILE, page=1, frame=0).tables
+    assert len(table.shape.row_edges) - 1 == 2
+
+
+def test_EX12_side_by_side_columns_are_never_one_candidate() -> None:
+    left = [
+        p
+        for n in range(3)
+        for p in text_line(["Fee", "band", f"{n}"], x=72, y=100 + 12 * n, size=9)
+    ]
+    right_col = [p for n in range(3) for p in right(f"CHF {n}.50", 540, 100 + 12 * n)]
+    lw = place(left)
+    rw = place(right_col, first_id=len(lw))
+    regions = [Region("prose", group_lines(lw, PROFILE)), Region("prose", group_lines(rw, PROFILE))]
+    stage_ = corridor_tables(regions, PROFILE, page=1, frame=0)
+    assert stage_.tables == ()
+    assert stage_.regions == tuple(regions)

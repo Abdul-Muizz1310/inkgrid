@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from inkgrid.core.furniture import FoundFurniture, FurnitureLine
 from inkgrid.core.prose import ProtoBlock
 from inkgrid.core.tables.grid import table_parts
-from inkgrid.core.tables.lattice import ProtoTable
+from inkgrid.core.tables.proto import ProtoTable
 from inkgrid.core.text import WordPair, block_text
 from inkgrid.errors import InvariantError
 from inkgrid.model.canonical import assign_keys

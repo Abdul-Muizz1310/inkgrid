@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from itertools import pairwise
 
 from inkgrid.core.lines import Line
-from inkgrid.core.tables.lattice import ProtoTable
+from inkgrid.core.tables.proto import ProtoTable
 from inkgrid.core.text import WordPair, block_text
 from inkgrid.model.document import Cell, Grid, Region
 from inkgrid.model.geometry import Interval, Rect, unturn_rect
@@ -61,7 +61,7 @@ def table_parts(table: ProtoTable, words: Sequence[Word], page: PageInfo) -> Tab
         col_bands=tuple(Interval(a, b) for a, b in pairwise(cols)),
         header_rows=table.header_rows,
         banner_rows=table.banner_rows,
-        source="lattice",
+        source=table.source,
         frame=table.frame,
         cells=tuple(cells),
     )

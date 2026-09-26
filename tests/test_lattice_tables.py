@@ -1,7 +1,8 @@
 from collections.abc import Mapping, Sequence
 
 import pdf_factory
-from inkgrid.core.tables.lattice import ProtoTable, TableStage, lattice_tables
+from inkgrid.core.tables.lattice import TableStage, lattice_tables
+from inkgrid.core.tables.proto import ProtoTable
 from inkgrid.core.text import block_text
 from inkgrid.model.config import Profile
 from inkgrid.model.findings import FindingCode

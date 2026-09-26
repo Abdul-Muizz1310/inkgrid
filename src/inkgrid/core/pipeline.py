@@ -7,7 +7,8 @@ from inkgrid.core.furniture import find_furniture
 from inkgrid.core.layout import Region, layout
 from inkgrid.core.lines import body_size
 from inkgrid.core.prose import ProtoBlock, line_gaps, page_blocks
-from inkgrid.core.tables.lattice import ProtoTable, lattice_tables
+from inkgrid.core.tables.lattice import lattice_tables
+from inkgrid.core.tables.proto import ProtoTable
 from inkgrid.core.view import upright
 from inkgrid.model.config import Lexicon, Profile
 from inkgrid.model.document import Document, Lattice

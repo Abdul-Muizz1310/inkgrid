@@ -37,6 +37,9 @@ Camelot 2.0.0 ran over the seven M1 fee schedules (304 pages) with each engine; 
   Its own faults were 4 tables it missed (3 of which the corridor stage read with the same cells) and
   empty rows or columns added at fill and image edges. On 30 synthetic drawing styles the two agreed on 27;
   on the other 3, `combined` added empty rows and columns.
+  On ICDAR-2013 (67 documents, 158 tables, scored on cell adjacency) `combined` reached precision 0.956
+  against `vector`'s 0.902, recall 0.621 against 0.630: 652 wrong relations against 1,554. Its worst case
+  there is a grid invented over a page of prose from its decoration (us-036).
 - **The default stays `combined`**, as DR-0022 accepted, and the measurement confirms it: accuracy, not
   speed, decides, and `vector` fuses and splits cells on tables drawn as Word draws borders. AP2 pins the
   default. `vector` stays a setting for speed on documents known to draw plain strokes.

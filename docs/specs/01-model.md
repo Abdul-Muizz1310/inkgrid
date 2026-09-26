@@ -286,8 +286,9 @@ a row, and none at either end.
     table's `word_ids`. A non-carried cell with no words has text `""`.
 15. The center of every word of a non-carried cell lies inside the cell's rectangle, computed from the
     bands and tested half-open. When the grid's `frame` is not 0 (a table on a page read upright in
-    its screen frame, `06-ruled-tables.md` § 6), the center is first turned by `frame` over the page's
-    unrotated size (`turn_point`).
+    its screen frame, `06-ruled-tables.md` § 6), the word's box is first turned by `frame` over the
+    page's unrotated size (`turn_rect`), and the turned box's center is tested, exactly as the table
+    stage claimed it.
 16. A cell's text satisfies invariant 7 against its own words and the block's joins inside it.
 17. A table with carried cells is the `from` of a resolved `continuation` link. Each carried cell's
     `source` anchors are cells of that link's `to` table in its header rows (`row < header_rows`), and
@@ -368,6 +369,7 @@ descriptions; each failure case starts from a valid document and breaks one thin
 | D43 | a grid with one position covered by no cell | `ValidationError` (invariant 13) |
 | D44 | a carried cell whose source is not a header cell of the parent; whose text differs from its source (`Rebate` for `Fee`) | `ValidationError` (invariant 17) |
 | D45 | a `Word` altered with `model_copy(update={"size": -3})`, placed in a `PageModel`; a `Document` given a `PageModel` as a page | `ValidationError` (no bypass) |
+| D48 | a `frame = 90` table whose word, turned, has its centre exactly on a column edge, and sits in the cell right of it | valid: the check turns the word's box and takes its centre, as the table stage does |
 | D47 | a table whose grid has `frame = 90`, valid in the turned frame; the same table with `frame = 0` | valid; `ValidationError` (invariant 15) |
 | D46 | a paragraph with a superscript word but no markers; with a marker naming a word that is not superscript | `ValidationError` (invariant 8d) |
 

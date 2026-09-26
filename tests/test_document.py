@@ -12,6 +12,7 @@ from pydantic import ValidationError
 from doc_builder import B, C, W, as_json, build, from_json, line
 from inkgrid.model.document import Document, Link, LinkEnd
 from inkgrid.model.findings import Finding, FindingCode
+from inkgrid.model.geometry import Rect, turn_point, turn_rect
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -799,3 +800,32 @@ def test_D47_a_turned_grid_is_checked_in_its_frame() -> None:
     data["blocks"][0]["grid"]["frame"] = 0
     with pytest.raises(ValidationError, match="outside cell"):
         from_json(data)
+
+
+def rounding_split() -> tuple[float, float, float]:
+    """A word's y0, y1 whose turned-box centre differs from the turned centre in the last bit."""
+    for hundredths in range(10000, 60000):
+        y0 = hundredths / 100
+        box = Rect(100.0, y0, 110.0, y0 + 10)  # doc_builder words are 10 pt high
+        via_box = turn_rect(box, 90, 612, 792).center[0]
+        via_point = turn_point(*box.center, 90, 612, 792)[0]
+        if via_box != via_point:
+            return box.y0, box.y1, via_box
+    msg = "no rounding split found"
+    raise AssertionError(msg)
+
+
+def test_D48_a_turned_word_on_an_edge_is_checked_as_it_was_claimed() -> None:
+    y0, _, edge = rounding_split()
+    word = W("xx", 100.0, y0)  # 10 pt wide at CHAR_WIDTH 5, so the box is x 100..110
+    table = B(
+        "table",
+        [word, screen_word("a", edge - 50, 110), screen_word("b", edge - 50, 130)],
+        row_bands=[(100, 120), (120, 140)],
+        col_bands=[(edge - 100, edge), (edge, edge + 100)],
+        cells=[C(0, 0, [1]), C(0, 1, [0]), C(1, 0, [2]), C(1, 1, [])],
+        frame=90,
+    )
+    turned = turn_rect(build([table]).words[0].bbox, 90, 612, 792).center
+    assert turned[0] == edge
+    assert build([table]).blocks[0].grid.frame == 90

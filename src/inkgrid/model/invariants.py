@@ -10,7 +10,7 @@ from collections.abc import Sequence
 from typing import TYPE_CHECKING, NoReturn
 
 from inkgrid.model.canonical import assign_keys
-from inkgrid.model.geometry import turn_point
+from inkgrid.model.geometry import turn_rect
 from inkgrid.model.page import expected_text_layer
 
 if TYPE_CHECKING:
@@ -207,7 +207,8 @@ def _check_cells(table: "Table", words: Sequence["Word"], pages: Sequence["PageI
         rect = table.grid.cell_rect(cell)
         for w in cell.word_ids:
             page = pages[words[w].page - 1]
-            x, y = turn_point(*words[w].bbox.center, frame, page.width, page.height)
+            # Turn the box, then take its centre: the table stage claimed the turned box's centre.
+            x, y = turn_rect(words[w].bbox, frame, page.width, page.height).center
             if not rect.contains_point(x, y):
                 _fail(f"word {w} lies outside cell ({cell.row}, {cell.col}) of table {table.id}")
         members = set(cell.word_ids)

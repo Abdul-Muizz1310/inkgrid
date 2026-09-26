@@ -79,7 +79,8 @@ Shipped so far (M0, M1, M2a, and M2b):
 - **Left-to-right scripts only.** Right-to-left and bidirectional text is not reordered in v0.1.
 - **Unruled tables have no row spans.** A label centred beside several rows splits across them
   (`Charge per` / `executed order`), and a label whose value is centred beside it needs the rows to be
-  set apart by more than the label's own line pitch.
+  set apart by more than the label's own line pitch. A fee set on two lines around a one-line label
+  (`€10 per million on the value` / `above €20,000`) splits from it, never into another fee's cell.
 - **A table needs a value.** A table of text alone with no ruled grid reads as paragraphs, and a
   caption set directly above a table can join it as its first row.
 - **A table beside a prose column can come apart.** Lines are grouped across the whole page before

@@ -713,6 +713,20 @@ def test_CG9_qualified_fees_stacked_in_one_column_are_two_rows() -> None:
     assert len(rows) == 5
 
 
+def test_CG10_a_long_qualified_fee_under_another_is_never_its_cell() -> None:
+    up_to = [
+        *text_line(["Up", "to", "20,000"], x=72, y=160, size=9),
+        P("\u20ac0", 300, 160, size=9),
+    ]
+    fee = ["\u20ac10", "per", "million", "on", "the", "value"]  # Euronext p25: six tokens
+    between = text_line(["Between", "20,000", "and", "2m"], x=72, y=169, size=9)
+    between += text_line(fee, x=282, y=169, size=9)
+    ps = value_rows(100, 3) + up_to + between + value_rows(190, 2)
+    assert len(rows_of(ps)) == 7
+    cells = [cell for table in stage(ps).tables for cell in table.cells]
+    assert not any({"\u20ac0", "\u20ac10"} <= {w.text for w in cell.words} for cell in cells)
+
+
 def test_RW12_a_banner_wrapped_onto_a_value_line_stays_one_row() -> None:
     banner = text_line(["Option", "2", "minimum", "fee"], x=72, y=160, size=9, bold=True)
     banner += text_line(["\u20ac250,000", "(monthly)"], x=72, y=172.2, size=9)  # Euronext p8 pitch

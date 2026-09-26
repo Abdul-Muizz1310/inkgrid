@@ -63,8 +63,18 @@ def is_value_like(words: Sequence[Word]) -> bool:
 
 
 def _holds_value(words: Sequence[Word]) -> bool:
-    """A value-like or a value piece: what anchors rows and what the L2 checks count."""
+    """A value-like or a value piece: what anchors rows."""
     return is_value_like(words) or is_value_piece(words)
+
+
+def _counts_as_value(words: Sequence[Word]) -> bool:
+    """What the L2 checks count: a piece that holds a value, or opens with one however long.
+
+    `$10 per million on the value` is too long to make a value row, but it is still a fee, and it
+    never shares a row's column or a cell with another.
+    """
+    tokens = _tokens(words)
+    return _holds_value(words) or (bool(tokens) and is_strong_value(tokens[0]))
 
 
 @dataclass(frozen=True)
@@ -102,8 +112,8 @@ def _row(lines: Sequence[Line], profile: Profile) -> Row:
 
 def _clash(line: Line, row: Sequence[Line], profile: Profile) -> bool:
     """True when the line holds a value-like piece over one the row already holds (L2)."""
-    mine = [p for p in fragments(line, profile) if _holds_value(p.words)]
-    theirs = [p for other in row for p in fragments(other, profile) if _holds_value(p.words)]
+    mine = [p for p in fragments(line, profile) if _counts_as_value(p.words)]
+    theirs = [p for other in row for p in fragments(other, profile) if _counts_as_value(p.words)]
     return any(a.x0 < b.x1 and b.x0 < a.x1 for a in mine for b in theirs)
 
 
@@ -257,6 +267,7 @@ def _wrap_lone_values(
             and lines[i].top - lines[i - 1].top <= limit
             and not _ruled_between(lines[i - 1], lines[i], rules)
             and _continues([lines[j] for j in above], lines[i], profile)
+            and not _clash(lines[i], [lines[j] for j in above], profile)
         ):
             above.append(i)
             continue
@@ -317,7 +328,8 @@ def fold_rows(
             row = _wrapped_row(
                 line, lines, groups, pitch=pitch, height=height, profile=profile, rules=rules
             )
-        if row is not None:
+        # Never into a row whose column already holds a value (L2), however close.
+        if row is not None and not _clash(line, [lines[j] for j in groups[row]], profile):
             groups[row].append(i)
             continue
         prev = loose[-1][-1] if loose else None
@@ -326,6 +338,7 @@ def fold_rows(
             and line.top - lines[prev].top <= min(WRAP_PITCH * pitch, HEIGHT_REACH * height)
             and not _ruled_between(lines[prev], line, rules)
             and _continues([lines[j] for j in loose[-1]], line, profile)
+            and not _clash(line, [lines[j] for j in loose[-1]], profile)
         ):
             loose[-1].append(i)
         else:
@@ -457,7 +470,7 @@ def _values_on_own_lines(words: Sequence[Word], profile: Profile) -> int:
         1
         for line in group_lines(words, profile)
         for piece in fragments(line, profile)
-        if _holds_value(piece.words)
+        if _counts_as_value(piece.words)
     )
 
 

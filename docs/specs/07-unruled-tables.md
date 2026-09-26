@@ -51,8 +51,11 @@ grouping, so `CHF 250` and `5 bp` count though neither token does alone), or whe
 tokens and its first token is a strong value (`$5,000 per month`, `0.10 per contract`).
 
 `is_value_like(words)` is looser: the remaining text `is_value` (weak values included: `1 – 150`, `62`,
-`Free`, `-`). A piece that is either one *holds a value*; that is what anchors rows and what the clash and
-fusion checks count (§ 2, § 5), so qualified money (`€10 per million`) counts like a bare value.
+`Free`, `-`). A piece that is either one *holds a value*; that is what anchors rows (§ 2). The clash and
+fusion checks (§ 2, § 5) count more: a piece that holds a value, or that opens with a strong value
+however many words qualify it, so qualified money (`€10 per million`, and Euronext's six-token `€10 per
+million on the value`) counts like a bare value, while a prose line opening with an amount anchors no
+row.
 
 | # | case | expected |
 |---|---|---|
@@ -109,6 +112,8 @@ its lines top to bottom; its size is the median size of its words. Rows are anch
   base-14 Helvetica), so rows at ordinary leading overlap and gaps say nothing; and a median pitch over
   all lines is set by the wraps when most rows wrap, which folded a header into its first row and split
   three-line labels into rows of their own. Distances between values are the table's own rhythm.
+- **No line joins a row it clashes with**, by any rule above: when it holds a piece the clash check
+  counts (§ 1) over one the row already holds, it starts a row of its own (L2).
 - **A drawn rule ends a row.** A rule of the page lies between two lines when it is horizontal, lies
   between their centres, and overlaps the line being placed horizontally. Euronext rules its rows while
   centring each value beside a two-line label, so a row's first label line sits closer to the row above
@@ -268,6 +273,7 @@ In each size run:
 | CG7 | `centred_span`: `Free` centred beside two 9 pt rows at a 12 pt pitch, which chains them into one line | no cell holds both rows' fees |
 | CG8 | a boundary in a 2.7 pt word space of a 9 pt piece; in a 5 pt gap | not split; split |
 | CG9 | two qualified fees (`€10 per million`, `€20 per million`) stacked 5 pt apart in one column, in rows 20 pt apart | two rows, never one cell |
+| CG10 | `Up to 20,000 \| €0`, then 9 pt below `Between 20,000 and 2m \| €10 per million on the value` (six tokens) in the same column, in rows 20 pt apart | two rows, and no cell holds both fees |
 | CG5 | a valid corridor table built into a `Document` | valid: every word's centre in its cell, cells tiling the grid |
 
 ---
@@ -302,7 +308,7 @@ and assembly places corridor tables among the page's blocks exactly as ruled tab
 
 ## 8 · Acceptance
 
-- [ ] VP1–VP4, RW1–RW18, EX1–EX20, CB1–CB4, CG1–CG9, NT1–NT4, and CP1–CP5 pass.
+- [ ] VP1–VP4, RW1–RW18, EX1–EX20, CB1–CB4, CG1–CG10, NT1–NT4, and CP1–CP5 pass.
 - [ ] The seven fee schedules read without error; SIX, LSE, and Euronext gain their unruled tables, and
       a sample of them, rendered in the inspector, reads as the page prints.
 - [ ] Every M0, M1, and M2a case still passes.

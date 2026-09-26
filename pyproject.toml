@@ -124,7 +124,14 @@ addopts = [
     "--cov-report=term-missing:skip-covered",
     "--cov-report=json",
 ]
-filterwarnings = ["error"]
+filterwarnings = [
+    "error",
+    # PyMuPDF's SWIG types warn while its extension initialises; as an error there it segfaults
+    # (PyMuPDF #4392, fixed only in wheels built with SWIG >= 4.4, which macOS wheels are not).
+    "ignore:builtin type (SwigPy|swigvarlink):DeprecationWarning",
+    # PyMuPDF names typing.ByteString, deprecated in Python 3.15.
+    "ignore:'typing.ByteString' and 'collections.abc.ByteString' are deprecated:DeprecationWarning:pymupdf",
+]
 
 [tool.coverage.run]
 branch = true

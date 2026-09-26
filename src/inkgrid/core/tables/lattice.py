@@ -91,6 +91,24 @@ def _roles(cells: Sequence[ProtoCell], n_rows: int) -> tuple[int, tuple[int, ...
     return header, banners
 
 
+def _ruled_layout(cells: Sequence[ProtoCell], n_cols: int, profile: Profile) -> bool:
+    """True when every column is running text: a frame ruled around columns of prose, not a table.
+
+    A column is running text when its single-column cells hold prose by layout's test and one of
+    them holds a column's worth of lines (twice `column_min_lines`). Table cells of text are short.
+    """
+    for col in range(n_cols):
+        own = [c for c in cells if c.cell.col == col and c.cell.col_span == 1]
+        lines = [line for c in own for line in c.lines]
+        if len(lines) < profile.column_min_lines:
+            return False
+        if sum(len(line.words) for line in lines) / len(lines) < profile.prose_min_words:
+            return False
+        if max(len(c.lines) for c in own) < 2 * profile.column_min_lines:
+            return False
+    return True
+
+
 def _crossing(cells: Sequence[ProtoCell], bbox: Rect) -> int:
     """Words overhanging their cell's left or right edge into a neighbouring cell."""
     count = 0
@@ -144,6 +162,8 @@ def lattice_tables(
         ]
         n_rows, n_cols = len(shape.row_edges) - 1, len(shape.col_edges) - 1
         if n_rows < MIN_ROWS or n_cols < MIN_COLS or sum(1 for c in cells if c.words) < MIN_FILLED:
+            continue
+        if _ruled_layout(cells, n_cols, profile):
             continue
         header, banners = _roles(cells, n_rows)
         table = ProtoTable(page.number, shape, tuple(cells), header, banners, frame)

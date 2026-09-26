@@ -167,8 +167,14 @@ furniture). It returns the proto tables, the ids of the words they claim, and fi
    cell whose rectangle contains its centre, half-open (`[x0, x1) x [y0, y1)`), so assignment is a partition
    by construction.
 2. **Acceptance.** A grid becomes a table only when it has at least 2 rows, at least 2 columns, and at least
-   2 cells holding words. Otherwise it claims nothing, and its words stay for prose: a box around a
-   paragraph or a furniture label is not a table.
+   2 cells holding words, and when at least one of its columns is not a column of running text. A column
+   is running text when its single-column cells hold prose by layout's test (at least `column_min_lines`
+   lines, a mean of at least `prose_min_words` words per line) and one of them holds at least
+   `2 x column_min_lines` lines. A grid whose every column is running text is a ruled page layout (a frame
+   with a rule between two columns of text), not a table. Measured: the frame case holds 12 lines per
+   cell; two-column fee tables of text on Cboe, PHLX, and Nasdaq hold at most 5, and stay tables.
+   Otherwise the grid claims nothing, and its words stay for prose: a box around a paragraph, a furniture
+   label, or a ruled page layout is not a table.
 3. **Cell text.** A cell's words form lines (`group_lines`), read top to bottom and left to right, and the
    text rule of `04` § 6 applies within the cell: one space between words and lines, and recorded hyphen
    joins.
@@ -201,6 +207,7 @@ furniture). It returns the proto tables, the ids of the words they claim, and fi
 | LT8 | a page Camelot read that returned no grid | `lattice_disagrees` on that page |
 | LT11 | a first data row whose fee `$0.0030` carries a superscript `1` | header rows 1 |
 | LT12 | header `Tier 1 \| Fee (47)`, then data `{CK} $0.00 \| $5,000 per month` | header rows 1 |
+| LT13 | a 2 x 2 grid: a full-width title, then two cells of prose (6 lines of 7 words each); the same with one cell of short values; the same with cells of 4 lines | no table; one table; one table |
 | LT10 | a table of text only, with a bold first row; the same with a regular first row | header rows 1; header rows 0 |
 | LT9 | two lines of text in one cell, the first ending `execu-` and the second `tions` | cell text `executions`, one join |
 
@@ -236,6 +243,7 @@ before testing it against the cell rectangle.
 | TP3 | `boxed_paragraph`: a 1 x 1 box around a paragraph | a paragraph, no table |
 | TP4 | `ruled_landscape` | one table, rows in screen order (`Fee Rate Cap` first); a valid `Document` with `frame = 90` |
 | TP5 | a `Document` whose table has `frame = 90`, with a word moved out of its cell (JSON) | `ValidationError` (invariant 15) |
+| TP7 | `ruled_columns`: a page frame with a rule under its header and a rule between two columns of prose | no table; the left column's blocks, then the right column's |
 | TP6 | the SIX-like `labelled_page`: a boxed furniture label on 3 pages | no table |
 
 ---
@@ -291,6 +299,6 @@ before testing it against the cell rectangle.
 
 ## 9 · Acceptance
 
-- [ ] VL1–VL5, LC1, CM1–CM9, LP1, GS1–GS3, LT1–LT12, TP1–TP6, EX1–EX5, and AP1–AP6 pass.
+- [ ] VL1–VL5, LC1, CM1–CM9, LP1, GS1–GS3, LT1–LT13, TP1–TP7, EX1–EX5, and AP1–AP6 pass.
 - [ ] The seven fee schedules read without error, with Camelot's tables claimed as in § 0.
 - [ ] Every M0 and M1 case still passes.

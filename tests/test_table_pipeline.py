@@ -60,3 +60,12 @@ def test_TP6_a_boxed_furniture_label_is_not_a_table() -> None:
     doc = build(pdf_factory.labelled_page())
     assert tables(doc) == []
     assert [b.text for b in doc.blocks if b.kind == "furniture"] == [pdf_factory.LABEL] * 3
+
+
+def test_TP7_a_ruled_two_column_page_reads_as_prose_columns() -> None:
+    doc = build(pdf_factory.ruled_columns())
+    assert tables(doc) == []
+    texts = [b.text for b in doc.blocks]
+    assert texts.index(" ".join(pdf_factory.RULED_COLUMNS_LEFT)) < texts.index(
+        " ".join(pdf_factory.RULED_COLUMNS_RIGHT)
+    )

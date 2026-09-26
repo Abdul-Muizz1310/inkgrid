@@ -56,7 +56,8 @@ Shipped so far (M0, M1, and M2a):
 - **Ruled tables as cell grids.** Camelot's lattice parser reads the pages whose rules run both ways,
   through its cell edge flags, never its DataFrame. A merged cell is one cell with a span, so a value
   is never copied into the positions it covers. Leading value-free rows become header rows, and
-  full-width rows become banner rows. A box around a paragraph or a furniture label is not a table.
+  full-width rows become banner rows. A box around a paragraph, a furniture label, or a frame ruled
+  around columns of running text is not a table.
   Tables export as GFM Markdown, HTML with `colspan`/`rowspan`, and dense rows that flag every
   repeated value.
 - **Markdown and an HTML inspector.** The inspector draws every block over its rendered page, for

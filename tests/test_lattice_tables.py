@@ -217,3 +217,26 @@ def test_LT12_qualified_fees_are_values_and_numbered_labels_are_not() -> None:
     placed = place(words)
     stage = lattice_tables(mk_page(words=placed), [grid], placed, PROFILE, frame=0, read=True)
     assert stage.tables[0].header_rows == 1
+
+
+def prose_cell(tag: str, x: float, y: float, lines: int = 6) -> list[P]:
+    """`lines` lines of seven words at 9 pt, 12 pt apart."""
+    return [
+        p
+        for i in range(lines)
+        for p in text_line([f"{tag}{i}{j}" for j in range(7)], x=x, y=y + 12 * i, size=9)
+    ]
+
+
+def test_LT13_a_ruled_page_layout_of_prose_is_not_a_table() -> None:
+    grid = [Rect(40, 40, 572, 70), Rect(40, 70, 306, 160), Rect(306, 70, 572, 160)]
+    title = text_line(["Official", "Bulletin"], x=50, y=50, size=9)
+    columns = place([*title, *prose_cell("l", 50, 80), *prose_cell("r", 316, 80)])
+    stage = lattice_tables(mk_page(words=columns), [grid], columns, PROFILE, frame=0, read=True)
+    assert (stage.tables, stage.claimed) == ((), frozenset())
+    values = place([*title, *prose_cell("l", 50, 80), *text_line(["0.10"], x=316, y=80, size=9)])
+    stage = lattice_tables(mk_page(words=values), [grid], values, PROFILE, frame=0, read=True)
+    assert len(stage.tables) == 1
+    short = place([*title, *prose_cell("l", 50, 80, lines=4), *prose_cell("r", 316, 80, lines=4)])
+    stage = lattice_tables(mk_page(words=short), [grid], short, PROFILE, frame=0, read=True)
+    assert len(stage.tables) == 1

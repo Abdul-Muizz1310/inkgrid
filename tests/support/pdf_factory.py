@@ -302,6 +302,27 @@ def boxed_paragraph() -> bytes:
     return _save(doc)
 
 
+RULED_COLUMNS_LEFT = [f"Left column prose line {i} with words." for i in range(12)]
+RULED_COLUMNS_RIGHT = [f"Right column prose line {i} with text." for i in range(12)]
+
+
+def ruled_columns() -> bytes:
+    """A page frame with a rule under its header and a rule between two columns of prose."""
+    doc = pymupdf.open()
+    page = _page(doc)
+    shape = page.new_shape()
+    shape.draw_rect(pymupdf.Rect(40, 40, 572, 752))
+    shape.draw_line((40, 70), (572, 70))
+    shape.draw_line((306, 70), (306, 752))
+    shape.finish(color=BLACK, width=0.6)
+    shape.commit()
+    page.insert_text((50, 60), "Official Bulletin of Fees", fontsize=9)
+    for i, (left, right) in enumerate(zip(RULED_COLUMNS_LEFT, RULED_COLUMNS_RIGHT, strict=True)):
+        page.insert_text((50, 100 + 13 * i), left, fontsize=10)
+        page.insert_text((316, 100 + 13 * i), right, fontsize=10)
+    return _save(doc)
+
+
 LABEL = "Sensitivity: C1 Public"
 
 
@@ -693,6 +714,7 @@ OPENABLE: dict[str, Callable[[], bytes]] = {
     "table_between_paragraphs": table_between_paragraphs,
     "boxed_paragraph": boxed_paragraph,
     "labelled_page": labelled_page,
+    "ruled_columns": ruled_columns,
     "spaced_paragraphs": spaced_paragraphs,
     "furnished": furnished,
     "furniture_only_page": furniture_only_page,

@@ -155,6 +155,29 @@ The Lexicon grows in M2 (numbers, money, ranges).
 | LN8 | property: every input word is in exactly one line and in exactly one fragment | holds |
 | LN9 | two words with the same text and box (a doubled text layer) | one line holding both |
 
+### The upright page (`core/view.py`)
+
+`upright(page) -> PageModel` returns the page as its reader sees it. The page model's coordinates
+are unrotated (`02-reader.md`), so a landscape page (a `/Rotate` of 90 or 270 whose text is upright
+on screen) holds nothing but vertical words.
+
+- A page is turned upright when its `/Rotate` is not 0 **and** most of its characters are in
+  non-horizontal words. Otherwise it is returned unchanged: text that is sideways on screen keeps
+  the unrotated frame.
+- Turning maps every word box by the rotation, with `W` and `H` the unrotated CropBox size: 90 →
+  `(H − y, x)`, 180 → `(W − x, H − y)`, 270 → `(y, W − x)` (PyMuPDF's `rotation_matrix`, measured).
+  Width and height swap for 90 and 270, the rotation becomes 0, and each word's `horizontal` flag
+  flips, because the reader flags only the direction `(1, 0)`.
+- The upright page carries no rules. M2 maps rules when it first reads them.
+- Furniture, layout, and prose run on upright pages. Assembly takes every word's box from the
+  reading, so the `Document` keeps unrotated coordinates.
+
+| # | case | expected |
+|---|---|---|
+| VW1 | a word at (10, 20, 30, 30) on a 612 × 792 page, `/Rotate` 90, 180, and 270, with every word vertical | boxes (762, 10, 772, 30), (582, 762, 602, 772), (20, 582, 30, 602); page sizes 792 × 612, 612 × 792, 792 × 612 |
+| VW2 | a `/Rotate` 90 page whose words are mostly horizontal | returned unchanged |
+| VW3 | a `/Rotate` 0 page of vertical words | returned unchanged |
+
 ---
 
 ## 3 · Furniture (`core/furniture.py`, pure, document-wide)
@@ -394,7 +417,7 @@ Each furniture line is its own `Furniture` block.
 pydantic's error text, never a `ValidationError`, because an invalid document is a bug in inkgrid.
 
 **The pipeline (`core/pipeline.py`).** `build_document(reading, *, lexicon, profile, lattice)` runs
-furniture over the document, takes the body size over the non-furniture words, runs `layout` for
+every page upright, furniture over the document, takes the body size over the non-furniture words, runs `layout` for
 each page, takes the line gaps over every page's regions, runs `page_blocks` for each page, and
 assembles. A page with no content words contributes no blocks. A
 document with no words at all has no blocks, which is valid: the partition of zero words is empty.
@@ -417,12 +440,14 @@ document with no words at all has no blocks, which is valid: the partition of ze
 | PL3 | the `furnished` fixture | header and footer furniture on every page; body text in paragraphs |
 | PL4 | `image_only` and `blank` | no blocks, and a valid `Document` |
 | PL5 | a page whose only words are furniture | no content blocks on that page; a valid `Document` |
+| PL6 | the `landscape` fixture: a `/Rotate` 90 page whose bold title and two paragraphs are upright on screen | a heading, then two paragraphs, with regions in unrotated coordinates |
+| PL7 | the `rotated` fixture: horizontal text on a `/Rotate` 90 page, sideways on screen | read in the unrotated frame, as before |
 
 ---
 
 ## 7 · Acceptance
 
-- [ ] CF1–CF10, LN1–LN9, FU1–FU13, LY1–LY16, PB1–PB18, AS1–AS11, and PL1–PL5 pass.
+- [ ] CF1–CF10, LN1–LN9, FU1–FU13, LY1–LY16, PB1–PB18, AS1–AS11, VW1–VW3, and PL1–PL7 pass.
 - [ ] Every M0 fixture assembles to a valid `Document` (the M1 exit criterion, through
       `inkgrid read`; `05-read-and-inspector.md`).
 - [ ] The two-column fixture reads in column order (M1 exit criterion).

@@ -64,3 +64,19 @@ def test_PB15_reader_boxes_keep_paragraph_breaks() -> None:
         expected = [" ".join(p) for p in paragraphs]
         blocks = [b for b in doc.blocks if b.regions[0].page == page]
         assert [(b.kind, b.text) for b in blocks] == [("paragraph", t) for t in expected]
+
+
+def test_PL6_a_landscape_page_reads_as_the_reader_sees_it() -> None:
+    doc = build(pdf_factory.landscape())
+    assert content(doc) == [
+        ("heading", pdf_factory.LANDSCAPE_TITLE),
+        *(("paragraph", " ".join(p)) for p in pdf_factory.LANDSCAPE_PARAGRAPHS),
+    ]
+    by_id = {w.id: w for w in doc.words}
+    for block in doc.blocks:
+        assert all(block.regions[0].bbox.contains_rect(by_id[w].bbox) for w in block.word_ids)
+
+
+def test_PL7_sideways_text_keeps_the_unrotated_frame() -> None:
+    doc = build(pdf_factory.rotated())
+    assert content(doc) == [("paragraph", "Rotated")]

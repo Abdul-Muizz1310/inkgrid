@@ -107,11 +107,13 @@ class _Parts:
     joins: tuple[WordPair, ...]
 
 
-def _parts(item: ProtoBlock | FurnitureLine) -> _Parts:
+def _parts(item: ProtoBlock | FurnitureLine, words: Sequence[Word]) -> _Parts:
+    """The block's parts, with each word as the reading has it (layout may have turned it)."""
     lines = (item.line,) if isinstance(item, FurnitureLine) else item.lines
     text, joins = block_text(lines)
     kind = "furniture" if isinstance(item, FurnitureLine) else item.kind
-    return _Parts(item, kind, tuple(w for line in lines for w in line.words), text, joins)
+    own = tuple(words[w.id] for line in lines for w in line.words)
+    return _Parts(item, kind, own, text, joins)
 
 
 def _block(parts: _Parts, block_id: str, key: str, sizes: Sequence[float]) -> Block:
@@ -153,9 +155,9 @@ def assemble(
     sizes = sorted(
         {round(b.size * 2) / 2 for b in items if isinstance(b, ProtoBlock) and b.kind == "heading"}
     )
-    parts = [_parts(item) for item in items]
-    keys = assign_keys([(p.kind, p.text) for p in parts])
     words = tuple(w for page in reading.pages for w in page.words)
+    parts = [_parts(item, words) for item in items]
+    keys = assign_keys([(p.kind, p.text) for p in parts])
     findings = list(reading.findings)
     if len(reading.pages) > profile.long_document_pages and not furniture.word_ids:
         detail = f"{len(reading.pages)} pages and no running header, footer, or page number"

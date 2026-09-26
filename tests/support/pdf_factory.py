@@ -213,6 +213,37 @@ def rotated() -> bytes:
     return _save(doc)
 
 
+LANDSCAPE_TITLE = "Landscape Fee Summary"
+LANDSCAPE_PARAGRAPHS = [
+    [
+        "The exchange charges each member a",
+        "monthly port fee for every order entry",
+        "session it keeps open.",
+    ],
+    [
+        "Rebates for added liquidity are credited",
+        "on the invoice for the month after the",
+        "trading that earned them.",
+    ],
+]
+
+
+def landscape() -> bytes:
+    """A `/Rotate 90` page whose bold title and two paragraphs are upright on screen."""
+    doc = pymupdf.open()
+    page = _page(doc)
+    # rotate=90 runs the text upward (direction (0, -1)); /Rotate 90 turns it upright on screen.
+    page.insert_text((80, 720), LANDSCAPE_TITLE, fontsize=14, fontname="hebo", rotate=90)
+    x = 110.0
+    for paragraph in LANDSCAPE_PARAGRAPHS:
+        for text in paragraph:
+            page.insert_text((x, 720), text, fontsize=10, rotate=90)
+            x += 12
+        x += 12
+    page.set_rotation(90)
+    return _save(doc)
+
+
 def offset_mediabox() -> bytes:
     """MediaBox `[-100 -100 512 692]`, text drawn at PDF (72, 600)."""
     return _raw_content(b"BT /F1 10 Tf 72 600 Td (Offset) Tj ET", mediabox="-100 -100 512 692")
@@ -506,6 +537,7 @@ OPENABLE: dict[str, Callable[[], bytes]] = {
     "alpha_zero": alpha_zero,
     "outside_crop": outside_crop,
     "two_column": two_column,
+    "landscape": landscape,
     "spaced_paragraphs": spaced_paragraphs,
     "furnished": furnished,
     "furniture_only_page": furniture_only_page,

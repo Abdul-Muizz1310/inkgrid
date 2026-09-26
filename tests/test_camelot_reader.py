@@ -165,3 +165,8 @@ def test_LC1_the_lattice_copy_shows_every_word_where_the_original_does(data: byt
 def test_LC1_the_lattice_copy_is_decrypted() -> None:
     copy = lattice_copy(pdf_factory.ruled_encrypted("secret"), "secret")
     assert [w.text for w in read_pdf(copy, file_name=None, password=None).words()][:1] == ["Fee"]
+
+
+def test_CM10_a_group_with_a_drawn_edge_inside_stays_split() -> None:
+    crossed = edges(["lt rtb", "lb rbt"])
+    assert merged_groups(crossed) == [(0, 0, 1, 1), (0, 1, 1, 2), (1, 0, 2, 1), (1, 1, 2, 2)]

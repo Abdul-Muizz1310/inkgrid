@@ -104,8 +104,9 @@ decides structure. The grammar, matched against the whole text after trimming:
 3. **Merged cells** come from the edge flags. Two neighbouring cells belong together when the edge between
    them is drawn on neither side (`right` of the left cell and `left` of the right cell both false, or
    `bottom` of the upper cell and `top` of the lower cell both false). Each connected group becomes one
-   rectangle when its cells fill that rectangle exactly; a group that does not is split back into its
-   single cells, because a guessed merge would fuse values (L2).
+   rectangle when its cells fill that rectangle exactly and every edge inside the rectangle is open; a
+   group that does not is split back into its single cells, because a guessed merge would fuse values
+   (L2).
 4. **The frame.** Camelot's coordinates are y-up from the bottom-left of the copy's page, in the page's
    rotated frame when Camelot turned the page. It turned the page when `Table.pdf_size` is the page's
    height by width (a `/Rotate` of 90 or 270), or when the `/Rotate` is 180. A swapped `pdf_size` on a
@@ -124,6 +125,7 @@ decides structure. The grammar, matched against the whole text after trimming:
 | CM5 | `ruled_landscape`: a grid upright on screen on a `/Rotate` 90 page, with and without an inset CropBox | the cells where the words are |
 | CM6 | a Camelot failure on page 2 of 3 (injected) | `lattice_failed` on page 2; pages 1 and 3 read |
 | CM7 | edge flags whose connected group is L-shaped | its cells stay separate |
+| CM10 | edge flags `lt rtb / lb rbt`: the four cells connect, but the edge between the two right-hand cells is drawn | four single cells |
 | CM8 | CM1–CM5 with each `engine`: `vector`, `combined`, and `raster` | the same cells, within 1 pt |
 | CM9 | `ruled_grid` encrypted with only an owner password (AES-256); with a user password, read with it | the table, both times |
 
@@ -309,6 +311,6 @@ before testing it against the cell rectangle.
 
 ## 9 · Acceptance
 
-- [ ] VL1–VL5, LC1, CM1–CM9, LP1, GS1–GS3, LT1–LT15, TP1–TP9, EX1–EX5, and AP1–AP6 pass.
+- [ ] VL1–VL5, LC1, CM1–CM10, LP1, GS1–GS3, LT1–LT15, TP1–TP9, EX1–EX5, and AP1–AP6 pass.
 - [ ] The seven fee schedules read without error, with Camelot's tables claimed as in § 0.
 - [ ] Every M0 and M1 case still passes.

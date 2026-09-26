@@ -35,6 +35,19 @@ class Edges:
     bottom: bool
 
 
+def _open_inside(edges: Sequence[Sequence[Edges]], box: Box) -> bool:
+    """True when no edge inside the box is drawn, on either of its sides."""
+    r0, c0, r1, c1 = box
+    for r in range(r0, r1):
+        for c in range(c0, c1):
+            here = edges[r][c]
+            if c + 1 < c1 and (here.right or edges[r][c + 1].left):
+                return False
+            if r + 1 < r1 and (here.bottom or edges[r + 1][c].top):
+                return False
+    return True
+
+
 def merged_groups(edges: Sequence[Sequence[Edges]]) -> list[Box]:
     """The cells as merged groups, in reading order.
 
@@ -65,7 +78,7 @@ def merged_groups(edges: Sequence[Sequence[Edges]]) -> list[Box]:
     for members in groups.values():
         r0, c0 = min(r for r, _ in members), min(c for _, c in members)
         r1, c1 = max(r for r, _ in members) + 1, max(c for _, c in members) + 1
-        if len(members) == (r1 - r0) * (c1 - c0):
+        if len(members) == (r1 - r0) * (c1 - c0) and _open_inside(edges, (r0, c0, r1, c1)):
             boxes.append((r0, c0, r1, c1))
         else:
             boxes.extend((r, c, r + 1, c + 1) for r, c in members)

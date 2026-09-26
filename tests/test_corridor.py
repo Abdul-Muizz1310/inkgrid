@@ -2,7 +2,7 @@ import pytest
 
 import pdf_factory
 from inkgrid.core.layout import Region
-from inkgrid.core.lines import group_lines
+from inkgrid.core.lines import fragments, group_lines
 from inkgrid.core.tables.corridor import (
     CorridorStage,
     Row,
@@ -526,3 +526,16 @@ def test_CG6_a_part_whose_widest_word_is_not_its_last_stays_in_its_cells() -> No
 @pytest.mark.parametrize("text", ["CHF 250", "5 bp", "500 CHF", "10 %"])
 def test_VP4_integer_money_with_a_separate_code_or_unit_is_a_value_piece(text: str) -> None:
     assert is_value_piece(words(text))
+
+
+def test_CG7_rows_chained_by_a_centred_value_never_share_a_cell() -> None:
+    doc = read_with_tables(pdf_factory.centred_span())
+    for table in doc.tables():
+        by_id = {w.id: w for w in doc.words}
+        for cell in table.grid.cells:
+            words = [by_id[w] for w in cell.word_ids]
+            lines = group_lines(words, PROFILE)
+            valued = [
+                f for line in lines for f in fragments(line, PROFILE) if is_value_like(f.words)
+            ]
+            assert len(valued) <= 1, cell.text

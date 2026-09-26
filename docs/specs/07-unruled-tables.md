@@ -190,8 +190,9 @@ In each size run:
 4. **Row bands** run from the first row's top to the last row's bottom. The edge between two rows is the
    midpoint of the gap between them, clamped between the upper row's lowest word centre and the lower
    row's highest; when those interleave, there is no table.
-5. **Never fuse (L2).** A table where any cell would hold two value-like pieces is not a table: its words
-   go to prose.
+5. **Never fuse (L2).** A cell holds at most one value-like piece, counted on the cell's own visual lines
+   (`group_lines` over its words): a word centred beside two rows can chain them into one line
+   (`04` § 2), so the page-level line is not enough to count by.
 6. Row spans are 1. Header and banner rows come from `table_roles` (`06` § 5), and `header_not_found` is
    raised as for ruled tables. The grid's `source` is `corridor`.
 
@@ -202,6 +203,7 @@ In each size run:
 | CG3 | `Commitment \| No commitment required` under 4 columns | `No commitment required` spans columns 2–3; column 1 is an empty cell |
 | CG4 | two values in one column of one row, bridged by a wide cell in another row | no table |
 | CG6 | `chained_edge`: a review's minimised crash, where chained lines leave a cell's widest word before its last | a valid `Document` |
+| CG7 | `centred_span`: `Free` centred beside two 9 pt rows at a 12 pt pitch, which chains them into one line | no cell holds both rows' fees |
 | CG5 | a valid corridor table built into a `Document` | valid: every word's centre in its cell, cells tiling the grid |
 
 ---
@@ -236,7 +238,7 @@ and assembly places corridor tables among the page's blocks exactly as ruled tab
 
 ## 8 · Acceptance
 
-- [ ] VP1–VP4, RW1–RW7, EX1–EX17, CB1–CB3, CG1–CG6, NT1–NT4, and CP1–CP5 pass.
+- [ ] VP1–VP4, RW1–RW7, EX1–EX17, CB1–CB3, CG1–CG7, NT1–NT4, and CP1–CP5 pass.
 - [ ] The seven fee schedules read without error; SIX, LSE, and Euronext gain their unruled tables, and
       a sample of them, rendered in the inspector, reads as the page prints.
 - [ ] Every M0, M1, and M2a case still passes.

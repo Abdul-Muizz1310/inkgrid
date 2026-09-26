@@ -13,7 +13,7 @@ from itertools import pairwise
 
 from inkgrid.core.layout import Region
 from inkgrid.core.lexicon import is_strong_value, is_value
-from inkgrid.core.lines import Line, fragments
+from inkgrid.core.lines import Line, fragments, group_lines
 from inkgrid.core.tables.proto import (
     ProtoCell,
     ProtoTable,
@@ -207,7 +207,23 @@ def _row_edges(rows: Sequence[Row]) -> list[float] | None:
     return edges
 
 
-def _row_cells(row: Row, bounds: Sequence[float]) -> list[tuple[int, int, list[Word]]] | None:
+def _values_on_own_lines(words: Sequence[Word], profile: Profile) -> int:
+    """Value-like pieces among a cell's words, counted on the cell's own visual lines.
+
+    A word centred beside two rows can chain them into one page-level line (spec 04 section 2),
+    so the cell's words are grouped again without it before the values are counted (L2).
+    """
+    return sum(
+        1
+        for line in group_lines(words, profile)
+        for piece in fragments(line, profile)
+        if is_value_like(piece.words)
+    )
+
+
+def _row_cells(
+    row: Row, bounds: Sequence[float], profile: Profile
+) -> list[tuple[int, int, list[Word]]] | None:
     """The row's cells as (first band, last band, words), or None when a cell holds two values."""
     parts = [part for piece in row.pieces for part in _split(piece, bounds)]
     spans = sorted(
@@ -230,9 +246,10 @@ def _row_cells(row: Row, bounds: Sequence[float]) -> list[tuple[int, int, list[W
             cells.append((first, last, [part]))
     out: list[tuple[int, int, list[Word]]] = []
     for first, last, members in cells:
-        if sum(1 for part in members if is_value_like(part)) > 1:
+        words = [w for part in members for w in part]
+        if _values_on_own_lines(words, profile) > 1:
             return None
-        out.append((first, last, [w for part in members for w in part]))
+        out.append((first, last, words))
     return out
 
 
@@ -255,7 +272,7 @@ def corridor_table(
         return None
     cells: list[ProtoCell] = []
     for r, row in enumerate(rows):
-        found = _row_cells(row, bounds)
+        found = _row_cells(row, bounds, profile)
         if found is None:
             return None
         taken = {c for first, last, _ in found for c in range(first, last + 1)}

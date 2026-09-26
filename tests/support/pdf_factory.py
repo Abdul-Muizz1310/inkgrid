@@ -521,6 +521,38 @@ def unruled_landscape() -> bytes:
     return _save(doc)
 
 
+CENTRED_SPAN_ROWS = [
+    ("Trading", "CHF 0.10", None),
+    ("Post trade", "CHF 0.20", None),
+    ("Drop copy", "CHF 0.30", None),
+    ("Reporting", "CHF 0.40", "CHF 5.00"),
+]
+
+
+def centred_span() -> bytes:
+    """9 pt rows at a 12 pt pitch, with `Free` centred beside rows 1 and 2 (LSE p10's pattern).
+
+    Base-14 boxes are 1.38 em tall, so `Free` overlaps both rows enough to chain them into one line.
+    """
+    doc = pymupdf.open()
+    page = _page(doc)
+
+    def right(end: float, y: float, text: str, font: str = "helv") -> None:
+        width = pymupdf.get_text_length(text, fontname=font, fontsize=9)
+        page.insert_text((end - width, y), text, fontsize=9, fontname=font)
+
+    page.insert_text((72, 100), "Component", fontsize=9, fontname="hebo")
+    right(300, 100, "Fee", "hebo")
+    right(400, 100, "Monthly fee", "hebo")
+    for n, (label, fee, monthly) in enumerate(CENTRED_SPAN_ROWS, 1):
+        page.insert_text((72, 100 + 12 * n), label, fontsize=9)
+        right(300, 100 + 12 * n, fee)
+        if monthly:
+            right(400, 100 + 12 * n, monthly)
+    right(400, 118, "Free")
+    return _save(doc)
+
+
 CHAINED_EDGE = [
     ("n/a", 356.1, 658.96, 10),
     ("1", 370.5, 659.76, 6),
@@ -869,6 +901,7 @@ OPENABLE: dict[str, Callable[[], bytes]] = {
     "landscape": landscape,
     "unruled_table": unruled_table,
     "chained_edge": chained_edge,
+    "centred_span": centred_span,
     "centred_values": centred_values,
     "ruled_and_unruled": ruled_and_unruled,
     "unruled_landscape": unruled_landscape,

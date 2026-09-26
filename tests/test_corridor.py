@@ -603,15 +603,18 @@ def test_EX19_a_refused_table_costs_a_few_attempts_not_one_per_row(
 
 
 def test_EX20_a_long_table_costs_about_its_length() -> None:
-    def timed(n: int) -> float:
+    def best(n: int) -> float:
         ps = long_table(n)
-        started = time.perf_counter()
-        (table,) = stage(ps).tables
+        times = []
+        for _ in range(3):  # the best of three: a slow run is the machine, not the code
+            started = time.perf_counter()
+            (table,) = stage(ps).tables
+            times.append(time.perf_counter() - started)
         assert len(table.shape.row_edges) - 1 == n
-        return time.perf_counter() - started
+        return min(times)
 
-    # Linear work triples with the rows; quadratic work would grow ninefold.
-    assert timed(3000) < 4 * timed(1000)
+    # Eight times the rows: linear work grows 8 times, n log n about 11, quadratic 64.
+    assert best(4000) < 16 * best(500)
 
 
 def test_CG6_a_part_whose_widest_word_is_not_its_last_stays_in_its_cells() -> None:

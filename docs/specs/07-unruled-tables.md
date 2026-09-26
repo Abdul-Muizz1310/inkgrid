@@ -207,7 +207,7 @@ In each size run:
 | EX10 | 10 pt headings 25 pt apart around a 9 pt table whose rows are 15 pt apart | the table's header and rows stay apart |
 | EX18 | four value rows, then CG4's pair: `Label \| 0.10 \| 0.20`, and `Other \| $1,000 per month` bridging those two values | a table of the four rows and `Label`; `Other` is text, with one `table_left_as_text` on the page |
 | EX19 | 200 value rows ending in CG4's pair | a table of 201 rows, in at most 4 log2(200) attempts to grid |
-| EX20 | tables of 1,000 and 3,000 value rows | the longer costs less than 4 times the shorter (linear work triples; quadratic grows ninefold) |
+| EX20 | tables of 500 and 4,000 value rows, each timed as the best of three runs | the longer costs less than 16 times the shorter (linear work grows 8 times, n log n about 11, quadratic 64) |
 
 ---
 

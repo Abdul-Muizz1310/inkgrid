@@ -460,3 +460,55 @@ def test_EX13_regions_whose_boxes_overlap_still_stack() -> None:
     ]
     (table,) = corridor_tables(regions, PROFILE, page=1, frame=0).tables
     assert {w.text for w in table.words} >= {"Standard", "tariff"}
+
+
+def test_EX14_a_centred_header_wider_than_its_column_is_in() -> None:
+    header = text_line(["Category"], x=72, y=100, size=9)
+    title = ["Maximum", "number"]
+    width = sum(4.5 * len(t) for t in title) + 2.7
+    header += text_line(title, x=399.5 - width / 2, y=100, size=9)  # centred on the last column
+    rows: list[P] = []
+    for n in range(2):
+        at = 112 + 12 * n
+        rows += text_line([f"Band{n}"], x=72, y=at, size=9) + right(f"CHF {n}.50", 285, at)
+        rows += right("12", 404, at)
+    (table,) = stage(header + rows).tables
+    assert table.header_rows == 1
+    assert len(table.shape.row_edges) - 1 == 3
+
+
+def test_EX15_a_second_tables_header_starts_the_second_table() -> None:
+    first = text_line(["Monthly", "fee"], x=72, y=100, size=9) + right("CHF 6,000", 404, 100)
+    first += text_line(["Setup", "fee"], x=72, y=112, size=9) + right("CHF 1,000", 404, 112)
+    second = (
+        text_line(["Band"], x=72, y=124, size=9)
+        + right("Variable", 285, 124)
+        + right("Minimum", 404, 124)
+    )
+    for n in range(2):
+        at = 136 + 12 * n
+        second += text_line([f"Tier{n}"], x=72, y=at, size=9) + right(f"0.{n}0 bp", 285, at)
+        second += right(f"CHF {n}.60", 404, at)
+    tables = stage(first + second).tables
+    assert len(tables) == 2
+    assert tables[1].header_rows == 1
+
+
+def test_EX16_a_wrapped_banner_is_not_a_new_header() -> None:
+    banner = text_line(
+        ["Aggressive", "executions", "qualifying", "under", "the", "scheme"],
+        x=72,
+        y=136,
+        size=9,
+        bold=True,
+    )
+    banner += text_line(["for", "equities"], x=72, y=145, size=9, bold=True)
+    (table,) = stage(header_row(100) + six_rows(112) + banner + six_rows(160)).tables
+    assert len(table.shape.row_edges) - 1 == 6
+
+
+def test_EX17_the_downward_rows_never_run_into_the_next_table() -> None:
+    tables = stage(header_row(100) + six_rows(112) + header_row(148) + six_rows(160)).tables
+    assert len(tables) == 2
+    assert [len(t.shape.row_edges) - 1 for t in tables] == [3, 3]
+    assert tables[1].header_rows == 1

@@ -277,15 +277,21 @@ class CorridorStage:
     findings: tuple[Finding, ...]
 
 
+def _side_by_side(row: Row) -> bool:
+    """True when two pieces of the row sit apart horizontally: cells, not a wrapped cell."""
+    return any(a.x1 <= b.x0 for a, b in pairwise(row.pieces))
+
+
 def _has_value_piece(row: Row) -> bool:
     return any(is_value_piece(p.words) for p in row.pieces)
 
 
 def _fits(row: Row, spans: Sequence[Span], tol: float) -> bool:
-    """True when the row lies within the columns and every piece is anchored to them.
+    """True when every piece of the row is anchored to the columns (spec 07 section 3 item 4).
 
-    A piece is anchored by its start at a column's start, its end at a column's end, or its centre
-    at the centre of a span of consecutive columns.
+    A piece is anchored by its centre at the centre of a span of consecutive columns, or by its
+    start at a column's start or its end at a column's end while it lies within the table's width:
+    a centred header may be wider than its column, a sentence may not run past the columns.
     """
     lo, hi = spans[0][0] - tol, spans[-1][1] + tol
     starts = [a for a, _ in spans]
@@ -294,14 +300,14 @@ def _fits(row: Row, spans: Sequence[Span], tol: float) -> bool:
         (spans[i][0] + spans[j][1]) / 2 for i in range(len(spans)) for j in range(i, len(spans))
     ]
     for piece in row.pieces:
-        if piece.x0 < lo or piece.x1 > hi:
-            return False
         mid = (piece.x0 + piece.x1) / 2
-        if not (
-            any(abs(piece.x0 - a) <= tol for a in starts)
-            or any(abs(piece.x1 - b) <= tol for b in ends)
-            or any(abs(mid - c) <= tol for c in centres)
-        ):
+        if any(abs(mid - c) <= tol for c in centres):
+            continue
+        within = lo <= piece.x0 and piece.x1 <= hi
+        edge = any(abs(piece.x0 - a) <= tol for a in starts) or any(
+            abs(piece.x1 - b) <= tol for b in ends
+        )
+        if not (within and edge):
             return False
     return True
 
@@ -327,18 +333,30 @@ def _extent(run: Sequence[Row], start: int, first: int) -> tuple[int, int, tuple
     for k in range(first + 1, len(run)):
         if not is_value_row(run[k]):
             continue
+        between = [run[j] for j in range(last + 1, k)]
+        # A row of several pieces holding no value at all (not even `Free` or `-`) before more
+        # values is the next table's column header.
+        if any(
+            _side_by_side(row) and not any(is_value_like(p.words) for p in row.pieces)
+            for row in between
+        ):
+            break
         spans = columns([run[j] for j in [*members, k]])
-        if all(_fits(run[j], spans, tol) for j in range(last + 1, k)):
+        if all(_fits(row, spans, tol) for row in between):
             members.append(k)
             last = k
         else:
             break
     spans = columns([run[j] for j in members])
     hi = last
-    while hi + 1 < len(run) and len(run[hi + 1].pieces) >= MIN_PIECES:
-        if not _fits(run[hi + 1], spans, tol):
+    while hi + 1 < len(run) and _side_by_side(run[hi + 1]):
+        below = run[hi + 1]
+        if _has_value_piece(below) or not _fits(below, spans, tol):
             break
         hi += 1
+    # Rows that lead up to another value row are the next table's header: give them back.
+    if hi + 1 < len(run) and is_value_row(run[hi + 1]):
+        hi = last
     lo = first
     while lo - 1 >= start and first - (lo - 1) <= MAX_HEADER_ROWS:
         above = run[lo - 1]

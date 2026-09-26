@@ -109,15 +109,20 @@ In each size run:
 3. The table runs from its first value row through each following value row whose rows in between all
    align (item 4) with the columns of the value rows so far: banners, label rows, and value-free rows such
    as `Commitment | No commitment required` stay in. A row between that does not align ends the table at
-   the value row before it.
-4. **Aligned rows.** A row *aligns* when all its pieces lie within the table's width (from the first
-   column's start to the last column's end, give or take half the run's size) and each piece is anchored,
-   within half the run's size: its start at a column's start, its end at a column's end, or its centre at
-   the centre of a span of consecutive columns. A sentence that runs past the columns does not align, even when it starts where
-   they do.
+   the value row before it, and so does a row of two or more pieces side by side (horizontally apart, so
+   not the lines of one wrapped cell) holding nothing value-like (not even `Free` or `-`) followed by
+   another value row: that is the next table's column header (`Variable charge | Minimum charge` under a subscription
+   fee), which the next table takes as its own.
+4. **Aligned rows.** A row *aligns* when each piece is anchored, within half the run's size: by its
+   centre at the centre of a span of consecutive columns, or by its start at a column's start or its end at
+   a column's end while lying within the table's width (from the first column's start to the last column's
+   end, give or take half the run's size). A sentence that runs past the columns does not align, even when
+   it starts where they do; a centred header wider than the narrow column it heads does.
 5. **Upward**, the table takes up to 3 preceding rows, nearest first, while each holds no value piece and
    aligns: the column header, and a caption or a banner above it.
-6. **Downward**, it takes following rows while each has at least 2 pieces and aligns.
+6. **Downward**, it takes following rows while each has at least 2 pieces side by side, holds no value
+   piece, and aligns; but when a value row follows the rows it took, those rows lead into the next table
+   and it gives them back.
 7. **Acceptance:** at least 2 rows. A size run can hold several tables: after one, the search resumes at
    the first row after it.
 
@@ -135,6 +140,10 @@ In each size run:
 | EX11 | a two-row table (`First 1,000 executed orders \| €0.60` over `Subsequent executed orders \| €0.30`) in a prose region | one table |
 | EX12 | two prose columns side by side whose lines hold values at the same heights | never one candidate: no table across the columns |
 | EX13 | a centred label's first line in a prose region whose box overlaps the table's rows region by 1 pt | one candidate: the line joins the table |
+| EX14 | a centred header `Maximum number` wider than its narrow value column, the table's last | in the table as its header row |
+| EX15 | a two-row table, then a second table's value-free two-piece header, then its value rows | two tables; the header heads the second |
+| EX16 | a bold banner wrapped onto two lines, both starting at column 0, between value rows | in the table: one banner row |
+| EX17 | a table, then a second header on the same columns, then that table's value rows | two tables; the second header heads the second |
 | EX10 | 10 pt headings 25 pt apart around a 9 pt table whose rows are 15 pt apart | the table's header and rows stay apart |
 
 ---
@@ -223,7 +232,7 @@ and assembly places corridor tables among the page's blocks exactly as ruled tab
 
 ## 8 · Acceptance
 
-- [ ] VP1–VP3, RW1–RW7, EX1–EX13, CB1–CB3, CG1–CG5, NT1–NT4, and CP1–CP5 pass.
+- [ ] VP1–VP3, RW1–RW7, EX1–EX17, CB1–CB3, CG1–CG5, NT1–NT4, and CP1–CP5 pass.
 - [ ] The seven fee schedules read without error; SIX, LSE, and Euronext gain their unruled tables, and
       a sample of them, rendered in the inspector, reads as the page prints.
 - [ ] Every M0, M1, and M2a case still passes.

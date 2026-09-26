@@ -252,7 +252,7 @@ before testing it against the cell rectangle.
 | TP2 | `table_between_paragraphs`: a paragraph, a ruled table, a paragraph | paragraph, table, paragraph |
 | TP3 | `boxed_paragraph`: a 1 x 1 box around a paragraph | a paragraph, no table |
 | TP4 | `ruled_landscape` | one table, rows in screen order (`Fee Rate Cap` first); a valid `Document` with `frame = 90` |
-| TP5 | a `Document` whose table has `frame = 90`, with a word moved out of its cell (JSON) | `ValidationError` (invariant 15) |
+| TP5 | TP4's `Document` in JSON with the table's `frame` set to 0, so its words fall outside the cells they were claimed into | `ValidationError` (invariant 15) |
 | TP7 | `ruled_columns`: a page frame with a rule under its header and a rule between two columns of prose | no table; the left column's blocks, then the right column's |
 | TP8 | `table_in_right_column`: three left-column paragraphs; in the right column a paragraph, a ruled table, a paragraph | left, left, left, right, table, right |
 | TP9 | Camelot failing on page 1 of `ruled_grid` (injected) | `lattice_failed` on page 1 and no `lattice_disagrees` |

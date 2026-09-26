@@ -119,10 +119,18 @@ In each size run:
 
 - **Columns** are the connected components of the union of the value rows' piece extents. Two pieces
   that overlap in x, in any value rows, are in one column.
-- **Boundaries.** Between two consecutive columns lies a *corridor*. The boundary is the midpoint of the
-  widest part of the corridor where **every** row of the table is blank; when no part is blank in every
-  row, it is the corridor's midpoint. So a long label in a value-free row (`Securities in the uncleared
-  market …`) stays in its column, and a centred header does not straddle a boundary it can avoid.
+- **Boundaries.** Between two consecutive columns lies a *corridor*, and every row of the table votes on
+  where in it the boundary goes:
+  - a row's *blanks* are the parts of the corridor none of its words cover, at least half the row's size
+    wide (narrower gaps are word spacing, not column space); a row with no blank abstains;
+  - the candidates are the corridor's midpoint and the midpoint of every blank;
+  - a candidate scores +1 for each row with a blank that contains it, and −1 for each row whose blanks
+    all miss it; the best score wins, and a tie goes to the candidate farthest from any word.
+
+  So a long label in a value-free row (`Securities in the uncleared market …`) stays in its column, a
+  header's own column break wins inside a wide data corridor, and a spanning header whose only blanks are
+  word spacing abstains and keeps its span. (A plain "widest blank in every row" would pick the 2 pt word
+  gaps inside `Trades executed via STI` and split it.)
 - The column bands run from the table's leftmost word start, through the boundaries, to its rightmost word
   end plus 0.01 pt (half-open, as `06` § 5).
 

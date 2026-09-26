@@ -1,7 +1,15 @@
 import pytest
 
 from inkgrid.core.lines import group_lines
-from inkgrid.core.tables.corridor import Row, fold_rows, is_value_like, is_value_piece
+from inkgrid.core.tables.corridor import (
+    Row,
+    columns,
+    corridor_table,
+    fold_rows,
+    is_value_like,
+    is_value_piece,
+)
+from inkgrid.core.tables.proto import ProtoTable
 from inkgrid.model.config import Profile
 from inkgrid.model.page import Word
 from layout_builder import P, place, text_line
@@ -112,3 +120,108 @@ def test_RW5_weak_values_stacked_in_one_column_are_rows_of_their_own() -> None:
         *text_line(["501", "\u2013", "1,000"], x=72, y=110),
     ]
     assert len(rows_of(ps)) == 2
+
+
+def corridor(ps: list[P]) -> ProtoTable | None:
+    rows = rows_of(ps)
+    return corridor_table(rows, columns(rows), PROFILE, page=1, frame=0)
+
+
+def cell_map(table: ProtoTable) -> dict[str, tuple[int, int, int]]:
+    """Each non-empty cell by its text: (row, col, col_span)."""
+    return {
+        " ".join(w.text for w in c.words): (c.cell.row, c.cell.col, c.cell.col_span)
+        for c in table.cells
+        if c.words
+    }
+
+
+def right(text: str, end: float, y: float, size: float = 9) -> list[P]:
+    """Words laid out so the piece ends at `end` (right-aligned money)."""
+    width = sum(0.5 * size * len(t) for t in text.split()) + 0.3 * size * (len(text.split()) - 1)
+    return text_line(text.split(), x=end - width, y=y, size=size)
+
+
+def six_rows(y: float = 120) -> list[P]:
+    """Two SIX value rows: a label, Floor ending 285, Scale ending 345, Cap ending 404."""
+    out: list[P] = []
+    for n, (label, floor, scale) in enumerate(
+        [("a) Poster", "-", "1.00 bp"), ("b) Aggressor", "CHF 0.50", "0.55 bp")]
+    ):
+        at = y + 12 * n
+        out += text_line(label.split(), x=72, y=at, size=9)
+        out += right(floor, 285, at) + right(scale, 345, at) + right("-", 404, at)
+    return out
+
+
+def test_CB1_columns_come_from_the_value_rows() -> None:
+    rows = rows_of(six_rows())
+    assert len(columns(rows)) == 4
+
+
+def test_CB2_a_long_label_keeps_its_column() -> None:
+    label = text_line(["Securities", "in", "the", "uncleared", "market"], x=72, y=144, size=9)
+    table = corridor(six_rows() + label + right("Free", 285, 144))
+    assert table is not None
+    assert cell_map(table)["Securities in the uncleared market"] == (2, 0, 1)
+    assert cell_map(table)["Free"] == (2, 1, 1)
+
+
+def test_CB3_a_word_across_a_corridor_with_no_blank_spans_both_columns() -> None:
+    header = [P("Transaction-fee-schedule-heading", 110, 100, size=9)]
+    table = corridor(header + six_rows())
+    assert table is not None
+    assert cell_map(table)["Transaction-fee-schedule-heading"] == (0, 0, 2)
+
+
+def five_columns(y: float) -> list[P]:
+    """SIX's STI/OTI value rows: a label and four right-aligned CHF columns."""
+    out: list[P] = []
+    for n in range(2):
+        at = y + 12 * n
+        out += text_line([f"Row{n}"], x=57, y=at, size=9)
+        for end in (250, 349, 447, 546):
+            out += right("CHF 1.00", end, at)
+    return out
+
+
+def test_CG1_a_spanning_header_keeps_its_span() -> None:
+    header = right("Trades executed via STI", 348, 100) + right("Trades executed via OTI", 546, 100)
+    table = corridor(header + five_columns(120))
+    assert table is not None
+    spans = cell_map(table)
+    assert spans["Trades executed via STI"] == (0, 1, 2)
+    assert spans["Trades executed via OTI"] == (0, 3, 2)
+
+
+def test_CG2_a_column_break_inside_a_fragment_splits_it() -> None:
+    header = right("During continuous", 250, 100)
+    header += text_line(["Auction", "&", "TAL"], x=255, y=100, size=9)
+    table = corridor(header + five_columns(120))
+    assert table is not None
+    spans = cell_map(table)
+    assert spans["During continuous"] == (0, 1, 1)
+    assert spans["Auction & TAL"][:2] == (0, 2)
+
+
+def test_CG3_a_trailing_wide_cell_spans_and_leaves_an_empty_cell() -> None:
+    commitment = text_line(["Commitment"], x=72, y=144, size=9) + right(
+        "No commitment required", 404, 144
+    )
+    table = corridor(six_rows() + commitment)
+    assert table is not None
+    assert cell_map(table)["No commitment required"] == (2, 2, 2)
+    empty = [(c.cell.row, c.cell.col) for c in table.cells if not c.words]
+    assert (2, 1) in empty
+
+
+def test_CG4_two_values_in_one_cell_is_no_table() -> None:
+    fused = (
+        text_line(["Label"], x=72, y=120, size=9)
+        + right("0.10", 218, 120)
+        + right("0.20", 258, 120)
+    )
+    wide = text_line(["Other"], x=72, y=132, size=9) + text_line(
+        ["$1,000", "per", "month"], x=200, y=132, size=9
+    )
+    assert corridor(fused + wide) is None

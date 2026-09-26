@@ -6,6 +6,7 @@ everything else keeps row order, which is right for tables and hanging-indent li
 """
 
 import bisect
+from collections import Counter
 from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Literal
@@ -105,6 +106,27 @@ def _columns(run: _Run, gutters: Sequence[Interval], profile: Profile) -> list[R
     return [Region("prose", tuple(column)) for column in lines]
 
 
+def _run_from(rows: Sequence[_Row]) -> _Run:
+    run = _Run([rows[0]], rows[0].free, rows[0].line.x0, rows[0].line.x1)
+    for row in rows[1:]:
+        run = run.extended(row)
+    return run
+
+
+def _column_counts(row: _Row, cuts: Sequence[float]) -> Counter[int]:
+    """How many of the row's fragments fall in each column."""
+    return Counter(bisect.bisect(cuts, (part.x0 + part.x1) / 2) for part in row.parts)
+
+
+def _prose_columns(rows: Sequence[_Row], profile: Profile, width: float) -> list[Region] | None:
+    """The rows as prose columns on their own gutters, or None."""
+    if len(rows) < profile.column_min_lines:
+        return None
+    run = _run_from(rows)
+    gutters = _gutters(run.free, run.left, run.right, width)
+    return _columns(run, gutters, profile) if gutters else None
+
+
 def _sections(rows: Sequence[_Row], profile: Profile, body_size: float) -> list[Region]:
     width = profile.gutter_min_em * body_size
     regions: list[Region] = []
@@ -124,17 +146,41 @@ def _sections(rows: Sequence[_Row], profile: Profile, body_size: float) -> list[
                 break
             run = longer
         gutters = _gutters(run.free, run.left, run.right, width)
-        if gutters and len(run.rows) >= profile.column_min_lines:
-            flush()
-            columns = _columns(run, gutters, profile)
-            if columns is None:
-                regions.append(Region("rows", tuple(row.line for row in run.rows)))
-            else:
-                regions.extend(columns)
-            i += len(run.rows)
-        else:
+        if not gutters or len(run.rows) < profile.column_min_lines:
             plain.append(rows[i].line)
             i += 1
+            continue
+        cuts = [(lo + hi) / 2 for lo, hi in gutters]
+        # A one-sided first row before a two-sided one ends the text above: a paragraph's short
+        # last line, or a date set flush right.
+        if (
+            len(_column_counts(run.rows[0], cuts)) == 1
+            and len(_column_counts(run.rows[1], cuts)) > 1
+        ):
+            plain.append(rows[i].line)
+            i += 1
+            continue
+        flush()
+        columns = _columns(run, gutters, profile)
+        if columns is not None:
+            regions.extend(columns)
+            i += len(run.rows)
+            continue
+        # Not prose columns: cut away a table beside them. A busy row holds two fragments in one
+        # column, as a table row whose values share one side of the gutter does.
+        busy = [k for k, row in enumerate(run.rows) if max(_column_counts(row, cuts).values()) > 1]
+        head = _prose_columns(run.rows[: busy[0]], profile, width) if busy else None
+        if head is not None:
+            regions.extend(head)
+            i += busy[0]
+            continue
+        tail = _prose_columns(run.rows[busy[-1] + 1 :], profile, width) if busy else None
+        if tail is not None:
+            regions.extend(_sections(run.rows[: busy[-1] + 1], profile, body_size))
+            regions.extend(tail)
+        else:
+            regions.append(Region("rows", tuple(row.line for row in run.rows)))
+        i += len(run.rows)
     flush()
     return regions
 

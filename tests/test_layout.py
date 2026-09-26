@@ -142,3 +142,77 @@ def test_LY11_a_dense_page_is_laid_out_quickly() -> None:
     regions = layout(words, PROFILE, BODY)
     assert time.perf_counter() - start < 2.0
     assert [r.kind for r in regions] == ["rows"]
+
+
+RIGHT_X = 72 + COLUMN_WIDTH + 24
+
+
+def fee_table(y: float) -> list[P]:
+    """Five rows: a label left of the gutter, two values right of it."""
+    out: list[P] = []
+    for n, label in enumerate(["Customer", "Firm", "Broker", "Member", "Agent"]):
+        row_y = y + PITCH * n
+        out += [
+            P(label, 72, row_y),
+            P(f"0.{n}0", RIGHT_X + 20, row_y),
+            P(f"0.{n}5", RIGHT_X + 120, row_y),
+        ]
+    return out
+
+
+def test_LY12_a_table_below_the_columns_is_cut_away() -> None:
+    left, right = two_columns(y=100)
+    table = fee_table(100 + 6 * PITCH + 8)
+    regions = layout(place(left + right + table), PROFILE, BODY)
+    assert read_order(regions) == [
+        ("prose", texts(left)),
+        ("prose", texts(right)),
+        ("rows", texts(table)),
+    ]
+
+
+def test_LY13_a_table_above_the_columns_is_cut_away() -> None:
+    table = fee_table(100)
+    left, right = two_columns(y=100 + 5 * PITCH + 8)
+    regions = layout(place(table + left + right), PROFILE, BODY)
+    assert read_order(regions) == [
+        ("rows", texts(table)),
+        ("prose", texts(left)),
+        ("prose", texts(right)),
+    ]
+
+
+def paragraph_above(y: float) -> list[P]:
+    return [
+        *text_line(["words"] * 12, x=72, y=y),
+        *text_line(["end", "of", "it."], x=72, y=y + PITCH),
+    ]
+
+
+def test_LY14_a_paragraphs_last_line_stays_with_it_above_columns() -> None:
+    para = paragraph_above(70)
+    left, right = two_columns(y=70 + 2 * PITCH + 6)
+    regions = layout(place(para + left + right), PROFILE, BODY)
+    assert read_order(regions) == [
+        ("prose", texts(para)),
+        ("prose", texts(left)),
+        ("prose", texts(right)),
+    ]
+
+
+def test_LY15_a_paragraphs_last_line_stays_with_it_above_a_table() -> None:
+    para = paragraph_above(70)
+    table = fee_table(70 + 2 * PITCH + 6)
+    regions = layout(place(para + table), PROFILE, BODY)
+    assert read_order(regions) == [("prose", texts(para)), ("rows", texts(table))]
+
+
+def test_LY16_a_flush_right_date_above_columns_reads_first() -> None:
+    date = text_line(["Effective", "2026"], x=72 + 2 * COLUMN_WIDTH + 24 - 70, y=80)
+    left, right = two_columns(y=100)
+    regions = layout(place(date + left + right), PROFILE, BODY)
+    assert read_order(regions) == [
+        ("prose", texts(date)),
+        ("prose", texts(left)),
+        ("prose", texts(right)),
+    ]

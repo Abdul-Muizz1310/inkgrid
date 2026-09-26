@@ -237,6 +237,10 @@ The algorithm:
    a gutter. A run with a gutter and at least `column_min_lines` lines is a **gutter section**, and the
    walk continues after it. Otherwise line `i` is a **plain line**, and the walk continues at `i + 1`.
    Consecutive plain lines form one plain section.
+   - **A run starts where its columns do.** When a run's first row holds fragments in only one of
+     its columns and its second row in two or more, the first row is the last line of the text above
+     (a paragraph's short last line, a date set flush right): it is a plain line, and the run starts
+     one row later.
 5. **Classification.**
    - The gutters of a section cut it into columns, and each fragment goes to the column that holds
      its centre.
@@ -245,6 +249,12 @@ The algorithm:
      `prose_min_words`.
    - Prose columns become one `prose` region per column, left to right. Within a column, each source
      line contributes one line: its words in that column.
+   - **A table beside the columns is cut away.** A row is *busy* when one of the section's columns
+     holds two or more of its fragments: a table row whose value columns share one side of the
+     gutter. In a gutter section that is not prose columns, the rows before the first busy row, or
+     those after the last one, become prose columns when there are at least `column_min_lines` of
+     them and they are prose columns on their own gutters. The rest of the section is walked again as
+     sections of its own.
    - Any other gutter section becomes one `rows` region.
    - A plain section becomes one `prose` region.
 6. **Reading order.** Sections go top to bottom; within a prose-column section, columns go left to
@@ -266,6 +276,11 @@ The algorithm:
 | LY9 | a vertical (rotated) label beside a paragraph | a separate `rows` region after the others |
 | LY10 | property: every input word is in exactly one region | holds |
 | LY11 | a dense page of 1500 lines in three columns of values | finishes in under 2 s |
+| LY12 | two prose columns directly above a table whose value columns sit right of the gutter | left, right, then the table as `rows` |
+| LY13 | the same table directly above the columns | the table as `rows`, then left, right |
+| LY14 | a full-width paragraph whose short last line sits directly above two columns | the whole paragraph in one region, then left, right |
+| LY15 | a full-width paragraph whose short last line sits directly above a 3-column table | the whole paragraph in one region, then the table as `rows` |
+| LY16 | a date set flush right directly above two columns | the date, then left, right |
 
 ---
 
@@ -407,7 +422,7 @@ document with no words at all has no blocks, which is valid: the partition of ze
 
 ## 7 · Acceptance
 
-- [ ] CF1–CF10, LN1–LN9, FU1–FU13, LY1–LY11, PB1–PB18, AS1–AS11, and PL1–PL5 pass.
+- [ ] CF1–CF10, LN1–LN9, FU1–FU13, LY1–LY16, PB1–PB18, AS1–AS11, and PL1–PL5 pass.
 - [ ] Every M0 fixture assembles to a valid `Document` (the M1 exit criterion, through
       `inkgrid read`; `05-read-and-inspector.md`).
 - [ ] The two-column fixture reads in column order (M1 exit criterion).

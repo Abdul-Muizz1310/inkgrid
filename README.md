@@ -16,10 +16,10 @@
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue"></a>
 </p>
 
-> **Status: pre-alpha (milestone M2b of M6).** Today inkgrid reads a PDF into a validated `Document`:
-> every word in exactly one block, in reading order, with running headers and footers set apart, and
-> tables, ruled or not, as explicit cell grids. Note lists and glossaries arrive in M2c, footnote links
-> and table continuation in M3, and independent verification in M4. The roadmap is in
+> **Status: pre-alpha (milestone M2 of M6 complete).** Today inkgrid reads a PDF into a validated
+> `Document`: every word in exactly one block, in reading order, with running headers and footers set
+> apart, tables, ruled or not, as explicit cell grids, and glossaries and note lists as definitions and
+> footnotes. Footnote links and table continuation arrive in M3, and independent verification in M4. The roadmap is in
 > [`docs/specs/00-design.md`](docs/specs/00-design.md) § 14.
 
 ## What it does
@@ -34,7 +34,7 @@ cell grids, with merged cells as spans and headers carried across page breaks, m
 Links record the relationships the page prints: footnote calls to their notes, and tables that
 continue onto the next page.
 
-Shipped so far (M0, M1, M2a, and M2b):
+Shipped so far (M0, M1, and M2):
 
 - **Words rebuilt from characters.** A superscript marker printed tight against a value stays its own
   word (`$0.40` and `2`, never `$0.402`). A font change in the middle of a word keeps it one word.
@@ -65,6 +65,12 @@ Shipped so far (M0, M1, M2a, and M2b):
   votes on where each boundary sits, wrapped lines join their row, a drawn row rule ends a row, and two
   values never share a cell: rows that could only be read by fusing two values stay text, with a
   `table_left_as_text` warning.
+- **Glossaries and note lists.** Inside a definitions section, an entry that opens with a term becomes
+  a definition block with its `term` and `body`: a quoted term (`“ABBO” means …`), a bold one
+  (`Available for Distribution:`), or one set in a column of its own (SIX's glossary). Outside such a
+  section only a quoted term with a defining verb counts. A two-column grid of note labels beside prose
+  becomes footnotes (`X2 | Connection rebate: …`, where a table prints `EMDI^X2`), and inside a
+  section, or under its own `Legend` banner, a grid of terms beside prose becomes definitions.
 - **Markdown and an HTML inspector.** The inspector draws every block over its rendered page, for
   looking at a reading rather than trusting it.
 - **The full output contract,** `inkgrid.document/1`, with its invariants enforced: every word owned

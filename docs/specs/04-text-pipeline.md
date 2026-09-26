@@ -350,7 +350,7 @@ tables among them first, and what is left, such as hanging-indent lists, is pros
 8. **`paragraph`:** anything else.
 
 Definitions from hanging-indent glossaries arrive in M2 together with glossary grids, because both
-share the term-and-body test.
+share the term-and-body test: `08-notes-and-glossaries.md` types them after this stage.
 
 | # | case | expected |
 |---|---|---|

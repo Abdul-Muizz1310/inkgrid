@@ -27,6 +27,9 @@ All notable changes to this project are documented here. The format follows
   `Table.to_rows()`; `lattice="vector"` alongside `combined` and `raster`; `inkgrid read --lattice`.
 - Unruled tables (M2b): whitespace-corridor grids with voted boundaries, header and banner rows,
   `header_not_found`, and `table_left_as_text` for rows no grid holds without fusing two values; currency codes are now the ISO 4217 list, so `LPS2` or `SEC 31` is no value.
+- Glossaries and note lists (M2c): definition blocks from quoted, bold, and hanging terms in
+  definitions sections, and from quoted terms with a defining verb anywhere; two-column grids of note
+  labels or terms beside prose read as footnotes and definitions.
 - `Document.to_markdown()`, the HTML inspector, and the `inkgrid read` command with `--markdown`,
   `--inspector`, and `--strict`.
 - A layer-table test on the import graph, and CI across Linux, Windows, and macOS.

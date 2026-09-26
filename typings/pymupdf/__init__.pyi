@@ -103,6 +103,7 @@ class Pixmap:
 class Page:
     rotation: int
     cropbox: Rect
+    mediabox: Rect
     @overload
     def get_text(
         self, option: Literal["rawdict"], *, flags: int = ..., clip: Rect | None = ...

@@ -19,6 +19,7 @@ import pymupdf
 from inkgrid.errors import PasswordRequired, PdfOpenError, WrongPassword
 from inkgrid.model.canonical import sha256_hex
 from inkgrid.model.findings import Finding, FindingCode
+from inkgrid.model.lattice import PageFrame
 from inkgrid.model.page import PageModel, ReaderInfo, Reading, Source, Word, expected_text_layer
 from inkgrid.read.page_findings import PageSignals, engine_warning_findings, page_findings
 from inkgrid.read.raw import (
@@ -319,3 +320,31 @@ def render_pages(data: bytes, password: str | None, dpi: int) -> tuple[bytes | N
         finally:
             doc.close()
     return tuple(images)
+
+
+def page_frames(data: bytes, password: str | None) -> tuple[PageFrame, ...]:
+    """Each loadable page's MediaBox and CropBox, for placing Camelot's y-up coordinates."""
+    frames: list[PageFrame] = []
+    with _quiet():
+        doc = _open(data, password)
+        try:
+            for index in range(doc.page_count):
+                try:
+                    page = doc.load_page(index)
+                except LOAD_ERRORS:
+                    break
+                frames.append(
+                    PageFrame(
+                        number=index + 1,
+                        mediabox_x0=page.mediabox.x0,
+                        mediabox_height=page.mediabox.height,
+                        cropbox_x0=page.cropbox.x0,
+                        cropbox_y0=page.cropbox.y0,
+                        rotation=_rotation(page.rotation),
+                        width=page.cropbox.width,
+                        height=page.cropbox.height,
+                    )
+                )
+        finally:
+            doc.close()
+    return tuple(frames)

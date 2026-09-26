@@ -32,7 +32,7 @@ WordPair = tuple[NonNegativeInt, NonNegativeInt]
 """A hyphen join `(a, b)`: word a's final hyphen is dropped and b follows it with no space."""
 
 
-Lattice = Literal["combined", "raster"]
+Lattice = Literal["combined", "vector", "raster"]
 """How Camelot reads ruled tables (used from M2; recorded in `Producer.lattice`)."""
 
 

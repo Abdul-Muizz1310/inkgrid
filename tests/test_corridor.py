@@ -377,3 +377,19 @@ def test_RW6_rows_at_ordinary_leading_whose_boxes_overlap_stay_apart() -> None:
         at = 112 + 12 * n
         ps += [P(f"Tier{n}", 72, at, size=12.4), P(f"0.{n}0", 300, at, size=12.4)]
     assert len(rows_of(ps)) == 4
+
+
+def test_EX10_the_headings_pitch_does_not_set_the_tables() -> None:
+    ps: list[P] = []
+    for n, y in enumerate((60, 85, 110)):
+        ps += text_line([f"1.{n}", "Heading"], x=72, y=y, size=10, bold=True)
+    ps += header_row(135)
+    for n in range(2):
+        at = 150 + 15 * n
+        ps += text_line([f"Tier{n}"], x=72, y=at, size=9) + right(f"CHF {n}.50", 285, at)
+        ps += right("0.25 bp", 345, at) + right("-", 404, at)
+    for n, y in enumerate((200, 225, 250)):
+        ps += text_line([f"2.{n}", "Heading"], x=72, y=y, size=10, bold=True)
+    (table,) = stage(ps).tables
+    assert len(table.shape.row_edges) - 1 == 3
+    assert table.header_rows == 1

@@ -289,16 +289,16 @@ def _fits(row: Row, spans: Sequence[Span], tol: float) -> bool:
     return True
 
 
-def _size_runs(rows: Sequence[Row], profile: Profile) -> list[list[Row]]:
-    """The rows split wherever the type size changes (prose rule 2, against the smaller size)."""
-    runs: list[list[Row]] = []
-    for row in rows:
+def _size_runs(lines: Sequence[Line], profile: Profile) -> list[list[Line]]:
+    """The lines split wherever the type size changes (prose rule 2, against the smaller size)."""
+    runs: list[list[Line]] = []
+    for line in lines:
         if runs:
             prev = runs[-1][-1]
-            if abs(row.size - prev.size) <= profile.size_change_ratio * min(row.size, prev.size):
-                runs[-1].append(row)
+            if abs(line.size - prev.size) <= profile.size_change_ratio * min(line.size, prev.size):
+                runs[-1].append(line)
                 continue
-        runs.append([row])
+        runs.append([line])
     return runs
 
 
@@ -384,9 +384,10 @@ def corridor_tables(
         while j < len(regions) and regions[j].kind == "rows":
             j += 1
         group = regions[i:j]
-        rows = fold_rows([line for region in group for line in region.lines], profile)
         claimed: set[int] = set()
-        for run in _size_runs(rows, profile):
+        # Fold each size run on its own: the headings' pitch must not set the table's.
+        for lines in _size_runs([line for region in group for line in region.lines], profile):
+            run = fold_rows(lines, profile)
             for lo, hi, table in _run_tables(run, profile, page=page, frame=frame):
                 tables.append(table)
                 findings.extend(missing_header(table))

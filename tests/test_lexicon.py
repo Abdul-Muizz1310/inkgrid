@@ -123,3 +123,21 @@ def test_VL4_labels_are_not_values(text: str) -> None:
 )
 def test_VL5_strong_values_carry_a_unit_decimal_or_grouping(token: str, strong: bool) -> None:
     assert is_strong_value(token) is strong
+
+
+@pytest.mark.parametrize(
+    ("text", "value"),
+    [
+        ("LPS2", False),
+        ("CAT 1", False),
+        ("SEC 31", False),
+        ("MAX 10", False),
+        ("VAT 15%", False),
+        ("LPS2 CLOB tariff", False),
+        ("NOK 1,200", True),
+        ("ZAR 5", True),
+        ("0.13 EUR", True),
+    ],
+)
+def test_VL6_only_iso_4217_codes_are_currencies(text: str, value: bool) -> None:
+    assert is_value(text) is value

@@ -50,7 +50,7 @@ decides structure. The grammar, matched against the whole text after trimming:
   `,` `.` `'` U+00A0 U+202F or a space, with an optional decimal part after `.` or `,`; or plain digits with an
   optional decimal part. `1,234.5`, `1.234,5`, `1 234`, `1'234`, `0.40`, `12`.
 - **value:** a number with, in order, optional pieces around it: a currency before it (a symbol from
-  `$ € £ ¥ ₹ ₣ R`, or a three-letter upper-case code), a magnitude after it (`k`, `m`, `mn`, `bn`, `K`, `M`,
+  `$ € £ ¥ ₹ ₣ R`, or an ISO 4217 currency code (`CHF`, `EUR`, `NOK`, …, the list in `core/lexicon.py`)), a magnitude after it (`k`, `m`, `mn`, `bn`, `K`, `M`,
   `B`), a unit (`%`, `bp`, `bps`, `‰`, or a currency symbol or code), a per-unit suffix (`/port/month`,
   `/contract`), and trailing note marks (`*`, `†`, `‡`).
   One space may separate a currency or unit from the number. `$0.40`, `R 0.00`, `0.13 EUR`, `20,000 €`,
@@ -70,6 +70,7 @@ decides structure. The grammar, matched against the whole text after trimming:
 | VL1 | `0.40`, `1,234.5`, `1.234,5`, `1 234`, `1'234`, `−` + `0.10`, `12` | values |
 | VL2 | `$0.40`, `R 0.00`, `0.13 EUR`, `20,000 €`, `€1.4bn`, `-0.15bp`, `0.45bp*`, `12%`, `CHF 25`, `$575/port/month`, `0.10/contract` | values |
 | VL3 | `(47)`, `($0.10)`, `0.10 - 0.20`, `1–5`, `—`, `n/a`, `Free` | values |
+| VL6 | `LPS2`, `CAT 1`, `SEC 31`, `MAX 10`, `VAT 15%`, `LPS2 CLOB tariff`; `NOK 1,200`, `ZAR 5`, `0.13 EUR` | not values; values (only ISO 4217 codes are currencies) |
 | VL5 | `is_strong_value` on `$0.00`, `0.0030`, `5,000`, `12%`, `0.25bp`, `R0.00`; on `1`, `12`, `(47)`, `—`, `n/a`, `2026`, `1-5` | strong; weak |
 | VL4 | `2026`, `Tier 1`, `Monthly`, `0.10 per contract`, `ZAR (Ex VAT)`, `` (empty), `1.2.3` | not values |
 
@@ -311,6 +312,6 @@ before testing it against the cell rectangle.
 
 ## 9 · Acceptance
 
-- [ ] VL1–VL5, LC1, CM1–CM10, LP1, GS1–GS3, LT1–LT15, TP1–TP9, EX1–EX5, and AP1–AP6 pass.
+- [ ] VL1–VL6, LC1, CM1–CM10, LP1, GS1–GS3, LT1–LT15, TP1–TP9, EX1–EX5, and AP1–AP6 pass.
 - [ ] The seven fee schedules read without error, with Camelot's tables claimed as in § 0.
 - [ ] Every M0 and M1 case still passes.

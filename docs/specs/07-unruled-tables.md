@@ -85,9 +85,10 @@ top to bottom; its size is the median size of its words.
 
 ## 3 · Table extent (`table_runs`)
 
-A *candidate* is the lines of a maximal run of adjacent `rows` regions of one page, in order. Its rows
-(§ 2) are split into *size runs* wherever a row's size differs from the previous row's by more than
-`size_change_ratio` × the smaller of the two.
+A *candidate* is the lines of a maximal run of adjacent `rows` regions of one page, in order. Its lines
+are split into *size runs* wherever a line's size differs from the previous line's by more than
+`size_change_ratio` × the smaller of the two, and each size run is folded into rows (§ 2) on its own, so
+the pitch of the headings around a table never sets the pitch its rows are measured by.
 
 In each size run:
 
@@ -119,6 +120,7 @@ In each size run:
 | EX7 | a table whose last row starts the next rows region | one table |
 | EX8 | two tables in one size run, a value-free, unaligned line between them | two tables |
 | EX9 | a header row over a single value row | a table of 2 rows |
+| EX10 | 10 pt headings 25 pt apart around a 9 pt table whose rows are 15 pt apart | the table's header and rows stay apart |
 
 ---
 
@@ -205,7 +207,7 @@ and assembly places corridor tables among the page's blocks exactly as ruled tab
 
 ## 8 · Acceptance
 
-- [ ] VP1–VP3, RW1–RW6, EX1–EX9, CB1–CB3, CG1–CG5, NT1–NT4, and CP1–CP5 pass.
+- [ ] VP1–VP3, RW1–RW6, EX1–EX10, CB1–CB3, CG1–CG5, NT1–NT4, and CP1–CP5 pass.
 - [ ] The seven fee schedules read without error; SIX, LSE, and Euronext gain their unruled tables, and
       a sample of them, rendered in the inspector, reads as the page prints.
 - [ ] Every M0, M1, and M2a case still passes.

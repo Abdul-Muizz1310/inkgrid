@@ -71,6 +71,13 @@ def _is_value_cell(cell: ProtoCell) -> bool:
     return is_value(" ".join(tokens)) or any(is_strong_value(t) for t in tokens)
 
 
+def _cell_lines(words: Sequence[Word], profile: Profile) -> tuple[Line, ...]:
+    """A cell's lines: horizontal words by position, then rotated words in id order (04, 4)."""
+    across = group_lines([w for w in words if w.horizontal], profile)
+    turned = tuple(sorted((w for w in words if not w.horizontal), key=lambda w: w.id))
+    return (*across, Line(turned)) if turned else across
+
+
 def _roles(cells: Sequence[ProtoCell], n_rows: int) -> tuple[int, tuple[int, ...]]:
     """Header rows and banner rows, from which rows hold values and which run full width."""
     rows: list[tuple[bool, bool, bool]] = []  # (has words, has a value, full width)
@@ -149,7 +156,7 @@ def lattice_tables(
         cells = [
             ProtoCell(
                 cell,
-                group_lines(
+                _cell_lines(
                     [
                         w
                         for w in words

@@ -240,3 +240,17 @@ def test_LT13_a_ruled_page_layout_of_prose_is_not_a_table() -> None:
     short = place([*title, *prose_cell("l", 50, 80, lines=4), *prose_cell("r", 316, 80, lines=4)])
     stage = lattice_tables(mk_page(words=short), [grid], short, PROFILE, frame=0, read=True)
     assert len(stage.tables) == 1
+
+
+def test_LT14_rotated_text_in_a_cell_reads_in_its_own_order() -> None:
+    cells = {"a": (172, 100, 272, 160), "0.10": (72, 160, 172, 180), "0.20": (172, 160, 272, 180)}
+    # Bottom-to-top text: the first word sits lower on the page than the second.
+    rotated = [
+        P("Maker", 110, 140, size=9, horizontal=False),
+        P("fee", 110, 110, size=9, horizontal=False),
+    ]
+    grid = [Rect(72, 100, 172, 160), *(Rect(*b) for b in cells.values())]
+    stage, _ = run(cells, extra=rotated, grids=[grid])
+    (table,) = stage.tables
+    first = next(c for c in table.cells if (c.cell.row, c.cell.col) == (0, 0))
+    assert block_text(first.lines)[0] == "Maker fee"

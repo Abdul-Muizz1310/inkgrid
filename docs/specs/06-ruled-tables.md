@@ -175,9 +175,10 @@ furniture). It returns the proto tables, the ids of the words they claim, and fi
    cell; two-column fee tables of text on Cboe, PHLX, and Nasdaq hold at most 5, and stay tables.
    Otherwise the grid claims nothing, and its words stay for prose: a box around a paragraph, a furniture
    label, or a ruled page layout is not a table.
-3. **Cell text.** A cell's words form lines (`group_lines`), read top to bottom and left to right, and the
-   text rule of `04` § 6 applies within the cell: one space between words and lines, and recorded hyphen
-   joins.
+3. **Cell text.** A cell's horizontal words form lines (`group_lines`), read top to bottom and left to
+   right; its other words (rotated text) follow as one line in id order, as layout reads vertical text
+   (`04` § 4). The text rule of `04` § 6 applies within the cell: one space between words and lines, and
+   recorded hyphen joins.
 4. **Header rows** are the leading run of rows that each hold at least one word and no value cell. A cell
    is a value cell when its text without its superscript words `is_value`, or when one of those words
    `is_strong_value`: a fee with a note mark (`$0.0030` and a raised `1`), a code (`{CK} $0.00`), or a
@@ -208,6 +209,7 @@ furniture). It returns the proto tables, the ids of the words they claim, and fi
 | LT11 | a first data row whose fee `$0.0030` carries a superscript `1` | header rows 1 |
 | LT12 | header `Tier 1 \| Fee (47)`, then data `{CK} $0.00 \| $5,000 per month` | header rows 1 |
 | LT13 | a 2 x 2 grid: a full-width title, then two cells of prose (6 lines of 7 words each); the same with one cell of short values; the same with cells of 4 lines | no table; one table; one table |
+| LT14 | a header cell of rotated text: `Maker` then `fee`, bottom to top | cell text `Maker fee` |
 | LT10 | a table of text only, with a bold first row; the same with a regular first row | header rows 1; header rows 0 |
 | LT9 | two lines of text in one cell, the first ending `execu-` and the second `tions` | cell text `executions`, one join |
 
@@ -302,6 +304,6 @@ before testing it against the cell rectangle.
 
 ## 9 · Acceptance
 
-- [ ] VL1–VL5, LC1, CM1–CM9, LP1, GS1–GS3, LT1–LT13, TP1–TP8, EX1–EX5, and AP1–AP6 pass.
+- [ ] VL1–VL5, LC1, CM1–CM9, LP1, GS1–GS3, LT1–LT14, TP1–TP8, EX1–EX5, and AP1–AP6 pass.
 - [ ] The seven fee schedules read without error, with Camelot's tables claimed as in § 0.
 - [ ] Every M0 and M1 case still passes.

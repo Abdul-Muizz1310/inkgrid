@@ -328,14 +328,13 @@ def test_EX2_a_caption_and_a_header_are_the_first_rows() -> None:
 
 
 def test_EX3_a_sentence_past_the_columns_stays_out() -> None:
-    sentence = text_line(
-        ["The", "standard", "fees", "for", "members", "trading", "on", "the", "book", "are:"],
-        x=72,
-        y=88,
-        size=9,
+    # One piece, starting where column 0 starts: only the table's width keeps it out.
+    text = (
+        "The standard fees for members trading on the order book are set out in the schedule below"
     )
-    wide = [*sentence, P("follows", 520, 88, size=9)]
-    result = stage(wide + header_row(100) + six_rows(112))
+    sentence = text_line(text.split(), x=72, y=88, size=9)
+    assert sentence[-1].x > 404  # past the last column's end
+    result = stage(sentence + header_row(100) + six_rows(112))
     (table,) = result.tables
     assert len(table.shape.row_edges) - 1 == 3
 

@@ -184,7 +184,7 @@ In each size run:
 |---|---|---|
 | EX1 | a 10 pt bold heading, then a 9 pt table | the heading is not in the table |
 | EX2 | a caption, a bold header `Fee \| Floor \| Scale \| Cap`, then value rows | the caption and the header are rows 0 and 1 |
-| EX3 | a 9 pt sentence spanning the page above a narrower table | not in the table |
+| EX3 | a 9 pt sentence of one piece, starting where column 0 starts and running past the last column, above the table | not in the table |
 | EX4 | a trailing `Commitment \| No commitment required` row | in the table |
 | EX5 | a trailing bullet line `■ \| Members paying the fee …` whose text runs past the columns | not in the table |
 | EX6 | a bold full-width banner between value rows | in the table |

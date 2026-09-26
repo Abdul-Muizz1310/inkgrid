@@ -55,6 +55,12 @@ def _parser() -> argparse.ArgumentParser:
     read_command.add_argument(
         "--strict", action="store_true", help="exit 1 when an error-severity finding is present"
     )
+    read_command.add_argument(
+        "--lattice",
+        choices=("combined", "vector", "raster"),
+        default="combined",
+        help="Camelot's engine for ruled tables (default: combined)",
+    )
     words = commands.add_parser("words", help="print the raw page model (words, rules) as JSON")
     _add_common(words)
     return parser
@@ -129,7 +135,7 @@ def _words(args: argparse.Namespace) -> int:
 
 def _read(args: argparse.Namespace) -> int:
     password = _password(args)
-    doc = read(args.pdf, password=password)
+    doc = read(args.pdf, password=password, lattice=args.lattice)
     _emit(doc, args)
     if args.markdown is not None:
         _write_file(args.markdown, doc.to_markdown().encode("utf-8"))

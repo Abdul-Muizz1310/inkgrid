@@ -28,7 +28,7 @@ Solid arrows exist today (M1). Dotted arrows are the later milestones.
 | package | role | may import |
 |---|---|---|
 | `inkgrid.model` | frozen, validated values: geometry, the page model, the `Document` contract, findings | stdlib, pydantic |
-| `inkgrid.read` | the shell that reads PDFs; only `pymupdf_reader.py` imports pymupdf | `model`, pymupdf, camelot |
+| `inkgrid.read` | the shell that reads PDFs; only `pymupdf_reader.py` imports pymupdf, and only `camelot_reader.py` camelot | `model`, pymupdf, camelot |
 | `inkgrid.core` | the pipeline stages, pure functions | `model` |
 | `inkgrid.verify` | the independent re-read (from M4) | `model`, pypdfium2 |
 | `inkgrid.render` | the HTML inspector | `model`, `read` |
@@ -76,7 +76,7 @@ pinned by a test.
 MuPDF's console output is silenced around each read and its display settings restored afterwards.
 PyMuPDF is not thread-safe, so parallelize across processes.
 
-## Building a document (M1)
+## Building a document (M1, M2a)
 
 `core/pipeline.py` runs the stages in order. Each is a pure function over typed values
 ([`specs/04-text-pipeline.md`](specs/04-text-pipeline.md)):
@@ -86,7 +86,12 @@ PyMuPDF is not thread-safe, so parallelize across processes.
    footer, or page-number furniture, one line at a time.
 2. **Layout** (per page). Lines cluster by vertical overlap and split into fragments at wide gaps.
    A gutter that persists over at least three lines, with prose on both sides, makes columns, read
-   left to right. Any other column-shaped run keeps row order, as a table candidate for M2.
+   left to right. Any other column-shaped run keeps row order, as a table candidate for M2b.
+   Before layout, **ruled tables** claim their words ([`specs/06-ruled-tables.md`](specs/06-ruled-tables.md)):
+   Camelot reads the pages with rules both ways, the reader hands over cell rectangles in unrotated
+   page coordinates, and the core rebuilds rows, columns, and spans in the frame it reads the page
+   in. A word belongs to the cell whose half-open rectangle holds its centre, so the claim is a
+   partition. A grid is a table only with two rows, two columns, and two cells holding words.
 3. **Prose** (per page). A paragraph gap, a size or weight change, or a bullet or enumerator starts
    a block. The paragraph gap is 1.75 x the line gap of the text's size: the lower quartile of the
    document's line-to-line gaps at that size, clamped at 0 because MuPDF's line boxes overlap at

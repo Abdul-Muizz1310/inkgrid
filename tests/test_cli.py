@@ -247,3 +247,13 @@ def test_CR5_an_unwritable_markdown_path_exits_2(
     err = capsys.readouterr().err
     assert err.count("\n") == 1
     assert str(target) in err
+
+
+def test_AP3_the_cli_takes_a_lattice_engine(
+    tmp_path: Path, capsysbinary: pytest.CaptureFixture[bytes]
+) -> None:
+    path = write_pdf(tmp_path, pdf_factory.ruled_grid())
+    assert main(["read", str(path), "--lattice", "raster"]) == 0
+    doc = Document.model_validate_json(capsysbinary.readouterr().out)
+    assert doc.producer.lattice == "raster"
+    assert [b.kind for b in doc.blocks] == ["table"]

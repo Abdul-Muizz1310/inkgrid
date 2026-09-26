@@ -1,12 +1,12 @@
 from collections.abc import Sequence
 from typing import Any
 
+import camelot
 import pytest
 
 import pdf_factory
 from inkgrid.model.geometry import Rect, turn_rect
 from inkgrid.model.lattice import LatticeReading, RuledGrid
-from inkgrid.read import camelot_reader
 from inkgrid.read.camelot_reader import Edges, merged_groups, read_lattice
 from inkgrid.read.pymupdf_reader import page_frames, read_pdf
 
@@ -63,7 +63,7 @@ def test_CM5_a_landscape_grid_is_placed_where_the_words_are() -> None:
 
 
 def test_CM6_a_camelot_failure_costs_one_page(monkeypatch: pytest.MonkeyPatch) -> None:
-    real = camelot_reader.camelot.read_pdf
+    real = camelot.read_pdf
 
     def flaky(data: bytes, pages: str, **kw: Any) -> Any:
         if pages == "2":
@@ -71,7 +71,7 @@ def test_CM6_a_camelot_failure_costs_one_page(monkeypatch: pytest.MonkeyPatch) -
             raise RuntimeError(msg)
         return real(data, pages, **kw)
 
-    monkeypatch.setattr(camelot_reader.camelot, "read_pdf", flaky)
+    monkeypatch.setattr(camelot, "read_pdf", flaky)
     reading = lattice(pdf_factory.ruled_grid_pages(3))
     assert sorted(g.page for g in reading.grids) == [1, 3]
     assert [(f.code.value, f.page) for f in reading.findings] == [("lattice_failed", 2)]

@@ -339,7 +339,7 @@ doc = inkgrid.read(
     password=None,
     lexicon=inkgrid.Lexicon.default(),
     profile=inkgrid.Profile.default(),
-    lattice="combined",                                 # or "raster"
+    lattice="combined",                                 # or "vector", "raster"
     strict=False,                                       # True: error-severity findings raise
 )
 report = inkgrid.verify(doc, "fees.pdf")                # -> inkgrid.VerificationReport

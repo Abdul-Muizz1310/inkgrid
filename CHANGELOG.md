@@ -21,6 +21,10 @@ All notable changes to this project are documented here. The format follows
   as furniture; column-aware reading order; headings, paragraphs, list items, and footnotes; and the
   partition proof. `strict=True` raises `StrictModeError` on an error-severity finding.
 - `Profile` and `Lexicon`, the versioned configuration a `Document` records.
+- Ruled tables (M2a): Camelot lattice grids read through their edge flags, merged cells as spans,
+  header and banner rows, and the findings `lattice_failed`, `lattice_disagrees`,
+  `word_crosses_rule`, and `header_not_found`. `Table.to_markdown()`, `Table.to_html()`, and
+  `Table.to_rows()`; `lattice="vector"` alongside `combined` and `raster`; `inkgrid read --lattice`.
 - `Document.to_markdown()`, the HTML inspector, and the `inkgrid read` command with `--markdown`,
   `--inspector`, and `--strict`.
 - A layer-table test on the import graph, and CI across Linux, Windows, and macOS.

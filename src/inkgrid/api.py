@@ -1,12 +1,14 @@
 """The public entry points: the only module where the shell meets the core."""
 
 from inkgrid.core.pipeline import build_document
+from inkgrid.core.tables.pages import lattice_pages
 from inkgrid.errors import StrictModeError
 from inkgrid.model.config import Lexicon, Profile
 from inkgrid.model.document import Document, Lattice
 from inkgrid.model.findings import Severity, summarize
 from inkgrid.model.page import Reading
-from inkgrid.read.pymupdf_reader import read_pdf
+from inkgrid.read.camelot_reader import read_lattice
+from inkgrid.read.pymupdf_reader import page_frames, read_pdf
 from inkgrid.read.source import SourceLike, load_source
 
 
@@ -34,10 +36,12 @@ def _lattice(value: str) -> Lattice:
     match value:
         case "combined":
             return "combined"
+        case "vector":
+            return "vector"
         case "raster":
             return "raster"
         case _:
-            msg = f"lattice must be 'combined' or 'raster', not {value!r}"
+            msg = f"lattice must be 'combined', 'vector', or 'raster', not {value!r}"
             raise ValueError(msg)
 
 
@@ -77,7 +81,7 @@ def read(
         password: the user password, for an encrypted PDF.
         lexicon: token classes; `Lexicon.default()` when omitted.
         profile: geometry tolerances; `Profile.default()` when omitted.
-        lattice: how ruled tables are read, `combined` or `raster` (recorded; used from M2).
+        lattice: Camelot's lattice engine for ruled tables: `combined`, `vector`, or `raster`.
         strict: raise instead of returning a document that carries an error-severity finding.
 
     Raises:
@@ -90,9 +94,27 @@ def read(
     checked_lexicon = _lexicon(lexicon)
     checked_profile = _profile(profile)
     checked_lattice = _lattice(lattice)
-    reading = read_pages(source, password=password)
+    loaded = load_source(source)
+    reading = read_pdf(loaded.data, file_name=loaded.file_name, password=password)
+    # Camelot renders every page it reads at 300 DPI, so it reads only pages ruled both ways.
+    pages = lattice_pages(reading)
+    grids = (
+        read_lattice(
+            loaded.data,
+            page_frames(loaded.data, password),
+            pages,
+            engine=checked_lattice,
+            password=password,
+        )
+        if pages
+        else None
+    )
     doc = build_document(
-        reading, lexicon=checked_lexicon, profile=checked_profile, lattice=checked_lattice
+        reading,
+        lexicon=checked_lexicon,
+        profile=checked_profile,
+        lattice=checked_lattice,
+        grids=grids,
     )
     if strict and not doc.complete:
         errors = [f for f in doc.findings if f.severity is Severity.ERROR]

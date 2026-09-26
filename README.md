@@ -16,10 +16,10 @@
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue"></a>
 </p>
 
-> **Status: pre-alpha (milestone M1 of M6).** Today inkgrid reads a PDF into a validated `Document`:
-> every word in exactly one block, in reading order, with running headers and footers set apart.
-> Tables arrive in M2, footnote links and table continuation in M3, and independent verification in
-> M4. The roadmap is in
+> **Status: pre-alpha (milestone M2a of M6).** Today inkgrid reads a PDF into a validated `Document`:
+> every word in exactly one block, in reading order, with running headers and footers set apart, and
+> ruled tables as explicit cell grids. Unruled tables arrive in M2b, note lists and glossaries in M2c,
+> footnote links and table continuation in M3, and independent verification in M4. The roadmap is in
 > [`docs/specs/00-design.md`](docs/specs/00-design.md) § 14.
 
 ## What it does
@@ -34,7 +34,7 @@ cell grids, with merged cells as spans and headers carried across page breaks, m
 Links record the relationships the page prints: footnote calls to their notes, and tables that
 continue onto the next page.
 
-Shipped so far (M0 and M1):
+Shipped so far (M0, M1, and M2a):
 
 - **Words rebuilt from characters.** A superscript marker printed tight against a value stays its own
   word (`$0.40` and `2`, never `$0.402`). A font change in the middle of a word keeps it one word.
@@ -53,6 +53,12 @@ Shipped so far (M0 and M1):
   furniture, line by line.
 - **Typed blocks:** headings with their section numbers and levels, paragraphs, list items, and
   footnotes, with every line-end hyphen join recorded so it can be undone.
+- **Ruled tables as cell grids.** Camelot's lattice parser reads the pages whose rules run both ways,
+  through its cell edge flags, never its DataFrame. A merged cell is one cell with a span, so a value
+  is never copied into the positions it covers. Leading value-free rows become header rows, and
+  full-width rows become banner rows. A box around a paragraph or a furniture label is not a table.
+  Tables export as GFM Markdown, HTML with `colspan`/`rowspan`, and dense rows that flag every
+  repeated value.
 - **Markdown and an HTML inspector.** The inspector draws every block over its rendered page, for
   looking at a reading rather than trusting it.
 - **The full output contract,** `inkgrid.document/1`, with its invariants enforced: every word owned
@@ -65,7 +71,8 @@ Shipped so far (M0 and M1):
   white text on a white page, and text too small to read all read as visible. The independent
   verifier (M4) is where those checks belong.
 - **Left-to-right scripts only.** Right-to-left and bidirectional text is not reordered in v0.1.
-- **No tables yet.** Until M2, a table reads as rows of text, in row order.
+- **Only ruled tables so far.** A table drawn without rules (whitespace columns, or cell fills alone)
+  reads as rows of text until M2b.
 - **Lists set in the Symbol font read as paragraphs.** Their bullet is a private-use character, which
   the reader drops as invisible.
 - **Untrusted PDFs belong in a separate process.** MuPDF parses in memory, and a library cannot bound
@@ -132,8 +139,10 @@ the output, so its independence is structural. Details:
 ## Tech stack
 
 Python 3.12+, PyMuPDF 1.28 (text layer and drawings), Pydantic v2 (frozen, validated models), uv
-with the `uv_build` backend, Ruff, mypy `--strict`, pytest 9 with Hypothesis, and GitHub Actions. From
-M2, Camelot 2.0 reads ruled tables; from M4, pypdfium2 powers the independent verifier.
+with the `uv_build` backend, Ruff, mypy `--strict`, pytest 9 with Hypothesis, and GitHub Actions.
+Camelot 2.0 reads ruled tables (`lattice="combined"`, `"vector"`, or `"raster"`; `vector` measured
+about 5x faster with the same grids on our fee schedules). From M4, pypdfium2 powers the independent
+verifier.
 
 ## Deployment
 
@@ -149,3 +158,7 @@ inkgrid's own code is MIT; see [LICENSE](LICENSE).
 dual-licenses under the GNU AGPL-3.0 or a commercial license. Software distributed or served over a
 network with inkgrid must meet the AGPL's terms for the combined work, unless you hold Artifex's
 commercial license. This is not legal advice.
+
+The other dependencies are permissively licensed: Camelot (MIT), Pydantic (MIT), OpenCV (Apache-2.0),
+pypdfium2 (Apache-2.0 or BSD-3-Clause), pandas and NumPy (BSD-3-Clause). OpenCV is pinned away from
+5.0.0.93, whose bundled FFmpeg lacks the CVE-2026-8461 fix.

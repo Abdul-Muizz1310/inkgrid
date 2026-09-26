@@ -10,13 +10,15 @@ from __future__ import annotations
 
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
-
-import camelot
+from typing import TYPE_CHECKING
 
 from inkgrid.model.document import Lattice
 from inkgrid.model.findings import Finding, FindingCode
 from inkgrid.model.geometry import Rect, Rotation, turn_point
 from inkgrid.model.lattice import LatticeReading, PageFrame, RuledGrid
+
+if TYPE_CHECKING:
+    import camelot
 
 Box = tuple[int, int, int, int]
 """A merged group as indices: first row, first column, end row, end column (exclusive)."""
@@ -126,6 +128,10 @@ def read_lattice(
     password: str | None,
 ) -> LatticeReading:
     """Camelot's lattice grids for `pages`, one page at a time so a failure costs only that page."""
+    # Imported here, not at the top: pandas and OpenCV cost about 0.4 s to import, and a document
+    # without ruled pages never needs them.
+    import camelot  # noqa: PLC0415
+
     by_number = {frame.number: frame for frame in frames}
     grids: list[RuledGrid] = []
     findings: list[Finding] = []

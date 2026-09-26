@@ -129,3 +129,16 @@ def test_RD9_configuration_of_the_wrong_type_is_a_type_error(kwargs: dict[str, A
 def test_RD10_a_document_round_trips_through_json() -> None:
     doc = inkgrid.read(pdf_factory.furnished())
     assert Document.model_validate_json(doc.model_dump_json()) == doc
+
+
+def test_AP1_the_lattice_engine_is_a_setting() -> None:
+    doc = inkgrid.read(pdf_factory.ruled_grid(), lattice="vector")
+    assert doc.producer.lattice == "vector"
+    assert doc.producer.camelot is not None
+    assert [b.kind for b in doc.blocks] == ["table"]
+
+
+def test_AP2_camelot_runs_only_on_ruled_pages() -> None:
+    doc = inkgrid.read(pdf_factory.simple_text())
+    assert doc.producer.camelot is None
+    assert doc.producer.lattice == "combined"

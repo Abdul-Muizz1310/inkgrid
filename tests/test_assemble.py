@@ -10,7 +10,7 @@ from inkgrid.core.prose import ProtoBlock
 from inkgrid.core.text import block_text
 from inkgrid.errors import InvariantError
 from inkgrid.model.config import Lexicon, Profile
-from inkgrid.model.document import Document
+from inkgrid.model.document import Definition, Document
 from inkgrid.model.findings import FindingCode
 from inkgrid.model.page import PageModel, Reading
 from layout_builder import P, place, text_line
@@ -99,6 +99,38 @@ def test_AS7_a_word_in_two_blocks_is_an_invariant_error() -> None:
     empty = FoundFurniture((), frozenset())
     with pytest.raises(InvariantError, match="word 0 is in blocks"):
         assemble(reading, (blocks,), empty, lexicon=LEXICON, profile=PROFILE, lattice="combined")
+
+
+def test_DF14_a_definition_renders_as_term_and_body() -> None:
+    reading = reading_of(
+        [text_line(["\u201cABBO\u201d", "means", "the", "best", "bid"], x=72, y=100)]
+    )
+    term, *body = reading.pages[0].words
+    block = ProtoBlock(
+        "definition", (Line((term,)), Line(tuple(body))), 10.0, term=(Line((term,)),)
+    )
+    empty = FoundFurniture((), frozenset())
+    doc = assemble(
+        reading, ((block,),), empty, lexicon=LEXICON, profile=PROFILE, lattice="combined"
+    )
+    (d,) = doc.blocks
+    assert isinstance(d, Definition)
+    assert (d.term, d.body, d.text) == (
+        "\u201cABBO\u201d",
+        "means the best bid",
+        "\u201cABBO\u201d means the best bid",
+    )
+    assert doc.to_markdown() == "**\u201cABBO\u201d** means the best bid\n"
+
+
+def test_DF14_a_definition_block_holds_its_term_first_and_a_body() -> None:
+    a, b = (Line((w,)) for w in place(text_line(["Term", "body"], x=72, y=100)))
+    with pytest.raises(ValueError, match="opening lines"):
+        ProtoBlock("definition", (b, a), 10.0, term=(a,))
+    with pytest.raises(ValueError, match="body"):
+        ProtoBlock("definition", (a,), 10.0, term=(a,))
+    with pytest.raises(ValueError, match="has no term"):
+        ProtoBlock("paragraph", (a, b), 10.0, term=(a,))
 
 
 def test_AS8_the_ledger_counts_furniture_characters() -> None:

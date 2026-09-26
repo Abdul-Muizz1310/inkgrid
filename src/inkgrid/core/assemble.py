@@ -1,6 +1,6 @@
 """Assembly: keys, regions, ledger, and the proved `Document` (docs/specs/04 section 6)."""
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 
 from inkgrid.core.furniture import FoundFurniture, FurnitureLine
@@ -13,6 +13,7 @@ from inkgrid.model.canonical import assign_keys
 from inkgrid.model.config import Lexicon, Profile
 from inkgrid.model.document import (
     Block,
+    Definition,
     Document,
     Footnote,
     Furniture,
@@ -118,6 +119,8 @@ class _Parts:
     joins: tuple[WordPair, ...]
     regions: tuple[Region, ...]
     grid: Grid | None = None
+    term: str = ""  # a definition's: its text is the term, a space, then the body
+    body: str = ""
 
 
 def _parts(item: Item, words: Sequence[Word], pages: Sequence[PageInfo]) -> _Parts:
@@ -128,9 +131,17 @@ def _parts(item: Item, words: Sequence[Word], pages: Sequence[PageInfo]) -> _Par
             item, "table", table.words, table.text, table.joins, (table.region,), table.grid
         )
     lines = (item.line,) if isinstance(item, FurnitureLine) else item.lines
-    text, joins = block_text(lines)
     kind = "furniture" if isinstance(item, FurnitureLine) else item.kind
     own = tuple(words[w.id] for line in lines for w in line.words)
+    if isinstance(item, ProtoBlock) and item.kind == "definition":
+        # The term and the body render apart, so the text is exactly `term + " " + body` (8c).
+        term, term_joins = block_text(item.term)
+        body, body_joins = block_text(lines[len(item.term) :])
+        text = f"{term} {body}"
+        return _Parts(
+            item, kind, own, text, term_joins + body_joins, _regions(own), term=term, body=body
+        )
+    text, joins = block_text(lines)
     return _Parts(item, kind, own, text, joins, _regions(own))
 
 
@@ -150,6 +161,12 @@ def _block(parts: _Parts, block_id: str, key: str, sizes: Sequence[float]) -> Bl
         return Table.model_validate({**common, "grid": parts.grid})
     if isinstance(item, FurnitureLine):
         return Furniture.model_validate({**common, "role": item.role})
+    return _prose_block(item, parts, common, sizes)
+
+
+def _prose_block(
+    item: ProtoBlock, parts: _Parts, common: Mapping[str, object], sizes: Sequence[float]
+) -> Block:
     match item.kind:
         case "heading":
             level = _level(item.size, sizes)
@@ -160,6 +177,8 @@ def _block(parts: _Parts, block_id: str, key: str, sizes: Sequence[float]) -> Bl
             return Footnote.model_validate({**common, "label": item.label})
         case "paragraph":
             return Paragraph.model_validate(common)
+        case "definition":
+            return Definition.model_validate({**common, "term": parts.term, "body": parts.body})
 
 
 def assemble(

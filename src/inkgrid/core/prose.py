@@ -16,7 +16,7 @@ from inkgrid.core.lines import Line
 from inkgrid.model.config import Lexicon, Profile
 from inkgrid.model.invariants import strip_label
 
-ProseKind = Literal["heading", "paragraph", "list_item", "footnote"]
+ProseKind = Literal["heading", "paragraph", "list_item", "footnote", "definition"]
 SENTENCE_END = (".", ";", ",")
 TERMINAL = (".", ":", ";", "?", "!")
 MIN_GAPS = (
@@ -26,13 +26,29 @@ MIN_GAPS = (
 
 @dataclass(frozen=True, slots=True)
 class ProtoBlock:
-    """A block before assembly: its kind, lines, size (its first line's), and kind fields."""
+    """A block before assembly: its kind, lines, size (its first line's), and kind fields.
+
+    A definition's `term` holds its term's lines, which `lines` opens with; no other kind has one.
+    """
 
     kind: ProseKind
     lines: tuple[Line, ...]
     size: float
     label: str | None = None
     number: str | None = None
+    term: tuple[Line, ...] = ()
+
+    def __post_init__(self) -> None:
+        if self.kind == "definition":
+            if not self.term or self.lines[: len(self.term)] != self.term:
+                msg = "a definition's term must be the opening lines of its block"
+                raise ValueError(msg)
+            if len(self.lines) == len(self.term):
+                msg = "a definition needs a body after its term"
+                raise ValueError(msg)
+        elif self.term:
+            msg = f"a {self.kind} has no term"
+            raise ValueError(msg)
 
 
 def _lower_quartile(values: Sequence[float]) -> float:

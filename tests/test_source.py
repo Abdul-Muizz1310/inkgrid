@@ -87,7 +87,10 @@ def test_load_source_unicode_path(tmp_path: Path) -> None:
     assert load_source(path).file_name == "fee schedule Z\u00fcrich.pdf"
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="Windows file names are always valid Unicode")
+@pytest.mark.skipif(
+    sys.platform in {"win32", "darwin"},
+    reason="Windows and macOS (APFS) file names are always valid Unicode",
+)
 def test_S7_undecodable_file_name_is_made_valid_unicode(tmp_path: Path) -> None:
     path = tmp_path / os.fsdecode(b"Z\xfcrich.pdf")
     path.write_bytes(PDF)

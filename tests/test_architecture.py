@@ -96,6 +96,12 @@ def test_T4_only_the_adapter_imports_pymupdf(tmp_path: Path) -> None:
     assert violations(tmp_path) == ["read/words.py: only read/pymupdf_reader.py may import pymupdf"]
 
 
+def test_AP4_only_the_adapter_imports_camelot(tmp_path: Path) -> None:
+    write(tmp_path, "read/words.py", "import camelot\n")
+    write(tmp_path, "read/camelot_reader.py", "import camelot\n")
+    assert violations(tmp_path) == ["read/words.py: only read/camelot_reader.py may import camelot"]
+
+
 def test_T5_core_may_not_import_third_party(tmp_path: Path) -> None:
     write(tmp_path, "core/x.py", "import numpy as np\n")
     assert violations(tmp_path) == ["core/x.py: imports third-party numpy"]

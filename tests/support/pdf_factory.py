@@ -213,6 +213,88 @@ def rotated() -> bytes:
     return _save(doc)
 
 
+RULED_GRID_CELLS: dict[str, tuple[float, float, float, float]] = {
+    "Fee": (72, 100, 172, 120),
+    "Rate": (172, 100, 372, 120),  # spans columns 1-2
+    "Equity": (72, 120, 172, 160),  # spans rows 1-2
+    "0.10": (172, 120, 272, 140),
+    "0.20": (272, 120, 372, 140),
+    "0.30": (172, 140, 272, 160),
+    "0.40": (272, 140, 372, 160),
+    "Bonds": (72, 160, 172, 180),
+    "0.50": (172, 160, 272, 180),
+    "0.60": (272, 160, 372, 180),
+}
+"""Each cell of `ruled_grid` by the one word it holds, as drawn (unrotated page coordinates)."""
+
+
+def _draw_grid(page: pymupdf.Page, cells: dict[str, tuple[float, float, float, float]]) -> None:
+    """Stroke every cell's outline and centre its word in it, at 9 pt."""
+    shape = page.new_shape()
+    for x0, y0, x1, y1 in cells.values():
+        shape.draw_rect(pymupdf.Rect(x0, y0, x1, y1))
+    shape.finish(color=BLACK, width=0.8)
+    shape.commit()
+    for text, (x0, y0, x1, y1) in cells.items():
+        width = pymupdf.get_text_length(text, fontsize=9)
+        page.insert_text(((x0 + x1 - width) / 2, (y0 + y1) / 2 + 3), text, fontsize=9)
+
+
+def ruled_grid(
+    rotation: int = 0,
+    mediabox: tuple[float, float, float, float] | None = None,
+    cropbox: tuple[float, float, float, float] | None = None,
+) -> bytes:
+    """A 4 x 3 ruled table: `Rate` spans columns 1-2 of the header, `Equity` rows 1-2."""
+    doc = pymupdf.open()
+    page = _page(doc)
+    _draw_grid(page, RULED_GRID_CELLS)
+    if mediabox is not None:
+        page.set_mediabox(pymupdf.Rect(*mediabox))
+    if cropbox is not None:
+        page.set_cropbox(pymupdf.Rect(*cropbox))
+    page.set_rotation(rotation)
+    return _save(doc)
+
+
+def ruled_grid_pages(n: int = 3) -> bytes:
+    """`ruled_grid` on each of `n` pages."""
+    doc = pymupdf.open()
+    for _ in range(n):
+        _draw_grid(_page(doc), RULED_GRID_CELLS)
+    return _save(doc)
+
+
+RULED_LANDSCAPE_CELLS: dict[str, tuple[float, float, float, float]] = {
+    "Fee": (72, 100, 172, 120),
+    "Rate": (172, 100, 272, 120),
+    "Cap": (272, 100, 372, 120),
+    "Equity": (72, 120, 172, 140),
+    "0.10": (172, 120, 272, 140),
+    "0.20": (272, 120, 372, 140),
+}
+"""The cells of `ruled_landscape` as shown on screen (the /Rotate 90 frame, 792 x 612)."""
+
+
+def ruled_landscape() -> bytes:
+    """A 2 x 3 ruled table upright on screen on a `/Rotate 90` page."""
+    doc = pymupdf.open()
+    page = _page(doc)
+    height = page.rect.height
+    shape = page.new_shape()
+    for x0, y0, x1, y1 in RULED_LANDSCAPE_CELLS.values():
+        # Screen (X, Y) shows the unrotated point (Y, height - X).
+        shape.draw_rect(pymupdf.Rect(y0, height - x1, y1, height - x0))
+    shape.finish(color=BLACK, width=0.8)
+    shape.commit()
+    for text, (x0, y0, x1, y1) in RULED_LANDSCAPE_CELLS.items():
+        width = pymupdf.get_text_length(text, fontsize=9)
+        start_x, baseline = (x0 + x1 - width) / 2, (y0 + y1) / 2 + 3
+        page.insert_text((baseline, height - start_x), text, fontsize=9, rotate=90)
+    page.set_rotation(90)
+    return _save(doc)
+
+
 LANDSCAPE_TITLE = "Landscape Fee Summary"
 LANDSCAPE_PARAGRAPHS = [
     [
@@ -538,6 +620,8 @@ OPENABLE: dict[str, Callable[[], bytes]] = {
     "outside_crop": outside_crop,
     "two_column": two_column,
     "landscape": landscape,
+    "ruled_grid": ruled_grid,
+    "ruled_landscape": ruled_landscape,
     "spaced_paragraphs": spaced_paragraphs,
     "furnished": furnished,
     "furniture_only_page": furniture_only_page,

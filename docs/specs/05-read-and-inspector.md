@@ -59,7 +59,7 @@ import cycle.
     written as printed, so the numbering reads as printed;
   - footnote: `[^label]:`, then a space and the text without its first word, when there is more;
   - definition: `**term** body`;
-  - table: its text, one line per row, until M2 adds grids;
+  - table: a GFM pipe table (`06-ruled-tables.md` § 7);
   - furniture: omitted.
 - **Layout:** blocks are separated by one blank line, the output ends with one newline, and page
   breaks are not marked. A document with no rendered block is `""`.
@@ -80,7 +80,7 @@ import cycle.
 | MD4 | a heading of level 9 | six `#` |
 | MD5 | a definition `Member` / `a firm admitted to trading` | `**Member** a firm admitted to trading\n` |
 | MD7 | a `•` item `# of trades`; a footnote `3 - see below`; a paragraph `Use <script> here`; a heading `Fees <b>` | `- \# of trades`; `[^3]: \- see below`; `Use \<script> here`; `## Fees \<b>` |
-| MD6 | a 2 × 2 table `Fee 0.10` / `Rebate 0.20` | `Fee 0.10\nRebate 0.20\n` |
+| MD6 | a 2 × 2 table `Fee 0.10` / `Rebate 0.20` with no header rows | an empty GFM header row, the separator, then both rows |
 
 ---
 

@@ -5,7 +5,9 @@ the document dispatches over its block kinds and calls these formatters.
 """
 
 import re
-from collections.abc import Iterable
+from collections.abc import Iterable, Sequence
+from dataclasses import dataclass
+from html import escape
 
 MAX_HEADING_LEVEL = 6
 STRUCTURE_OPENERS = ("#", ">", "-", "+", "*")
@@ -61,9 +63,86 @@ def definition(term: str, body: str) -> str:
     return f"**{_tags(term)}** {_tags(body)}"
 
 
-def table(text: str) -> str:
-    """A table's text, one line per row, with tag openings escaped (grids arrive in M2)."""
-    return _tags(text)
+@dataclass(frozen=True, slots=True)
+class GridCell:
+    """A cell as the exporters need it: where it starts, what it spans, and its text."""
+
+    row: int
+    col: int
+    row_span: int
+    col_span: int
+    text: str
+
+
+@dataclass(frozen=True, slots=True)
+class DenseCell:
+    """One grid position of a dense row. `copy` marks a merged cell's text repeated here (L1)."""
+
+    text: str
+    row: int
+    col: int
+    copy: bool
+
+
+def _positions(n_rows: int, n_cols: int, cells: Sequence[GridCell]) -> list[list[DenseCell]]:
+    grid = [[DenseCell("", r, c, copy=False) for c in range(n_cols)] for r in range(n_rows)]
+    for cell in cells:
+        for r in range(cell.row, cell.row + cell.row_span):
+            for c in range(cell.col, cell.col + cell.col_span):
+                grid[r][c] = DenseCell(cell.text, r, c, copy=(r, c) != (cell.row, cell.col))
+    return grid
+
+
+def dense_rows(
+    n_rows: int, n_cols: int, cells: Sequence[GridCell]
+) -> tuple[tuple[DenseCell, ...], ...]:
+    """Every grid position filled; a merged cell's text repeats with `copy=True` (L1)."""
+    return tuple(tuple(row) for row in _positions(n_rows, n_cols, cells))
+
+
+def _gfm(text: str) -> str:
+    return _tags(text).replace("|", "\\|")
+
+
+def table_markdown(n_rows: int, n_cols: int, header_rows: int, cells: Sequence[GridCell]) -> str:
+    """A GFM pipe table; a merged cell's text appears once and the positions it covers are empty."""
+    rows = [
+        [_gfm(c.text) if not c.copy else "" for c in row]
+        for row in _positions(n_rows, n_cols, cells)
+    ]
+    header = rows[0] if header_rows else [""] * n_cols
+    body = rows[1:] if header_rows else rows
+    lines = [header, ["---"] * n_cols, *body]
+    return "\n".join("| " + " | ".join(line) + " |" for line in lines)
+
+
+def table_html(
+    n_rows: int,
+    header_rows: int,
+    banner_rows: Sequence[int],
+    cells: Sequence[GridCell],
+) -> str:
+    """A `<table>`: header rows in `<thead>`, spans as `colspan`/`rowspan`, all text escaped."""
+    parts = ["<table>"]
+    for r in range(n_rows):
+        if r == 0 and header_rows:
+            parts.append("<thead>")
+        if r == header_rows:
+            parts.append("<tbody>")
+        tag = "th" if r < header_rows else "td"
+        parts.append('<tr class="banner">' if r in banner_rows else "<tr>")
+        for cell in (c for c in cells if c.row == r):
+            spans = (f' colspan="{cell.col_span}"' if cell.col_span > 1 else "") + (
+                f' rowspan="{cell.row_span}"' if cell.row_span > 1 else ""
+            )
+            parts.append(f"<{tag}{spans}>{escape(cell.text, quote=False)}</{tag}>")
+        parts.append("</tr>")
+        if r == header_rows - 1:
+            parts.append("</thead>")
+    if header_rows < n_rows:
+        parts.append("</tbody>")
+    parts.append("</table>")
+    return "".join(parts)
 
 
 def join(parts: Iterable[str]) -> str:

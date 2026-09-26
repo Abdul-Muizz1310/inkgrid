@@ -9,8 +9,9 @@ from collections.abc import Sequence
 from html import escape
 
 from inkgrid.model.canonical import sha256_hex
-from inkgrid.model.document import Block, Document
+from inkgrid.model.document import Block, Document, Table
 from inkgrid.model.findings import Finding
+from inkgrid.model.geometry import unturn_rect
 from inkgrid.model.page import PageInfo
 from inkgrid.read.pymupdf_reader import render_pages
 from inkgrid.read.source import SourceLike, load_source
@@ -34,6 +35,7 @@ h2 { font-size: 16px; margin: 24px 0 8px; }
 .page > h2 { grid-column: 1 / -1; }
 svg { width: 100%; height: auto; background: #fff; border: 1px solid var(--line); }
 rect { fill: none; stroke-width: 1.2; }
+rect.cell { stroke: var(--table); stroke-width: 0.4; stroke-dasharray: 2 1; }
 text { font: 9px sans-serif; }
 .card { background: var(--card); border-left: 4px solid var(--line); padding: 6px 10px;
   margin: 0 0 8px; overflow-wrap: anywhere; }
@@ -97,6 +99,18 @@ def _sheet(page: PageInfo, png: bytes | None, boxes: str) -> str:
     )
 
 
+def _cells(table: Table, page: PageInfo) -> str:
+    """Each cell of a table as a thin rectangle, back in unrotated page coordinates."""
+    out = []
+    for cell in table.grid.cells:
+        box = unturn_rect(table.grid.cell_rect(cell), table.grid.frame, page.width, page.height)
+        out.append(
+            f'<rect class="cell" x="{box.x0}" y="{box.y0}" width="{box.x1 - box.x0}" '
+            f'height="{box.y1 - box.y0}"/>'
+        )
+    return "".join(out)
+
+
 def _page(doc: Document, page: PageInfo, png: bytes | None) -> str:
     boxes: list[str] = []
     cards: list[str] = []
@@ -110,6 +124,8 @@ def _page(doc: Document, page: PageInfo, png: bytes | None) -> str:
                 f'width="{box.x1 - box.x0}" height="{box.y1 - box.y0}" fill-opacity="0.08"/>'
                 f'<text class="k-{block.kind}" x="{box.x0}" y="{box.y0 - 1}">{number}</text>'
             )
+            if isinstance(block, Table):
+                boxes.append(_cells(block, page))
             cards.append(_card(number, block))
     findings = [f for f in doc.findings if f.page == page.number]
     return (

@@ -260,6 +260,25 @@ class Table(BlockBase):
     kind: Literal["table"] = "table"
     grid: Grid
 
+    def _cells(self) -> list[export.GridCell]:
+        return [
+            export.GridCell(c.row, c.col, c.row_span, c.col_span, c.text) for c in self.grid.cells
+        ]
+
+    def to_markdown(self) -> str:
+        """The table as a GFM pipe table; a merged cell's text is written once (L1)."""
+        grid = self.grid
+        return export.table_markdown(grid.n_rows, grid.n_cols, grid.header_rows, self._cells())
+
+    def to_html(self) -> str:
+        """The table as HTML, with `colspan`/`rowspan` for merged cells and a `<thead>`."""
+        grid = self.grid
+        return export.table_html(grid.n_rows, grid.header_rows, grid.banner_rows, self._cells())
+
+    def to_rows(self) -> tuple[tuple[export.DenseCell, ...], ...]:
+        """Dense rows: every position filled, each repeated merged value flagged `copy=True`."""
+        return export.dense_rows(self.grid.n_rows, self.grid.n_cols, self._cells())
+
     @model_validator(mode="after")
     def _cells_partition_words(self) -> Self:
         if len(self.regions) != 1:
@@ -416,7 +435,7 @@ class Document(Frozen):
                 case Definition():
                     parts.append(export.definition(block.term, block.body))
                 case Table():
-                    parts.append(export.table(block.text))
+                    parts.append(block.to_markdown())
                 case Furniture():
                     pass
         return export.join(parts)

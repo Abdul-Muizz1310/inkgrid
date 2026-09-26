@@ -9,6 +9,7 @@ import pdf_factory
 from doc_builder import B, build, line
 from inkgrid.read.pymupdf_reader import render_pages
 from inkgrid.render.inspector import build_inspector, inspector_html
+from lattice_builder import read_with_tables
 
 
 def page_sections(html: str) -> list[str]:
@@ -100,3 +101,9 @@ def test_IN10_each_card_names_its_kind_detail() -> None:
         "furniture (footer)",
     ):
         assert detail in html
+
+
+def test_EX5_the_inspector_draws_every_cell() -> None:
+    data = pdf_factory.ruled_grid()
+    html = build_inspector(read_with_tables(data), data)
+    assert html.count('<rect class="cell"') == 10

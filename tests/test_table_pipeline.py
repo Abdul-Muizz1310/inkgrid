@@ -4,22 +4,10 @@ import pytest
 from pydantic import ValidationError
 
 import pdf_factory
-from inkgrid.core.pipeline import build_document
-from inkgrid.core.tables.pages import lattice_pages
-from inkgrid.model.config import Lexicon, Profile
 from inkgrid.model.document import Document, Table
-from inkgrid.read.camelot_reader import read_lattice
-from inkgrid.read.pymupdf_reader import page_frames, read_pdf
+from lattice_builder import read_with_tables
 
-
-def build(data: bytes) -> Document:
-    reading = read_pdf(data, file_name=None, password=None)
-    grids = read_lattice(
-        data, page_frames(data, None), lattice_pages(reading), engine="vector", password=None
-    )
-    return build_document(
-        reading, lexicon=Lexicon(), profile=Profile(), lattice="vector", grids=grids
-    )
+build = read_with_tables
 
 
 def tables(doc: Document) -> list[Table]:

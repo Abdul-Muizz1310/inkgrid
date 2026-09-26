@@ -1,4 +1,7 @@
+import pdf_factory
 from doc_builder import B, C, W, build, line
+from inkgrid.model.document import Table
+from lattice_builder import read_with_tables
 
 BULLET = "\u2022"
 
@@ -53,7 +56,9 @@ def test_MD6_a_table_renders_as_its_text() -> None:
         col_bands=[(100, 200), (200, 300)],
         cells=[C(0, 0, [0]), C(0, 1, [1]), C(1, 0, [2]), C(1, 1, [3])],
     )
-    assert build([table]).to_markdown() == "Fee 0.10\nRebate 0.20\n"
+    assert build([table]).to_markdown() == (
+        "|  |  |\n| --- | --- |\n| Fee | 0.10 |\n| Rebate | 0.20 |\n"
+    )
 
 
 def test_MD7_block_openings_and_tags_are_escaped_everywhere() -> None:
@@ -71,3 +76,56 @@ def test_MD7_block_openings_and_tags_are_escaped_everywhere() -> None:
         "Use \\<script> here",
         "## Fees \\<b>\n",
     ]
+
+
+def ruled_table() -> Table:
+    """LT1's table: `Rate` over columns 1-2 of the header, `Equity` over rows 1-2."""
+    doc = read_with_tables(pdf_factory.ruled_grid())
+    (table,) = doc.tables()
+    return table
+
+
+def test_EX1_markdown_writes_a_merged_value_once() -> None:
+    lines = ruled_table().to_markdown().split("\n")
+    assert lines[0] == "| Fee | Rate |  |"
+    assert lines[1] == "| --- | --- | --- |"
+    assert lines[2] == "| Equity | 0.10 | 0.20 |"
+    assert lines[3] == "|  | 0.30 | 0.40 |"
+    assert "".join(lines).count("Equity") == 1
+
+
+def test_EX2_html_carries_the_spans() -> None:
+    html = ruled_table().to_html()
+    assert '<th colspan="2">Rate</th>' in html
+    assert '<td rowspan="2">Equity</td>' in html
+    assert html.count("<th>") + html.count("<th ") == 2
+
+
+def test_EX3_dense_rows_flag_every_copy() -> None:
+    rows = ruled_table().to_rows()
+    assert [len(r) for r in rows] == [3, 3, 3, 3]
+    copies = {(c.row, c.col, c.text) for r in rows for c in r if c.copy}
+    assert copies == {(0, 2, "Rate"), (2, 0, "Equity")}
+    assert rows[1][0].text == "Equity"
+    assert rows[1][0].copy is False
+
+
+def test_EX4_cell_text_is_escaped_in_both_forms() -> None:
+    table = B(
+        "table",
+        [
+            W("a", 110, 105),
+            W("|", 120, 105),
+            W("b", 130, 105),
+            W("<b>", 140, 105),
+            W("0.1", 210, 105),
+            W("x", 110, 125),
+            W("0.2", 210, 125),
+        ],
+        row_bands=[(100, 120), (120, 140)],
+        col_bands=[(100, 200), (200, 300)],
+        cells=[C(0, 0, [0, 1, 2, 3]), C(0, 1, [4]), C(1, 0, [5]), C(1, 1, [6])],
+    )
+    (built,) = build([table]).tables()
+    assert "a \\| b \\<b>" in built.to_markdown()
+    assert "a | b &lt;b&gt;" in built.to_html()

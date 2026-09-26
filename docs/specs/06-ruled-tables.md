@@ -146,7 +146,7 @@ Otherwise it is `None`. Edges within 0.5 pt are one edge.
 
 ## 5 · The table stage (`core/tables/lattice.py`, pure, per page)
 
-`lattice_tables(page, grids, words, lexicon, profile) -> TableStage` takes one page (upright, as the layout
+`lattice_tables(page, grids, words, profile, *, frame, read) -> TableStage` takes one page (upright, as the layout
 reads it), the page's ruled grids turned into that frame (`turn_rect`), and the page's content words (not
 furniture). It returns the proto tables, the ids of the words they claim, and findings.
 
@@ -162,11 +162,14 @@ furniture). It returns the proto tables, the ids of the words they claim, and fi
 4. **Header rows** are the leading run of rows that each hold at least one word and no value cell
    (`is_value` of the cell's text). A full-width row, whose only cell with words is its first, ends the run
    once a row with several cells has been counted: a caption above the column headers belongs to the header,
-   a section banner below them does not. With no header rows, the table raises `header_not_found` (info).
+   a section banner below them does not. A row's cells are the cells that start in it. When the run would
+   cover every row, the table has no value rows to tell headers from: it has 1 header row when the first
+   row's words are all bold, else none. With no header rows, the table raises `header_not_found` (info).
 5. **Banner rows** are the rows, anywhere, that are full-width and hold no value.
 6. **`word_crosses_rule`** (warning): one finding per table, with the count, when any claimed word's box
-   extends more than 1 pt past its own cell's rectangle, into a neighbouring cell. A merged cell has no
-   interior rule, so words inside it never cross.
+   extends more than 1 pt past its own cell's left or right edge into a neighbouring cell. A merged cell
+   has no interior rule, so words inside it never cross. Vertical overhang is ordinary: MuPDF's line boxes
+   span the font's full ascent and descent, so they reach past tight rows.
 7. **`lattice_disagrees`** (warning): Camelot read the page and returned no grid at all. (A page whose grids
    were all rejected is not a disagreement: Camelot saw the rules.) The rule-grid fallback of design § 5.2
    arrives with M2b; until then the page's words stay for prose.
@@ -181,6 +184,7 @@ furniture). It returns the proto tables, the ids of the words they claim, and fi
 | LT6 | a table whose first row holds values | header rows 0; `header_not_found` |
 | LT7 | a word straddling a drawn column rule by 3 pt | `word_crosses_rule` with count 1 |
 | LT8 | a page Camelot read that returned no grid | `lattice_disagrees` on that page |
+| LT10 | a table of text only, with a bold first row; the same with a regular first row | header rows 1; header rows 0 |
 | LT9 | two lines of text in one cell, the first ending `execu-` and the second `tions` | cell text `executions`, one join |
 
 ---
@@ -268,6 +272,6 @@ before testing it against the cell rectangle.
 
 ## 9 · Acceptance
 
-- [ ] VL1–VL4, CM1–CM8, LP1, GS1–GS3, LT1–LT9, TP1–TP6, EX1–EX5, and AP1–AP4 pass.
+- [ ] VL1–VL4, CM1–CM8, LP1, GS1–GS3, LT1–LT10, TP1–TP6, EX1–EX5, and AP1–AP4 pass.
 - [ ] The seven fee schedules read without error, with Camelot's tables claimed as in § 0.
 - [ ] Every M0 and M1 case still passes.

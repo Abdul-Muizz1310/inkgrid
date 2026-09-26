@@ -1,6 +1,6 @@
 import pytest
 
-from inkgrid.core.lexicon import enumerator, is_bullet, note_label, section_number
+from inkgrid.core.lexicon import enumerator, is_bullet, is_value, note_label, section_number
 from inkgrid.model.config import Lexicon
 
 LEXICON = Lexicon()
@@ -53,3 +53,42 @@ def test_CF9_section_number(token: str, expected: str | None) -> None:
 )
 def test_CF10_note_label(token: str, expected: str | None) -> None:
     assert note_label(token) == expected
+
+
+@pytest.mark.parametrize(
+    "text", ["0.40", "1,234.5", "1.234,5", "1 234", "1'234", "\u22120.10", "12"]
+)
+def test_VL1_numbers_are_values(text: str) -> None:
+    assert is_value(text)
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "$0.40",
+        "R 0.00",
+        "0.13 EUR",
+        "20,000 \u20ac",
+        "\u20ac1.4bn",
+        "-0.15bp",
+        "0.45bp*",
+        "12%",
+        "CHF 25",
+    ],
+)
+def test_VL2_money_and_units_are_values(text: str) -> None:
+    assert is_value(text)
+
+
+@pytest.mark.parametrize(
+    "text", ["(47)", "($0.10)", "0.10 - 0.20", "1\u20135", "\u2014", "n/a", "Free"]
+)
+def test_VL3_negatives_ranges_and_placeholders_are_values(text: str) -> None:
+    assert is_value(text)
+
+
+@pytest.mark.parametrize(
+    "text", ["2026", "Tier 1", "Monthly", "0.10 per contract", "ZAR (Ex VAT)", "", "1.2.3"]
+)
+def test_VL4_labels_are_not_values(text: str) -> None:
+    assert not is_value(text)

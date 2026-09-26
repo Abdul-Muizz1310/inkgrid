@@ -103,7 +103,7 @@ The term is its words' rendered text; the body is the rest of the paragraph's.
 | DF6 | in a scope: a paragraph bold throughout | a paragraph |
 | DF7 | in a scope: `Access` at x 57, `Connection of physical data line …` at x 190, its second line at x 190 | term `Access`, body from `Connection` |
 | DF8 | the same, with the second line at x 57 | a paragraph |
-| DF9 | in a scope: `1` at x 57, `Trade activity on days when …` at x 80, its second line at x 80 | a paragraph |
+| DF9 | in a scope: `1` at x 57, `Trade activity on days when …` at x 100, its second line at x 100 | a paragraph |
 | DF10 | in a scope: a list item `1. “CADV” means …` | a list item |
 | DF11 | in a scope: `2 These transaction fees do not apply to:` (regular), then more words | a paragraph |
 | DF12 | in a scope: `“Fee is charged per trade and more words than twelve without a closing quote …` | a paragraph |

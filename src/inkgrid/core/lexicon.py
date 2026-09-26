@@ -199,6 +199,33 @@ VALUE = re.compile(
 STRONG_MARK = re.compile(
     rf"{_SYMBOL}|{_CODE}|%|bps?|\u2030|\d[.,'\u00a0\u202f]\d|\d{_MAGNITUDE}(?![A-Za-z])"
 )
+# A heading holding one of these titles a glossary (spec 08, section 1).
+DEFINITION_WORDS = frozenset(
+    {
+        "definition",
+        "definitions",
+        "glossary",
+        "legend",
+        "interpretation",
+        "interpretations",
+        "abbreviation",
+        "abbreviations",
+    }
+)
+DEFINITION_PHRASES = (("defined", "terms"),)
+# The verbs a quoted term opens a definition with, as tokens (spec 08 section 2).
+DEFINING_VERBS = (
+    ("means",),
+    ("mean",),
+    ("shall", "mean"),
+    ("refers", "to"),
+    ("refer", "to"),
+    ("is", "defined"),
+    ("are", "defined"),
+    ("has", "the", "meaning"),
+    ("have", "the", "meaning"),
+    ("shall", "have", "the", "meaning"),
+)
 NOTE_MARK = re.compile("\\d{1,3}|[*\u2020\u2021\u00a7\u00b6#]{1,3}")
 
 

@@ -142,3 +142,15 @@ def test_AP2_camelot_runs_only_on_ruled_pages() -> None:
     doc = inkgrid.read(pdf_factory.simple_text())
     assert doc.producer.camelot is None
     assert doc.producer.lattice == "combined"
+
+
+def test_AP5_a_cropped_page_keeps_its_grid_with_the_default_engine() -> None:
+    doc = inkgrid.read(pdf_factory.ruled_grid(cropbox=(10, 10, 602, 782)))
+    (table,) = doc.tables()
+    assert (table.grid.n_rows, table.grid.n_cols) == (4, 3)
+
+
+def test_AP6_encrypted_documents_keep_their_tables() -> None:
+    locked = inkgrid.read(pdf_factory.ruled_encrypted("secret"), password="secret")
+    owner_only = inkgrid.read(pdf_factory.ruled_encrypted(None))
+    assert [len(d.tables()) for d in (locked, owner_only)] == [1, 1]

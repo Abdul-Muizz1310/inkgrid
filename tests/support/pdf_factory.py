@@ -334,7 +334,7 @@ RULED_LANDSCAPE_CELLS: dict[str, tuple[float, float, float, float]] = {
 """The cells of `ruled_landscape` as shown on screen (the /Rotate 90 frame, 792 x 612)."""
 
 
-def ruled_landscape() -> bytes:
+def ruled_landscape(cropbox: tuple[float, float, float, float] | None = None) -> bytes:
     """A 2 x 3 ruled table upright on screen on a `/Rotate 90` page."""
     doc = pymupdf.open()
     page = _page(doc)
@@ -349,8 +349,18 @@ def ruled_landscape() -> bytes:
         width = pymupdf.get_text_length(text, fontsize=9)
         start_x, baseline = (x0 + x1 - width) / 2, (y0 + y1) / 2 + 3
         page.insert_text((baseline, height - start_x), text, fontsize=9, rotate=90)
+    if cropbox is not None:
+        page.set_cropbox(pymupdf.Rect(*cropbox))
     page.set_rotation(90)
     return _save(doc)
+
+
+def ruled_encrypted(user_pw: str | None) -> bytes:
+    """`ruled_grid`, AES-256 encrypted; with no user password it opens without one."""
+    doc = pymupdf.open(stream=ruled_grid(), filetype="pdf")
+    return doc.tobytes(
+        encryption=pymupdf.PDF_ENCRYPT_AES_256, owner_pw="owner", user_pw=user_pw or ""
+    )
 
 
 LANDSCAPE_TITLE = "Landscape Fee Summary"

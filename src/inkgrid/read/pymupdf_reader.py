@@ -323,7 +323,7 @@ def render_pages(data: bytes, password: str | None, dpi: int) -> tuple[bytes | N
 
 
 def page_frames(data: bytes, password: str | None) -> tuple[PageFrame, ...]:
-    """Each loadable page's MediaBox and CropBox, for placing Camelot's y-up coordinates."""
+    """Each loadable page's rotation and unrotated CropBox size, for placing Camelot's grids."""
     frames: list[PageFrame] = []
     with _quiet():
         doc = _open(data, password)
@@ -336,10 +336,6 @@ def page_frames(data: bytes, password: str | None) -> tuple[PageFrame, ...]:
                 frames.append(
                     PageFrame(
                         number=index + 1,
-                        mediabox_x0=page.mediabox.x0,
-                        mediabox_height=page.mediabox.height,
-                        cropbox_x0=page.cropbox.x0,
-                        cropbox_y0=page.cropbox.y0,
                         rotation=_rotation(page.rotation),
                         width=page.cropbox.width,
                         height=page.cropbox.height,
@@ -348,3 +344,31 @@ def page_frames(data: bytes, password: str | None) -> tuple[PageFrame, ...]:
         finally:
             doc.close()
     return tuple(frames)
+
+
+def lattice_copy(data: bytes, password: str | None) -> bytes:
+    """The document as Camelot must read it: decrypted, each page's MediaBox set to its CropBox.
+
+    Camelot's raster engines render the CropBox but scale it by the MediaBox, and its parser needs
+    an optional package for AES. With the two boxes equal and no encryption, every engine places
+    its grids in the page model's frame. PyMuPDF reports the CropBox measured down from the
+    MediaBox top; `set_mediabox` takes PDF coordinates.
+    """
+    with _quiet():
+        doc = _open(data, password)
+        try:
+            for index in range(doc.page_count):
+                try:
+                    page = doc.load_page(index)
+                except LOAD_ERRORS:
+                    break
+                rotation = page.rotation
+                page.set_rotation(0)
+                crop, media = page.cropbox, page.mediabox
+                page.set_mediabox(
+                    pymupdf.Rect(crop.x0, media.y1 - crop.y1, crop.x1, media.y1 - crop.y0)
+                )
+                page.set_rotation(rotation)
+            return doc.tobytes(encryption=pymupdf.PDF_ENCRYPT_NONE)
+        finally:
+            doc.close()

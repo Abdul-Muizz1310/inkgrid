@@ -8,24 +8,19 @@ from typing import Annotated, Self
 
 from pydantic import Field, PositiveInt, model_validator
 
-from inkgrid.model.base import Coord, Frozen
+from inkgrid.model.base import Frozen
 from inkgrid.model.document import Lattice
 from inkgrid.model.findings import Finding
 from inkgrid.model.geometry import Rect, Rotation
 
 
 class PageFrame(Frozen):
-    """The boxes Camelot measures a page from, as PyMuPDF reports them.
+    """A page's rotation and unrotated CropBox size: the frame Camelot's grids are placed in.
 
-    `cropbox_x0` is PDF x; `cropbox_y0` is measured down from the MediaBox top. `width` and `height`
-    are the unrotated CropBox, the page model's frame.
+    Camelot reads the lattice copy, whose MediaBox is the CropBox, so no box offsets remain.
     """
 
     number: PositiveInt
-    mediabox_x0: Coord
-    mediabox_height: Annotated[float, Field(gt=0)]
-    cropbox_x0: Coord
-    cropbox_y0: Coord
     rotation: Rotation
     width: Annotated[float, Field(gt=0)]
     height: Annotated[float, Field(gt=0)]

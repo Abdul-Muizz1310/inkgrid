@@ -8,18 +8,19 @@ import pdf_factory
 from inkgrid.model.geometry import Rect, turn_rect
 from inkgrid.model.lattice import LatticeReading, RuledGrid
 from inkgrid.read.camelot_reader import Edges, merged_groups, read_lattice
-from inkgrid.read.pymupdf_reader import page_frames, read_pdf
+from inkgrid.read.pymupdf_reader import lattice_copy, page_frames, read_pdf
 
 
-def lattice(data: bytes, engine: str = "vector") -> LatticeReading:
-    frames = page_frames(data, None)
-    return read_lattice(data, frames, [f.number for f in frames], engine=engine, password=None)
+def lattice(data: bytes, engine: str = "vector", password: str | None = None) -> LatticeReading:
+    frames = page_frames(data, password)
+    copy = lattice_copy(data, password)
+    return read_lattice(copy, frames, [f.number for f in frames], engine=engine, password=None)
 
 
-def cells_by_word(data: bytes, grid: RuledGrid) -> dict[str, Rect]:
+def cells_by_word(data: bytes, grid: RuledGrid, password: str | None = None) -> dict[str, Rect]:
     """Each word of the page by the one cell its centre falls in."""
     out: dict[str, Rect] = {}
-    for word in read_pdf(data, file_name=None, password=None).pages[grid.page - 1].words:
+    for word in read_pdf(data, file_name=None, password=password).pages[grid.page - 1].words:
         x, y = word.bbox.center
         (cell,) = [c for c in grid.cells if c.contains_point(x, y)]
         out[word.text] = cell
@@ -40,26 +41,63 @@ def test_CM1_merged_cells_come_back_as_one_rectangle_each() -> None:
     assert cells_by_word(data, grid) == shifted(0, 0)
 
 
+ENGINES = ["vector", "combined", "raster"]
+CROP = (50, 50, 550, 750)
+
+
+@pytest.mark.parametrize("engine", ENGINES)
 @pytest.mark.parametrize(
     ("data", "dx", "dy"),
     [
         pytest.param(pdf_factory.ruled_grid(mediabox=(-100, -100, 512, 692)), 100, -100, id="CM2"),
-        pytest.param(pdf_factory.ruled_grid(cropbox=(50, 50, 550, 750)), -50, -50, id="CM3"),
+        pytest.param(pdf_factory.ruled_grid(cropbox=CROP), -50, -50, id="CM3"),
         pytest.param(pdf_factory.ruled_grid(rotation=90), 0, 0, id="CM4-90"),
         pytest.param(pdf_factory.ruled_grid(rotation=180), 0, 0, id="CM4-180"),
         pytest.param(pdf_factory.ruled_grid(rotation=270), 0, 0, id="CM4-270"),
+        pytest.param(pdf_factory.ruled_grid(rotation=90, cropbox=CROP), -50, -50, id="CM4-90-crop"),
+        pytest.param(
+            pdf_factory.ruled_grid(rotation=180, cropbox=CROP), -50, -50, id="CM4-180-crop"
+        ),
+        pytest.param(
+            pdf_factory.ruled_grid(rotation=270, cropbox=CROP), -50, -50, id="CM4-270-crop"
+        ),
     ],
 )
-def test_CM2_to_CM4_cells_are_placed_where_the_words_are(data: bytes, dx: float, dy: float) -> None:
-    (grid,) = lattice(data).grids
-    assert cells_by_word(data, grid) == shifted(dx, dy)
+def test_CM2_to_CM4_and_CM8_cells_are_placed_where_the_words_are(
+    data: bytes, dx: float, dy: float, engine: str
+) -> None:
+    (grid,) = lattice(data, engine).grids
+    near(cells_by_word(data, grid), shifted(dx, dy))
 
 
-def test_CM5_a_landscape_grid_is_placed_where_the_words_are() -> None:
-    data = pdf_factory.ruled_landscape()
-    (grid,) = lattice(data).grids
-    on_screen = {t: turn_rect(c, 90, 612, 792) for t, c in cells_by_word(data, grid).items()}
-    assert on_screen == {t: Rect(*r) for t, r in pdf_factory.RULED_LANDSCAPE_CELLS.items()}
+def near(got: dict[str, Rect], want: dict[str, Rect]) -> None:
+    """The same cells for the same words, each edge within 1 pt."""
+    assert got.keys() == want.keys()
+    for text, cell in want.items():
+        edges = zip(
+            (got[text].x0, got[text].y0, got[text].x1, got[text].y1),
+            (cell.x0, cell.y0, cell.x1, cell.y1),
+            strict=True,
+        )
+        assert max(abs(a - b) for a, b in edges) <= 1.0, text
+
+
+@pytest.mark.parametrize("engine", ENGINES)
+@pytest.mark.parametrize("cropbox", [None, (0, 0, 612, 750)], ids=["full", "crop"])
+def test_CM5_a_landscape_grid_is_placed_where_the_words_are(
+    engine: str, cropbox: tuple[float, float, float, float] | None
+) -> None:
+    data = pdf_factory.ruled_landscape(cropbox)
+    page = read_pdf(data, file_name=None, password=None).pages[0]
+    (grid,) = lattice(data, engine).grids
+    placed = cells_by_word(data, grid)
+    on_screen = {t: turn_rect(c, 90, page.width, page.height) for t, c in placed.items()}
+    shift = page.height - 792  # a CropBox trimming the page's foot moves the screen's x origin
+    want = {
+        t: Rect(x0 + shift, y0, x1 + shift, y1)
+        for t, (x0, y0, x1, y1) in pdf_factory.RULED_LANDSCAPE_CELLS.items()
+    }
+    near(on_screen, want)
 
 
 def test_CM6_a_camelot_failure_costs_one_page(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -96,21 +134,34 @@ def test_CM7_a_merge_that_is_not_a_rectangle_stays_split() -> None:
     assert merged_groups(l_shape) == [(0, 0, 1, 1), (0, 1, 1, 2), (1, 0, 2, 1), (1, 1, 2, 2)]
 
 
-@pytest.mark.parametrize("engine", ["combined", "raster"])
-def test_CM8_every_engine_reads_the_same_cells(engine: str) -> None:
-    data = pdf_factory.ruled_grid()
-    (grid,) = lattice(data, engine).grids
-    placed = cells_by_word(data, grid)
-    for text, want in shifted(0, 0).items():
-        got = placed[text]
-        assert (
-            max(
-                abs(a - b)
-                for a, b in zip(
-                    (got.x0, got.y0, got.x1, got.y1),
-                    (want.x0, want.y0, want.x1, want.y1),
-                    strict=True,
-                )
-            )
-            <= 1.0
-        )
+def test_CM9_encrypted_documents_keep_their_tables() -> None:
+    owner_only = pdf_factory.ruled_encrypted(None)
+    assert len(lattice(owner_only).grids) == 1
+    locked = pdf_factory.ruled_encrypted("secret")
+    (grid,) = lattice(locked, password="secret").grids
+    near(cells_by_word(locked, grid, password="secret"), shifted(0, 0))
+
+
+@pytest.mark.parametrize(
+    "data",
+    [
+        pdf_factory.ruled_grid(mediabox=(-100, -100, 512, 692)),
+        pdf_factory.ruled_grid(cropbox=CROP),
+        pdf_factory.ruled_grid(rotation=90, cropbox=CROP),
+        pdf_factory.ruled_grid(rotation=180, cropbox=(10, 10, 602, 782)),
+        pdf_factory.ruled_landscape((0, 0, 612, 750)),
+    ],
+    ids=["offset", "crop", "crop-90", "crop-180", "landscape-crop"],
+)
+def test_LC1_the_lattice_copy_shows_every_word_where_the_original_does(data: bytes) -> None:
+    copy = lattice_copy(data, None)
+    original = read_pdf(data, file_name=None, password=None)
+    copied = read_pdf(copy, file_name=None, password=None)
+    assert [(w.text, w.bbox) for w in copied.words()] == [
+        (w.text, w.bbox) for w in original.words()
+    ]
+
+
+def test_LC1_the_lattice_copy_is_decrypted() -> None:
+    copy = lattice_copy(pdf_factory.ruled_encrypted("secret"), "secret")
+    assert [w.text for w in read_pdf(copy, file_name=None, password=None).words()][:1] == ["Fee"]

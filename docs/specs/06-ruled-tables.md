@@ -73,10 +73,15 @@ decides structure. The grammar, matched against the whole text after trimming:
 
 ### Types
 
-- **`PageFrame`**: a page's `number`, its MediaBox `x0` and `height`, and its CropBox `x0` and `y0` as PyMuPDF
-  reports them (PDF x, y measured down from the MediaBox top), plus `rotation`, `width`, and `height` of the
-  unrotated CropBox. `pymupdf_reader.page_frames(data, password) -> tuple[PageFrame, ...]` reads them, so
-  `camelot_reader` never imports pymupdf.
+- **`PageFrame`**: a page's `number`, `rotation`, and the `width` and `height` of its unrotated CropBox.
+  `pymupdf_reader.page_frames(data, password) -> tuple[PageFrame, ...]` reads them, so `camelot_reader`
+  never imports pymupdf.
+- **The lattice copy.** `pymupdf_reader.lattice_copy(data, password) -> bytes` is the document Camelot
+  reads: decrypted, with each page's MediaBox set to its CropBox (in PDF coordinates; PyMuPDF reports
+  the CropBox measured down from the MediaBox top). Camelot's raster engines render the CropBox but
+  scale it by the MediaBox, and Camelot's parser needs an optional package for AES, so a copy whose
+  two boxes agree and which carries no encryption is the only input all three engines place
+  correctly. It shows every word where the original does.
 - **`RuledGrid`**: `page` and `cells`, a tuple of `Rect` in **unrotated page coordinates**, one per cell,
   where a merged cell is one rectangle. It carries no bands and no indices: the core derives those in its
   own frame (§ 4). Validated: at least one cell, every rectangle of positive size.
@@ -95,24 +100,26 @@ decides structure. The grammar, matched against the whole text after trimming:
    `bottom` of the upper cell and `top` of the lower cell both false). Each connected group becomes one
    rectangle when its cells fill that rectangle exactly; a group that does not is split back into its
    single cells, because a guessed merge would fuse values (L2).
-4. **The frame.** Camelot's coordinates are y-up from the bottom-left of the MediaBox, in the page's rotated
-   frame when Camelot turned the page. It turned the page when `Table.pdf_size` is the page's height by
-   width (a `/Rotate` of 90 or 270), or when the `/Rotate` is 180. A swapped `pdf_size` on a page whose
-   `/Rotate` is 0 cannot be placed: `lattice_failed` for that grid.
-5. **Conversion to unrotated page coordinates.** In Camelot's frame, a point `(x, y)` is first taken to
-   screen coordinates, `(x + mb.x0 − cb.x0, mb.height − cb.y0 − y)`, with the frame's own width and height
-   for a turned page, and then turned back by the page's rotation (`turn_point` inverted).
+4. **The frame.** Camelot's coordinates are y-up from the bottom-left of the copy's page, in the page's
+   rotated frame when Camelot turned the page. It turned the page when `Table.pdf_size` is the page's
+   height by width (a `/Rotate` of 90 or 270), or when the `/Rotate` is 180. A swapped `pdf_size` on a
+   page whose `/Rotate` is 0 cannot be placed: `lattice_failed` for that grid.
+5. **Conversion to unrotated page coordinates.** A point `(x, y)` in Camelot's frame is `(x, h − y)` on
+   screen, with `h` the frame's height, and is then turned back by the page's rotation (`turn_point`
+   inverted) when Camelot turned the page.
 
 | # | case | expected |
 |---|---|---|
+| LC1 | the lattice copy of `ruled_grid` with an offset MediaBox, an inset CropBox, an inset CropBox and `/Rotate` 90 or 180, and `ruled_landscape`; an encrypted PDF | every word where the original has it; the copy is not encrypted |
 | CM1 | `ruled_grid`: a 4 x 3 ruled table whose header spans columns 1–2 and whose label spans rows 1–2 | 10 cells; the header and the label as one rectangle each, at the drawn positions |
 | CM2 | `ruled_grid` with MediaBox `[-100 -100 512 692]` | the same cells in page coordinates as the words |
 | CM3 | `ruled_grid` with CropBox `[50 50 550 750]` | the cells shifted by (−50, −50), as the words are |
-| CM4 | `ruled_grid` on a page of `/Rotate` 90, 180, and 270 (text horizontal in the unrotated page) | the cells where the words are, in each |
-| CM5 | `ruled_landscape`: a grid upright on screen on a `/Rotate` 90 page | the cells where the words are |
+| CM4 | `ruled_grid` on a page of `/Rotate` 90, 180, and 270 (text horizontal in the unrotated page), each also with an inset CropBox | the cells where the words are, in each |
+| CM5 | `ruled_landscape`: a grid upright on screen on a `/Rotate` 90 page, with and without an inset CropBox | the cells where the words are |
 | CM6 | a Camelot failure on page 2 of 3 (injected) | `lattice_failed` on page 2; pages 1 and 3 read |
 | CM7 | edge flags whose connected group is L-shaped | its cells stay separate |
-| CM8 | `engine` `vector`, `combined`, and `raster` on `ruled_grid` | the same cells |
+| CM8 | CM1–CM5 with each `engine`: `vector`, `combined`, and `raster` | the same cells, within 1 pt |
+| CM9 | `ruled_grid` encrypted with only an owner password (AES-256); with a user password, read with it | the table, both times |
 
 ---
 
@@ -266,12 +273,14 @@ before testing it against the cell rectangle.
 | AP1 | `read(ruled_grid(), lattice="vector")` | `producer.lattice == "vector"`, `producer.camelot` set |
 | AP2 | `read(simple_text())` | Camelot does not run; `producer.camelot is None` |
 | AP3 | `inkgrid read ruled.pdf --lattice raster` | exit 0; a `Document` with a table |
+| AP5 | `read(ruled_grid(cropbox=(10, 10, 602, 782)))` with the default engine | one 4 x 3 table |
+| AP6 | `read(ruled_encrypted("secret"), password="secret")`; `read(ruled_encrypted(None))` | one table each |
 | AP4 | the architecture test with `read/words.py` importing camelot | one violation |
 
 ---
 
 ## 9 · Acceptance
 
-- [ ] VL1–VL4, CM1–CM8, LP1, GS1–GS3, LT1–LT10, TP1–TP6, EX1–EX5, and AP1–AP4 pass.
+- [ ] VL1–VL4, LC1, CM1–CM9, LP1, GS1–GS3, LT1–LT10, TP1–TP6, EX1–EX5, and AP1–AP6 pass.
 - [ ] The seven fee schedules read without error, with Camelot's tables claimed as in § 0.
 - [ ] Every M0 and M1 case still passes.

@@ -8,7 +8,7 @@ from inkgrid.model.document import Document, Lattice
 from inkgrid.model.findings import Severity, summarize
 from inkgrid.model.page import Reading
 from inkgrid.read.camelot_reader import read_lattice
-from inkgrid.read.pymupdf_reader import page_frames, read_pdf
+from inkgrid.read.pymupdf_reader import lattice_copy, page_frames, read_pdf
 from inkgrid.read.source import SourceLike, load_source
 
 
@@ -100,11 +100,11 @@ def read(
     pages = lattice_pages(reading)
     grids = (
         read_lattice(
-            loaded.data,
+            lattice_copy(loaded.data, password),
             page_frames(loaded.data, password),
             pages,
             engine=checked_lattice,
-            password=password,
+            password=None,
         )
         if pages
         else None

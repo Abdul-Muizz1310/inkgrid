@@ -32,24 +32,8 @@ def test_lattice_reading_holds_only_pages_it_read() -> None:
         lattice(findings=(Finding.of(FindingCode.LATTICE_FAILED, "boom", page=3),))
 
 
-def test_page_frames_report_the_boxes_camelot_measures_from() -> None:
+def test_page_frames_report_rotation_and_cropbox_size() -> None:
     (crop,) = page_frames(pdf_factory.cropbox(), None)
-    assert crop == PageFrame(
-        number=1,
-        mediabox_x0=0,
-        mediabox_height=800,
-        cropbox_x0=50,
-        cropbox_y0=50,
-        rotation=0,
-        width=500,
-        height=700,
-    )
-    (offset,) = page_frames(pdf_factory.offset_mediabox(), None)
-    assert (offset.mediabox_x0, offset.mediabox_height, offset.cropbox_x0, offset.cropbox_y0) == (
-        -100,
-        792,
-        -100,
-        0,
-    )
+    assert crop == PageFrame(number=1, rotation=0, width=500, height=700)
     (turned,) = page_frames(pdf_factory.rotated(), None)
-    assert turned.rotation == 90
+    assert (turned.rotation, turned.width, turned.height) == (90, 612, 792)

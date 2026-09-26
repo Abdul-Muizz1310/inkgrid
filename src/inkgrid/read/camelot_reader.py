@@ -100,10 +100,7 @@ def _placer(table: camelot.Table, frame: PageFrame) -> Place | None:
         return turned
 
     def upright(x: float, y: float) -> tuple[float, float]:
-        return (
-            x + frame.mediabox_x0 - frame.cropbox_x0,
-            frame.mediabox_height - frame.cropbox_y0 - y,
-        )
+        return x, frame.height - y
 
     return upright
 
@@ -120,7 +117,7 @@ def _grid(table: camelot.Table, place: Place, page: int) -> RuledGrid:
 
 
 def read_lattice(
-    data: bytes,
+    data: bytes,  # the lattice copy (pymupdf_reader.lattice_copy): boxes equal, no encryption
     frames: Sequence[PageFrame],
     pages: Sequence[int],
     *,

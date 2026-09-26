@@ -412,6 +412,115 @@ def ruled_encrypted(user_pw: str | None) -> bytes:
     )
 
 
+UNRULED_HEADER = ["Standard tariff", "Floor", "Scale", "Cap"]
+UNRULED_ROWS = [
+    ["a) Poster", "-", "1.00 bp", "-"],
+    ["b) Aggressor", "CHF 0.50", "0.55 bp", "-"],
+    ["c) Auction", "CHF 0.50", "0.75 bp", "-"],
+]
+UNRULED_ENDS = (285.0, 345.0, 404.0)  # right edges of the value columns
+UNRULED_INTRO = [
+    "The ad valorem fee differs depending on the rate band, according to the",
+    "following table. It is charged on the value of every trade executed on the",
+    "order book, and it is invoiced monthly to the member that entered the order.",
+]
+UNRULED_COMMITMENT = ["Commitment", "No commitment required"]
+
+
+def _unruled_rows(
+    page: pymupdf.Page, y: float, *, x0: float = 72.0, rotate: int = 0, height: float = 792.0
+) -> float:
+    """SIX's layout: a bold header, value rows 12 pt apart, and a commitment row; the next free y.
+
+    With `rotate=90` each point (x, y) is drawn at the unrotated (y, height - x), so the table
+    shows upright on a /Rotate 90 page.
+    """
+
+    def put(text: str, x: float, at: float, font: str) -> None:
+        if rotate:
+            page.insert_text((at, height - x), text, fontsize=9, fontname=font, rotate=90)
+        else:
+            page.insert_text((x, at), text, fontsize=9, fontname=font)
+
+    def row(cells: list[str], at: float, font: str) -> None:
+        put(cells[0], x0, at, font)
+        for text, end in zip(cells[1:], UNRULED_ENDS, strict=True):
+            put(
+                text,
+                x0 - 72 + end - pymupdf.get_text_length(text, fontname=font, fontsize=9),
+                at,
+                font,
+            )
+
+    row(UNRULED_HEADER, y, "hebo")
+    for n, cells in enumerate(UNRULED_ROWS, 1):
+        row(cells, y + 12 * n, "helv")
+    at = y + 12 * (len(UNRULED_ROWS) + 1)
+    put(UNRULED_COMMITMENT[0], x0, at, "helv")
+    text = UNRULED_COMMITMENT[1]
+    put(text, x0 - 72 + UNRULED_ENDS[-1] - pymupdf.get_text_length(text, fontsize=9), at, "helv")
+    return at + 12
+
+
+def unruled_table() -> bytes:
+    """A heading, an intro paragraph, a SIX-style unruled table, then a heading."""
+    doc = pymupdf.open()
+    page = _page(doc)
+    page.insert_text((72, 80), "1.2 Ad valorem fee", fontsize=10, fontname="hebo")
+    for i, text in enumerate(UNRULED_INTRO):
+        page.insert_text((72, 98 + 12 * i), text, fontsize=10)
+    after = _unruled_rows(page, 140)
+    page.insert_text((72, after + 20), "1.3 Retail orders", fontsize=10, fontname="hebo")
+    return _save(doc)
+
+
+CENTRED_ROWS = [
+    (["Standard trading"], "0.45bp"),
+    (["Value of all nominated client orders that do", "not qualify for the scheme"], "0.30bp"),
+    (["Passive orders"], "0.00bp"),
+    (["Aggressive orders"], "0.15bp"),
+]
+CENTRED_BANNER = "Liquidity Provider Scheme"
+
+
+def centred_values() -> bytes:
+    """LSE's layout: two-line labels with their value centred beside them, and a bold banner.
+
+    The label lines are 10.9 pt apart and the value sits 5.45 pt below the first, as LSE sets them.
+    """
+    doc = pymupdf.open()
+    page = _page(doc)
+    y = 100.0
+    for index, (label, value) in enumerate(CENTRED_ROWS):
+        if index == 2:
+            page.insert_text((76, y), CENTRED_BANNER, fontsize=9, fontname="hebo")
+            y += 19.3
+        for i, text in enumerate(label):
+            page.insert_text((76, y + 10.9 * i), text, fontsize=9)
+        mid = y + 5.45 * (len(label) - 1)
+        page.insert_text((522 - pymupdf.get_text_length(value, fontsize=9), mid), value, fontsize=9)
+        y += 10.9 * (len(label) - 1) + 19.3
+    return _save(doc)
+
+
+def ruled_and_unruled() -> bytes:
+    """`ruled_grid`'s table, and below it an unruled SIX-style table."""
+    doc = pymupdf.open()
+    page = _page(doc)
+    _draw_grid(page, RULED_GRID_CELLS)
+    _unruled_rows(page, 320)
+    return _save(doc)
+
+
+def unruled_landscape() -> bytes:
+    """The unruled table of `unruled_table`, upright on a /Rotate 90 page."""
+    doc = pymupdf.open()
+    page = _page(doc)
+    _unruled_rows(page, 116, rotate=90, height=page.rect.height)
+    page.set_rotation(90)
+    return _save(doc)
+
+
 LANDSCAPE_TITLE = "Landscape Fee Summary"
 LANDSCAPE_PARAGRAPHS = [
     [
@@ -737,6 +846,10 @@ OPENABLE: dict[str, Callable[[], bytes]] = {
     "outside_crop": outside_crop,
     "two_column": two_column,
     "landscape": landscape,
+    "unruled_table": unruled_table,
+    "centred_values": centred_values,
+    "ruled_and_unruled": ruled_and_unruled,
+    "unruled_landscape": unruled_landscape,
     "ruled_grid": ruled_grid,
     "ruled_landscape": ruled_landscape,
     "table_between_paragraphs": table_between_paragraphs,

@@ -368,3 +368,12 @@ def test_NT3_a_lone_value_row_is_not_a_table() -> None:
 def test_NT4_a_single_column_of_values_is_not_a_table() -> None:
     column = [p for n in range(3) for p in right(f"CHF {n}.00", 285, 100 + 12 * n)]
     assert stage(column).tables == ()
+
+
+def test_RW6_rows_at_ordinary_leading_whose_boxes_overlap_stay_apart() -> None:
+    ps = header_row(100)
+    ps = [P(p.text, p.x, p.y, size=12.4, bold=True) for p in ps]
+    for n in range(3):
+        at = 112 + 12 * n
+        ps += [P(f"Tier{n}", 72, at, size=12.4), P(f"0.{n}0", 300, at, size=12.4)]
+    assert len(rows_of(ps)) == 4

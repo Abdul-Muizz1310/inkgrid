@@ -7,6 +7,7 @@ from inkgrid.core.furniture import find_furniture
 from inkgrid.core.layout import Region, layout
 from inkgrid.core.lines import body_size
 from inkgrid.core.prose import ProtoBlock, line_gaps, page_blocks
+from inkgrid.core.tables.corridor import corridor_tables
 from inkgrid.core.tables.lattice import lattice_tables
 from inkgrid.core.tables.proto import ProtoTable
 from inkgrid.core.view import upright
@@ -54,9 +55,14 @@ def build_document(
             view, turned, words, profile, frame=frame, read=page.number in lattice_read
         )
         found += stage.findings
-        tables.append(stage.tables)
         rest = [w for w in words if w.id not in stage.claimed]
-        regions.append(layout(rest, profile, body) if rest else ())
+        # Unruled tables come from layout's rows regions; the other lines go back to prose.
+        unruled = corridor_tables(
+            layout(rest, profile, body) if rest else (), profile, page=page.number, frame=frame
+        )
+        found += unruled.findings
+        tables.append((*stage.tables, *unruled.tables))
+        regions.append(unruled.regions)
     # Line gaps over the document: a page of one-line paragraphs has none of its own.
     gaps = line_gaps([region for page in regions for region in page])
     pages: list[tuple[ProtoBlock, ...]] = [

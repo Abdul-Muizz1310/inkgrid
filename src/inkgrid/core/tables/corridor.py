@@ -30,8 +30,7 @@ from inkgrid.model.page import Word
 Span = tuple[float, float]
 
 MAX_QUALIFIED_TOKENS = 4  # `$5,000 per month`: a value and a few words qualifying it
-WRAP_RATIO = 0.35  # a line closer than this share of the block's typical gap wraps its row
-MIN_WRAP = 0.5  # pt: the wrap threshold is never smaller
+WRAP_PITCH = 0.8  # a line whose pitch is at most this share of the block's typical pitch wraps
 MIN_BLANK_EM = 0.5  # narrower gaps are word spacing, not column space
 MIN_PIECES = MIN_COLUMNS = MIN_ROWS = 2
 MAX_HEADER_ROWS = 3  # rows above the first value row a table may take: header, caption, banner
@@ -100,16 +99,19 @@ def _clash(line: Line, row: Sequence[Line], profile: Profile) -> bool:
 
 
 def fold_rows(lines: Sequence[Line], profile: Profile) -> tuple[Row, ...]:
-    """Consecutive lines as table rows: a wrap joins its row, but two values never share one."""
+    """Consecutive lines as table rows: a wrap joins its row, but two values never share one.
+
+    A wrap is told by its pitch (top to top), not its gap: MuPDF's boxes span the font's full
+    ascent and descent, so rows at ordinary leading overlap like wraps do (spec 07 section 2).
+    """
     if not lines:
         return ()
-    gaps = [b.top - a.bottom for a, b in pairwise(lines) if b.top > a.bottom]
-    wrap = max(WRAP_RATIO * statistics.median(gaps), MIN_WRAP) if gaps else MIN_WRAP
+    pitches = [b.top - a.top for a, b in pairwise(lines)]
+    wrap = WRAP_PITCH * statistics.median(pitches) if pitches else 0.0
     groups: list[list[Line]] = [[lines[0]]]
-    for line in lines[1:]:
+    for prev, line in pairwise(lines):
         current = groups[-1]
-        gap = line.top - max(other.bottom for other in current)
-        if gap <= wrap and not _clash(line, current, profile):
+        if line.top - prev.top <= wrap and not _clash(line, current, profile):
             current.append(line)
         else:
             groups.append([line])

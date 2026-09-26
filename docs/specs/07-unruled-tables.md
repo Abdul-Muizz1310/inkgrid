@@ -64,12 +64,13 @@ token is a strong value (`$5,000 per month`, `0.10 per contract`).
 `fold_rows(lines) -> tuple[Row, ...]` groups consecutive lines into table rows. A `Row` holds its lines
 top to bottom; its size is the median size of its words.
 
-- The **wrap threshold** is `max(0.35 × the median of the positive gaps between the lines, 0.5)` pt, over
-  the lines given; with no positive gap it is 0.5 pt.
-- A line joins the row above when its gap to that row's lowest bottom is at most the threshold (negative
-  gaps included), **unless** it holds a value-like piece that overlaps horizontally a value-like piece
-  already in that row. Then it starts a new row: two values in one column are two rows, never one cell
-  (L2).
+- A line's *pitch* is the distance from the top of the line before it to its own top. A line joins the
+  row above when its pitch is at most 0.8 × the median pitch of the lines given, **unless** it holds a
+  value-like piece that overlaps horizontally a value-like piece already in that row. Then it starts a new
+  row: two values in one column are two rows, never one cell (L2).
+- Pitch, not gap, because MuPDF's line boxes span the font's full ascent and descent (1.38 em for base-14
+  Helvetica), so rows set at ordinary leading overlap and their gaps are negative, like a wrap's. Measured
+  pitch over the block's median: SIX wraps 0.76, rows 1.0; LSE wraps 0.28–0.55, rows 1.0.
 
 | # | case | expected |
 |---|---|---|
@@ -77,6 +78,7 @@ top to bottom; its size is the median size of its words.
 | RW2 | three lines 0.5 pt apart, each with a value right-aligned in the same column (Euronext) | three rows |
 | RW3 | a two-line label with its value centred between the lines, 4.9 pt above the second (LSE) | one row of three lines |
 | RW4 | lines 9 pt apart in a block whose median gap is 9 pt | one row each |
+| RW6 | 9 pt rows at a 12 pt pitch, whose boxes overlap by 0.4 pt, under a bold header | one row each |
 | RW5 | `151 – 500` 0 pt above `501 – 1,000`, in the same column | two rows |
 
 ---
@@ -203,7 +205,7 @@ and assembly places corridor tables among the page's blocks exactly as ruled tab
 
 ## 8 · Acceptance
 
-- [ ] VP1–VP3, RW1–RW5, EX1–EX9, CB1–CB3, CG1–CG5, NT1–NT4, and CP1–CP5 pass.
+- [ ] VP1–VP3, RW1–RW6, EX1–EX9, CB1–CB3, CG1–CG5, NT1–NT4, and CP1–CP5 pass.
 - [ ] The seven fee schedules read without error; SIX, LSE, and Euronext gain their unruled tables, and
       a sample of them, rendered in the inspector, reads as the page prints.
 - [ ] Every M0, M1, and M2a case still passes.

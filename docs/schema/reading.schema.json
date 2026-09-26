@@ -67,6 +67,7 @@
         "lattice_disagrees",
         "word_crosses_rule",
         "header_not_found",
+        "table_left_as_text",
         "call_unresolved",
         "no_furniture_long_document"
       ],

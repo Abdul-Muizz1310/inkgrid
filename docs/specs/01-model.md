@@ -106,11 +106,12 @@ illegal state cannot be represented (negative-space programming).
 | `lattice_disagrees` | warning | our rules saw a ruled region where Camelot returned no grid (M2) |
 | `word_crosses_rule` | warning | a word's box crosses a drawn cell boundary (M2) |
 | `header_not_found` | info | a table prints no header rows (M2) |
+| `table_left_as_text` | warning | rows that read as an unruled table are left as text: no grid holds them without fusing two values or two rows (M2) |
 | `call_unresolved` | warning | a footnote call with no note found (M3) |
 | `no_furniture_long_document` | info | more than 8 pages and no furniture: confirm, do not assume (M1) |
 
-`blank_page`, `hidden_text`, `type3_font`, and `unreadable_page` are additions to the design's
-initial list:
+`blank_page`, `hidden_text`, `type3_font`, `unreadable_page`, and `table_left_as_text` are additions
+to the design's initial list:
 
 - `blank_page` exists because `no_text_layer` is an error, and a genuinely empty page is not.
 - Hidden text is a known way to smuggle instructions into text pipelines, so it must never be silent
@@ -120,6 +121,9 @@ initial list:
   only U+FFFD, so it gets its own code.
 - `unreadable_page` covers pages that exist in the page tree but cannot be read at all. Found by the
   final M0 review.
+- `table_left_as_text` exists because an unruled table the corridors refuse (L2 forbids fusing two
+  values into one cell) would otherwise become prose without a word (G4). Found by the final M2b
+  review.
 
 - `Finding(code, severity, page, block, detail)` is frozen. `page` is `None` or an integer of at least 1;
   `block` is `None` or a block id; `detail` is free text. A validator requires `severity ==

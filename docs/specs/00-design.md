@@ -476,6 +476,7 @@ The initial finding codes (the enum grows only in a versioned, documented way):
 | `lattice_disagrees` | warning | our rule reading saw a ruled region where Camelot returned no grid |
 | `word_crosses_rule` | warning | a word's box crosses a drawn cell boundary |
 | `header_not_found` | info | a table has no header rows the document prints |
+| `table_left_as_text` | warning | rows that read as an unruled table are left as text, because no grid holds them safely (added in M2b) |
 | `call_unresolved` | warning | a footnote call with no note found |
 | `no_furniture_long_document` | info | more than 8 pages and no furniture at all: confirm, do not assume |
 

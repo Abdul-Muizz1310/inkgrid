@@ -17,6 +17,7 @@ EXPECTED_ORDER = [
     "lattice_disagrees",
     "word_crosses_rule",
     "header_not_found",
+    "table_left_as_text",
     "call_unresolved",
     "no_furniture_long_document",
 ]
@@ -32,6 +33,7 @@ def test_F1_severity_table_matches_spec() -> None:
     assert errors == {FindingCode.NO_TEXT_LAYER, FindingCode.UNREADABLE_PAGE}
     assert SEVERITY[FindingCode.HIDDEN_TEXT] is Severity.WARNING
     assert SEVERITY[FindingCode.BLANK_PAGE] is Severity.INFO
+    assert SEVERITY[FindingCode("table_left_as_text")] is Severity.WARNING
 
 
 def test_F2_mislabelled_severity_is_rejected() -> None:

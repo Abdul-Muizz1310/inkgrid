@@ -8,7 +8,13 @@ a box around a paragraph or a furniture label is not a table.
 from collections.abc import Sequence
 from dataclasses import dataclass
 
-from inkgrid.core.tables.proto import ProtoCell, ProtoTable, cell_lines, table_roles
+from inkgrid.core.tables.proto import (
+    ProtoCell,
+    ProtoTable,
+    cell_lines,
+    missing_header,
+    table_roles,
+)
 from inkgrid.core.tables.shape import grid_shape
 from inkgrid.model.config import Profile
 from inkgrid.model.findings import Finding, FindingCode
@@ -103,15 +109,10 @@ def lattice_tables(
         if _ruled_layout(cells, n_cols, profile):
             continue
         header, banners, text_only = table_roles(cells, n_rows)
-        table = ProtoTable(page.number, shape, tuple(cells), header, banners, frame, "lattice")
-        if header == 0:
-            detail = (
-                "the table holds no values and its first row is not bold, "
-                "so no header row was found"
-                if text_only
-                else "the table's first rows hold values, so no header row was found"
-            )
-            findings.append(Finding.of(FindingCode.HEADER_NOT_FOUND, detail, page=page.number))
+        table = ProtoTable(
+            page.number, shape, tuple(cells), header, banners, frame, "lattice", text_only
+        )
+        findings.extend(missing_header(table))
         crossing = _crossing(cells, table.bbox)
         if crossing:
             detail = f"{crossing} word{'s' if crossing > 1 else ''} cross a drawn column rule"

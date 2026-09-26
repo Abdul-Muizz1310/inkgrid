@@ -8,6 +8,7 @@ from inkgrid.core.lexicon import is_strong_value, is_value
 from inkgrid.core.lines import Line, group_lines
 from inkgrid.core.tables.shape import GridShape, ShapeCell
 from inkgrid.model.config import Profile
+from inkgrid.model.findings import Finding, FindingCode
 from inkgrid.model.geometry import Rect, Rotation
 from inkgrid.model.page import Word
 
@@ -36,6 +37,7 @@ class ProtoTable:
     banner_rows: tuple[int, ...]
     frame: Rotation
     source: Literal["lattice", "corridor"]
+    text_only: bool = False  # no value to tell headers from: header_rows came from bold type
 
     @property
     def bbox(self) -> Rect:
@@ -87,3 +89,15 @@ def table_roles(cells: Sequence[ProtoCell], n_rows: int) -> tuple[int, tuple[int
             break
         header = min(reach, n_rows)
     return header, banners, text_only
+
+
+def missing_header(table: ProtoTable) -> tuple[Finding, ...]:
+    """`header_not_found` for a table with no header row, saying why; nothing otherwise."""
+    if table.header_rows:
+        return ()
+    detail = (
+        "the table holds no values and its first row is not bold, so no header row was found"
+        if table.text_only
+        else "the table's first rows hold values, so no header row was found"
+    )
+    return (Finding.of(FindingCode.HEADER_NOT_FOUND, detail, page=table.page),)

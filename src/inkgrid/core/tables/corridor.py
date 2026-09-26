@@ -11,11 +11,19 @@ from dataclasses import dataclass
 from functools import cached_property
 from itertools import pairwise
 
+from inkgrid.core.layout import Region
 from inkgrid.core.lexicon import is_strong_value, is_value
 from inkgrid.core.lines import Line, fragments
-from inkgrid.core.tables.proto import ProtoCell, ProtoTable, cell_lines, table_roles
+from inkgrid.core.tables.proto import (
+    ProtoCell,
+    ProtoTable,
+    cell_lines,
+    missing_header,
+    table_roles,
+)
 from inkgrid.core.tables.shape import GridShape, ShapeCell
 from inkgrid.model.config import Profile
+from inkgrid.model.findings import Finding
 from inkgrid.model.geometry import Rect, Rotation
 from inkgrid.model.page import Word
 
@@ -26,6 +34,7 @@ WRAP_RATIO = 0.35  # a line closer than this share of the block's typical gap wr
 MIN_WRAP = 0.5  # pt: the wrap threshold is never smaller
 MIN_BLANK_EM = 0.5  # narrower gaps are word spacing, not column space
 MIN_PIECES = MIN_COLUMNS = MIN_ROWS = 2
+MAX_HEADER_ROWS = 3  # rows above the first value row a table may take: header, caption, banner
 RIGHT_PAD = 0.01  # pt past the rightmost word, so its centre sits inside the last band
 
 
@@ -236,5 +245,150 @@ def corridor_table(
             shape = ShapeCell(r, first, 1, last - first + 1, rect)
             cells.append(ProtoCell(shape, cell_lines(members, profile)))
     grid = GridShape(tuple(row_edges), tuple(col_edges), tuple(c.cell for c in cells))
-    header, banners, _ = table_roles(cells, len(rows))
-    return ProtoTable(page, grid, tuple(cells), header, banners, frame, "corridor")
+    header, banners, text_only = table_roles(cells, len(rows))
+    return ProtoTable(page, grid, tuple(cells), header, banners, frame, "corridor", text_only)
+
+
+@dataclass(frozen=True, slots=True)
+class CorridorStage:
+    """What the corridor stage made of a page: tables, the regions left for prose, and findings."""
+
+    tables: tuple[ProtoTable, ...]
+    regions: tuple[Region, ...]
+    findings: tuple[Finding, ...]
+
+
+def _has_value_piece(row: Row) -> bool:
+    return any(is_value_piece(p.words) for p in row.pieces)
+
+
+def _fits(row: Row, spans: Sequence[Span], tol: float) -> bool:
+    """True when the row lies within the columns and every piece is anchored to them.
+
+    A piece is anchored by its start at a column's start, its end at a column's end, or its centre
+    at the centre of a span of consecutive columns.
+    """
+    lo, hi = spans[0][0] - tol, spans[-1][1] + tol
+    starts = [a for a, _ in spans]
+    ends = [b for _, b in spans]
+    centres = [
+        (spans[i][0] + spans[j][1]) / 2 for i in range(len(spans)) for j in range(i, len(spans))
+    ]
+    for piece in row.pieces:
+        if piece.x0 < lo or piece.x1 > hi:
+            return False
+        mid = (piece.x0 + piece.x1) / 2
+        if not (
+            any(abs(piece.x0 - a) <= tol for a in starts)
+            or any(abs(piece.x1 - b) <= tol for b in ends)
+            or any(abs(mid - c) <= tol for c in centres)
+        ):
+            return False
+    return True
+
+
+def _size_runs(rows: Sequence[Row], profile: Profile) -> list[list[Row]]:
+    """The rows split wherever the type size changes (prose rule 2, against the smaller size)."""
+    runs: list[list[Row]] = []
+    for row in rows:
+        if runs:
+            prev = runs[-1][-1]
+            if abs(row.size - prev.size) <= profile.size_change_ratio * min(row.size, prev.size):
+                runs[-1].append(row)
+                continue
+        runs.append([row])
+    return runs
+
+
+def _extent(run: Sequence[Row], start: int, first: int) -> tuple[int, int, tuple[Span, ...]]:
+    """The rows (lo, hi) of the table whose first value row is `first`, and its columns."""
+    members = [first]
+    last = first
+    tol = 0.5 * run[first].size
+    for k in range(first + 1, len(run)):
+        if not is_value_row(run[k]):
+            continue
+        spans = columns([run[j] for j in [*members, k]])
+        if all(_fits(run[j], spans, tol) for j in range(last + 1, k)):
+            members.append(k)
+            last = k
+        else:
+            break
+    spans = columns([run[j] for j in members])
+    hi = last
+    while hi + 1 < len(run) and len(run[hi + 1].pieces) >= MIN_PIECES:
+        if not _fits(run[hi + 1], spans, tol):
+            break
+        hi += 1
+    lo = first
+    while lo - 1 >= start and first - (lo - 1) <= MAX_HEADER_ROWS:
+        above = run[lo - 1]
+        if _has_value_piece(above) or not _fits(above, spans, tol):
+            break
+        lo -= 1
+    return lo, hi, spans
+
+
+def _run_tables(
+    run: Sequence[Row], profile: Profile, *, page: int, frame: Rotation
+) -> list[tuple[int, int, ProtoTable]]:
+    """Every table in one size run, as (first row, last row, table)."""
+    found: list[tuple[int, int, ProtoTable]] = []
+    start = 0
+    while True:
+        first = next((k for k in range(start, len(run)) if is_value_row(run[k])), None)
+        if first is None:
+            return found
+        lo, hi, spans = _extent(run, start, first)
+        table = corridor_table(run[lo : hi + 1], spans, profile, page=page, frame=frame)
+        if table is None:
+            start = first + 1
+            continue
+        found.append((lo, hi, table))
+        start = hi + 1
+
+
+def _leftover(group: Sequence[Region], claimed: set[int]) -> list[Region]:
+    """The group's unclaimed lines as regions, cut where a table was or a region ended."""
+    out: list[Region] = []
+    for region in group:
+        current: list[Line] = []
+        for line in region.lines:
+            if id(line) in claimed:
+                if current:
+                    out.append(Region(region.kind, tuple(current)))
+                    current = []
+            else:
+                current.append(line)
+        if current:
+            out.append(Region(region.kind, tuple(current)))
+    return out
+
+
+def corridor_tables(
+    regions: Sequence[Region], profile: Profile, *, page: int, frame: Rotation
+) -> CorridorStage:
+    """Unruled tables in each run of adjacent `rows` regions; the other lines go back to prose."""
+    tables: list[ProtoTable] = []
+    out: list[Region] = []
+    findings: list[Finding] = []
+    i = 0
+    while i < len(regions):
+        if regions[i].kind != "rows":
+            out.append(regions[i])
+            i += 1
+            continue
+        j = i
+        while j < len(regions) and regions[j].kind == "rows":
+            j += 1
+        group = regions[i:j]
+        rows = fold_rows([line for region in group for line in region.lines], profile)
+        claimed: set[int] = set()
+        for run in _size_runs(rows, profile):
+            for lo, hi, table in _run_tables(run, profile, page=page, frame=frame):
+                tables.append(table)
+                findings.extend(missing_header(table))
+                claimed |= {id(line) for row in run[lo : hi + 1] for line in row.lines}
+        out.extend(_leftover(group, claimed) if claimed else group)
+        i = j
+    return CorridorStage(tuple(tables), tuple(out), tuple(findings))

@@ -1,10 +1,13 @@
 import pytest
 
+from inkgrid.core.layout import Region
 from inkgrid.core.lines import group_lines
 from inkgrid.core.tables.corridor import (
+    CorridorStage,
     Row,
     columns,
     corridor_table,
+    corridor_tables,
     fold_rows,
     is_value_like,
     is_value_piece,
@@ -225,3 +228,143 @@ def test_CG4_two_values_in_one_cell_is_no_table() -> None:
         ["$1,000", "per", "month"], x=200, y=132, size=9
     )
     assert corridor(fused + wide) is None
+
+
+def stage(*regions: list[P]) -> CorridorStage:
+    placed: list[Region] = []
+    first = 0
+    for ps in regions:
+        words = place(ps, first_id=first)
+        first += len(words)
+        placed.append(Region("rows", group_lines(words, PROFILE)))
+    return corridor_tables(placed, PROFILE, page=1, frame=0)
+
+
+def texts_of(region: Region) -> list[str]:
+    return [" ".join(w.text for w in line.words) for line in region.lines]
+
+
+def header_row(y: float, bold: bool = True) -> list[P]:
+    out = text_line(["Asymmetrical:"], x=72, y=y, size=9, bold=bold)
+    for text, end in (("Floor", 285), ("Scale", 345), ("Cap", 404)):
+        out += [P(text, end - 4.5 * len(text), y, size=9, bold=bold)]
+    return out
+
+
+def test_EX1_a_larger_heading_stays_out_of_the_table() -> None:
+    heading = text_line(["1.2", "Ad", "valorem", "fee"], x=72, y=80, size=10, bold=True)
+    result = stage(heading + header_row(100) + six_rows(112))
+    (table,) = result.tables
+    assert len(table.shape.row_edges) - 1 == 3
+    assert [texts_of(r) for r in result.regions] == [["1.2 Ad valorem fee"]]
+
+
+def test_EX2_a_caption_and_a_header_are_the_first_rows() -> None:
+    caption = text_line(["Standard", "tariff"], x=72, y=88, size=9)
+    (table,) = stage(caption + header_row(100) + six_rows(112)).tables
+    assert table.header_rows == 2
+    first = [" ".join(w.text for w in c.words) for c in table.cells if c.cell.row == 0 and c.words]
+    assert first == ["Standard tariff"]
+
+
+def test_EX3_a_sentence_past_the_columns_stays_out() -> None:
+    sentence = text_line(
+        ["The", "standard", "fees", "for", "members", "trading", "on", "the", "book", "are:"],
+        x=72,
+        y=88,
+        size=9,
+    )
+    wide = [*sentence, P("follows", 520, 88, size=9)]
+    result = stage(wide + header_row(100) + six_rows(112))
+    (table,) = result.tables
+    assert len(table.shape.row_edges) - 1 == 3
+
+
+def test_EX4_a_trailing_commitment_row_is_in() -> None:
+    commitment = text_line(["Commitment"], x=72, y=136, size=9) + right(
+        "No commitment required", 404, 136
+    )
+    (table,) = stage(header_row(100) + six_rows(112) + commitment).tables
+    assert len(table.shape.row_edges) - 1 == 4
+
+
+def test_EX5_a_trailing_bullet_past_the_columns_is_out() -> None:
+    bullet = [
+        P("\u25a0", 72, 136, size=9),
+        *text_line(
+            ["Members", "paying", "the", "fee", "are", "billed", "each", "month"],
+            x=100,
+            y=136,
+            size=9,
+        ),
+    ]
+    bullet += [P("afterwards", 470, 136, size=9)]
+    result = stage(header_row(100) + six_rows(112) + bullet)
+    (table,) = result.tables
+    assert len(table.shape.row_edges) - 1 == 3
+    assert len(result.regions) == 1
+
+
+def test_EX6_a_banner_between_value_rows_is_in() -> None:
+    banner = text_line(["Liquidity", "Provider", "Scheme"], x=72, y=136, size=9, bold=True)
+    (table,) = stage(header_row(100) + six_rows(112) + banner + six_rows(148)).tables
+    assert len(table.shape.row_edges) - 1 == 6
+    assert table.banner_rows == (3,)
+
+
+def test_EX7_a_table_across_two_rows_regions_is_one() -> None:
+    commitment = text_line(["Commitment"], x=72, y=136, size=9) + right(
+        "No commitment required", 404, 136
+    )
+    result = stage(header_row(100) + six_rows(112), commitment)
+    (table,) = result.tables
+    assert len(table.shape.row_edges) - 1 == 4
+    assert result.regions == ()
+
+
+def test_EX8_an_unaligned_line_between_two_tables_parts_them() -> None:
+    note = text_line(["Rates", "for", "the", "second", "book"], x=100, y=136, size=9)
+    result = stage(header_row(100) + six_rows(112) + note + header_row(160) + six_rows(172))
+    assert len(result.tables) == 2
+    assert [texts_of(r) for r in result.regions] == [["Rates for the second book"]]
+
+
+def test_EX9_a_header_over_one_value_row_is_a_table() -> None:
+    value = text_line(["Reporting"], x=72, y=112, size=9) + right("CHF 0.50", 285, 112)
+    value += right("0.25 bp", 345, 112) + right("CHF 25", 404, 112)
+    (table,) = stage(header_row(100) + value).tables
+    assert len(table.shape.row_edges) - 1 == 2
+
+
+def test_NT1_a_hanging_list_mentioning_fees_is_not_a_table() -> None:
+    items = []
+    for n, label in enumerate(["a)", "b)", "c)"]):
+        items += [P(label, 72, 100 + 12 * n, size=9)]
+        items += text_line(
+            ["The", "fee", "is", "CHF", "5", "per", "trade."], x=100, y=100 + 12 * n, size=9
+        )
+    assert stage(items).tables == ()
+
+
+def test_NT2_a_table_of_contents_is_not_a_table() -> None:
+    entries = []
+    for n, title in enumerate(["Transaction fees", "Ad valorem fee", "Annual fee"]):
+        entries += text_line([f"1.{n}", *title.split()], x=72, y=100 + 12 * n, size=9)
+        entries += [P(str(7 + n), 500, 100 + 12 * n, size=9)]
+    assert stage(entries).tables == ()
+
+
+def test_NT3_a_lone_value_row_is_not_a_table() -> None:
+    value = text_line(["Standard"], x=72, y=100, size=9) + right("CHF 1.00", 285, 100)
+    prose = text_line(
+        ["Members", "pay", "this", "fee", "on", "every", "trade", "they", "make."],
+        x=100,
+        y=112,
+        size=9,
+    )
+    assert stage(value + prose).tables == ()
+
+
+def test_NT4_a_single_column_of_values_is_not_a_table() -> None:
+    column = [p for n in range(3) for p in right(f"CHF {n}.00", 285, 100 + 12 * n)]
+    assert stage(column).tables == ()

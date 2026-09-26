@@ -91,10 +91,15 @@ In each size run:
 
 1. **Value rows** have at least 2 pieces, and a value piece other than their leftmost.
 2. **Columns** (§ 4) are computed from the value rows. With fewer than 2 columns there is no table.
-3. The table spans from the first to the last value row, and every row between them is part of it
-   (banners, label rows, and value-free rows such as `Commitment | No commitment required` in between).
-4. **Aligned rows.** A row *aligns* when each of its pieces has its start, end, or centre within half the
-   run's size of a column's start, a column's end, or the centre of a span of consecutive columns.
+3. The table runs from its first value row through each following value row whose rows in between all
+   align (item 4) with the columns of the value rows so far: banners, label rows, and value-free rows such
+   as `Commitment | No commitment required` stay in. A row between that does not align ends the table at
+   the value row before it.
+4. **Aligned rows.** A row *aligns* when all its pieces lie within the table's width (from the first
+   column's start to the last column's end, give or take half the run's size) and each piece is anchored,
+   within half the run's size: its start at a column's start, its end at a column's end, or its centre at
+   the centre of a span of consecutive columns. A sentence that runs past the columns does not align, even when it starts where
+   they do.
 5. **Upward**, the table takes up to 3 preceding rows, nearest first, while each holds no value piece and
    aligns: the column header, and a caption or a banner above it.
 6. **Downward**, it takes following rows while each has at least 2 pieces and aligns.

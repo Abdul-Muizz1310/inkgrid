@@ -30,7 +30,10 @@ from inkgrid.model.page import Rule, Word
 Span = tuple[float, float]
 
 MAX_QUALIFIED_TOKENS = 4  # `$5,000 per month`: a value and a few words qualifying it
-WRAP_PITCH = 0.8  # a line whose pitch is at most this share of the block's typical pitch wraps
+WRAP_PITCH = 0.8  # a line whose pitch is at most this share of the row pitch wraps the line above
+VALUE_WRAP = 0.35  # a value line this close (share of the row pitch) to the last one wraps its row
+REACH = 0.5  # a line without a value joins the nearest value line within this share of the pitch
+HEIGHT_REACH = 1.5  # ... and within this many line heights, however far apart the values are
 MIN_BLANK_EM = 0.5  # narrower gaps are word spacing, not column space
 MIN_PIECES = MIN_COLUMNS = MIN_ROWS = 2
 MAX_HEADER_ROWS = 3  # rows above the first value row a table may take: header, caption, banner
@@ -57,6 +60,11 @@ def is_value_like(words: Sequence[Word]) -> bool:
     """True for a piece that reads as a value at all, weak values included (`62`, `1 - 150`)."""
     tokens = _tokens(words)
     return bool(tokens) and is_value(" ".join(tokens))
+
+
+def _holds_value(words: Sequence[Word]) -> bool:
+    """A value-like or a value piece: what anchors rows and what the L2 checks count."""
+    return is_value_like(words) or is_value_piece(words)
 
 
 @dataclass(frozen=True)
@@ -94,32 +102,28 @@ def _row(lines: Sequence[Line], profile: Profile) -> Row:
 
 def _clash(line: Line, row: Sequence[Line], profile: Profile) -> bool:
     """True when the line holds a value-like piece over one the row already holds (L2)."""
-    mine = [p for p in fragments(line, profile) if is_value_like(p.words)]
-    theirs = [p for other in row for p in fragments(other, profile) if is_value_like(p.words)]
+    mine = [p for p in fragments(line, profile) if _holds_value(p.words)]
+    theirs = [p for other in row for p in fragments(other, profile) if _holds_value(p.words)]
     return any(a.x0 < b.x1 and b.x0 < a.x1 for a in mine for b in theirs)
 
 
-def _ruled_between(prev: Line, line: Line, rules: Sequence[Rule]) -> bool:
-    """True when a drawn horizontal rule lies between two lines' centres, across the line."""
-    upper = (prev.top + prev.bottom) / 2
-    lower = (line.top + line.bottom) / 2
+def _centre(line: Line) -> float:
+    return (line.top + line.bottom) / 2
+
+
+def _ruled_between(a: Line, b: Line, rules: Sequence[Rule]) -> bool:
+    """True when a drawn horizontal rule lies between two lines' centres, across line `b`."""
+    upper, lower = sorted((_centre(a), _centre(b)))
     return any(
-        rule.axis == "h" and upper < rule.at < lower and rule.start < line.x1 and line.x0 < rule.end
+        rule.axis == "h" and upper < rule.at < lower and rule.start < b.x1 and b.x0 < rule.end
         for rule in rules
     )
 
 
-def fold_rows(
-    lines: Sequence[Line], profile: Profile, *, rules: Sequence[Rule] = ()
-) -> tuple[Row, ...]:
-    """Consecutive lines as table rows: a wrap joins its row, but two values never share one.
-
-    A wrap is told by its pitch (top to top), not its gap: MuPDF's boxes span the font's full
-    ascent and descent, so rows at ordinary leading overlap like wraps do. A drawn horizontal rule
-    between two lines always ends the row (spec 07 section 2).
-    """
-    if not lines:
-        return ()
+def _fold_by_pitch(
+    lines: Sequence[Line], profile: Profile, rules: Sequence[Rule]
+) -> list[list[Line]]:
+    """Rows by pitch alone, for a run with fewer than two value lines (spec 07 section 2)."""
     pitches = [b.top - a.top for a, b in pairwise(lines)]
     wrap = WRAP_PITCH * statistics.median(pitches) if pitches else 0.0
     groups: list[list[Line]] = [[lines[0]]]
@@ -133,7 +137,198 @@ def fold_rows(
             current.append(line)
         else:
             groups.append([line])
-    return tuple(_row(group, profile) for group in groups)
+    return groups
+
+
+def _value_rows(
+    lines: Sequence[Line],
+    anchors: Sequence[int],
+    pitch: float,
+    profile: Profile,
+    rules: Sequence[Rule],
+) -> list[list[int]]:
+    """Each value line starts a row, unless it wraps the last (close, no clash, no rule between)."""
+    groups: list[list[int]] = []
+    for i in anchors:
+        if groups:
+            last = groups[-1][-1]
+            close = _centre(lines[i]) - _centre(lines[last]) <= VALUE_WRAP * pitch
+            if (
+                close
+                and not _clash(lines[i], [lines[j] for j in groups[-1]], profile)
+                and not _ruled_between(lines[last], lines[i], rules)
+            ):
+                groups[-1].append(i)
+                continue
+        groups.append([i])
+    return groups
+
+
+def _nearest_row(
+    line: Line,
+    lines: Sequence[Line],
+    anchors: Sequence[int],
+    *,
+    owner: dict[int, int],
+    reach: float,
+    profile: Profile,
+    rules: Sequence[Rule],
+) -> int | None:
+    """The row of the value line nearest this line's centre, within reach and no rule between.
+
+    A line over the value line's pieces must share their weight: a bold caption over a regular label
+    is not its wrap. A label in a column of its own (a bold row header) joins in any weight.
+    """
+    centres = [_centre(lines[i]) for i in anchors]
+    at = bisect.bisect(centres, _centre(line))
+    best: tuple[float, int] | None = None
+    for k in (at - 1, at):
+        if 0 <= k < len(anchors):
+            anchor = lines[anchors[k]]
+            distance = abs(_centre(anchor) - _centre(line))
+            nearer = best is None or distance < best[0]
+            under = [p for p in fragments(anchor, profile) if p.x0 < line.x1 and line.x0 < p.x1]
+            alike = all(p.bold == line.bold for p in under)
+            if distance <= reach and nearer and alike and not _ruled_between(anchor, line, rules):
+                best = (distance, owner[anchors[k]])
+    return None if best is None else best[1]
+
+
+def _wrapped_row(
+    line: Line,
+    lines: Sequence[Line],
+    groups: Sequence[list[int]],
+    *,
+    pitch: float,
+    height: float,
+    profile: Profile,
+    rules: Sequence[Rule],
+) -> int | None:
+    """The value row directly above that this line wraps: close under its last line, continuing it.
+
+    Closer than a row: within 0.8 x the row pitch and 1.5 line heights of the row's last line.
+    """
+    above = [g for g, members in enumerate(groups) if all(lines[i].top < line.top for i in members)]
+    if not above:
+        return None
+    row = max(above, key=lambda g: max(lines[i].top for i in groups[g]))
+    members = [lines[i] for i in groups[row]]
+    last = max(members, key=lambda other: other.top)
+    close = line.top - last.top <= min(WRAP_PITCH * pitch, HEIGHT_REACH * height)
+    if close and _continues(members, line, profile) and not _ruled_between(last, line, rules):
+        return row
+    return None
+
+
+def _wrap_lone_values(
+    lines: Sequence[Line],
+    groups: list[list[int]],
+    loose: list[list[int]],
+    *,
+    limit: float,
+    profile: Profile,
+    rules: Sequence[Rule],
+) -> list[list[int]]:
+    """Fold a lone one-piece value line into the value-free row it wraps (a banner's second line).
+
+    `loose` gains the line; the value rows that remain are returned.
+    """
+    in_loose = {i: row for row in loose for i in row}
+    kept: list[list[int]] = []
+    for group in groups:
+        (i,) = group if len(group) == 1 else (None,)
+        above = in_loose.get(i - 1) if i is not None else None
+        if (
+            i is not None
+            and above is not None
+            and len(fragments(lines[i], profile)) == 1
+            and lines[i].top - lines[i - 1].top <= limit
+            and not _ruled_between(lines[i - 1], lines[i], rules)
+            and _continues([lines[j] for j in above], lines[i], profile)
+        ):
+            above.append(i)
+            continue
+        kept.append(group)
+    return kept
+
+
+def _continues(row: Sequence[Line], line: Line, profile: Profile) -> bool:
+    """True when the line wraps the row: it continues columns the row has already opened.
+
+    Pieces side by side open columns under a row of one column (a header under a paragraph).
+    """
+    above = [p for other in row for p in fragments(other, profile)]
+    mine = fragments(line, profile)
+    side_by_side = any(a.x1 <= b.x0 for a, b in pairwise(sorted(above, key=lambda p: p.x0)))
+    overlaps = all(any(p.x0 < q.x1 and q.x0 < p.x1 for q in above) for p in mine)
+    if overlaps and (len(mine) == 1 or side_by_side):
+        return True
+    left, right = min(p.x0 for p in above), max(p.x1 for p in above)
+    return side_by_side and left <= line.x0 and line.x1 <= right
+
+
+def fold_rows(
+    lines: Sequence[Line], profile: Profile, *, rules: Sequence[Rule] = ()
+) -> tuple[Row, ...]:
+    """A size run's lines as table rows, anchored on their values (spec 07 section 2).
+
+    Each value line starts a row; every other line joins the value line nearest it within half the
+    row pitch; what joins none folds into rows of its own by pitch. A drawn horizontal rule never
+    lies inside a row, and two values in one column are never one row (L2).
+    """
+    if not lines:
+        return ()
+    valued = [any(_holds_value(p.words) for p in fragments(line, profile)) for line in lines]
+    anchors = [i for i, v in enumerate(valued) if v]
+    steps = [_centre(lines[b]) - _centre(lines[a]) for a, b in pairwise(anchors)]
+    if not steps:
+        return tuple(_row(group, profile) for group in _fold_by_pitch(lines, profile, rules))
+    pitch = statistics.median(steps)
+    height = statistics.median(line.bottom - line.top for line in lines)
+    reach = min(REACH * pitch, HEIGHT_REACH * height)
+    groups = _value_rows(lines, anchors, pitch, profile, rules)
+    owner = {i: g for g, members in enumerate(groups) for i in members}
+    loose: list[list[int]] = []
+    for i, line in enumerate(lines):
+        if valued[i]:
+            continue
+        # A label wraps within its column: a line of pieces side by side is a row of its own.
+        single = len(fragments(line, profile)) == 1
+        row = (
+            _nearest_row(
+                line, lines, anchors, owner=owner, reach=reach, profile=profile, rules=rules
+            )
+            if single
+            else None
+        )
+        if row is None and single:
+            row = _wrapped_row(
+                line, lines, groups, pitch=pitch, height=height, profile=profile, rules=rules
+            )
+        if row is not None:
+            groups[row].append(i)
+            continue
+        prev = loose[-1][-1] if loose else None
+        if (
+            prev == i - 1
+            and line.top - lines[prev].top <= min(WRAP_PITCH * pitch, HEIGHT_REACH * height)
+            and not _ruled_between(lines[prev], line, rules)
+            and _continues([lines[j] for j in loose[-1]], line, profile)
+        ):
+            loose[-1].append(i)
+        else:
+            loose.append([i])
+    groups = _wrap_lone_values(
+        lines,
+        groups,
+        loose,
+        limit=min(WRAP_PITCH * pitch, HEIGHT_REACH * height),
+        profile=profile,
+        rules=rules,
+    )
+    rows = [sorted(group) for group in [*groups, *loose]]
+    rows.sort(key=lambda group: min(lines[i].top for i in group))
+    return tuple(_row([lines[i] for i in group], profile) for group in rows)
 
 
 def is_value_row(row: Row) -> bool:
@@ -221,7 +416,7 @@ def _values_on_own_lines(words: Sequence[Word], profile: Profile) -> int:
         1
         for line in group_lines(words, profile)
         for piece in fragments(line, profile)
-        if is_value_like(piece.words)
+        if _holds_value(piece.words)
     )
 
 
@@ -359,7 +554,7 @@ def _extent(run: Sequence[Row], start: int, first: int) -> tuple[int, int, tuple
         # A row of several pieces holding no value at all (not even `Free` or `-`) before more
         # values is the next table's column header.
         if any(
-            _side_by_side(row) and not any(is_value_like(p.words) for p in row.pieces)
+            _side_by_side(row) and not any(_holds_value(p.words) for p in row.pieces)
             for row in between
         ):
             break

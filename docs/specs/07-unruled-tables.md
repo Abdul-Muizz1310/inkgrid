@@ -50,7 +50,8 @@ grouping, so `CHF 250` and `5 bp` count though neither token does alone), or whe
 tokens and its first token is a strong value (`$5,000 per month`, `0.10 per contract`).
 
 `is_value_like(words)` is looser: the remaining text `is_value` (weak values included: `1 – 150`, `62`,
-`Free`, `-`). It guards row folding (§ 2).
+`Free`, `-`). A piece that is either one *holds a value*; that is what anchors rows and what the clash and
+fusion checks count (§ 2, § 5), so qualified money (`€10 per million`) counts like a bare value.
 
 | # | case | expected |
 |---|---|---|
@@ -63,32 +64,71 @@ tokens and its first token is a strong value (`$5,000 per month`, `0.10 per cont
 
 ## 2 · Rows (`fold_rows`)
 
-`fold_rows(lines) -> tuple[Row, ...]` groups consecutive lines into table rows. A `Row` holds its lines
-top to bottom; its size is the median size of its words.
+`fold_rows(lines, *, rules=()) -> tuple[Row, ...]` groups a size run's lines into table rows. A `Row` holds
+its lines top to bottom; its size is the median size of its words. Rows are anchored on their values:
 
-- A line's *pitch* is the distance from the top of the line before it to its own top. A line joins the
-  row above when its pitch is at most 0.8 × the median pitch of the lines given, **unless** it holds a
-  value-like piece that overlaps horizontally a value-like piece already in that row. Then it starts a new
-  row: two values in one column are two rows, never one cell (L2).
-- **A drawn rule ends a row.** A line never joins the row above across a horizontal rule of the page
-  that lies between the centre of the line before it and its own centre and overlaps it horizontally.
-  Euronext rules its rows while centring each value beside a two-line label, so the first label line of
-  a row sits tight under the row above; the rule, not the pitch, says where it belongs. (This is the
-  part of design § 5.2's rule grid that unruled reading needs: rules as row boundaries. Pages read
-  upright in a turned frame carry no rules, `04` § 2a, and fold by pitch alone.)
-- Pitch, not gap, because MuPDF's line boxes span the font's full ascent and descent (1.38 em for base-14
-  Helvetica), so rows set at ordinary leading overlap and their gaps are negative, like a wrap's. Measured
-  pitch over the block's median: SIX wraps 0.76, rows 1.0; LSE wraps 0.28–0.55, rows 1.0.
+- A *value line* holds a piece that holds a value (§ 1). The *row pitch* is the median distance between the centres of
+  consecutive value lines.
+- **Each value line starts a row**, unless its centre is within 0.35 × the row pitch of the previous value
+  line, no drawn rule lies between them, and it holds no value-like piece that overlaps horizontally one
+  already in that row. Two values in one column are two rows, never one cell (L2).
+- **Every other line of a single piece joins the value row whose value line is nearest its centre**, when
+  that distance is at most half the row pitch and at most 1.5 × the median line height, no drawn rule
+  lies between them, and the line is bold, or not, as every piece of the value line it lies over is (a
+  line or piece is bold when half its characters are in bold words). A label wraps within its own column, so a value-free line with pieces side by side
+  is a header or a descriptor row and never attaches; and the height cap keeps a caption from joining a
+  value line that sits far away when a run holds only a few, widely spaced value lines. The weight keeps
+  a bold caption set at ordinary leading over a regular value line (Euronext's `OPTION 2` over
+  `Monthly subscription fee €6,000`) a row of its own, while a bold row label in a column of its own
+  (Euronext's `REQUESTOR` beside `Total value executed above €100,000: €0`) joins its value row, and so
+  does a bold label wrapped onto its value line (`INTERMEDIARY AUTHORISED` / `TO RESPOND €10 per million`).
+- **A one-piece line that wraps the value row above it joins it**, even beyond half a pitch from the value:
+  when its pitch from that row's lowest line is at most 0.8 × the row pitch and 1.5 × the median line height
+  (closer than a row), it continues the row (below), and no drawn rule lies between. A label that wraps twice under a value set on its first line
+  (LSE's `Post trade – not OTBD` / `only***`) stays whole. So a label split around its centred value
+  (LSE), or wrapped onto three lines, joins its value's row, while a header or a banner, farther than half
+  a pitch, stays a row of its own.
+- **A lone value line that wraps a value-free row above it joins that row**: a value row of one line and
+  one piece, closer than a row to a line of a row that joined no value (as above), continuing it. So a
+  banner's second line `€250,000 (monthly)` stays in its banner (Euronext).
+- **The lines that join no value row form rows of their own**: consecutive ones fold together when the
+  pitch (top to top) between them is at most 0.8 × the row pitch and at most 1.5 × the median line height,
+  no drawn rule lies between them, and the line continues the row: each of its pieces overlaps a piece of
+  the row horizontally, or the row already holds pieces side by side and the line lies within its width;
+  and a line of pieces side by side continues only a row that already holds pieces side by side. So a
+  header and its wrap fold, a one-piece caption does not swallow the header under it, and cells under a
+  paragraph line start a row (Euronext's `Option A` / `Option B` under the paragraph introducing them).
+- **With fewer than two value lines**, rows fold by pitch alone: a line joins the row above when its pitch
+  is at most 0.8 × the median pitch of the lines, unless it clashes as above or a drawn rule lies between.
+- **Why values, and why pitch.** MuPDF's line boxes span the font's full ascent and descent (1.38 em for
+  base-14 Helvetica), so rows at ordinary leading overlap and gaps say nothing; and a median pitch over
+  all lines is set by the wraps when most rows wrap, which folded a header into its first row and split
+  three-line labels into rows of their own. Distances between values are the table's own rhythm.
+- **A drawn rule ends a row.** A rule of the page lies between two lines when it is horizontal, lies
+  between their centres, and overlaps the line being placed horizontally. Euronext rules its rows while
+  centring each value beside a two-line label, so a row's first label line sits closer to the row above
+  than a gap suggests; the rule says where it belongs. (This is the part of design § 5.2's rule grid that
+  unruled reading needs: rules as row boundaries. Pages read upright in a turned frame carry no rules,
+  `04` § 2a, and fold on their values alone.)
 
 | # | case | expected |
 |---|---|---|
 | RW1 | a header line, then its wrap 0 pt below, then rows 3 pt apart | the wrap joins the header row; each value line is its own row |
-| RW2 | three lines 0.5 pt apart, each with a value right-aligned in the same column (Euronext) | three rows |
+| RW2 | in rows 20 pt apart, two value lines 5 pt apart with their values in the same column; the same with the second value in the next column | two rows; one row |
 | RW3 | a two-line label with its value centred between the lines, 4.9 pt above the second (LSE) | one row of three lines |
 | RW4 | lines 9 pt apart in a block whose median gap is 9 pt | one row each |
-| RW7 | a row's value, then the next row's first label line 1 pt below, a drawn rule between them, and its value below | the label line starts the next row |
+| RW7 | a label line nearer the value above it, but under a drawn rule | it joins the value below; without the rule, the one above |
+| RW8 | a bold header over LSE rows whose every label is two lines around a centred value | the header is a row of its own; each value's row holds its two label lines |
+| RW9 | three-line labels with the value on the middle line | one row per value, of three lines each |
+| RW10 | two tables' value rows 80 pt apart, each under a two-piece header set at ordinary leading and a one-piece caption | the headers and captions stay rows of their own |
+| RW11 | a two-line label under a value set on its first line, in rows 19.3 pt apart, with a centred second column | the label's second line joins its row |
+| RW12 | a banner `Option 2 – A – minimum commitment fee` wrapped onto a second line `€250,000 (monthly)`, between value rows 20 pt apart | one banner row of two lines |
+| RW13 | a paragraph line over a two-piece header `Option A` / `Option B`, 11 pt apart, above value rows | the header is a row of its own |
+| RW14 | a bold one-piece caption `OPTION 2` 9 pt above a regular value line `Monthly fee` / `6,000`, in rows 20 pt apart | the caption is a row of its own |
+| RW15 | a bold `REQUESTOR` in a column of its own, 7 pt below a regular value line `Total below` / `1`, in rows 20 pt apart | it joins that value row |
+| RW16 | a bold `INTERMEDIARY AUTHORISED` 8 pt above a line of a bold `TO RESPOND` and a regular `€10 per million` | the label's first line joins that value row |
 | RW6 | 9 pt rows at a 12 pt pitch, whose boxes overlap by 0.4 pt, under a bold header | one row each |
-| RW5 | `151 – 500` 0 pt above `501 – 1,000`, in the same column | two rows |
+| RW5 | in rows 20 pt apart, `151 – 500` 5 pt above `501 – 1,000` in the same column | two rows |
 
 ---
 
@@ -206,6 +246,7 @@ In each size run:
 | CG6 | `chained_edge`: a review's minimised crash, where chained lines leave a cell's widest word before its last | a valid `Document` |
 | CG7 | `centred_span`: `Free` centred beside two 9 pt rows at a 12 pt pitch, which chains them into one line | no cell holds both rows' fees |
 | CG8 | a boundary in a 2.7 pt word space of a 9 pt piece; in a 5 pt gap | not split; split |
+| CG9 | two qualified fees (`€10 per million`, `€20 per million`) stacked 5 pt apart in one column, in rows 20 pt apart | two rows, never one cell |
 | CG5 | a valid corridor table built into a `Document` | valid: every word's centre in its cell, cells tiling the grid |
 
 ---
@@ -240,7 +281,7 @@ and assembly places corridor tables among the page's blocks exactly as ruled tab
 
 ## 8 · Acceptance
 
-- [ ] VP1–VP4, RW1–RW7, EX1–EX17, CB1–CB3, CG1–CG8, NT1–NT4, and CP1–CP5 pass.
+- [ ] VP1–VP4, RW1–RW16, EX1–EX17, CB1–CB3, CG1–CG9, NT1–NT4, and CP1–CP5 pass.
 - [ ] The seven fee schedules read without error; SIX, LSE, and Euronext gain their unruled tables, and
       a sample of them, rendered in the inspector, reads as the page prints.
 - [ ] Every M0, M1, and M2a case still passes.

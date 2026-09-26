@@ -89,11 +89,21 @@ def test_RW1_a_wrapped_header_line_joins_its_row() -> None:
     ]
 
 
+def value_rows(y: float, n: int) -> list[P]:
+    """`n` value rows 20 pt apart: a label, and a value set at x 282."""
+    return [
+        p
+        for k in range(n)
+        for p in (P(f"Row{k}", 72, y + 20 * k, size=9), P(f"0.{k}5", 282, y + 20 * k, size=9))
+    ]
+
+
 def test_RW2_values_stacked_in_one_column_are_rows_of_their_own() -> None:
-    ps = []
-    for n, y in enumerate((100.0, 109.5, 119.0)):
-        ps += [P(f"Band{n}", 72, y, size=9), P(f"\u20ac0.1{n}", 200, y, size=9)]
-    assert len(rows_of(ps)) == 3
+    band = [P("Band", 72, 160, size=9), P("\u20ac0.13", 282, 160, size=9)]
+    stacked = [*band, P("\u20ac0.08", 282, 165, size=9)]
+    assert len(rows_of(value_rows(100, 3) + stacked)) == 5
+    beside = [*band, P("\u20ac0.08", 382, 165, size=9)]
+    assert len(rows_of(value_rows(100, 3) + beside)) == 4
 
 
 def test_RW3_a_centred_value_joins_its_two_line_label() -> None:
@@ -121,11 +131,12 @@ def test_RW4_lines_at_the_blocks_own_pitch_are_rows() -> None:
 
 
 def test_RW5_weak_values_stacked_in_one_column_are_rows_of_their_own() -> None:
-    ps = [
-        *text_line(["151", "\u2013", "500"], x=72, y=100),
-        *text_line(["501", "\u2013", "1,000"], x=72, y=110),
+    ranges = [
+        *text_line(["151", "\u2013", "500"], x=72, y=160, size=9),
+        P("0.95", 282, 160, size=9),
     ]
-    assert len(rows_of(ps)) == 2
+    ranges += text_line(["501", "\u2013", "1,000"], x=72, y=165, size=9)
+    assert len(rows_of(value_rows(100, 3) + ranges)) == 5
 
 
 def corridor(ps: list[P]) -> ProtoTable | None:
@@ -399,29 +410,20 @@ def test_EX10_the_headings_pitch_does_not_set_the_tables() -> None:
 
 
 def test_RW7_a_drawn_rule_ends_a_row() -> None:
-    # Two rows of three lines 5 pt apart; without the rule, `above` would fold into the first row.
     ps = [
         P("Requestor", 72, 100, size=9),
         P("\u20ac2", 300, 105, size=9),
         P("below", 72, 110, size=9),
     ]
-    ps += [P("above", 72, 115, size=9), P("\u20ac0", 300, 120, size=9), P("limit", 72, 125, size=9)]
-    ps += [
-        p
-        for n in range(6)
-        for p in (
-            P(f"Other{n}", 72, 140 + 15 * n, size=9),
-            P(f"\u20ac{n}", 300, 140 + 15 * n, size=9),
-        )
-    ]
+    ps += [P("above", 72, 115, size=9), P("\u20ac0", 300, 125, size=9)]
+    for n in range(4):
+        at = 146 + 21 * n
+        ps += [P(f"Other{n}", 72, at, size=9), P(f"\u20ac{n}", 300, at, size=9)]
     rule = Rule(page=1, axis="h", at=117, start=60, end=320, thickness=0.5)
     ruled = fold_rows(group_lines(place(ps), PROFILE), PROFILE, rules=(rule,))
-    assert row_texts(ruled)[:2] == [
-        ["Requestor", "\u20ac2", "below"],
-        ["above", "\u20ac0", "limit"],
-    ]
+    assert row_texts(ruled)[:2] == [["Requestor", "\u20ac2", "below"], ["above", "\u20ac0"]]
     unruled = fold_rows(group_lines(place(ps), PROFILE), PROFILE)
-    assert row_texts(unruled)[0] == ["Requestor", "\u20ac2", "below", "above"]
+    assert row_texts(unruled)[:2] == [["Requestor", "\u20ac2", "below", "above"], ["\u20ac0"]]
 
 
 def test_EX11_a_two_row_table_in_a_prose_region_is_found() -> None:
@@ -551,3 +553,112 @@ def test_CG8_only_a_column_sized_gap_splits_a_piece() -> None:
     wide = [P("During", 200, 100, size=9), P("Auction", 232, 100, size=9)]  # 5 pt apart
     (apart,) = group_lines(place(wide), PROFILE)
     assert len(_split(apart, [229.5], 9.0)) == 2
+
+
+def lse_rows(label_lines: int, *, value_on: float) -> list[P]:
+    """A bold header over 4 rows whose labels are `label_lines` lines 10.9 pt apart.
+
+    Rows are 19.3 pt apart; `value_on` is the label line the value sits on (0.5: centred between).
+    """
+    ps = [P("Scheme", 76, 100, size=9, bold=True), P("Charge", 494, 100, size=9, bold=True)]
+    y = 122.0
+    for n in range(4):
+        ps += [P(f"label{n}line{i}", 76, y + 10.9 * i, size=9) for i in range(label_lines)]
+        ps.append(P(f"0.{n}5bp", 494, y + 10.9 * value_on, size=9))
+        y += 10.9 * (label_lines - 1) + 19.3
+    return ps
+
+
+def test_RW8_a_header_over_two_line_labels_stays_its_own_row() -> None:
+    rows = rows_of(lse_rows(2, value_on=0.5))
+    assert len(rows) == 5
+    assert [w.text for w in rows[0].words] == ["Scheme", "Charge"]
+    assert all(len(row.lines) == 3 for row in rows[1:])
+
+
+def test_RW9_three_line_labels_are_one_row_each() -> None:
+    rows = rows_of(lse_rows(3, value_on=1))
+    assert len(rows) == 5
+    for n, row in enumerate(rows[1:]):
+        assert sorted(w.text for w in row.words if w.text.startswith("label")) == [
+            f"label{n}line{i}" for i in range(3)
+        ]
+
+
+def test_RW10_headers_and_captions_never_join_distant_value_lines() -> None:
+    ps: list[P] = []
+    for n, y in enumerate((100, 180)):
+        ps.append(P(f"OPTION{n}", 72, y, size=9, bold=True))
+        ps += [P("Option", 200, y + 12, size=9), P("Other", 300, y + 12, size=9)]
+        ps += [P("0.70bp", 200, y + 24, size=9), P("0.50bp", 300, y + 24, size=9)]
+    rows = rows_of(ps)
+    assert len(rows) == 6
+
+
+def test_RW11_a_label_wrapped_under_a_top_value_stays_in_its_row() -> None:
+    ps: list[P] = []
+    y = 100.0
+    for n in range(4):
+        ps += [P(f"Post{n}", 76, y, size=9), P(f"\u00a3{n}05", 494, y, size=9)]
+        if n == 1:
+            ps += [P("CompID", 300, y + 7, size=9), P("only", 76, y + 14.8, size=9)]
+            y += 14.8
+        y += 19.3
+    rows = rows_of(ps)
+    assert [len(row.lines) for row in rows] == [1, 3, 1, 1]
+
+
+def test_CG9_qualified_fees_stacked_in_one_column_are_two_rows() -> None:
+    qualified = [
+        P("Band", 72, 160, size=9),
+        *text_line(["\u20ac10", "per", "million"], x=282, y=160, size=9),
+    ]
+    qualified += text_line(["\u20ac20", "per", "million"], x=282, y=165, size=9)
+    rows = rows_of(value_rows(100, 3) + qualified)
+    assert len(rows) == 5
+
+
+def test_RW12_a_banner_wrapped_onto_a_value_line_stays_one_row() -> None:
+    banner = text_line(["Option", "2", "minimum", "fee"], x=72, y=160, size=9, bold=True)
+    banner += text_line(["\u20ac250,000", "(monthly)"], x=72, y=172.2, size=9)  # Euronext p8 pitch
+    rows = rows_of(value_rows(100, 3) + banner + value_rows(188, 2))
+    assert len(rows) == 6
+    assert [" ".join(w.text for w in line.words) for line in rows[3].lines] == [
+        "Option 2 minimum fee",
+        "\u20ac250,000 (monthly)",
+    ]
+
+
+def test_RW13_cells_under_a_paragraph_line_start_a_row() -> None:
+    text = "If a member also joins the Best of Book programme the variable fee is"
+    paragraph = text_line(text.split(), x=72, y=170, size=9)
+    header = [P("Option", 100, 181, size=9), P("A", 128, 181, size=9)]
+    header += [P("Option", 282, 181, size=9), P("B", 310, 181, size=9)]  # Euronext p15
+    rows = rows_of(value_rows(100, 3) + paragraph + header + value_rows(200, 2))
+    assert row_texts(rows)[3:5] == [
+        ["If a member also joins the Best of Book programme the variable fee is"],
+        ["Option A Option B"],
+    ]
+
+
+def test_RW14_a_bold_caption_over_a_regular_value_line_is_a_row_of_its_own() -> None:
+    caption = [P("OPTION", 72, 161, size=9, bold=True), P("2", 102, 161, size=9, bold=True)]
+    fee = [P("Monthly", 72, 170, size=9), P("fee", 110, 170, size=9), P("6,000", 282, 170, size=9)]
+    rows = rows_of(value_rows(100, 3) + caption + fee + value_rows(190, 2))  # Euronext p21
+    assert row_texts(rows)[3:5] == [["OPTION 2"], ["Monthly fee 6,000"]]
+
+
+def test_RW15_a_bold_label_in_a_column_of_its_own_joins_its_value_row() -> None:
+    below = [P("Total", 150, 160, size=9), P("below", 175, 160, size=9), P("1", 282, 160, size=9)]
+    label = [P("REQUESTOR", 72, 167, size=9, bold=True)]
+    above = [P("Total", 150, 180, size=9), P("above", 175, 180, size=9), P("0", 282, 180, size=9)]
+    rows = rows_of(value_rows(100, 3) + below + label + above + value_rows(200, 2))  # Euronext p24
+    assert row_texts(rows)[3:5] == [["Total below 1", "REQUESTOR"], ["Total above 0"]]
+
+
+def test_RW16_a_bold_label_wrapped_onto_its_value_line_joins_it() -> None:
+    label = text_line(["INTERMEDIARY", "AUTHORISED"], x=72, y=160, size=9, bold=True)
+    value = text_line(["TO", "RESPOND"], x=72, y=168, size=9, bold=True)
+    value += text_line(["\u20ac10", "per", "million"], x=282, y=168, size=9)  # Euronext p25
+    rows = rows_of(value_rows(100, 3) + label + value + value_rows(188, 2))
+    assert row_texts(rows)[3] == ["INTERMEDIARY AUTHORISED", "TO RESPOND \u20ac10 per million"]

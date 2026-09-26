@@ -151,6 +151,36 @@ def test_DF13_a_term_needs_a_body() -> None:
     assert term_and_body(only(said(f"{OPEN}ABBO{CLOSE}"))) == "paragraph"
 
 
+def test_DF15_a_body_under_2_em_from_its_term_is_no_hanging_indent() -> None:
+    ps = [P("Access", 57, 100)]  # ends at x 87; the body starts 1.5 em later
+    ps += text_line(["Connection", "of", "physical", "data", "line"], x=102, y=100)
+    ps += text_line(["to", "the", "Exchange", "network."], x=102, y=112)
+    assert term_and_body(only(ps)) == "paragraph"
+
+
+def test_DF16_an_or_without_a_quote_ends_the_term() -> None:
+    block = only(said(f"{OPEN}Fee{CLOSE} or charges apply to all trades"))
+    assert term_and_body(block) == (f"{OPEN}Fee{CLOSE}", "or charges apply to all trades")
+
+
+def test_DF17_an_unclosed_parenthetical_stays_out_of_the_term() -> None:
+    text = f"{OPEN}Fee{CLOSE} (as charged per trade to every member without a close"
+    term, body = term_and_body(only(said(text)))
+    assert (term, body.split()[0]) == (f"{OPEN}Fee{CLOSE}", "(as")
+
+
+def test_DF18_an_italic_lead_is_a_term_inside_a_scope() -> None:
+    ps = text_line(["Distributor."], x=72, y=100, italic=True)
+    ps += text_line(
+        ["Any", "entity", "that", "receives", "the", "Exchange", "data", "product"], x=130, y=100
+    )
+    assert term_and_body(only(ps)) == (
+        "Distributor.",
+        "Any entity that receives the Exchange data product",
+    )
+    assert term_and_body(only(ps), in_scope=False) == "paragraph"
+
+
 # --- Scopes (spec 08 section 1) ------------------------------------------------------------
 
 
@@ -319,3 +349,34 @@ def test_NL7_a_label_no_superscript_spells_is_no_note() -> None:
 def test_NL8_a_note_row_whose_text_is_a_fee_keeps_the_table() -> None:
     table = grid([["1", "$0.25 per contract"], REBATE])
     assert dissolve(table, in_scope=False, marks=frozenset({"X2"}), profile=PROFILE) is None
+
+
+def test_NL10_a_long_full_width_row_keeps_the_table() -> None:
+    # 16 words: one more than heading_max_words, so the row is a paragraph, not a banner
+    notice = (
+        "These notes apply to every connection a member orders at any of the sites listed below"
+    )
+    table = grid([["1", "Applies to members trading on the market"]] * 2, banner=notice)
+    assert dissolve(table, in_scope=False, marks=frozenset(), profile=PROFILE) is None
+
+
+def test_NL11_an_empty_row_between_notes_is_passed_over() -> None:
+    rows = [
+        ["1", "Applies to members trading on the market"],
+        ["", ""],
+        ["2", "Excludes orders routed to other venues"],
+    ]
+    blocks = dissolve(grid(rows), in_scope=False, marks=frozenset(), profile=PROFILE)
+    assert blocks is not None
+    assert shown(blocks) == [("footnote", "1"), ("footnote", "2")]
+
+
+def test_NL12_a_mark_that_is_only_punctuation_is_no_label() -> None:
+    rows = [[")", "Applies to members trading on the market"], ["1", "Excludes orders routed"]]
+    table = grid(rows)
+    assert dissolve(table, in_scope=False, marks=frozenset({")"}), profile=PROFILE) is None
+
+
+def test_NL13_a_row_with_one_cell_filled_keeps_the_table() -> None:
+    rows = [["1", "Applies to members trading on the market"], ["2", ""]]
+    assert dissolve(grid(rows), in_scope=True, marks=frozenset(), profile=PROFILE) is None

@@ -1,3 +1,5 @@
+import pytest
+
 import inkgrid
 import pdf_factory
 from inkgrid.model.document import Block, Definition, Footnote
@@ -24,6 +26,8 @@ def test_GP1_a_definitions_section_reads_as_definitions() -> None:
         ("definition", "\u201cABBO\u201d"),
         ("definition", "Admission Fee:"),
         ("definition", "Access"),
+        ("definition", "Aggressor"),
+        ("definition", "bp"),
         ("heading", "Fees"),
         ("paragraph", "\u201cFee\u201d"),
     ]
@@ -37,3 +41,10 @@ def test_NL9_a_legend_grid_reads_as_a_heading_a_definition_and_a_note() -> None:
         ("definition", "Tier A"),
         ("footnote", "X2"),
     ]
+
+
+@pytest.mark.parametrize("name", ["definitions_section", "legend_grid"])
+def test_GP2_the_glossary_fixtures_read_into_valid_documents(name: str) -> None:
+    assert name in pdf_factory.OPENABLE  # so RD1 and CP5 read them with every other fixture
+    doc = inkgrid.read(pdf_factory.OPENABLE[name]())
+    assert type(doc).model_validate_json(doc.model_dump_json()) == doc

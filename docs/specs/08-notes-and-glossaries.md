@@ -84,8 +84,10 @@ and at least one word follows the term. Headings, list items, and footnotes are 
    term. Outside one, only when the body opens with a **defining verb** (`core/lexicon.py`): `means`,
    `mean`, `shall mean`, `refers to`, `refer to`, `is defined`, `are defined`, `has the meaning`, `have the
    meaning`, `shall have the meaning`.
-2. **Bold** (inside a scope). The first line opens with 1 to 12 bold words and holds a word that is not
-   bold after them. The term is the bold words (`Available for Distribution:`, `Distributor.`).
+2. **Bold or italic** (inside a scope). The first line opens with 1 to 12 bold words, or 1 to 12 italic
+   words, and holds a word that is not bold (or not italic) after them. The term is those words
+   (`Available for Distribution:`, `Distributor.`). MIAX sets its market data definitions' terms in
+   italic.
 3. **Hanging** (inside a scope). The first line's first fragment holds 1 to 8 words and is followed by a
    gap of at least 2 em (of the line's size) to the next word, and every later line of the paragraph
    starts within 2 pt of that next word's x: the body's column. The term is the first fragment. A term
@@ -109,6 +111,10 @@ The term is its words' rendered text; the body is the rest of the paragraph's.
 | DF12 | in a scope: `“Fee is charged per trade and more words than twelve without a closing quote …` | a paragraph |
 | DF13 | a quoted term with nothing after it: `“ABBO”` | a paragraph |
 | DF14 | `Document.to_markdown()` of DF1's definition | `**“ABBO”** means the best bid(s) …` |
+| DF15 | in a scope: `Access`, then its body 1.5 em after it, the second line in the body's column | a paragraph |
+| DF16 | in a scope: `“Fee” or charges apply to all trades` | term `“Fee”`, body `or charges apply …` |
+| DF17 | in a scope: `“Fee” (as charged per trade …` with no closing parenthesis within 6 words | term `“Fee”` |
+| DF18 | in a scope: italic `Distributor.`, then regular `Any entity that receives …`; outside a scope | term `Distributor.`; a paragraph |
 
 ---
 
@@ -119,8 +125,9 @@ A table **dissolves** into blocks when it has exactly 2 columns and each of its 
 - a **banner** row, one cell spanning both columns and holding no more words than a heading may
   (`heading_max_words`): a heading block with its text;
 - a **note** row: the first cell is one word, either a `note_label` (`1`, `(3)`, `*`) or a word that some
-  superscript word of the document spells (`X2`, where a table prints `EMDI^X2`), and the second cell is
-  prose: a footnote block labelled with that word;
+  superscript word of the document spells (`X2`, where a table prints `EMDI^X2`), that keeps some text
+  without `().` (a mark `)` labels nothing), and the second cell is prose: a footnote block labelled
+  with that word;
 - a **term** row, only in a definitions scope (§ 1): the first cell holds at most 8 words and no value, and
   the second cell is prose: a definition block, whose term is the first cell and whose body is the second.
 
@@ -141,6 +148,10 @@ order, row by row, and each owns its row's words, so no word changes stage (the 
 | NL7 | `X2 \| Connection rebate: …` rows outside a scope, and no superscript `X2` in the document | a table |
 | NL8 | a note row whose second cell is `$0.25 per contract` | a table |
 | NL9 | NL1's page read end to end | a valid `Document`: every word in exactly one block |
+| NL10 | a grid whose full-width first row holds 16 words, then note rows | a table |
+| NL11 | note rows `1` and `2` with an empty row between them | two footnotes |
+| NL12 | a first cell `)` that a superscript `)` spells, beside prose | a table |
+| NL13 | a note row `1 \| Applies to …`, then a row `2 \|` whose second cell is empty | a table |
 
 ---
 
@@ -163,14 +174,14 @@ returns each page's blocks and tables. Assembly then numbers the blocks and prov
 
 | # | case | expected |
 |---|---|---|
-| GP1 | `definitions_section`: a heading, quoted, bold, and hanging entries, and a `Legend` grid, read end to end | the definitions and the footnote of §§ 2–3, in reading order, in a valid `Document` |
-| GP2 | every `OPENABLE` fixture | a valid `Document` |
+| GP1 | `definitions_section`: a `Definitions` heading; quoted, bold, and hanging entries; a ruled grid of two terms beside prose; then `Fees` and a quoted paragraph, read end to end | five definitions in reading order, the grid's in its place; a heading; a paragraph |
+| GP2 | `definitions_section` and `legend_grid`, which join `OPENABLE` (so RD1 and CP5 read them with every fixture) | a valid `Document` that survives a JSON round trip |
 
 ---
 
 ## 6 · Acceptance
 
-- [ ] SC1–SC6, DF1–DF14, NL1–NL9, and GP1–GP2 pass.
+- [ ] SC1–SC6, DF1–DF18, NL1–NL13, and GP1–GP2 pass.
 - [ ] The seven fee schedules read without error, and the sketch's definitions (§ 0) come out as
       definition blocks: SIX's glossary, Euronext's bold terms, and the US exchanges' quoted terms.
 - [ ] Every M0, M1, M2a, and M2b case still passes.

@@ -601,7 +601,7 @@ def _write(
 
 
 def definitions_section() -> bytes:
-    """A `Definitions` section: a quoted, a bold, and a hanging entry; then `Fees` ends it."""
+    """`Definitions`: quoted, bold, and hanging entries and a ruled grid; `Fees` ends it."""
     doc = pymupdf.open()
     page = _page(doc)
     _write(page, 72, 90, "Definitions", size=14, bold=True)
@@ -616,8 +616,18 @@ def definitions_section() -> bytes:
     _write(page, 72, 180, "Access")
     _write(page, 190, 180, "Connection of a physical data line to the Exchange network")
     _write(page, 190, 192, "or a technical connection to the Exchange system.")
-    _write(page, 72, 230, "Fees", size=14, bold=True)
-    _write(page, 72, 260, "\u201cFee\u201d applies to every trade on the order book.")
+    shape = page.new_shape()
+    for x0, y0, x1, y1 in ((72, 210, 192, 234), (192, 210, 522, 234), (72, 234, 192, 258)):
+        shape.draw_rect(pymupdf.Rect(x0, y0, x1, y1))
+    shape.draw_rect(pymupdf.Rect(192, 234, 522, 258))
+    shape.finish(color=BLACK, width=0.8)
+    shape.commit()
+    _write(page, 76, 226, "Aggressor", size=9)
+    _write(page, 196, 226, "An order that executes against a resting order.", size=9)
+    _write(page, 76, 250, "bp", size=9)
+    _write(page, 196, 250, "Basis points, one hundredth of a percentage point.", size=9)
+    _write(page, 72, 290, "Fees", size=14, bold=True)
+    _write(page, 72, 320, "\u201cFee\u201d applies to every trade on the order book.")
     return _save(doc)
 
 

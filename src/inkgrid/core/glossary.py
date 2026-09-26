@@ -5,7 +5,7 @@ in bold, or in a column of its own (a hanging indent). Outside a definitions sec
 term with a defining verb is taken; the other forms need the section as evidence of a glossary.
 """
 
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 
 from inkgrid.core.lexicon import (
     DEFINING_VERBS,
@@ -30,7 +30,7 @@ TRAILING = ".,:;"
 ALTERNATES = ("or", "and", "/")
 MAX_QUOTED_WORDS = 12  # a quoted phrase closes within this many words, or it is not a term
 MAX_PAREN_WORDS = 6  # `(cross-connect)`, `("MEI")`: a parenthetical that belongs to the term
-MAX_BOLD_WORDS = 12
+MAX_LEAD_WORDS = 12  # a bold or italic lead-in term
 MAX_HANGING_WORDS = 8
 HANGING_GAP_EM = 2.0  # the gap between a hanging term and its body, in ems of the line's size
 HANGING_X_TOL = 2.0  # pt: how far a later line may start from the body's column
@@ -81,14 +81,21 @@ def defines(words: Sequence[Word]) -> bool:
     return any(tuple(tokens[: len(verb)]) == verb for verb in DEFINING_VERBS)
 
 
-def bold_term(line: Line) -> int:
-    """How many leading bold words form a term: some bold words, then a word that is not bold."""
-    count = 0
-    for word in line.words:
-        if not word.bold:
-            break
-        count += 1
-    return count if 0 < count < len(line.words) and count <= MAX_BOLD_WORDS else 0
+def lead_term(line: Line) -> int:
+    """How many leading words form a term set apart by its type: bold, or italic, words first.
+
+    A word that is not follows them (`Available for Distribution:`, an italic `Distributor.`).
+    """
+
+    def run(set_apart: Callable[[Word], bool]) -> int:
+        count = 0
+        for word in line.words:
+            if not set_apart(word):
+                break
+            count += 1
+        return count if 0 < count < len(line.words) and count <= MAX_LEAD_WORDS else 0
+
+    return run(lambda w: w.bold) or run(lambda w: w.italic)
 
 
 def hanging_term(lines: Sequence[Line], profile: Profile) -> int:
@@ -115,9 +122,9 @@ def _term_length(block: ProtoBlock, *, in_scope: bool, profile: Profile) -> int:
         return quoted
     if not in_scope:
         return 0
-    bold = bold_term(block.lines[0])
-    if bold:
-        return bold
+    lead = lead_term(block.lines[0])
+    if lead:
+        return lead
     hanging = hanging_term(block.lines, profile)
     # A lone note number in the term's column is a note, not a term (`1 | Trade activity ...`).
     if hanging == 1 and note_label(words[0].text) is not None:
@@ -198,7 +205,9 @@ def _pair(
         return None
     lines = (*left.lines, *right.lines)
     label = left.words[0].text
-    if len(left.words) == 1 and (note_label(label) is not None or label in marks):
+    # A mark that is punctuation alone (`)`, `.`) strips to nothing: no label (8b).
+    noted = note_label(label) is not None or label in marks
+    if len(left.words) == 1 and strip_label(label) and noted:
         return ProtoBlock("footnote", lines, lines[0].size, label=strip_label(label))
     if in_scope and len(left.words) <= MAX_TERM_CELL_WORDS and not _holds_value(left.words):
         return ProtoBlock("definition", lines, lines[0].size, term=left.lines)

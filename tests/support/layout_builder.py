@@ -24,6 +24,7 @@ class P:
     superscript: bool = False
     horizontal: bool = True
     hidden: bool = False
+    italic: bool = False
 
     @property
     def width(self) -> float:
@@ -39,9 +40,9 @@ def place(ps: Sequence[P], *, page: int = 1, first_id: int = 0) -> tuple[Word, .
             bbox=Rect(p.x, p.y, p.x + p.width, p.y + p.size),
             text=p.text,
             size=p.size,
-            font="Helvetica-Bold" if p.bold else "Helvetica",
+            font="Helvetica" + ("-Bold" if p.bold else "") + ("-Oblique" if p.italic else ""),
             bold=p.bold,
-            italic=False,
+            italic=p.italic,
             superscript=p.superscript,
             hidden=p.hidden,
             horizontal=p.horizontal,
@@ -57,12 +58,13 @@ def text_line(
     y: float,
     size: float = 10.0,
     bold: bool = False,
+    italic: bool = False,
     gap_em: float = 0.3,
 ) -> list[P]:
     """Words laid out left to right on one line, `gap_em` apart."""
     out = []
     for text in texts:
-        p = P(text, x, y, size, bold)
+        p = P(text, x, y, size, bold, italic=italic)
         out.append(p)
         x += p.width + gap_em * size
     return out

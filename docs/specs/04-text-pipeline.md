@@ -271,15 +271,29 @@ The algorithm:
 
 ## 5 · Prose blocks (`core/prose.py`, pure)
 
-`page_blocks(regions, lexicon, profile, body_size) -> tuple[ProtoBlock, ...]`. A `ProtoBlock` holds
+`page_blocks(regions, lexicon, profile, body_size, gaps) -> tuple[ProtoBlock, ...]`, where `gaps` is `line_gaps` over the document. A `ProtoBlock` holds
 its kind, its lines, its size (its first line's size), and its kind fields. Stage 4 claims every word
 it receives. `rows` regions follow the same rules as `prose` regions: M2's table stage claims the
 tables among them first, and what is left, such as hanging-indent lists, is prose.
 
 **Breaks.** Within a region, a new block starts at a line when any of these holds:
 1. its gap to the previous line (`top − previous bottom`) exceeds `max(paragraph_gap_ratio × the
-   page's median positive line gap, paragraph_gap_floor)`. The median is taken over consecutive
-   lines within each region of the page; with no positive gap it is 0, and the floor applies;
+   line gap of the previous line's size, paragraph_gap_floor)`. **Line gaps** are measured over the
+   whole document, per size class (the size rounded to 0.5 pt), from consecutive lines of one size
+   within a region: each gap is clamped at 0, and the line gap is the lower quartile, the element at
+   index `(n − 1) // 4` of the sorted gaps (`line_gaps(regions)`). A size class with fewer than 4
+   gaps takes the lower quartile over all sizes, or 0 when there are none:
+   - clamped, because MuPDF's line boxes span the font's full ascent and descent (13.7 pt for 10 pt
+     Helvetica), so lines set at ordinary leading overlap;
+   - a lower quartile, because on a page of short paragraphs most gaps *are* paragraph breaks (SIX's
+     numbered clauses, one or two lines each), so a median lands on a break;
+   - document-wide, because a page of one-line paragraphs has no line gap of its own;
+   - per size, because each type size is set with its own leading (L10): Nasdaq sets its 10.44 pt
+     prose 2.8–3.5 pt apart beside 6.96 pt tables at 0, and one estimate for both splits the prose;
+   - except where the sentence runs on: when the previous line ends without terminal punctuation
+     (`.`, `:`, `;`, `?`, `!`) and the line opens with a lower-case letter, the gap is leading, not a
+     break. JSE sets one list item at 4 pt gaps among 10 pt lists set at 0; the design's paragraph
+     joins (stage 5) read the same signal;
 2. its size differs from the previous line's by more than `size_change_ratio` × the previous size;
 3. its `bold` state differs from the previous line's;
 4. its first word `is_bullet` or is an `enumerator`.
@@ -316,6 +330,10 @@ share the term-and-body test.
 | PB12 | a 12-word bold block of 3 lines | a paragraph (over `heading_max_lines`) |
 | PB13 | a hanging-indent `rows` region of 3 items, each 2 lines | three list items |
 | PB14 | a body-size line opening with a superscript word | a paragraph (the size rule fails) |
+| PB16 | a document whose page 1 holds multi-line paragraphs and whose page 2 holds one-line clauses 8 pt apart | each clause its own paragraph |
+| PB18 | a 10 pt item whose lines run on mid-sentence 4 pt apart, among tight 10 pt lines; then a line ending `.` and one opening upper case, 4 pt apart | the item is one block; the sentence end breaks |
+| PB17 | loose 10 pt paragraphs (4 pt line gaps, 16 pt breaks) beside tight 7 pt rows (0 pt gaps) | the paragraphs are not split at their 4 pt gaps, and split at 16 pt |
+| PB15 | the `spaced_paragraphs` fixture, read by the reader: Helvetica 10/12 with blank-line breaks, and Times 10/12 with 8 pt paragraph space | three paragraphs on each page |
 
 ---
 
@@ -361,8 +379,9 @@ Each furniture line is its own `Furniture` block.
 pydantic's error text, never a `ValidationError`, because an invalid document is a bug in inkgrid.
 
 **The pipeline (`core/pipeline.py`).** `build_document(reading, *, lexicon, profile, lattice)` runs
-furniture over the document, takes the body size over the non-furniture words, runs `layout` and
-`page_blocks` for each page, and assembles. A page with no content words contributes no blocks. A
+furniture over the document, takes the body size over the non-furniture words, runs `layout` for
+each page, takes the line gaps over every page's regions, runs `page_blocks` for each page, and
+assembles. A page with no content words contributes no blocks. A
 document with no words at all has no blocks, which is valid: the partition of zero words is empty.
 
 | # | case | expected |
@@ -388,7 +407,7 @@ document with no words at all has no blocks, which is valid: the partition of ze
 
 ## 7 · Acceptance
 
-- [ ] CF1–CF10, LN1–LN9, FU1–FU13, LY1–LY11, PB1–PB14, AS1–AS11, and PL1–PL5 pass.
+- [ ] CF1–CF10, LN1–LN9, FU1–FU13, LY1–LY11, PB1–PB18, AS1–AS11, and PL1–PL5 pass.
 - [ ] Every M0 fixture assembles to a valid `Document` (the M1 exit criterion, through
       `inkgrid read`; `05-read-and-inspector.md`).
 - [ ] The two-column fixture reads in column order (M1 exit criterion).

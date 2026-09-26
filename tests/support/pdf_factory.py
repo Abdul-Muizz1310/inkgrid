@@ -277,6 +277,36 @@ def two_column() -> bytes:
     return _save(doc)
 
 
+SPACED_PARAGRAPHS = (
+    [
+        ["The exchange charges a fee on", "every contract executed on its", "order book."],
+        ["Rebates are paid to members that", "add displayed liquidity in the", "fee tiers."],
+        ["Fees are invoiced monthly and are", "due within thirty days of the", "invoice date."],
+    ],
+    [
+        ["Market makers quote both sides", "of the market in each of their", "series."],
+        ["Orders routed away pay the fees", "charged by the venue that takes", "the order."],
+        ["Credits appear on the statement", "for the month after the activity", "earning them."],
+    ],
+)
+"""Each page's paragraphs; the pages differ, so no line recurs as a running header."""
+
+
+def spaced_paragraphs() -> bytes:
+    """Page 1: Helvetica 10/12, a blank line between paragraphs. Page 2: Times 10/12, 8 pt apart."""
+    doc = pymupdf.open()
+    styles = (("helv", 12), ("tiro", 8))
+    for (fontname, extra), paragraphs in zip(styles, SPACED_PARAGRAPHS, strict=True):
+        page = _page(doc)
+        y = 100.0
+        for paragraph in paragraphs:
+            for text in paragraph:
+                page.insert_text((72, y), text, fontsize=10, fontname=fontname)
+                y += 12
+            y += extra
+    return _save(doc)
+
+
 FURNISHED_PAGES = 5
 FURNISHED_HEADER = "Acme Fee Guide"
 
@@ -476,6 +506,7 @@ OPENABLE: dict[str, Callable[[], bytes]] = {
     "alpha_zero": alpha_zero,
     "outside_crop": outside_crop,
     "two_column": two_column,
+    "spaced_paragraphs": spaced_paragraphs,
     "furnished": furnished,
     "furniture_only_page": furniture_only_page,
 }

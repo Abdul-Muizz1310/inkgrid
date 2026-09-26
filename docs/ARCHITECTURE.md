@@ -87,8 +87,11 @@ PyMuPDF is not thread-safe, so parallelize across processes.
 2. **Layout** (per page). Lines cluster by vertical overlap and split into fragments at wide gaps.
    A gutter that persists over at least three lines, with prose on both sides, makes columns, read
    left to right. Any other column-shaped run keeps row order, as a table candidate for M2.
-3. **Prose** (per page). A paragraph gap (1.75 x the page's median line gap), a size or weight
-   change, or a bullet or enumerator starts a block. Each block is then typed as footnote, heading,
+3. **Prose** (per page). A paragraph gap, a size or weight change, or a bullet or enumerator starts
+   a block. The paragraph gap is 1.75 x the line gap of the text's size: the lower quartile of the
+   document's line-to-line gaps at that size, clamped at 0 because MuPDF's line boxes overlap at
+   ordinary leading. A sentence that runs on (no terminal punctuation, then a lower-case opening)
+   is never broken by its gap. Each block is then typed as footnote, heading,
    list item, or paragraph, in that order.
 4. **Assembly.** Text is rendered from words by the two-transform rule, keys and heading levels are
    derived, and the `Document` is constructed, which runs every invariant. A failure is a bug in

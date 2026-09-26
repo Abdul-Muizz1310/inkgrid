@@ -3,7 +3,7 @@ from typing import Literal
 
 from inkgrid.core.layout import Region
 from inkgrid.core.lines import group_lines
-from inkgrid.core.prose import ProtoBlock, page_blocks
+from inkgrid.core.prose import ProtoBlock, line_gaps, page_blocks
 from inkgrid.model.config import Lexicon, Profile
 from layout_builder import P, place, text_line
 
@@ -15,7 +15,7 @@ BULLET = "\u2022"
 
 def blocks_of(ps: Sequence[P], kind: Literal["prose", "rows"] = "prose") -> tuple[ProtoBlock, ...]:
     region = Region(kind, group_lines(place(ps), PROFILE))
-    return page_blocks((region,), LEXICON, PROFILE, BODY)
+    return page_blocks((region,), LEXICON, PROFILE, BODY, line_gaps((region,)))
 
 
 def summary(blocks: Sequence[ProtoBlock]) -> list[tuple[str, str | None, str]]:
@@ -42,7 +42,7 @@ def lines(
 
 
 def test_PB1_a_paragraph_gap_splits_paragraphs() -> None:
-    ps = lines(["one a", "one b", "one c"], y=100) + lines(["two a", "two b"], y=146)
+    ps = lines(["One a", "one b", "one c."], y=100) + lines(["Two a", "two b."], y=146)
     blocks = blocks_of(ps)
     assert [b.kind for b in blocks] == ["paragraph", "paragraph"]
     assert [len(b.lines) for b in blocks] == [3, 2]
@@ -68,12 +68,12 @@ def test_PB4_a_year_does_not_number_a_heading() -> None:
 
 def test_PB5_bullets_start_list_items() -> None:
     ps = lines([f"{BULLET} first", f"{BULLET} second", f"{BULLET} third"], y=100)
-    ps += lines(["after the list"], y=146)
+    ps += lines(["After the list"], y=146)
     assert summary(blocks_of(ps)) == [
         ("list_item", BULLET, f"{BULLET} first"),
         ("list_item", BULLET, f"{BULLET} second"),
         ("list_item", BULLET, f"{BULLET} third"),
-        ("paragraph", None, "after the list"),
+        ("paragraph", None, "After the list"),
     ]
 
 
@@ -138,3 +138,31 @@ def test_PB13_a_hanging_indent_rows_region_reads_as_list_items() -> None:
 def test_PB14_a_body_size_line_opening_with_a_superscript_is_a_paragraph() -> None:
     ps = [P("2", 72, 98, size=6, superscript=True), *text_line(["Rates", "apply"], x=76, y=100)]
     assert [b.kind for b in blocks_of(ps)] == ["paragraph"]
+
+
+def test_PB17_each_type_size_keeps_its_own_leading() -> None:
+    loose = [
+        *lines(["Alpha one two", "alpha three four", "alpha five six."], y=100, pitch=14),
+        *lines(
+            ["Beta one two", "beta three four", "beta five six."], y=100 + 2 * 14 + 26, pitch=14
+        ),
+    ]
+    tight = lines([f"row {n} value" for n in range(8)], y=400, size=7, pitch=7)
+    regions = (Region("prose", group_lines(place(loose + tight), PROFILE)),)
+    blocks = page_blocks(regions, LEXICON, PROFILE, BODY, line_gaps(regions))
+    assert [len(b.lines) for b in blocks] == [3, 3, 8]
+
+
+def test_PB18_a_sentence_that_runs_on_is_not_broken_by_its_gap() -> None:
+    tight = lines([f"Tight {n} line." for n in range(8)], y=100, pitch=10)
+    item = lines(
+        ["The fee is payable by any", "entity that has been granted", "status on the exchange."],
+        y=200,
+        pitch=14,
+    )
+    after = lines(["Fees apply monthly.", "Rebates are paid later."], y=260, pitch=14)
+    regions = (Region("prose", group_lines(place(tight + item + after), PROFILE)),)
+    blocks = page_blocks(regions, LEXICON, PROFILE, BODY, line_gaps(regions))
+    texts = [" ".join(w.text for line in b.lines for w in line.words) for b in blocks]
+    assert "The fee is payable by any entity that has been granted status on the exchange." in texts
+    assert texts[-2:] == ["Fees apply monthly.", "Rebates are paid later."]

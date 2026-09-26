@@ -140,7 +140,7 @@ def test_AS11_list_items_and_footnotes_carry_their_labels() -> None:
     ps = [
         *text_line(["\u2022", "first", "item", "here"], x=72, y=100),
         *text_line(["a)", "second", "item", "here"], x=72, y=112),
-        *text_line(["closing", "body", "text", "for", "the", "page"], x=72, y=140),
+        *text_line(["Closing", "body", "text", "for", "the", "page"], x=72, y=140),
         *text_line(["runs", "over", "a", "second", "line"], x=72, y=152),
         *text_line(["and", "a", "third", "one"], x=72, y=164),
         *text_line(["(4)", "Applies", "to", "members"], x=72, y=190, size=7),
@@ -153,3 +153,20 @@ def test_AS11_list_items_and_footnotes_carry_their_labels() -> None:
         ("paragraph", None),
         ("footnote", "4"),
     ]
+
+
+def test_PB16_one_line_clauses_break_at_the_documents_line_gap() -> None:
+    prose = [
+        *text_line(["The", "tier", "one", "fee"], x=72, y=100),
+        *text_line(["applies", "to", "members"], x=72, y=112),
+        *text_line(["and", "is", "billed", "monthly."], x=72, y=124),
+        *text_line(["A", "second", "paragraph", "starts"], x=72, y=150),
+        *text_line(["on", "this", "line", "here."], x=72, y=162),
+    ]
+    clauses = [
+        text_line(["1", "The", "fee", f"clause{'x' * n}", "applies."], x=72, y=100 + 18 * n)
+        for n in range(4)
+    ]
+    doc = document([prose, [p for clause in clauses for p in clause]])
+    on_page_2 = [b.text for b in doc.blocks if b.regions[0].page == 2]
+    assert len(on_page_2) == 4

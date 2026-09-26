@@ -56,3 +56,11 @@ def test_PL5_a_page_of_only_furniture_has_no_content_blocks() -> None:
     doc = build(pdf_factory.furniture_only_page())
     on_page_3 = [b.kind for b in doc.blocks if b.regions[0].page == 3]
     assert on_page_3 == ["furniture", "furniture"]
+
+
+def test_PB15_reader_boxes_keep_paragraph_breaks() -> None:
+    doc = build(pdf_factory.spaced_paragraphs())
+    for page, paragraphs in enumerate(pdf_factory.SPACED_PARAGRAPHS, 1):
+        expected = [" ".join(p) for p in paragraphs]
+        blocks = [b for b in doc.blocks if b.regions[0].page == page]
+        assert [(b.kind, b.text) for b in blocks] == [("paragraph", t) for t in expected]

@@ -323,6 +323,34 @@ def ruled_columns() -> bytes:
     return _save(doc)
 
 
+RIGHT_COLUMN_LEFT = [
+    [f"Left paragraph {n} line {i} of running text." for i in range(4)] for n in range(3)
+]
+RIGHT_COLUMN_RIGHT = [
+    [f"Right paragraph {n} line {i} of text here." for i in range(3)] for n in range(2)
+]
+RIGHT_COLUMN_TABLE = {
+    "Fee": (330, 200, 440, 220),
+    "Rate": (440, 200, 550, 220),
+    "Order": (330, 220, 440, 240),
+    "0.10": (440, 220, 550, 240),
+}
+
+
+def table_in_right_column() -> bytes:
+    """Two prose columns; the right one holds a paragraph, a ruled table, then a paragraph."""
+    doc = pymupdf.open()
+    page = _page(doc)
+    for n, paragraph in enumerate(RIGHT_COLUMN_LEFT):
+        for i, text in enumerate(paragraph):
+            page.insert_text((72, 100 + 80 * n + 12 * i), text, fontsize=10)
+    for n, paragraph in enumerate(RIGHT_COLUMN_RIGHT):
+        for i, text in enumerate(paragraph):
+            page.insert_text((330, 100 + 180 * n + 12 * i), text, fontsize=10)
+    _draw_grid(page, RIGHT_COLUMN_TABLE)
+    return _save(doc)
+
+
 LABEL = "Sensitivity: C1 Public"
 
 
@@ -715,6 +743,7 @@ OPENABLE: dict[str, Callable[[], bytes]] = {
     "boxed_paragraph": boxed_paragraph,
     "labelled_page": labelled_page,
     "ruled_columns": ruled_columns,
+    "table_in_right_column": table_in_right_column,
     "spaced_paragraphs": spaced_paragraphs,
     "furnished": furnished,
     "furniture_only_page": furniture_only_page,

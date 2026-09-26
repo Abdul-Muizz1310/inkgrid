@@ -69,3 +69,11 @@ def test_TP7_a_ruled_two_column_page_reads_as_prose_columns() -> None:
     assert texts.index(" ".join(pdf_factory.RULED_COLUMNS_LEFT)) < texts.index(
         " ".join(pdf_factory.RULED_COLUMNS_RIGHT)
     )
+
+
+def test_TP8_a_table_reads_within_its_column() -> None:
+    doc = build(pdf_factory.table_in_right_column())
+    left = [" ".join(p) for p in pdf_factory.RIGHT_COLUMN_LEFT]
+    right = [" ".join(p) for p in pdf_factory.RIGHT_COLUMN_RIGHT]
+    order = [b.text if b.kind != "table" else "TABLE" for b in doc.blocks]
+    assert order == [*left, right[0], "TABLE", right[1]]

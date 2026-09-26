@@ -219,8 +219,10 @@ furniture). It returns the proto tables, the ids of the words they claim, and fi
 → layout and prose over the words tables did not claim → assembly. Stage 3 claims before stage 4 (design
 § 4.4).
 
-**Reading order.** A table goes before the first block of the page, in reading order, whose top lies below
-the table's top; with none, after the page's content. Furniture keeps its places (`04` § 6).
+**Reading order.** A table goes before the first block of the page, in reading order, that overlaps it
+horizontally and whose top lies below the table's top. With none, it goes after the last block that overlaps
+it horizontally; with no such block at all, after the page's content. So a table in the right column of a
+two-column page reads within the right column. Furniture keeps its places (`04` § 6).
 
 **The `Table` block.**
 - `grid`: the bands from the shape's edges (`row_bands` from the row edges, `col_bands` from the column
@@ -244,6 +246,7 @@ before testing it against the cell rectangle.
 | TP4 | `ruled_landscape` | one table, rows in screen order (`Fee Rate Cap` first); a valid `Document` with `frame = 90` |
 | TP5 | a `Document` whose table has `frame = 90`, with a word moved out of its cell (JSON) | `ValidationError` (invariant 15) |
 | TP7 | `ruled_columns`: a page frame with a rule under its header and a rule between two columns of prose | no table; the left column's blocks, then the right column's |
+| TP8 | `table_in_right_column`: three left-column paragraphs; in the right column a paragraph, a ruled table, a paragraph | left, left, left, right, table, right |
 | TP6 | the SIX-like `labelled_page`: a boxed furniture label on 3 pages | no table |
 
 ---
@@ -299,6 +302,6 @@ before testing it against the cell rectangle.
 
 ## 9 · Acceptance
 
-- [ ] VL1–VL5, LC1, CM1–CM9, LP1, GS1–GS3, LT1–LT13, TP1–TP7, EX1–EX5, and AP1–AP6 pass.
+- [ ] VL1–VL5, LC1, CM1–CM9, LP1, GS1–GS3, LT1–LT13, TP1–TP8, EX1–EX5, and AP1–AP6 pass.
 - [ ] The seven fee schedules read without error, with Camelot's tables claimed as in § 0.
 - [ ] Every M0 and M1 case still passes.

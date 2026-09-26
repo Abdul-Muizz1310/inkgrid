@@ -60,12 +60,27 @@ def _page_info(page: PageModel) -> PageInfo:
 Item = ProtoBlock | FurnitureLine | ProtoTable
 
 
+def _overlaps(block: ProtoBlock, table: ProtoTable) -> bool:
+    """True when the block and the table share some horizontal extent."""
+    x0 = min(line.x0 for line in block.lines)
+    x1 = max(line.x1 for line in block.lines)
+    return x0 < table.bbox.x1 and x1 > table.bbox.x0
+
+
+def _slot(blocks: Sequence[ProtoBlock], table: ProtoTable) -> int:
+    """Where a table goes among a page's blocks: within the column it shares with them."""
+    beside = [i for i, b in enumerate(blocks) if _overlaps(b, table)]
+    below = [i for i in beside if blocks[i].lines[0].top >= table.bbox.y0]
+    if below:
+        return below[0]
+    return beside[-1] + 1 if beside else len(blocks)
+
+
 def _with_tables(blocks: Sequence[ProtoBlock], tables: Sequence[ProtoTable]) -> list[Item]:
-    """Content in reading order, each table before the first block whose top lies below its own."""
+    """Content in reading order, each table before the first block below it in its column."""
     before: dict[int, list[ProtoTable]] = {}
     for table in sorted(tables, key=lambda t: t.bbox.y0):
-        at = next((i for i, b in enumerate(blocks) if b.lines[0].top >= table.bbox.y0), len(blocks))
-        before.setdefault(at, []).append(table)
+        before.setdefault(_slot(blocks, table), []).append(table)
     out: list[Item] = []
     for index, block in enumerate(blocks):
         out += before.get(index, [])

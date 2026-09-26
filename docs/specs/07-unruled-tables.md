@@ -180,7 +180,8 @@ In each size run:
 ## 5 · Cells and the grid
 
 1. **Pieces are split at boundaries.** Within a row, each fragment is split wherever a boundary falls in
-   the gap between two of its words, so `During continuous trading` and `Auction & TAL executions`, set
+   a gap between two of its words that is at least half the row's size wide (column space, not a word
+   space: SIX's `Monthly minimum fee: CHF 10,000` stays whole), so `During continuous trading` and `Auction & TAL executions`, set
    less than a fragment gap apart, land in their own columns (L11: per line, then merged).
 2. Each piece covers the bands from the band of its leftmost word start to the band of its rightmost word
    end (not its first and last words: chained lines can leave the widest word before the last). Pieces of one row that
@@ -204,6 +205,7 @@ In each size run:
 | CG4 | two values in one column of one row, bridged by a wide cell in another row | no table |
 | CG6 | `chained_edge`: a review's minimised crash, where chained lines leave a cell's widest word before its last | a valid `Document` |
 | CG7 | `centred_span`: `Free` centred beside two 9 pt rows at a 12 pt pitch, which chains them into one line | no cell holds both rows' fees |
+| CG8 | a boundary in a 2.7 pt word space of a 9 pt piece; in a 5 pt gap | not split; split |
 | CG5 | a valid corridor table built into a `Document` | valid: every word's centre in its cell, cells tiling the grid |
 
 ---
@@ -238,7 +240,7 @@ and assembly places corridor tables among the page's blocks exactly as ruled tab
 
 ## 8 · Acceptance
 
-- [ ] VP1–VP4, RW1–RW7, EX1–EX17, CB1–CB3, CG1–CG7, NT1–NT4, and CP1–CP5 pass.
+- [ ] VP1–VP4, RW1–RW7, EX1–EX17, CB1–CB3, CG1–CG8, NT1–NT4, and CP1–CP5 pass.
 - [ ] The seven fee schedules read without error; SIX, LSE, and Euronext gain their unruled tables, and
       a sample of them, rendered in the inspector, reads as the page prints.
 - [ ] Every M0, M1, and M2a case still passes.

@@ -6,6 +6,7 @@ from inkgrid.core.lines import fragments, group_lines
 from inkgrid.core.tables.corridor import (
     CorridorStage,
     Row,
+    _split,
     columns,
     corridor_table,
     corridor_tables,
@@ -539,3 +540,14 @@ def test_CG7_rows_chained_by_a_centred_value_never_share_a_cell() -> None:
                 f for line in lines for f in fragments(line, PROFILE) if is_value_like(f.words)
             ]
             assert len(valued) <= 1, cell.text
+
+
+def test_CG8_only_a_column_sized_gap_splits_a_piece() -> None:
+    (line,) = group_lines(
+        place(text_line(["Monthly", "minimum", "fee:"], x=150, y=100, size=9)), PROFILE
+    )
+    word_space = (line.words[0].bbox.x1 + line.words[1].bbox.x0) / 2
+    assert len(_split(line, [word_space], 9.0)) == 1
+    wide = [P("During", 200, 100, size=9), P("Auction", 232, 100, size=9)]  # 5 pt apart
+    (apart,) = group_lines(place(wide), PROFILE)
+    assert len(_split(apart, [229.5], 9.0)) == 2

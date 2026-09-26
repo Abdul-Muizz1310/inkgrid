@@ -182,11 +182,15 @@ def _boundary(lo: float, hi: float, rows: Sequence[Row]) -> float:
     return max(candidates, key=score)
 
 
-def _split(piece: Line, bounds: Sequence[float]) -> list[list[Word]]:
-    """The piece cut wherever a boundary falls in the gap between two of its words."""
+def _split(piece: Line, bounds: Sequence[float], size: float) -> list[list[Word]]:
+    """The piece cut wherever a boundary falls in a column-sized gap between two of its words.
+
+    A gap narrower than half the row's size is a word space: a boundary there does not split.
+    """
     parts: list[list[Word]] = [[piece.words[0]]]
     for prev, word in pairwise(piece.words):
-        if any(prev.bbox.x1 <= b <= word.bbox.x0 for b in bounds):
+        wide = word.bbox.x0 - prev.bbox.x1 >= MIN_BLANK_EM * size
+        if wide and any(prev.bbox.x1 <= b <= word.bbox.x0 for b in bounds):
             parts.append([word])
         else:
             parts[-1].append(word)
@@ -225,7 +229,7 @@ def _row_cells(
     row: Row, bounds: Sequence[float], profile: Profile
 ) -> list[tuple[int, int, list[Word]]] | None:
     """The row's cells as (first band, last band, words), or None when a cell holds two values."""
-    parts = [part for piece in row.pieces for part in _split(piece, bounds)]
+    parts = [part for piece in row.pieces for part in _split(piece, bounds, row.size)]
     spans = sorted(
         [
             (

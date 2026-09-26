@@ -92,9 +92,10 @@ top to bottom; its size is the median size of its words.
 
 ## 3 · Table extent (`table_runs`)
 
-A *candidate* is the lines of a maximal run of adjacent regions of one page that stack: each starts at or
-below the bottom of the one before (give or take 0.5 pt). Side-by-side prose columns never stack, so they
-are never one candidate. Layout's `rows` regions hold most tables, but a table of two rows, or one whose
+A *candidate* is the lines of a maximal run of adjacent regions of one page that stack: each region's first
+line starts below the top of the previous region's last line. Side-by-side prose columns start level, so
+they never stack and are never one candidate; stacked regions whose boxes overlap by a point or two (MuPDF's
+tall line boxes) still do. Layout's `rows` regions hold most tables, but a table of two rows, or one whose
 label column reads as prose, lands in a prose region (layout needs `column_min_lines` rows to see a
 gutter). A candidate without a table passes through unchanged. Its lines
 are split into *size runs* wherever a line's size differs from the previous line's by more than
@@ -133,6 +134,7 @@ In each size run:
 | EX9 | a header row over a single value row | a table of 2 rows |
 | EX11 | a two-row table (`First 1,000 executed orders \| €0.60` over `Subsequent executed orders \| €0.30`) in a prose region | one table |
 | EX12 | two prose columns side by side whose lines hold values at the same heights | never one candidate: no table across the columns |
+| EX13 | a centred label's first line in a prose region whose box overlaps the table's rows region by 1 pt | one candidate: the line joins the table |
 | EX10 | 10 pt headings 25 pt apart around a 9 pt table whose rows are 15 pt apart | the table's header and rows stay apart |
 
 ---
@@ -221,7 +223,7 @@ and assembly places corridor tables among the page's blocks exactly as ruled tab
 
 ## 8 · Acceptance
 
-- [ ] VP1–VP3, RW1–RW7, EX1–EX12, CB1–CB3, CG1–CG5, NT1–NT4, and CP1–CP5 pass.
+- [ ] VP1–VP3, RW1–RW7, EX1–EX13, CB1–CB3, CG1–CG5, NT1–NT4, and CP1–CP5 pass.
 - [ ] The seven fee schedules read without error; SIX, LSE, and Euronext gain their unruled tables, and
       a sample of them, rendered in the inspector, reads as the page prints.
 - [ ] Every M0, M1, and M2a case still passes.

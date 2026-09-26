@@ -33,7 +33,6 @@ MAX_QUALIFIED_TOKENS = 4  # `$5,000 per month`: a value and a few words qualifyi
 WRAP_PITCH = 0.8  # a line whose pitch is at most this share of the block's typical pitch wraps
 MIN_BLANK_EM = 0.5  # narrower gaps are word spacing, not column space
 MIN_PIECES = MIN_COLUMNS = MIN_ROWS = 2
-STACK = 0.5  # pt a region may start above the previous one's bottom and still stack under it
 MAX_HEADER_ROWS = 3  # rows above the first value row a table may take: header, caption, banner
 RIGHT_PAD = 0.01  # pt past the rightmost word, so its centre sits inside the last band
 
@@ -404,9 +403,7 @@ def corridor_tables(
     while i < len(regions):
         # A candidate is a run of regions that stack; side-by-side columns never do (section 3).
         j = i + 1
-        while (
-            j < len(regions) and regions[j].lines[0].top >= regions[j - 1].lines[-1].bottom - STACK
-        ):
+        while j < len(regions) and regions[j].lines[0].top > regions[j - 1].lines[-1].top:
             j += 1
         group = regions[i:j]
         claimed: set[int] = set()

@@ -447,3 +447,16 @@ def test_EX12_side_by_side_columns_are_never_one_candidate() -> None:
     stage_ = corridor_tables(regions, PROFILE, page=1, frame=0)
     assert stage_.tables == ()
     assert stage_.regions == tuple(regions)
+
+
+def test_EX13_regions_whose_boxes_overlap_still_stack() -> None:
+    caption = text_line(["Standard", "tariff"], x=72, y=100, size=9)
+    body = header_row(108) + six_rows(120)  # the header's box overlaps the caption's by 1 pt
+    first = place(caption)
+    rest = place(body, first_id=len(first))
+    regions = [
+        Region("prose", group_lines(first, PROFILE)),
+        Region("rows", group_lines(rest, PROFILE)),
+    ]
+    (table,) = corridor_tables(regions, PROFILE, page=1, frame=0).tables
+    assert {w.text for w in table.words} >= {"Standard", "tariff"}

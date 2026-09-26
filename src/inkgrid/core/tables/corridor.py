@@ -212,8 +212,8 @@ def _row_cells(row: Row, bounds: Sequence[float]) -> list[tuple[int, int, list[W
     spans = sorted(
         [
             (
-                bisect.bisect_right(bounds, part[0].bbox.x0),
-                bisect.bisect_left(bounds, part[-1].bbox.x1),
+                bisect.bisect_right(bounds, min(w.bbox.x0 for w in part)),
+                bisect.bisect_left(bounds, max(w.bbox.x1 for w in part)),
                 part,
             )
             for part in parts

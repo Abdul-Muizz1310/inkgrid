@@ -1,5 +1,6 @@
 import pytest
 
+import pdf_factory
 from inkgrid.core.layout import Region
 from inkgrid.core.lines import group_lines
 from inkgrid.core.tables.corridor import (
@@ -15,6 +16,7 @@ from inkgrid.core.tables.corridor import (
 from inkgrid.core.tables.proto import ProtoTable
 from inkgrid.model.config import Profile
 from inkgrid.model.page import Rule, Word
+from lattice_builder import read_with_tables
 from layout_builder import P, place, text_line
 
 PROFILE = Profile()
@@ -512,3 +514,10 @@ def test_EX17_the_downward_rows_never_run_into_the_next_table() -> None:
     assert len(tables) == 2
     assert [len(t.shape.row_edges) - 1 for t in tables] == [3, 3]
     assert tables[1].header_rows == 1
+
+
+def test_CG6_a_part_whose_widest_word_is_not_its_last_stays_in_its_cells() -> None:
+    doc = read_with_tables(pdf_factory.chained_edge())
+    for table in doc.tables():
+        for cell in table.grid.cells:
+            assert all(w in table.word_ids for w in cell.word_ids)

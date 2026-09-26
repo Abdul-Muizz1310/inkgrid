@@ -180,7 +180,8 @@ In each size run:
 1. **Pieces are split at boundaries.** Within a row, each fragment is split wherever a boundary falls in
    the gap between two of its words, so `During continuous trading` and `Auction & TAL executions`, set
    less than a fragment gap apart, land in their own columns (L11: per line, then merged).
-2. Each piece covers the bands from the band of its start to the band of its end. Pieces of one row that
+2. Each piece covers the bands from the band of its leftmost word start to the band of its rightmost word
+   end (not its first and last words: chained lines can leave the widest word before the last). Pieces of one row that
    share a band merge into one cell, spanning the union of their bands. A position no piece covers is an
    empty cell.
 3. A cell's lines are its words by `cell_lines` (`06` § 5), and its text follows the text rule.
@@ -198,6 +199,7 @@ In each size run:
 | CG2 | `During continuous trading` and `Auction & TAL executions` less than a fragment gap apart | two cells |
 | CG3 | `Commitment \| No commitment required` under 4 columns | `No commitment required` spans columns 2–3; column 1 is an empty cell |
 | CG4 | two values in one column of one row, bridged by a wide cell in another row | no table |
+| CG6 | `chained_edge`: a review's minimised crash, where chained lines leave a cell's widest word before its last | a valid `Document` |
 | CG5 | a valid corridor table built into a `Document` | valid: every word's centre in its cell, cells tiling the grid |
 
 ---
@@ -232,7 +234,7 @@ and assembly places corridor tables among the page's blocks exactly as ruled tab
 
 ## 8 · Acceptance
 
-- [ ] VP1–VP3, RW1–RW7, EX1–EX17, CB1–CB3, CG1–CG5, NT1–NT4, and CP1–CP5 pass.
+- [ ] VP1–VP3, RW1–RW7, EX1–EX17, CB1–CB3, CG1–CG6, NT1–NT4, and CP1–CP5 pass.
 - [ ] The seven fee schedules read without error; SIX, LSE, and Euronext gain their unruled tables, and
       a sample of them, rendered in the inspector, reads as the page prints.
 - [ ] Every M0, M1, and M2a case still passes.

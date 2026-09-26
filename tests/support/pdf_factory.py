@@ -521,6 +521,27 @@ def unruled_landscape() -> bytes:
     return _save(doc)
 
 
+CHAINED_EDGE = [
+    ("n/a", 356.1, 658.96, 10),
+    ("1", 370.5, 659.76, 6),
+    ("$5,000", 369.42, 663.8, 10),
+    ("monthly charge", 60.0, 699.44, 10),
+    ("$5,000", 339.42, 689.24, 10),
+    ("12", 388.88, 690.68, 10),
+]
+"""A review's minimised crash: `$5,000` set 4.85 pt under `n/a` and starting before it ends."""
+
+
+def chained_edge() -> bytes:
+    """Words whose lines chain, so a cell's widest word is not its last (spec 07 CG6)."""
+    doc = pymupdf.open()
+    page = _page(doc)
+    for text, x, top, size in CHAINED_EDGE:
+        # MuPDF reports a base-14 Helvetica box 1.075 em above the baseline.
+        page.insert_text((x, top + 1.075 * size), text, fontsize=size)
+    return _save(doc)
+
+
 LANDSCAPE_TITLE = "Landscape Fee Summary"
 LANDSCAPE_PARAGRAPHS = [
     [
@@ -847,6 +868,7 @@ OPENABLE: dict[str, Callable[[], bytes]] = {
     "two_column": two_column,
     "landscape": landscape,
     "unruled_table": unruled_table,
+    "chained_edge": chained_edge,
     "centred_values": centred_values,
     "ruled_and_unruled": ruled_and_unruled,
     "unruled_landscape": unruled_landscape,

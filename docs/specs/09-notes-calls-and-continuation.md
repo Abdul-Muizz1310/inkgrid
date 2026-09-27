@@ -78,12 +78,14 @@ of the document (§ 2.1) carries it.
 
 A paragraph or list item becomes a footnote when its first line opens with a label and:
 
-1. the label is a `note_label` (`1`, `(3)`, `a)`, `*`, `†`), or a single letter;
+1. the label is a `note_label` (`1`, `(3)`, `a)`, `*`, `†`), a **mark** (a run of up to 4 of `*`, `†`, `‡`,
+   `§`, `¶`, `#`, `^`, `~`, `+`, `!`, `&`, or symbols such as `◊` and `◼`: MIAX calls with `^`, `~`, `◊`), or a
+   single letter;
 2. the label is called, and the label word is not flagged superscript (a flagged word opening a line is a
    call wrapped onto it, never a note: calls and notes stay disjoint);
 3. at least 3 words follow it on its first line;
 4. it is set smaller than the text after it (at most 0.92 × the median size of the rest of the line), or,
-   for a bare number or mark (no `.` or `)`; not a single letter), no larger (at most 1.05 ×);
+   for a bare number (no `.` or `)`) or a mark, no larger (at most 1.05 ×); a single letter must be smaller;
 5. the text after it is not larger than the body (at most 1.05 × `body_size`) and not mostly bold: a
    heading's number is large and its title bold.
 

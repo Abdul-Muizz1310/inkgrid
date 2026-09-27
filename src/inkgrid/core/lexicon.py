@@ -1,6 +1,7 @@
 """Token classification (docs/specs/04-text-pipeline.md section 1). It never decides structure."""
 
 import re
+import unicodedata
 
 from inkgrid.model.config import Lexicon
 
@@ -199,6 +200,30 @@ VALUE = re.compile(
 STRONG_MARK = re.compile(
     rf"{_SYMBOL}|{_CODE}|%|bps?|\u2030|\d[.,'\u00a0\u202f]\d|\d{_MAGNITUDE}(?![A-Za-z])"
 )
+# A table whose header holds one of these lists notes (spec 09, section 1.2).
+NOTES_WORDS = frozenset({"note", "notes", "footnote", "footnotes"})
+# Superscripts that are not footnote calls: ordinal suffixes and trade marks (spec 09, section 2.1).
+NOT_CALLS = frozenset({"st", "nd", "rd", "th", "\u00ae", "\u2122", "\u00a9", "SM", "TM"})
+MAX_CALL_CHARS = 4
+_CALL_SPLIT = re.compile(r",|\)\(|\s+")
+
+
+NOTE_MARK_CHARS = frozenset("*\u2020\u2021\u00a7\u00b6#^~+!&")
+
+
+def is_mark(text: str) -> bool:
+    """A run of up to 4 note marks: `*`, `\u2020`, `#`, `^`, `~`, `+`, or symbols like `\u25ca`."""
+    return 0 < len(text) <= MAX_CALL_CHARS and all(
+        c in NOTE_MARK_CHARS or unicodedata.category(c) == "So" for c in text
+    )
+
+
+def call_parts(text: str) -> tuple[str, ...]:
+    """The note labels a superscript word calls: `1,3,5` calls three, `(2)(3)` two, `nd` none."""
+    parts = (part.strip("().") for part in _CALL_SPLIT.split(text))
+    return tuple(p for p in parts if p and len(p) <= MAX_CALL_CHARS and p not in NOT_CALLS)
+
+
 # A heading holding one of these titles a glossary (spec 08, section 1).
 DEFINITION_WORDS = frozenset(
     {

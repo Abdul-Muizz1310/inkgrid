@@ -21,6 +21,10 @@ from inkgrid.read.raw import Box, RawLine, RawSpan
 JOIN_GAP_MAX = 0.6
 JOIN_GAP_MIN = -1.0
 JOIN_OVERLAP = 0.3
+# A run this much smaller than the next, its box bottom this much (of the next size) higher, is a
+# mark glued to the word it opens (PHLX's `1A surcharge`): MuPDF flags nothing at a line's start.
+MARK_SMALLER = 0.92
+MARK_RAISED = 0.2
 DIRECTION_TOL = 1e-3
 EPS = 1e-6
 
@@ -109,9 +113,12 @@ class _Token:
         return self.spans[best]
 
 
-def _can_join(prev: _Token, box: Box, *, superscript: bool, hidden: bool) -> bool:
+def _can_join(prev: _Token, box: Box, *, size: float, superscript: bool, hidden: bool) -> bool:
     if not prev.horizontal or prev.superscript != superscript or prev.hidden != hidden:
         return False
+    small_mark = prev.dominant().size <= MARK_SMALLER * size
+    if small_mark and box[3] - prev.box[3] > MARK_RAISED * size:
+        return False  # a raised mark opening the word (W3, spec 09 section 1.3)
     gap = box[0] - prev.box[2]
     if not JOIN_GAP_MIN - EPS <= gap <= JOIN_GAP_MAX + EPS:
         return False
@@ -187,7 +194,13 @@ def build_words(lines: Sequence[RawLine], page: int, first_id: int) -> WordsOut:
                         joins = (
                             at_start
                             and carry is not None
-                            and _can_join(carry, char.bbox, superscript=superscript, hidden=hidden)
+                            and _can_join(
+                                carry,
+                                char.bbox,
+                                size=span.size,
+                                superscript=superscript,
+                                hidden=hidden,
+                            )
                         )
                         if joins and carry is not None:
                             current = carry

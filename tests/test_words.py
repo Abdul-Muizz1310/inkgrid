@@ -62,6 +62,25 @@ def test_W3_superscript_marker_is_its_own_word() -> None:
     ]
 
 
+def test_W22_a_raised_smaller_mark_is_its_own_word() -> None:
+    # PHLX p14: a 7.31 pt `1` on a raised baseline, glued to 8.78 pt text (MuPDF sets no flag)
+    mark = span("1", 72, y0=748.7, h=8.09, w=4.0, size=7.31)
+    text = span("A surcharge", 76, y0=750.86, h=9.72, size=8.78)
+    words = build_words([line(mark, text)], page=1, first_id=0).words
+    assert [(w.text, w.superscript) for w in words] == [
+        ("1", False),
+        ("A", False),
+        ("surcharge", False),
+    ]
+
+
+def test_W23_a_mark_neither_smaller_nor_raised_stays_joined() -> None:
+    small_caps = span("2", 72, y0=102.6, h=7.0, w=4.0, size=7.0)  # bottom 0.4 pt above `Fee`'s
+    assert texts(line(small_caps, span("Fee", 76))) == ["2Fee"]
+    raised = span("2", 72, y0=96.0, h=10.0, w=4.0, size=10.0)  # raised, but not smaller
+    assert texts(line(raised, span("Fee", 76))) == ["2Fee"]
+
+
 @pytest.mark.parametrize(
     ("gap", "expected"),
     [

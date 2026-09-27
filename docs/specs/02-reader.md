@@ -120,7 +120,11 @@ hidden_chars)`.
   - no whitespace separates them;
   - both have the same superscript state and the same hidden state;
   - they overlap vertically by at least 0.3 × the smaller height;
-  - `−1.0 ≤ next.x0 − prev.x1 ≤ 0.6` pt.
+  - `−1.0 ≤ next.x0 − prev.x1 ≤ 0.6` pt;
+  - the previous run is not a raised mark: it is not both smaller (at most 0.92 × the next span's size)
+    and raised (its box bottom above the next character's by more than 0.2 × that size). PHLX glues a
+    raised 7.31 pt note number to 8.78 pt text (`1A surcharge`), and MuPDF flags nothing at a line's start
+    (M3, `09-notes-calls-and-continuation.md` § 1.3).
 
   This is how a font change mid-word stays one word, and how `$0.40` followed by a raised `2` becomes
   two words. W3 applies only on horizontal lines.
@@ -180,6 +184,8 @@ cases in M3 (design L7).
 | W-19 | a visible span and its identical clip copy (`char_flags=80`, `alpha=0`) | one set of words, visible, no duplicates |
 | W-20 | a span with `char_flags=16`, `alpha=0` | hidden words |
 | W-21 | a span holding a lone surrogate before `B` | one word `\ufffdB`; `unmapped_chars=1` |
+| W-22 | a 7.31 pt `1` whose box bottom sits 3.79 pt above an 8.78 pt `A surcharge`'s, no space | words `1`, `A`, `surcharge`, none superscript |
+| W-23 | a 7 pt `2` whose box bottom sits 0.4 pt above a 10 pt `Fee`'s; a raised 10 pt `2` before `Fee` | `2Fee`; `2Fee` |
 
 ---
 
@@ -316,7 +322,7 @@ different thresholds on purpose.
 
 ## 7 · Acceptance
 
-- [ ] S1–S7, O1–O10, W-1–W-21, R-1–R-14, and X1–X27 pass.
+- [ ] S1–S7, O1–O10, W-1–W-23, R-1–R-14, and X1–X27 pass.
 - [ ] Only `read/pymupdf_reader.py` imports `pymupdf`; `read/words.py` and `read/rules.py` import
       nothing outside `model` and the stdlib.
 - [ ] `mypy --strict` is clean, using local stubs in `typings/pymupdf/` for the parts of PyMuPDF the

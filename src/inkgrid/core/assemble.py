@@ -199,7 +199,8 @@ def _continuations(items: Sequence[Item]) -> list[Link]:
         if isinstance(item, ProtoTable) and item.continues is not None:
             parent = order_of.get(id(item.continues))
             if parent is None:
-                continue  # the model rejects carried cells with no link: never silent
+                msg = f"table b{order + 1} continues a table that is not in the document"
+                raise InvariantError(msg)
             link = {
                 "kind": "continuation",
                 "from": LinkEnd(block=f"b{order + 1}"),

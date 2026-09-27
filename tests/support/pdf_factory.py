@@ -282,6 +282,97 @@ def table_between_paragraphs() -> bytes:
     return _save(doc)
 
 
+CONTINUED_HEAD = {"Fee": (72, 680, 172, 700), "Rate": (172, 680, 272, 700)}
+CONTINUED_PAGE1 = {
+    **CONTINUED_HEAD,
+    "Band1": (72, 700, 172, 720),
+    "$0.50": (172, 700, 272, 720),
+    "Band2": (72, 720, 172, 740),
+    "$0.60": (172, 720, 272, 740),
+}
+CONTINUED_PAGE2 = {
+    "Band3": (72, 72, 172, 92),
+    "$0.70": (172, 72, 272, 92),
+    "Band4": (72, 92, 172, 112),
+    "$0.80": (172, 92, 272, 112),
+}
+
+
+def continued_table() -> bytes:
+    """A ruled `Fee | Rate` table at page 1's foot, continued headerless at page 2's top."""
+    doc = pymupdf.open()
+    page = _page(doc)
+    for i, text in enumerate(TABLE_BEFORE):
+        page.insert_text((72, 60 + 12 * i), text, fontsize=10)
+    _draw_grid(page, CONTINUED_PAGE1)
+    _draw_grid(_page(doc), CONTINUED_PAGE2)
+    return _save(doc)
+
+
+def headerless_table() -> bytes:
+    """One ruled table whose first row holds values: no header, and nothing it continues."""
+    doc = pymupdf.open()
+    _draw_grid(_page(doc), CONTINUED_PAGE2)
+    return _save(doc)
+
+
+CONTINUED_PROSE = [
+    "Members pay a monthly fee for each trading port they order,",
+    "and a transaction fee for each order they execute. For orders",
+    "executed in the closing auction the fee is charged per",
+]
+
+
+def continued_paragraph() -> bytes:
+    """A sentence broken by the page: `... the fee is charged per` / `executed order.`"""
+    doc = pymupdf.open()
+    page = _page(doc)
+    page.insert_text((72, 60), "Transaction fees", fontsize=14, fontname="hebo")
+    for i, text in enumerate(CONTINUED_PROSE):
+        page.insert_text((72, 716 + 12 * i), text, fontsize=10)
+    _page(doc).insert_text((72, 80), "executed order.", fontsize=10)
+    return _save(doc)
+
+
+FOOTNOTED_CELLS = {
+    "Fee": (72, 120, 172, 140),
+    "Rate": (172, 120, 272, 140),
+    "Trade": (72, 140, 172, 160),
+    "$0.50": (172, 140, 272, 160),
+}
+
+
+def footnoted_table() -> bytes:
+    """A ruled table whose `$0.50` carries a raised `1`, and a 7 pt note `1 Applies ...` below."""
+    doc = pymupdf.open()
+    page = _page(doc)
+    for i, text in enumerate(TABLE_BEFORE):
+        page.insert_text((72, 60 + 12 * i), text, fontsize=10)
+    _draw_grid(page, FOOTNOTED_CELLS)
+    x = (172 + 272 + pymupdf.get_text_length("$0.50", fontsize=9)) / 2 + 0.3
+    page.insert_text((x, 150.5), "1", fontsize=6)
+    page.insert_text((72, 190), "1 Applies to every trade on the order book.", fontsize=7)
+    return _save(doc)
+
+
+def glued_notes() -> bytes:
+    """A call `applies^1`, and PHLX's glued note: a raised 7 pt `1` flush against 9 pt text."""
+    doc = pymupdf.open()
+    page = _page(doc)
+    for i, text in enumerate(CONTINUED_PROSE):  # ordinary leading, so the note's gap is a break
+        page.insert_text((72, 64 + 11 * i), text, fontsize=9)
+    lead = "The index surcharge applies"
+    page.insert_text((72, 100), lead, fontsize=9)
+    x = 72 + pymupdf.get_text_length(lead, fontsize=9) + 0.3
+    page.insert_text((x, 96.5), "1", fontsize=6)
+    page.insert_text((x + 4, 100), "to options on NDX and NDXP.", fontsize=9)
+    page.insert_text((72, 140), "1", fontsize=7.31)
+    width = pymupdf.get_text_length("1", fontsize=7.31)
+    note = "A surcharge of $0.25 per contract will be assessed on each side."
+    page.insert_text((72 + width, 143.47), note, fontsize=8.78)
+    return _save(doc)
+
+
 BOXED_PARAGRAPH = [
     "Members must notify the exchange",
     "in writing before they change",
@@ -975,6 +1066,11 @@ OPENABLE: dict[str, Callable[[], bytes]] = {
     "landscape": landscape,
     "unruled_table": unruled_table,
     "chained_edge": chained_edge,
+    "continued_table": continued_table,
+    "headerless_table": headerless_table,
+    "continued_paragraph": continued_paragraph,
+    "footnoted_table": footnoted_table,
+    "glued_notes": glued_notes,
     "definitions_section": definitions_section,
     "legend_grid": legend_grid,
     "centred_span": centred_span,

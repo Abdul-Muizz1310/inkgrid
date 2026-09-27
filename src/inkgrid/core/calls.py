@@ -36,6 +36,7 @@ FUNCTION_WORDS = frozenset(
         "and", "or", "except", "excluding", "including", "than", "that", "if", "of", "to", "for",
         "in", "by", "with", "the", "a", "an", "is", "are", "be", "as", "at", "on", "from",
         "provided", "least", "plus", "per", "over", "under", "between",
+        "has", "have", "had",  # M3: a note never anchors on a verb (MEMX's `has (1) a Tape B`)
     }
 )  # fmt: skip
 

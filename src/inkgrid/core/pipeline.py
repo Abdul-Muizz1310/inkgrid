@@ -5,8 +5,10 @@ from collections import defaultdict
 from inkgrid.core.assemble import assemble
 from inkgrid.core.furniture import find_furniture
 from inkgrid.core.glossary import glossary
+from inkgrid.core.joins import join_paragraphs, join_tables
 from inkgrid.core.layout import Region, layout
 from inkgrid.core.lines import body_size
+from inkgrid.core.notes import call_labels, notes
 from inkgrid.core.prose import ProtoBlock, line_gaps, page_blocks
 from inkgrid.core.tables.corridor import corridor_tables
 from inkgrid.core.tables.lattice import lattice_tables
@@ -76,7 +78,11 @@ def build_document(
     # Glossaries and note lists, document-wide: a definitions section runs across pages.
     marks = frozenset(w.text for w in reading.words() if w.superscript)
     pages, tables = glossary(pages, tables, marks=marks, profile=profile)
-    # After continuation (M3), so a child whose header is carried raises none.
+    # Notes in every printed form, then continuation (spec 09): each needs the page's final blocks.
+    pages, tables = notes(pages, tables, called=call_labels(reading.words()), body=body)
+    tables = join_tables(pages, tables)
+    pages = join_paragraphs(pages, tables)
+    # After continuation, so a child whose header is carried raises none.
     found += [f for page_tables in tables for t in page_tables for f in missing_header(t)]
     return assemble(
         reading,

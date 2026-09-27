@@ -130,7 +130,9 @@ def join_tables(
             continue
         if not _aligned(parent, child):
             continue
-        if child.header_rows == 0:
+        if child.header_rows == 0 and parent.header_rows == 0:
+            joined = replace(child, continues=parent)  # neither prints a header: nothing to carry
+        elif child.header_rows == 0:
             joined = _carry(parent, child, _ceiling(child, pages[p + 1]))
         elif _header_texts(child) == _header_texts(parent):
             joined = replace(child, continues=parent)  # the document reprints the header

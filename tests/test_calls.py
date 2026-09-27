@@ -148,6 +148,11 @@ def test_FC_rejections_name_their_convention(text: str, reasons: list[tuple[str,
     assert rejected(text) == reasons
 
 
+def test_FC21_an_enumerator_after_has_is_no_call() -> None:
+    # MEMX (4c73123c9319 p8): a sentence enumerating its conditions after a verb
+    assert rejected("a Member has (1) a Tape B ADAV of at least 0.10%") == [("1", "function-word")]
+
+
 def test_FC18_a_number_no_note_carries_is_no_candidate() -> None:
     assert parenthetical_calls("payable in 2026 (99) and thereafter", REGISTER) == []
 
@@ -293,3 +298,15 @@ def test_FR_unresolved_calls_raise_one_finding_per_page() -> None:
     assert [k.status for k in doc.links] == ["unresolved", "unresolved"]
     (finding,) = [f for f in doc.findings if f.code is FindingCode.CALL_UNRESOLVED]
     assert (finding.page, finding.detail) == (1, "2 footnote calls resolve to no note: 4, 9")
+
+
+def test_FR9_one_label_called_twice_by_one_method_gives_one_link() -> None:
+    ps = [P("Fee", 72, 100), P("2", 90, 96.5, size=6, superscript=True)]
+    ps += [P("Cap", 100, 100), P("2", 118, 96.5, size=6, superscript=True)]
+    doc = document(
+        [
+            [("paragraph", None, ps)],
+            [("footnote", "2", said("2 Applies to all members", 700, size=7))],
+        ]
+    )
+    assert [(k.label, k.status) for k in doc.links] == [("2", "resolved")]

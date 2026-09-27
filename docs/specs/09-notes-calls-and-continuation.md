@@ -58,6 +58,12 @@ The 42 fee schedules (974 pages) were read with M2c's output on 2026-09-28.
   from 18.96 pt. Half the tables' median word size, 2.6 to 6 pt on these documents, lies between.
 - **Paragraph continuation.** 43 pairs of a paragraph ending a page without terminal punctuation and
   one opening the next page in lower case; every one is a sentence broken by the page.
+- **Result, after M3** (the 42 documents, 974 pages, all read into valid documents): 563 of 885
+  superscript calls resolve (none could before); 302 parenthetical calls resolve, 32 stay unresolved,
+  and 394 candidates are rejected by a named convention; 9 named calls resolve and 6 do not. 46 tables
+  continue a part on the previous page, 20 of them carrying its header, and 42 paragraphs join across
+  a page break. Of the 23 parenthetical calls resolved outside Cboe, 20 are notes' calls and 3 are
+  not (`Rule 900.2NY(4)`, `Criteria (2)`, and `has (1)`, since rejected: FC21).
 - **Not in M3:**
   - the prototype's **inverse** class (a note that names the fee codes it applies to, `Applicable to the
     following fee codes: B, V and Y`). It links a note to codes, not a call to a note, has no `Link`
@@ -175,7 +181,7 @@ be the text before `(n)`, `pb` it with trailing spaces removed, and `word` the l
 | 3b | accept | `pb` ends in `)` otherwise: a marker run, or a marker after an aside |
 | 4 | `attached-to-number` | no space precedes `(n)` and `pb` ends in a digit |
 | 5 | `spelled-number-gloss` | `word`, case-folded, spells `n` (`one` … `twenty`, `thirty` … `sixty`) |
-| 6 | `function-word` | `word` is lower case and a function word (`and`, `or`, `except`, `excluding`, `including`, `than`, `that`, `if`, `of`, `to`, `for`, `in`, `by`, `with`, `the`, `a`, `an`, `is`, `are`, `be`, `as`, `at`, `on`, `from`, `provided`, `least`, `plus`, `per`, `over`, `under`, `between`) |
+| 6 | `function-word` | `word` is lower case and a function word (`and`, `or`, `except`, `excluding`, `including`, `than`, `that`, `if`, `of`, `to`, `for`, `in`, `by`, `with`, `the`, `a`, `an`, `is`, `are`, `be`, `as`, `at`, `on`, `from`, `provided`, `least`, `plus`, `per`, `over`, `under`, `between`; and, beyond D-21, `has`, `have`, `had`) |
 | 7 | `no-anchor` | `pb` does not end in a letter, digit, `%`, `.`, or `]` |
 | 8 | accept | otherwise: a marker attached to a noun phrase, a value, or a capital letter |
 
@@ -206,6 +212,7 @@ decides):
 | FC18 | `payable in 2026 (99) and thereafter` | none: `99` is in no note, so it is no candidate |
 | FC19 | `Please see Customer Large Trade Discounts table and footnote 27 for details` | `27` (named, § 2.3) |
 | FC20 | `Add/Remove Volume Tiers. Applicable to the following fee codes: B, V and Y.` in a note | no link (the inverse class is not in M3, § 0) |
+| FC21 | `a Member has (1) a Tape B ADAV of at least 0.10%` (MEMX; not a prototype case) | none (`function-word`) |
 
 ### 2.3 Named calls
 
@@ -240,6 +247,7 @@ block, superscript calls come first, then parenthetical, then named, each in the
 | FR6 | FC12's text in a paragraph, with notes `1` and `34` later | one resolved link `34`; one rejected link `1`, reason `function-word` |
 | FR7 | a table cell `Fee^2` (row 1, column 1), note `2` below the table | a link from `{table, cell (1, 1)}` |
 | FR8 | a note `27` whose text says `see footnote 27` | no link (a note never calls itself) |
+| FR9 | a paragraph calling `2` twice by superscript, note `2` later | one link |
 
 ---
 
@@ -253,7 +261,8 @@ A table **continues** onto the next page when:
 - both are tables in the same frame with the same number of columns, and every column edge of the child
   lies within half their median word size of the parent's (L10);
 - and either:
-  - **the child prints no header** (`header_rows == 0`): it carries the parent's header (below); or
+  - **the child prints no header** (`header_rows == 0`): it carries the parent's header (below), or
+    nothing when the parent prints none either; or
   - **the child reprints the parent's header**: its header rows' texts equal the parent's, row by row,
     with spaces normalised. Nothing is carried.
 
@@ -282,6 +291,8 @@ part's. `header_not_found` is raised after continuation, so a child with a carri
 | TC9 | TC1 over three pages | page 3 links to page 2 and carries `Fee`, `Rate`, sourced from page 2's carried cells |
 | TC10 | TC1 whose page 1 header is two rows, one an empty cell | page 2 carries the non-empty cells and has an empty cell where the parent's is empty |
 | TC11 | TC1 read end to end | a valid `Document`; no `header_not_found` for page 2's table |
+| TC12 | a table whose `continues` names a table missing from the document | `InvariantError` (a bug, never a silently dropped link) |
+| TC13 | TC1 whose page 1 table prints no header either | a continuation, nothing carried |
 
 ---
 
@@ -321,7 +332,7 @@ After the glossary pass (`08` § 5): notes (§ 1), then table and paragraph cont
 
 ## 7 · Acceptance
 
-- [ ] OP1–OP10, NG1–NG4, W-22–W-23, SP1–SP4, FC1–FC20, FR1–FR8, TC1–TC11, PJ1–PJ6, and LK1–LK3 pass.
+- [ ] OP1–OP10, NG1–NG4, W-22–W-23, SP1–SP4, FC1–FC21, FR1–FR9, TC1–TC13, PJ1–PJ6, and LK1–LK3 pass.
 - [ ] The twenty call cases (FC1–FC20) pass, and `continued_table` carries its header (the M3 exit).
 - [ ] The seven fee schedules and the 42-document corpus read without error, and each document's
       resolved, unresolved, and rejected calls are counted and compared with § 0.

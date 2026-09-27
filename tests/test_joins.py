@@ -11,6 +11,7 @@ from inkgrid.core.prose import ProtoBlock
 from inkgrid.core.tables.lattice import lattice_tables
 from inkgrid.core.tables.proto import ProtoCell, ProtoTable
 from inkgrid.core.text import block_text
+from inkgrid.errors import InvariantError
 from inkgrid.model.config import Lexicon, Profile
 from inkgrid.model.document import Document
 from inkgrid.model.geometry import Rect
@@ -313,3 +314,20 @@ def test_PJ_a_chain_of_pages_is_one_paragraph() -> None:
         [],
         [],
     ]
+
+
+def test_TC12_a_table_continuing_one_missing_from_the_document_is_a_bug() -> None:
+    orphan = replace(
+        table(CHILD, page=1, y0=80, first_id=0), continues=table(PARENT, page=1, y0=600)
+    )
+    with pytest.raises(InvariantError, match="continues a table"):
+        assembled([(orphan,)])
+
+
+def test_TC13_a_headerless_parent_links_its_child_and_carries_nothing() -> None:
+    parent = table([["Band1", "$0.50"], ["Band2", "$0.60"]], page=1, y0=600)
+    assert parent.header_rows == 0
+    (_,), (child,) = joined([(), ()], [(parent,), (table(CHILD, page=2, y0=80),)])
+    assert child.continues is parent
+    assert carried(child) == []
+    assert child.header_rows == 0

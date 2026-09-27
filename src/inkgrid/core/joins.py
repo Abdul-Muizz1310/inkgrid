@@ -11,6 +11,7 @@ from collections.abc import Sequence
 from dataclasses import replace
 from itertools import pairwise
 
+from inkgrid.core.furniture import FurnitureLine
 from inkgrid.core.order import reading_order
 from inkgrid.core.prose import ProtoBlock
 from inkgrid.core.tables.proto import ProtoCell, ProtoTable
@@ -57,10 +58,16 @@ def _aligned(parent: ProtoTable, child: ProtoTable) -> bool:
     return all(abs(x - y) <= tol for x, y in zip(a, b, strict=True))
 
 
-def _ceiling(child: ProtoTable, blocks: Sequence[ProtoBlock]) -> float:
-    """The bottom of the lowest block ending above the child on its page, or the page top."""
+def _ceiling(
+    child: ProtoTable, blocks: Sequence[ProtoBlock], furniture: Sequence[FurnitureLine]
+) -> float:
+    """The bottom of the lowest block or furniture line ending above the child, or the page top.
+
+    Furniture is read on the same upright page as the tables, so its lines share their frame.
+    """
     top = child.bbox.y0
     bottoms = [max(line.bottom for line in b.lines) for b in blocks]
+    bottoms += [f.line.bottom for f in furniture if f.page == child.page]
     return max((b for b in bottoms if b <= top), default=0.0)
 
 
@@ -116,7 +123,10 @@ def _carry(parent: ProtoTable, child: ProtoTable, ceiling: float) -> ProtoTable:
 
 
 def join_tables(
-    pages: Sequence[Sequence[ProtoBlock]], tables: Sequence[Sequence[ProtoTable]]
+    pages: Sequence[Sequence[ProtoBlock]],
+    tables: Sequence[Sequence[ProtoTable]],
+    *,
+    furniture: Sequence[FurnitureLine] = (),
 ) -> list[tuple[ProtoTable, ...]]:
     """Each page's tables, a child of a continuation carrying or linking its parent (s. 4)."""
     out = [list(page) for page in tables]
@@ -133,7 +143,7 @@ def join_tables(
         if child.header_rows == 0 and parent.header_rows == 0:
             joined = replace(child, continues=parent)  # neither prints a header: nothing to carry
         elif child.header_rows == 0:
-            joined = _carry(parent, child, _ceiling(child, pages[p + 1]))
+            joined = _carry(parent, child, _ceiling(child, pages[p + 1], furniture))
         elif _header_texts(child) == _header_texts(parent):
             joined = replace(child, continues=parent)  # the document reprints the header
         else:

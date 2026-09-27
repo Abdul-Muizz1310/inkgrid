@@ -4,7 +4,7 @@ from dataclasses import replace
 import pytest
 
 from inkgrid.core.assemble import assemble
-from inkgrid.core.furniture import FoundFurniture
+from inkgrid.core.furniture import FoundFurniture, FurnitureLine
 from inkgrid.core.joins import join_paragraphs, join_tables
 from inkgrid.core.lines import group_lines
 from inkgrid.core.prose import ProtoBlock
@@ -370,3 +370,14 @@ def test_FR11_an_unresolved_call_in_a_continued_table_is_reported_where_it_is_pr
     doc = assembled(join_tables([(), ()], [(first,), (second,)]))
     (finding,) = [f for f in doc.findings if f.code is FindingCode.CALL_UNRESOLVED]
     assert finding.page == 1
+
+
+def test_TC14_carried_bands_stay_below_the_running_header() -> None:
+    header_words = place(
+        text_line(["Fee", "Schedule", "2026"], x=72, y=70, size=8), page=2, first_id=3000
+    )
+    running = FurnitureLine(2, group_lines(header_words, PROFILE)[0], "header", "Fee Schedule 2026")
+    parent = table(PARENT, page=1, y0=600)
+    child = table(CHILD, page=2, y0=80)
+    (_,), (joined_child,) = join_tables([(), ()], [(parent,), (child,)], furniture=(running,))
+    assert joined_child.shape.row_edges[0] >= running.line.bottom

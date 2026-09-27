@@ -80,7 +80,7 @@ def build_document(
     pages, tables = glossary(pages, tables, marks=marks, profile=profile)
     # Notes in every printed form, then continuation (spec 09): each needs the page's final blocks.
     pages, tables = notes(pages, tables, called=call_labels(reading.words()), body=body)
-    tables = join_tables(pages, tables)
+    tables = join_tables(pages, tables, furniture=furniture.lines)
     pages = join_paragraphs(pages, tables)
     # After continuation, so a child whose header is carried raises none.
     found += [f for page_tables in tables for t in page_tables for f in missing_header(t)]

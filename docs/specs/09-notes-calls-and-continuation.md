@@ -284,7 +284,8 @@ the same row, column, and spans: a carried cell with the parent cell's text and 
 `source`, or an empty cell when the parent's is empty. The child's `header_rows` becomes the parent's,
 and its body rows move down by as many. The carried rows get bands directly above the child's first
 row, with the parent's header heights scaled by `min(1, room / their total)`, where `room` is the
-distance from the child's top to the bottom of the nearest block above it on its page (or the page top).
+distance from the child's top to the bottom of the nearest block or furniture line above it on its page
+(or the page top), so a carried band never lies over the running header.
 A parent that carries its own header passes those cells on, so a chain's header is always the first
 part's. `header_not_found` is raised after continuation, so a child with a carried header raises none.
 
@@ -303,6 +304,7 @@ part's. `header_not_found` is raised after continuation, so a child with a carri
 | TC11 | TC1 read end to end | a valid `Document`; no `header_not_found` for page 2's table |
 | TC12 | a table whose `continues` names a table missing from the document | `InvariantError` (a bug, never a silently dropped link) |
 | TC13 | TC1 whose page 1 table prints no header either | a continuation, nothing carried |
+| TC14 | TC1 with a running header line ending 2 pt above page 2's table | the carried band lies below the header line |
 
 ---
 
@@ -342,7 +344,7 @@ After the glossary pass (`08` § 5): notes (§ 1), then table and paragraph cont
 
 ## 7 · Acceptance
 
-- [ ] OP1–OP10, NG1–NG4, W-22–W-23, SP1–SP5, FC1–FC23, FR1–FR11, TC1–TC13, PJ1–PJ6, and LK1–LK3 pass.
+- [ ] OP1–OP10, NG1–NG4, W-22–W-23, SP1–SP5, FC1–FC23, FR1–FR11, TC1–TC14, PJ1–PJ6, and LK1–LK3 pass.
 - [ ] The twenty call cases (FC1–FC20) pass, and `continued_table` carries its header (the M3 exit).
 - [ ] The seven fee schedules and the 42-document corpus read without error, and each document's
       resolved, unresolved, and rejected calls are counted and compared with § 0.

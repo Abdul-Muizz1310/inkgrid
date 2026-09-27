@@ -23,7 +23,7 @@ NAMED = re.compile(r"\bfootnotes?\s+(\d{1,3})\b", re.IGNORECASE)
 LAST_GROUP = re.compile(r"\(([^()]*)\)$")
 LAST_WORD = re.compile(r"([A-Za-z]+)[^A-Za-z]*$")
 CITATION_GROUP = re.compile(r"[a-z]|[ivxl]{1,4}")  # `202(a)(11)`: a single letter or roman numeral
-ANCHOR_END = re.compile(r"[\w%.\]]$")
+ANCHOR_END = re.compile(r"[\w%.\]}]$")  # `}` closes a fee code: Cboe's `{FF} (11)`
 DELIMITERS = (",", ";", ":")
 SPELLED = {
     1: "one", 2: "two", 3: "three", 4: "four", 5: "five", 6: "six", 7: "seven", 8: "eight",
@@ -37,6 +37,7 @@ FUNCTION_WORDS = frozenset(
         "in", "by", "with", "the", "a", "an", "is", "are", "be", "as", "at", "on", "from",
         "provided", "least", "plus", "per", "over", "under", "between",
         "has", "have", "had",  # M3: a note never anchors on a verb (MEMX's `has (1) a Tape B`)
+        "either", "both", "whether",  # M3: they open an enumeration (BOX's `either (1) a ...`)
     }
 )  # fmt: skip
 

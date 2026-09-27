@@ -153,6 +153,20 @@ def test_FC21_an_enumerator_after_has_is_no_call() -> None:
     assert rejected("a Member has (1) a Tape B ADAV of at least 0.10%") == [("1", "function-word")]
 
 
+def test_FC22_an_enumerator_after_either_is_no_call() -> None:
+    # BOX (b1c6ec9e845d p4): `either (1) ... or (2) ...` enumerates, it cites nothing
+    assert rejected("collected from either (1) a Participant or (2) a Member") == [
+        ("1", "function-word"),
+        ("2", "function-word"),
+    ]
+    assert rejected("whether (1) the order") == [("1", "function-word")]
+
+
+def test_FC23_a_call_after_a_braced_code_is_a_call() -> None:
+    # Cboe (3c7470ee5f03): the call follows a fee code in braces
+    assert accepted("Firm Facilitated Rebate {FF} (11)") == ["11"]
+
+
 def test_FC18_a_number_no_note_carries_is_no_candidate() -> None:
     assert parenthetical_calls("payable in 2026 (99) and thereafter", REGISTER) == []
 

@@ -68,6 +68,12 @@ def test_OP4_marks_at_text_size_open_called_notes() -> None:
     assert kind_and_label(bulleted, frozenset({"*"})) == ("footnote", "*")
 
 
+def test_OP4_geometric_marks_open_called_notes() -> None:
+    # MIAX calls with a black medium square and a black lozenge, both Unicode category Sm
+    for mark in ("\u25fc", "\u29eb", "\u25ca"):
+        assert kind_and_label(only(opener(mark, size=10)), frozenset({mark})) == ("footnote", mark)
+
+
 def test_OP5_an_enumerator_at_text_size_stays_a_list_item() -> None:
     block = only(opener("1)", size=10))
     assert block.kind == "list_item"

@@ -85,7 +85,7 @@ of the document (§ 2.1) carries it.
 A paragraph or list item becomes a footnote when its first line opens with a label and:
 
 1. the label is a `note_label` (`1`, `(3)`, `a)`, `*`, `†`), a **mark** (a run of up to 4 of `*`, `†`, `‡`,
-   `§`, `¶`, `#`, `^`, `~`, `+`, `!`, `&`, or symbols such as `◊` and `◼`: MIAX calls with `^`, `~`, `◊`), or a
+   `§`, `¶`, `#`, `^`, `~`, `+`, `!`, `&`, or symbols such as `◊` and `◼`, or any geometric shape (U+25A0–U+25FF) and `⧫`: MIAX calls with `^`, `~`, `◊`, `◼`, `⧫`), or a
    single letter;
 2. the label is called, and the label word is not flagged superscript (a flagged word opening a line is a
    call wrapped onto it, never a note: calls and notes stay disjoint);
@@ -102,7 +102,7 @@ The footnote's `label` is its first word without `().` (`01-model.md` 8b).
 | OP1 | a 6 pt `14` opening 8 pt prose, `14` printed raised after a fee elsewhere | a footnote, label `14` |
 | OP2 | the same, with no superscript `14` anywhere | a paragraph |
 | OP3 | a 10 pt `2` opening 10 pt prose, `2` called | a footnote |
-| OP4 | a 10 pt `^` opening 10 pt prose, `^` called; a 10 pt `*` list item, `*` called | two footnotes |
+| OP4 | a 10 pt `^` opening 10 pt prose, `^` called; a 10 pt `*` list item, `*` called; `◼`, `⧫`, `◊` likewise | footnotes |
 | OP5 | a 10 pt `1)` opening 10 pt prose, `1` called | a list item (an enumerator at text size) |
 | OP6 | a 7 pt `1)` opening 10 pt prose, `1` called | a footnote, label `1` |
 | OP7 | a flagged superscript `3` opening a line of prose, `3` called elsewhere | not a footnote |
@@ -181,8 +181,8 @@ be the text before `(n)`, `pb` it with trailing spaces removed, and `word` the l
 | 3b | accept | `pb` ends in `)` otherwise: a marker run, or a marker after an aside |
 | 4 | `attached-to-number` | no space precedes `(n)` and `pb` ends in a digit |
 | 5 | `spelled-number-gloss` | `word`, case-folded, spells `n` (`one` … `twenty`, `thirty` … `sixty`) |
-| 6 | `function-word` | `word` is lower case and a function word (`and`, `or`, `except`, `excluding`, `including`, `than`, `that`, `if`, `of`, `to`, `for`, `in`, `by`, `with`, `the`, `a`, `an`, `is`, `are`, `be`, `as`, `at`, `on`, `from`, `provided`, `least`, `plus`, `per`, `over`, `under`, `between`; and, beyond D-21, `has`, `have`, `had`) |
-| 7 | `no-anchor` | `pb` does not end in a letter, digit, `%`, `.`, or `]` |
+| 6 | `function-word` | `word` is lower case and a function word (`and`, `or`, `except`, `excluding`, `including`, `than`, `that`, `if`, `of`, `to`, `for`, `in`, `by`, `with`, `the`, `a`, `an`, `is`, `are`, `be`, `as`, `at`, `on`, `from`, `provided`, `least`, `plus`, `per`, `over`, `under`, `between`; and, beyond D-21, `has`, `have`, `had`, `either`, `both`, `whether`) |
+| 7 | `no-anchor` | `pb` does not end in a letter, digit, `%`, `.`, `]`, or `}` (beyond D-21: Cboe's `{FF} (11)`) |
 | 8 | accept | otherwise: a marker attached to a noun phrase, a value, or a capital letter |
 
 Test 6 is case-sensitive: `Underlying Symbol List A (34)` anchors on a capital `A`. An accepted candidate
@@ -213,6 +213,8 @@ decides):
 | FC19 | `Please see Customer Large Trade Discounts table and footnote 27 for details` | `27` (named, § 2.3) |
 | FC20 | `Add/Remove Volume Tiers. Applicable to the following fee codes: B, V and Y.` in a note | no link (the inverse class is not in M3, § 0) |
 | FC21 | `a Member has (1) a Tape B ADAV of at least 0.10%` (MEMX; not a prototype case) | none (`function-word`) |
+| FC22 | `collected from either (1) a Participant or (2) a Member`; `whether (1) the order` (BOX) | none (`function-word`) |
+| FC23 | `Firm Facilitated Rebate {FF} (11)` (Cboe) | `11` |
 
 ### 2.3 Named calls
 
@@ -332,7 +334,7 @@ After the glossary pass (`08` § 5): notes (§ 1), then table and paragraph cont
 
 ## 7 · Acceptance
 
-- [ ] OP1–OP10, NG1–NG4, W-22–W-23, SP1–SP4, FC1–FC21, FR1–FR9, TC1–TC13, PJ1–PJ6, and LK1–LK3 pass.
+- [ ] OP1–OP10, NG1–NG4, W-22–W-23, SP1–SP4, FC1–FC23, FR1–FR9, TC1–TC13, PJ1–PJ6, and LK1–LK3 pass.
 - [ ] The twenty call cases (FC1–FC20) pass, and `continued_table` carries its header (the M3 exit).
 - [ ] The seven fee schedules and the 42-document corpus read without error, and each document's
       resolved, unresolved, and rejected calls are counted and compared with § 0.

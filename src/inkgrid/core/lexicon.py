@@ -208,14 +208,17 @@ MAX_CALL_CHARS = 4
 _CALL_SPLIT = re.compile(r",|\)\(|\s+")
 
 
-NOTE_MARK_CHARS = frozenset("*\u2020\u2021\u00a7\u00b6#^~+!&")
+NOTE_MARK_CHARS = frozenset("*\u2020\u2021\u00a7\u00b6#^~+!&\u29eb")  # U+29EB: MIAX's lozenge
+GEOMETRIC_SHAPES = range(0x25A0, 0x2600)  # squares and diamonds: some are So, some Sm (U+25FC)
+
+
+def _mark_char(c: str) -> bool:
+    return c in NOTE_MARK_CHARS or ord(c) in GEOMETRIC_SHAPES or unicodedata.category(c) == "So"
 
 
 def is_mark(text: str) -> bool:
     """A run of up to 4 note marks: `*`, `\u2020`, `#`, `^`, `~`, `+`, or symbols like `\u25ca`."""
-    return 0 < len(text) <= MAX_CALL_CHARS and all(
-        c in NOTE_MARK_CHARS or unicodedata.category(c) == "So" for c in text
-    )
+    return 0 < len(text) <= MAX_CALL_CHARS and all(_mark_char(c) for c in text)
 
 
 def call_parts(text: str) -> tuple[str, ...]:

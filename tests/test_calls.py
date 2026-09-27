@@ -49,7 +49,7 @@ def rejected(text: str) -> list[tuple[str, str | None]]:
 
 def test_SP1_a_raised_number_after_a_fee_is_a_call() -> None:
     ws = words(P("$0.40", 72, 100), P("2", 97, 96.5, size=6.5, superscript=True))
-    assert calls_in("paragraph", ws, "$0.40 2", REGISTER) == [Candidate("2", "superscript")]
+    assert calls_in("paragraph", ws, "$0.40 2", REGISTER) == [Candidate("2", "superscript", page=1)]
 
 
 def test_SP2_lists_and_runs_of_marks_are_several_calls() -> None:
@@ -82,7 +82,7 @@ def test_SP5_a_superscript_in_brackets_is_one_call() -> None:
     # Cboe b48 cell (2, 7): a raised `(52)` is printed once, so it is one call, by superscript
     ws = words(P("Fee", 72, 100), P("(52)", 92, 96.5, size=6.5, superscript=True))
     assert calls_in("paragraph", ws, "Fee (52)", REGISTER | {"52"}) == [
-        Candidate("52", "superscript")
+        Candidate("52", "superscript", page=1)
     ]
 
 

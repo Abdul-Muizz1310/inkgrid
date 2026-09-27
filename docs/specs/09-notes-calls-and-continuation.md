@@ -232,9 +232,13 @@ after the calling block (documents restart their numbering per table, so a note 
 answers a different call):
 
 1. when the call's label is carried by exactly one note of the document, that note, however far on;
-2. otherwise, the first note with the label after the calling block, on the calling block's page or the
-   next. For a table that continues (§ 4), the page is that of its chain's last part: a long table's
-   notes follow its end.
+2. otherwise, the first note with the label after the calling block, on the call's page or the next. A
+   superscript call's page is its word's (so a call in a joined paragraph's second part looks from
+   its own page); the other calls take their block's first page. For a table that continues (§ 4),
+   the window runs to the page after its chain's last part: a long table's notes follow its end.
+
+A note is never taken from a page before the call's own. `call_unresolved` names the page the call is
+printed on.
 
 A call that resolves is a `resolved` link to the note; one that does not is `unresolved`. Each page with
 unresolved calls raises one `call_unresolved` (warning) naming how many and their labels. A block that
@@ -252,6 +256,8 @@ block, superscript calls come first, then parenthetical, then named, each in the
 | FR7 | a table cell `Fee^2` (row 1, column 1), note `2` below the table | a link from `{table, cell (1, 1)}` |
 | FR8 | a note `27` whose text says `see footnote 27` | no link (a note never calls itself) |
 | FR9 | a paragraph calling `2` twice by superscript, note `2` later | one link |
+| FR10 | a paragraph joined across pages 1 and 2, its page-2 part calling `1`; notes `1` at the foot of both pages | resolved to page 2's note |
+| FR11 | a table continued from page 1 to 2 whose page-1 cell calls `4`, with no note `4` | `call_unresolved` on page 1 |
 
 ---
 
@@ -336,7 +342,7 @@ After the glossary pass (`08` § 5): notes (§ 1), then table and paragraph cont
 
 ## 7 · Acceptance
 
-- [ ] OP1–OP10, NG1–NG4, W-22–W-23, SP1–SP5, FC1–FC23, FR1–FR9, TC1–TC13, PJ1–PJ6, and LK1–LK3 pass.
+- [ ] OP1–OP10, NG1–NG4, W-22–W-23, SP1–SP5, FC1–FC23, FR1–FR11, TC1–TC13, PJ1–PJ6, and LK1–LK3 pass.
 - [ ] The twenty call cases (FC1–FC20) pass, and `continued_table` carries its header (the M3 exit).
 - [ ] The seven fee schedules and the 42-document corpus read without error, and each document's
       resolved, unresolved, and rejected calls are counted and compared with § 0.

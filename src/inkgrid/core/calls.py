@@ -44,17 +44,21 @@ FUNCTION_WORDS = frozenset(
 
 @dataclass(frozen=True, slots=True)
 class Candidate:
-    """A call candidate: its label and method, and the convention that rejected it, if one did."""
+    """A call candidate: its label and method, and the convention that rejected it, if one did.
+
+    A superscript candidate knows the page its word is printed on; the others take their block's.
+    """
 
     label: str
     method: Method
     reason: str | None = None
+    page: int | None = None
 
 
 def superscript_calls(words: Sequence[Word]) -> list[Candidate]:
     """One call per label each superscript word carries (spec 09 section 2.1)."""
     return [
-        Candidate(label, "superscript")
+        Candidate(label, "superscript", page=w.page)
         for w in words
         if w.superscript
         for label in call_parts(w.text)
@@ -131,12 +135,16 @@ def calls_in(
 
 @dataclass(frozen=True, slots=True)
 class CallSite:
-    """A candidate where it sits: its block's reading order and page, and its cell in a table."""
+    """A candidate where it sits: its block's reading order, its printed page, and its cell.
+
+    `through` is the last page its notes may start from: a continued table's chain's last page.
+    """
 
     order: int
     page: int
     cell: tuple[int, int] | None
     candidate: Candidate
+    through: int | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -164,10 +172,12 @@ def resolve(sites: Sequence[CallSite], notes: Sequence[Note]) -> list[int | None
             out.append(None)  # rejected by a convention: never a call
             continue
         printed = by_label.get(site.candidate.label, [])
-        ahead = [n for n in printed if n.order > site.order]
+        # After the block, and not on a page before the call's own (a joined paragraph's part 2).
+        ahead = [n for n in printed if n.order > site.order and n.page >= site.page]
+        through = site.page if site.through is None else max(site.through, site.page)
         if not ahead:
             out.append(None)
-        elif len(printed) == 1 or ahead[0].page <= site.page + 1:
+        elif len(printed) == 1 or ahead[0].page <= through + 1:
             out.append(ahead[0].order)
         else:
             out.append(None)

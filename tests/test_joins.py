@@ -14,6 +14,7 @@ from inkgrid.core.text import block_text
 from inkgrid.errors import InvariantError
 from inkgrid.model.config import Lexicon, Profile
 from inkgrid.model.document import Document
+from inkgrid.model.findings import FindingCode
 from inkgrid.model.geometry import Rect
 from layout_builder import P, place, text_line
 from model_builders import mk_page, mk_reading
@@ -331,3 +332,41 @@ def test_TC13_a_headerless_parent_links_its_child_and_carries_nothing() -> None:
     assert child.continues is parent
     assert carried(child) == []
     assert child.header_rows == 0
+
+
+def test_FR10_a_call_in_a_joined_paragraphs_second_part_resolves_from_its_own_page() -> None:
+    first = para("paragraph", "the fee is charged per", page=1, y=700, first_id=0)
+    note1 = para("footnote", "1 Applies on page one only", page=1, y=760, first_id=5)
+    words = place(
+        [
+            *text_line(["executed", "order"], x=72, y=80, size=10),
+            P("1", 150, 79.0, size=6, superscript=True),
+        ],
+        page=2,
+        first_id=11,
+    )
+    lines = group_lines(words, PROFILE)
+    second = ProtoBlock("paragraph", lines, lines[0].size)
+    note2 = para("footnote", "1 Applies on page two only", page=2, y=760, first_id=14)
+    pages = join_paragraphs([(first, note1), (second, note2)], [(), ()])
+    assert len(pages[1]) == 1  # joined: page 2 keeps only its note
+    doc = assembled([(), ()], pages)
+    (call,) = [k for k in doc.links if k.kind == "footnote_call"]
+    note_two = next(b for b in doc.blocks if b.text.endswith("page two only"))
+    assert (call.status, call.to) == ("resolved", note_two.id)
+
+
+def test_FR11_an_unresolved_call_in_a_continued_table_is_reported_where_it_is_printed() -> None:
+    first = table([HEAD, ["Band1", "$0.50"], ["Band2", "$0.60"]], page=1, y0=600, first_id=0)
+    raised = place([P("4", 214, 622.5, size=5, superscript=True)], page=1, first_id=6)
+    cells = tuple(
+        ProtoCell(c.cell, group_lines((*c.words, *raised), PROFILE))
+        if (c.cell.row, c.cell.col) == (1, 1)
+        else c
+        for c in first.cells
+    )
+    first = replace(first, cells=cells)
+    second = table(CHILD, page=2, y0=80, first_id=7)
+    doc = assembled(join_tables([(), ()], [(first,), (second,)]))
+    (finding,) = [f for f in doc.findings if f.code is FindingCode.CALL_UNRESOLVED]
+    assert finding.page == 1

@@ -176,18 +176,19 @@ def _sites(
             continue  # a running header cites nothing
         page = part.regions[0].page
         if isinstance(item, ProtoTable):
-            page = _chain_end(item, items)  # a long table's notes follow its end
+            through = _chain_end(item, items)  # a long table's notes follow its end
             by_id = {w.id: w for w in part.words}
             for cell in part.grid.cells if part.grid is not None else ():
                 if cell.carried:
                     continue  # a carried header owns no words on this page
                 cell_words = [by_id[w] for w in cell.word_ids]
                 found = calls_in("table", cell_words, cell.text, register)
-                sites += [CallSite(order, page, (cell.row, cell.col), c) for c in found]
+                anchor = (cell.row, cell.col)
+                sites += [CallSite(order, c.page or page, anchor, c, through) for c in found]
             continue
         own = item.label if item.kind == "footnote" else None
         found = calls_in(item.kind, part.words, part.text, register, own_label=own)
-        sites += [CallSite(order, page, None, c) for c in found]
+        sites += [CallSite(order, c.page or page, None, c) for c in found]
     return sites
 
 

@@ -1,8 +1,10 @@
 """Assembly: keys, regions, ledger, and the proved `Document` (docs/specs/04 section 6)."""
 
+from collections import defaultdict
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 
+from inkgrid.core.calls import CallSite, Note, calls_in, resolve
 from inkgrid.core.furniture import FoundFurniture, FurnitureLine
 from inkgrid.core.order import heading_level, heading_sizes, reading_order
 from inkgrid.core.prose import ProtoBlock
@@ -22,6 +24,8 @@ from inkgrid.model.document import (
     Heading,
     Lattice,
     Ledger,
+    Link,
+    LinkEnd,
     ListItem,
     Paragraph,
     Producer,
@@ -149,6 +153,73 @@ def _prose_block(
             return Definition.model_validate({**common, "term": parts.term, "body": parts.body})
 
 
+def _sites(
+    items: Sequence[Item], parts: Sequence[_Parts], register: frozenset[str]
+) -> list[CallSite]:
+    """Every call candidate of the content blocks: per cell in a table (spec 09 section 2)."""
+    sites: list[CallSite] = []
+    for order, (item, part) in enumerate(zip(items, parts, strict=True)):
+        if isinstance(item, FurnitureLine):
+            continue  # a running header cites nothing
+        page = part.regions[0].page
+        if isinstance(item, ProtoTable):
+            by_id = {w.id: w for w in part.words}
+            for cell in part.grid.cells if part.grid is not None else ():
+                if cell.carried:
+                    continue  # a carried header owns no words on this page
+                cell_words = [by_id[w] for w in cell.word_ids]
+                found = calls_in("table", cell_words, cell.text, register)
+                sites += [CallSite(order, page, (cell.row, cell.col), c) for c in found]
+            continue
+        own = item.label if item.kind == "footnote" else None
+        found = calls_in(item.kind, part.words, part.text, register, own_label=own)
+        sites += [CallSite(order, page, None, c) for c in found]
+    return sites
+
+
+def _calls(items: Sequence[Item], parts: Sequence[_Parts]) -> tuple[list[Link], list[Finding]]:
+    """Footnote-call links, and one `call_unresolved` per page with unresolved calls (s. 3)."""
+    notes = [
+        Note(order, part.regions[0].page, item.label)
+        for order, (item, part) in enumerate(zip(items, parts, strict=True))
+        if isinstance(item, ProtoBlock) and item.kind == "footnote" and item.label is not None
+    ]
+    sites = _sites(items, parts, frozenset(n.label for n in notes))
+    links: list[Link] = []
+    seen: set[tuple[object, ...]] = set()
+    unresolved: defaultdict[int, list[str]] = defaultdict(list)
+    for site, target in zip(sites, resolve(sites, notes), strict=True):
+        call = site.candidate
+        key = (site.order, site.cell, call.label, call.method, call.reason)
+        if key in seen:
+            continue  # one label called twice by one method in one block: one link
+        seen.add(key)
+        if call.reason is not None:
+            status, to = "rejected", None
+        elif target is None:
+            status, to = "unresolved", None
+            unresolved[site.page].append(call.label)
+        else:
+            status, to = "resolved", f"b{target + 1}"
+        link = {
+            "kind": "footnote_call",
+            "from": LinkEnd(block=f"b{site.order + 1}", cell=site.cell),
+            "to": to,
+            "label": call.label,
+            "method": call.method,
+            "status": status,
+            "reason": call.reason,
+        }
+        links.append(Link.model_validate(link))
+    findings = []
+    for page, labels in sorted(unresolved.items()):
+        n = len(labels)
+        calls = f"{n} footnote call{'s' if n > 1 else ''} resolve{'' if n > 1 else 's'}"
+        detail = f"{calls} to no note: {', '.join(dict.fromkeys(labels))}"
+        findings.append(Finding.of(FindingCode.CALL_UNRESOLVED, detail, page=page))
+    return links, findings
+
+
 def assemble(
     reading: Reading,
     pages: Sequence[Sequence[ProtoBlock]],
@@ -173,7 +244,8 @@ def assemble(
     words = tuple(w for page in reading.pages for w in page.words)
     parts = [_parts(item, words, infos) for item in items]
     keys = assign_keys([(p.kind, p.text) for p in parts])
-    found = [*reading.findings, *findings]
+    links, call_findings = _calls(items, parts)
+    found = [*reading.findings, *findings, *call_findings]
     if len(reading.pages) > profile.long_document_pages and not furniture.word_ids:
         detail = f"{len(reading.pages)} pages and no running header, footer, or page number"
         found.append(Finding.of(FindingCode.NO_FURNITURE_LONG_DOCUMENT, detail))
@@ -197,6 +269,7 @@ def assemble(
                 _block(p, f"b{index}", key, sizes)
                 for index, (p, key) in enumerate(zip(parts, keys, strict=True), 1)
             ),
+            links=tuple(links),
             findings=tuple(found),
             ledger=Ledger(
                 content_chars=sum(len(w.text) for w in words) - furniture_chars,

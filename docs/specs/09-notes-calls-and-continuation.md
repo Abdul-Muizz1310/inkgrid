@@ -227,7 +227,8 @@ answers a different call):
 
 A call that resolves is a `resolved` link to the note; one that does not is `unresolved`. Each page with
 unresolved calls raises one `call_unresolved` (warning) naming how many and their labels. A block that
-calls one label twice by one method gives one link.
+calls one label twice by one method gives one link. Links follow their blocks' reading order; within a
+block, superscript calls come first, then parenthetical, then named, each in the order they are printed.
 
 | # | case | expected |
 |---|---|---|
@@ -236,7 +237,7 @@ calls one label twice by one method gives one link.
 | FR3 | a call `1` on page 1 and notes `1` on pages 3 and 5 | unresolved; one `call_unresolved` on page 1 |
 | FR4 | a note `2` on page 1, then a call `2` on page 2, no later note `2` | unresolved (never backward) |
 | FR5 | a table continuing over pages 4 and 5 calling `1`, notes `1` on pages 5 and 9 | resolved to page 5's |
-| FR6 | FC12's text in a paragraph, with note `34` later | one resolved link `34`; one rejected link `1`, reason `function-word` |
+| FR6 | FC12's text in a paragraph, with notes `1` and `34` later | one resolved link `34`; one rejected link `1`, reason `function-word` |
 | FR7 | a table cell `Fee^2` (row 1, column 1), note `2` below the table | a link from `{table, cell (1, 1)}` |
 | FR8 | a note `27` whose text says `see footnote 27` | no link (a note never calls itself) |
 

@@ -8,6 +8,7 @@ delimiter or a function word. The conventions and their order are the prototype'
 """
 
 import re
+from collections import defaultdict
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from typing import Literal
@@ -122,3 +123,48 @@ def calls_in(
     marks = words[1:] if kind == "footnote" else words
     found = [*superscript_calls(marks), *parenthetical_calls(text, register), *named_calls(text)]
     return [c for c in found if c.label != own_label]
+
+
+@dataclass(frozen=True, slots=True)
+class CallSite:
+    """A candidate where it sits: its block's reading order and page, and its cell in a table."""
+
+    order: int
+    page: int
+    cell: tuple[int, int] | None
+    candidate: Candidate
+
+
+@dataclass(frozen=True, slots=True)
+class Note:
+    """A footnote block: its reading order, its page, and its label."""
+
+    order: int
+    page: int
+    label: str
+
+
+def resolve(sites: Sequence[CallSite], notes: Sequence[Note]) -> list[int | None]:
+    """The note each site resolves to, by reading order, or None (spec 09 section 3).
+
+    Forward only: a note before the call answers another call, since documents restart their
+    numbering per table. A label printed on one note resolves at any distance; a repeated label
+    resolves to the first note after the call, when that note is on the call's page or the next.
+    """
+    by_label: defaultdict[str, list[Note]] = defaultdict(list)
+    for note in sorted(notes, key=lambda n: n.order):
+        by_label[note.label].append(note)
+    out: list[int | None] = []
+    for site in sites:
+        if site.candidate.reason is not None:
+            out.append(None)  # rejected by a convention: never a call
+            continue
+        printed = by_label.get(site.candidate.label, [])
+        ahead = [n for n in printed if n.order > site.order]
+        if not ahead:
+            out.append(None)
+        elif len(printed) == 1 or ahead[0].page <= site.page + 1:
+            out.append(ahead[0].order)
+        else:
+            out.append(None)
+    return out

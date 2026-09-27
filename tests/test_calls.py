@@ -1,9 +1,32 @@
+from collections.abc import Sequence
+from typing import Any
+
 import pytest
 
-from inkgrid.core.calls import Candidate, calls_in, named_calls, parenthetical_calls
-from inkgrid.model.page import Word
-from layout_builder import P, place
+from inkgrid.core.assemble import assemble
+from inkgrid.core.calls import (
+    CallSite,
+    Candidate,
+    Note,
+    calls_in,
+    named_calls,
+    parenthetical_calls,
+    resolve,
+)
+from inkgrid.core.furniture import FoundFurniture
+from inkgrid.core.lines import group_lines
+from inkgrid.core.prose import ProtoBlock
+from inkgrid.core.tables.lattice import lattice_tables
+from inkgrid.model.config import Lexicon, Profile
+from inkgrid.model.document import Document
+from inkgrid.model.findings import FindingCode
+from inkgrid.model.geometry import Rect
+from inkgrid.model.page import PageModel, Reading, Word
+from layout_builder import P, place, text_line
+from model_builders import mk_page, mk_reading
 
+PROFILE = Profile()
+LEXICON = Lexicon()
 REGISTER = frozenset(str(n) for n in range(1, 55))  # every label: the convention decides
 
 
@@ -139,3 +162,134 @@ def test_FC20_an_inverse_declaration_is_no_call() -> None:
     text = "Add/Remove Volume Tiers. Applicable to the following fee codes: B, V and Y."
     ws = place([P(t, 72 + 40 * i, 100) for i, t in enumerate(text.split())])
     assert calls_in("footnote", ws, text, REGISTER, own_label="3") == []
+
+
+# --- Resolution (spec 09 section 3) --------------------------------------------------------------
+
+
+def site(order: int, page: int, label: str, *, method: str = "superscript") -> CallSite:
+    return CallSite(order, page, None, Candidate(label, method))  # type: ignore[arg-type]
+
+
+def test_FR1_a_label_printed_once_resolves_at_any_distance() -> None:
+    assert resolve([site(0, 1, "3")], [Note(5, 4, "3")]) == [5]
+
+
+def test_FR2_repeated_labels_resolve_to_the_notes_on_their_own_pages() -> None:
+    notes = [Note(1, 1, "1"), Note(4, 3, "1")]
+    assert resolve([site(0, 1, "1"), site(3, 3, "1")], notes) == [1, 4]
+
+
+def test_FR3_a_repeated_label_with_no_note_nearby_is_unresolved() -> None:
+    assert resolve([site(0, 1, "1")], [Note(2, 3, "1"), Note(4, 5, "1")]) == [None]
+
+
+def test_FR4_a_call_never_resolves_backward() -> None:
+    assert resolve([site(1, 2, "2")], [Note(0, 1, "2")]) == [None]
+
+
+def test_FR5_a_continuing_tables_calls_count_from_its_last_page() -> None:
+    # the calling table starts on page 4; its chain ends on page 5, which is the site's page
+    assert resolve([site(0, 5, "1")], [Note(1, 5, "1"), Note(3, 9, "1")]) == [1]
+
+
+def test_FR_a_rejected_candidate_never_resolves() -> None:
+    rejected_site = CallSite(0, 1, None, Candidate("1", "parenthetical", "function-word"))
+    assert resolve([rejected_site], [Note(1, 1, "1")]) == [None]
+
+
+# --- Links through assembly (spec 09 sections 2-3) -----------------------------------------------
+
+
+def reading_of(specs: Sequence[Sequence[P]]) -> Reading:
+    pages: list[PageModel] = []
+    next_id = 0
+    for number, ps in enumerate(specs, 1):
+        ws = place(ps, page=number, first_id=next_id)
+        next_id += len(ws)
+        pages.append(mk_page(number=number, words=ws, text_layer="full" if ws else "none"))
+    return mk_reading(tuple(pages))
+
+
+def document(pages: Sequence[Sequence[tuple[str, str | None, list[P]]]], **kw: Any) -> Document:
+    """Assemble pages of `(kind, label, placements)` blocks, one line each, ids in page order."""
+    specs = [[p for _, _, ps in page for p in ps] for page in pages]
+    reading = reading_of(specs)
+    placed = iter(w for page in reading.pages for w in page.words)
+    out: list[tuple[ProtoBlock, ...]] = []
+    for page in pages:
+        blocks = []
+        for kind, label, ps in page:
+            ws = tuple(next(placed) for _ in ps)
+            lines = group_lines(ws, PROFILE)
+            blocks.append(ProtoBlock(kind, lines, lines[0].size, label=label))  # type: ignore[arg-type]
+        out.append(tuple(blocks))
+    empty = FoundFurniture((), frozenset())
+    return assemble(reading, out, empty, lexicon=LEXICON, profile=PROFILE, lattice="combined", **kw)
+
+
+def said(text: str, y: float, *, size: float = 10) -> list[P]:
+    return text_line(text.split(), x=72, y=y, size=size)
+
+
+def summary(doc: Document) -> list[tuple[str, str | None, str | None, str, str | None]]:
+    return [(k.from_.block, k.to, k.label, k.status, k.reason) for k in doc.links]
+
+
+def test_FR6_a_paragraph_links_its_call_and_records_the_rejection() -> None:
+    text = "transaction fees in all products except (1) Underlying Symbol List A (34), DJX"
+    doc = document(
+        [
+            [
+                ("paragraph", None, said(text, 100)),
+                ("footnote", "1", said("1 Applies to members trading", 700, size=7)),
+                ("footnote", "34", said("34 Applies to the list only", 712, size=7)),
+            ]
+        ]
+    )
+    assert summary(doc) == [
+        ("b1", None, "1", "rejected", "function-word"),
+        ("b1", "b3", "34", "resolved", None),
+    ]
+
+
+def test_FR7_a_call_in_a_table_cell_links_from_the_cell() -> None:
+    ps = [P("Fee", 76, 106), P("Cap", 176, 106), P("Band", 76, 126), P("$1.00", 176, 126)]
+    ps.append(P("2", 202, 123.5, size=6, superscript=True))
+    note = said("2 Applies to every member trading", 200, size=7)
+    reading = reading_of([ps + note])
+    words = reading.pages[0].words
+    rects = [Rect(72, 100, 172, 120), Rect(172, 100, 272, 120)]
+    rects += [Rect(72, 120, 172, 140), Rect(172, 120, 272, 140)]
+    stage = lattice_tables(reading.pages[0], [rects], words, PROFILE, frame=0, read=True)
+    (table,) = stage.tables
+    lines = group_lines(words[len(ps) :], PROFILE)
+    blocks = ((ProtoBlock("footnote", lines, lines[0].size, label="2"),),)
+    empty = FoundFurniture((), frozenset())
+    doc = assemble(
+        reading, blocks, empty, lexicon=LEXICON, profile=PROFILE, lattice="combined",
+        tables=[(table,)],
+    )  # fmt: skip
+    (link,) = doc.links
+    assert (link.from_.block, link.from_.cell, link.to, link.status) == (
+        "b1",
+        (1, 1),
+        "b2",
+        "resolved",
+    )
+
+
+def test_FR8_a_note_never_calls_itself() -> None:
+    doc = document(
+        [[("footnote", "27", said("27 Please see footnote 27 for details", 700, size=7))]]
+    )
+    assert doc.links == ()
+
+
+def test_FR_unresolved_calls_raise_one_finding_per_page() -> None:
+    ps = [P("Fee", 72, 100), P("4", 90, 96.5, size=6, superscript=True)]
+    ps += [P("Cap", 100, 100), P("9", 118, 96.5, size=6, superscript=True)]
+    doc = document([[("paragraph", None, ps)]])
+    assert [k.status for k in doc.links] == ["unresolved", "unresolved"]
+    (finding,) = [f for f in doc.findings if f.code is FindingCode.CALL_UNRESOLVED]
+    assert (finding.page, finding.detail) == (1, "2 footnote calls resolve to no note: 4, 9")

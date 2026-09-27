@@ -2,7 +2,7 @@ from collections.abc import Mapping, Sequence
 
 import pdf_factory
 from inkgrid.core.tables.lattice import TableStage, lattice_tables
-from inkgrid.core.tables.proto import ProtoTable
+from inkgrid.core.tables.proto import ProtoTable, missing_header
 from inkgrid.core.text import block_text
 from inkgrid.model.config import Profile
 from inkgrid.model.findings import FindingCode
@@ -123,7 +123,8 @@ def test_LT6_a_table_opening_with_values_has_no_header() -> None:
     }
     stage, _ = run(cells)
     assert stage.tables[0].header_rows == 0
-    assert [f.code for f in stage.findings] == [FindingCode.HEADER_NOT_FOUND]
+    assert stage.findings == ()  # raised in the pipeline, after continuation (spec 09 s. 4)
+    assert [f.code for f in missing_header(stage.tables[0])] == [FindingCode.HEADER_NOT_FOUND]
 
 
 def test_LT7_a_word_across_a_column_rule_is_reported() -> None:
@@ -179,7 +180,7 @@ def test_LT10_a_table_of_text_has_a_header_only_when_bold() -> None:
     stage, _ = run(cells)
     (plain,) = stage.tables
     assert plain.header_rows == 0
-    (missing,) = stage.findings
+    (missing,) = missing_header(plain)  # raised in the pipeline, after continuation
     assert "no values" in missing.detail
     words = place([centred(t, b, bold=t in {"Service", "Detail"}) for t, b in cells.items()])
     stage = lattice_tables(

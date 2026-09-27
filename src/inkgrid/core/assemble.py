@@ -153,6 +153,19 @@ def _prose_block(
             return Definition.model_validate({**common, "term": parts.term, "body": parts.body})
 
 
+def _chain_end(table: ProtoTable, items: Sequence[Item]) -> int:
+    """The page of the last part of the chain a table starts or belongs to (spec 09 section 3)."""
+    child_of = {
+        id(item.continues): item
+        for item in items
+        if isinstance(item, ProtoTable) and item.continues is not None
+    }
+    part = table
+    while id(part) in child_of:
+        part = child_of[id(part)]
+    return part.page
+
+
 def _sites(
     items: Sequence[Item], parts: Sequence[_Parts], register: frozenset[str]
 ) -> list[CallSite]:
@@ -163,6 +176,7 @@ def _sites(
             continue  # a running header cites nothing
         page = part.regions[0].page
         if isinstance(item, ProtoTable):
+            page = _chain_end(item, items)  # a long table's notes follow its end
             by_id = {w.id: w for w in part.words}
             for cell in part.grid.cells if part.grid is not None else ():
                 if cell.carried:
@@ -175,6 +189,25 @@ def _sites(
         found = calls_in(item.kind, part.words, part.text, register, own_label=own)
         sites += [CallSite(order, page, None, c) for c in found]
     return sites
+
+
+def _continuations(items: Sequence[Item]) -> list[Link]:
+    """A `continuation` link from each table that continues another, to that table (s. 4)."""
+    order_of = {id(item): order for order, item in enumerate(items)}
+    links = []
+    for order, item in enumerate(items):
+        if isinstance(item, ProtoTable) and item.continues is not None:
+            parent = order_of.get(id(item.continues))
+            if parent is None:
+                continue  # the model rejects carried cells with no link: never silent
+            link = {
+                "kind": "continuation",
+                "from": LinkEnd(block=f"b{order + 1}"),
+                "to": f"b{parent + 1}",
+                "status": "resolved",
+            }
+            links.append(Link.model_validate(link))
+    return links
 
 
 def _calls(items: Sequence[Item], parts: Sequence[_Parts]) -> tuple[list[Link], list[Finding]]:
@@ -245,6 +278,7 @@ def assemble(
     parts = [_parts(item, words, infos) for item in items]
     keys = assign_keys([(p.kind, p.text) for p in parts])
     links, call_findings = _calls(items, parts)
+    links = [*_continuations(items), *links]
     found = [*reading.findings, *findings, *call_findings]
     if len(reading.pages) > profile.long_document_pages and not furniture.word_ids:
         detail = f"{len(reading.pages)} pages and no running header, footer, or page number"

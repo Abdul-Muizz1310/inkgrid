@@ -12,7 +12,6 @@ from inkgrid.core.tables.proto import (
     ProtoCell,
     ProtoTable,
     cell_lines,
-    missing_header,
     table_roles,
 )
 from inkgrid.core.tables.shape import grid_shape
@@ -112,7 +111,6 @@ def lattice_tables(
         table = ProtoTable(
             page.number, shape, tuple(cells), header, banners, frame, "lattice", text_only
         )
-        findings.extend(missing_header(table))
         crossing = _crossing(cells, table.bbox)
         if crossing:
             detail = f"{crossing} word{'s' if crossing > 1 else ''} cross a drawn column rule"

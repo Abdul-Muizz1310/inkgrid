@@ -18,7 +18,6 @@ from inkgrid.core.tables.proto import (
     ProtoCell,
     ProtoTable,
     cell_lines,
-    missing_header,
     table_roles,
 )
 from inkgrid.core.tables.shape import GridShape, ShapeCell
@@ -772,7 +771,6 @@ def corridor_tables(
             found, left = _run_tables(run, profile, page=page, frame=frame)
             for lo, hi, table in found:
                 tables.append(table)
-                findings.extend(missing_header(table))
                 claimed |= {id(line) for row in run[lo : hi + 1] for line in row.lines}
             findings.extend(_left_as_text([run[k] for k in stretch], page) for stretch in left)
         out.extend(_leftover(group, claimed) if claimed else group)

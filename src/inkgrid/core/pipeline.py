@@ -10,7 +10,7 @@ from inkgrid.core.lines import body_size
 from inkgrid.core.prose import ProtoBlock, line_gaps, page_blocks
 from inkgrid.core.tables.corridor import corridor_tables
 from inkgrid.core.tables.lattice import lattice_tables
-from inkgrid.core.tables.proto import ProtoTable
+from inkgrid.core.tables.proto import ProtoTable, missing_header
 from inkgrid.core.view import upright
 from inkgrid.model.config import Lexicon, Profile
 from inkgrid.model.document import Document, Lattice
@@ -76,6 +76,8 @@ def build_document(
     # Glossaries and note lists, document-wide: a definitions section runs across pages.
     marks = frozenset(w.text for w in reading.words() if w.superscript)
     pages, tables = glossary(pages, tables, marks=marks, profile=profile)
+    # After continuation (M3), so a child whose header is carried raises none.
+    found += [f for page_tables in tables for t in page_tables for f in missing_header(t)]
     return assemble(
         reading,
         pages,

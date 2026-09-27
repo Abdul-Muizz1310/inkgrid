@@ -36,6 +36,19 @@ def table_parts(table: ProtoTable, words: Sequence[Word], page: PageInfo) -> Tab
     own: list[Word] = []
     for proto in table.cells:
         shape = proto.cell
+        if proto.source:
+            cells.append(
+                Cell(
+                    row=shape.row,
+                    col=shape.col,
+                    row_span=shape.row_span,
+                    col_span=shape.col_span,
+                    text=proto.carried,
+                    carried=True,
+                    source=proto.source,
+                )
+            )
+            continue  # a carried header owns no words, and the table's text leaves it out
         text, cell_joins = block_text(proto.lines) if proto.lines else ("", ())
         mine = _own(proto.lines, words)
         cells.append(

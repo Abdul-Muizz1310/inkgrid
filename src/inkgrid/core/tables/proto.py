@@ -15,10 +15,24 @@ from inkgrid.model.page import Word
 
 @dataclass(frozen=True, slots=True)
 class ProtoCell:
-    """One cell of a proto table: its place in the grid and its words as lines."""
+    """One cell of a proto table: its place in the grid and its words as lines.
+
+    A carried cell is a header copied onto a continuation page (spec 09 section 4): it has no lines,
+    and holds its text and the parent-table cells it copies (`source`).
+    """
 
     cell: ShapeCell
     lines: tuple[Line, ...]
+    carried: str = ""
+    source: tuple[tuple[int, int], ...] = ()
+
+    def __post_init__(self) -> None:
+        if bool(self.source) != bool(self.carried):
+            msg = "a carried cell has both a text and a source, and no other cell has either"
+            raise ValueError(msg)
+        if self.source and self.lines:
+            msg = "a carried cell owns no words"
+            raise ValueError(msg)
 
     @property
     def words(self) -> tuple[Word, ...]:
@@ -38,6 +52,7 @@ class ProtoTable:
     frame: Rotation
     source: Literal["lattice", "corridor"]
     text_only: bool = False  # no value to tell headers from: header_rows came from bold type
+    continues: "ProtoTable | None" = None  # the part this table continues (spec 09 section 4)
 
     @property
     def bbox(self) -> Rect:

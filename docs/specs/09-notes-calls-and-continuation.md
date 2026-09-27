@@ -58,12 +58,15 @@ The 42 fee schedules (974 pages) were read with M2c's output on 2026-09-28.
   from 18.96 pt. Half the tables' median word size, 2.6 to 6 pt on these documents, lies between.
 - **Paragraph continuation.** 43 pairs of a paragraph ending a page without terminal punctuation and
   one opening the next page in lower case; every one is a sentence broken by the page.
-- **Result, after M3** (the 42 documents, 974 pages, all read into valid documents): 563 of 885
-  superscript calls resolve (none could before); 302 parenthetical calls resolve, 32 stay unresolved,
-  and 394 candidates are rejected by a named convention; 9 named calls resolve and 6 do not. 46 tables
+- **Result, after M3** (the 42 documents, 974 pages, all read into valid documents): 572 of 885
+  superscript calls resolve (none could before); 280 parenthetical calls resolve, 24 stay unresolved,
+  and 398 candidates are rejected by a named convention; 9 named calls resolve and 6 do not. 46 tables
   continue a part on the previous page, 20 of them carrying its header, and 42 paragraphs join across
-  a page break. Of the 23 parenthetical calls resolved outside Cboe, 20 are notes' calls and 3 are
-  not (`Rule 900.2NY(4)`, `Criteria (2)`, and `has (1)`, since rejected: FC21).
+  a page break. The final review read the parenthetical calls resolved outside Cboe: the in-sentence
+  enumerations it found (`has (1)`, `either (1)`) are rejected since (FC21, FC22); citations that read
+  like calls remain (`Rule 900.2NY(4)`, `Article 6 (1) b)`, `Criteria (2)`). Of the 313 unresolved
+  superscript calls, about half have a note printed as a text-size enumerator (`5.` … under a table),
+  which § 1.1 leaves a list item.
 - **Not in M3:**
   - the prototype's **inverse** class (a note that names the fee codes it applies to, `Applicable to the
     following fee codes: B, V and Y`). It links a note to codes, not a call to a note, has no `Link`

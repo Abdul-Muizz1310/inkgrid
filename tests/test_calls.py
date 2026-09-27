@@ -78,6 +78,14 @@ def test_SP4_a_footnotes_own_label_is_no_call() -> None:
     assert calls_in("footnote", ws, "^ Contra fees", REGISTER, own_label="^") == []
 
 
+def test_SP5_a_superscript_in_brackets_is_one_call() -> None:
+    # Cboe b48 cell (2, 7): a raised `(52)` is printed once, so it is one call, by superscript
+    ws = words(P("Fee", 72, 100), P("(52)", 92, 96.5, size=6.5, superscript=True))
+    assert calls_in("paragraph", ws, "Fee (52)", REGISTER | {"52"}) == [
+        Candidate("52", "superscript")
+    ]
+
+
 # --- Parenthetical calls: the prototype's nineteen text cases (spec 09 section 2.2) --------------
 
 

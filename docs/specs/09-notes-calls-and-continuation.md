@@ -164,10 +164,12 @@ trade mark (`®`, `™`, `©`, `SM`, `TM`). Its method is `superscript`.
 | SP2 | a superscript `1,3,5`; a superscript `(2)(3)` | calls `1`, `3`, `5`; `2`, `3` |
 | SP3 | `2` then a superscript `nd`; `Nasdaq` then a superscript `SM` | no call |
 | SP4 | a footnote `^ Contra to …` whose first word `^` is superscript | no call from its label |
+| SP5 | `Fee` then a superscript `(52)`, note `52` in the register | one call, by superscript (the parenthetical scan reads only words set at the text's level) |
 
 ### 2.2 Parenthetical calls (D-21)
 
-In the text of each block (each cell, for a table), every `(n)` with 1 to 3 digits is a candidate when
+In the text of each block (each cell, for a table), leaving out its superscript words (a raised `(52)` is a
+superscript call, § 2.1), every `(n)` with 1 to 3 digits is a candidate when
 the document holds a note labelled `n`; with no note labelled `n` there is nothing to admit it, and it
 is no candidate at all. The tests run in this order, and the first that applies decides. Let `before`
 be the text before `(n)`, `pb` it with trailing spaces removed, and `word` the last alphabetic word of
@@ -334,7 +336,7 @@ After the glossary pass (`08` § 5): notes (§ 1), then table and paragraph cont
 
 ## 7 · Acceptance
 
-- [ ] OP1–OP10, NG1–NG4, W-22–W-23, SP1–SP4, FC1–FC23, FR1–FR9, TC1–TC13, PJ1–PJ6, and LK1–LK3 pass.
+- [ ] OP1–OP10, NG1–NG4, W-22–W-23, SP1–SP5, FC1–FC23, FR1–FR9, TC1–TC13, PJ1–PJ6, and LK1–LK3 pass.
 - [ ] The twenty call cases (FC1–FC20) pass, and `continued_table` carries its header (the M3 exit).
 - [ ] The seven fee schedules and the 42-document corpus read without error, and each document's
       resolved, unresolved, and rejected calls are counted and compared with § 0.

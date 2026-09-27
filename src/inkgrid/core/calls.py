@@ -120,10 +120,12 @@ def calls_in(
 ) -> list[Candidate]:
     """A block's (or a cell's) call candidates, in method order: superscript, parenthetical, named.
 
-    A footnote's first word is its label, not a call, and a note never calls its own label.
+    A footnote's first word is its label, not a call, and a note never calls its own label. A
+    raised `(52)` is one call, by superscript: the parenthetical scan reads only the other words.
     """
     marks = words[1:] if kind == "footnote" else words
-    found = [*superscript_calls(marks), *parenthetical_calls(text, register), *named_calls(text)]
+    level = " ".join(w.text for w in words if not w.superscript)
+    found = [*superscript_calls(marks), *parenthetical_calls(level, register), *named_calls(text)]
     return [c for c in found if c.label != own_label]
 
 

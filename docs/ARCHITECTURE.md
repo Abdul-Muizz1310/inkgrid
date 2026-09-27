@@ -110,8 +110,15 @@ PyMuPDF is not thread-safe, so parallelize across processes.
    definition; outside it only a quoted term with a defining verb does. A two-column grid of labels or
    terms beside prose becomes footnote and definition blocks in the table's place, its words keeping
    their stage.
+   Then **notes and continuation** ([`specs/09-notes-calls-and-continuation.md`](specs/09-notes-calls-and-continuation.md)),
+   document-wide: a paragraph opened by a label that some superscript calls becomes a footnote, and a
+   ruled table titled `Footnotes` dissolves into them. A table ending one page and one opening the
+   next continue when their columns align and the second prints no header (it carries the first's,
+   as cells that own no words) or reprints it; a sentence broken by the page joins into one paragraph.
 4. **Assembly.** Text is rendered from words by the two-transform rule, keys and heading levels are
-   derived, and the `Document` is constructed, which runs every invariant. A failure is a bug in
+   derived, footnote calls are found (superscript, parenthetical, named), tested against the drafting
+   conventions, and resolved forward to their notes, and the `Document` is constructed with its links,
+   which runs every invariant. A failure is a bug in
    inkgrid, so it raises `InvariantError`.
 
 Every size rule is relative to the document's own body size, because body text in the measured fee

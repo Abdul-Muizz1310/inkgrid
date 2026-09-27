@@ -16,10 +16,11 @@
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue"></a>
 </p>
 
-> **Status: pre-alpha (milestone M2 of M6 complete).** Today inkgrid reads a PDF into a validated
+> **Status: pre-alpha (milestone M3 of M6 complete).** Today inkgrid reads a PDF into a validated
 > `Document`: every word in exactly one block, in reading order, with running headers and footers set
-> apart, tables, ruled or not, as explicit cell grids, and glossaries and note lists as definitions and
-> footnotes. Footnote links and table continuation arrive in M3, and independent verification in M4. The roadmap is in
+> apart, tables, ruled or not, as explicit cell grids, glossaries as definitions, and footnote calls
+> linked to their notes. Tables and sentences that run onto the next page are joined. Independent
+> verification arrives in M4. The roadmap is in
 > [`docs/specs/00-design.md`](docs/specs/00-design.md) § 14.
 
 ## What it does
@@ -34,7 +35,7 @@ cell grids, with merged cells as spans and headers carried across page breaks, m
 Links record the relationships the page prints: footnote calls to their notes, and tables that
 continue onto the next page.
 
-Shipped so far (M0, M1, and M2):
+Shipped so far (M0 to M3):
 
 - **Words rebuilt from characters.** A superscript marker printed tight against a value stays its own
   word (`$0.40` and `2`, never `$0.402`). A font change in the middle of a word keeps it one word.
@@ -71,6 +72,18 @@ Shipped so far (M0, M1, and M2):
   section only a quoted term with a defining verb counts. A two-column grid of note labels beside prose
   becomes footnotes (`X2 | Connection rebate: …`, where a table prints `EMDI^X2`), and inside a
   section, or under its own `Legend` banner, a grid of terms beside prose becomes definitions.
+- **Footnote calls linked to their notes.** Notes are found in every form the measured documents print
+  them: small type opening with a number, a number or mark opening its note at the text's own size
+  (`^ Contra to …`, `2 Each month …`), a raised number glued to its first word (`1A surcharge`), and
+  ruled tables titled `Footnotes`. A note must be called somewhere in the document, so numbered
+  clauses are never read as notes. Calls come as superscripts, as parenthesised numbers at body size
+  (`Customer (2)(8)(9)`), and as named references (`see footnote 27`). Each call ends resolved to its
+  note, unresolved (with a `call_unresolved` warning), or rejected by a named drafting convention:
+  `five (5)`, `Section 202(a)(11)`, `except (1)`, and `; (2) if …` are never calls.
+- **Tables and sentences across pages.** A table that runs onto the next page without its header
+  carries the header as cells that own no words, linked to the part it continues. A reprinted header
+  links the parts without carrying. A sentence broken by the page joins into one paragraph with a
+  region on each page.
 - **Markdown and an HTML inspector.** The inspector draws every block over its rendered page, for
   looking at a reading rather than trusting it.
 - **The full output contract,** `inkgrid.document/1`, with its invariants enforced: every word owned
@@ -93,6 +106,13 @@ Shipped so far (M0, M1, and M2):
   columns are found, so on a two-column page a prose line level with two table rows can chain them
   into one line. Those rows read as interleaved text, and the unruled stage reports them with
   `table_left_as_text`.
+- **A call resolves forward only**, and a label the document prints on several notes resolves only
+  on its own page or the next (for a table that continues, from its last part). A note printed before
+  its call, or far from a numbering that restarts, leaves the call unresolved, with a warning. A
+  parenthesised number anchored on a capitalised noun is a call by the drafting conventions, so an
+  in-text reference like `Criteria (2)` can link to note 2.
+- **Only page breaks join.** A paragraph continued in the next column, and list items or notes that
+  continue on the next page, stay separate blocks.
 - **Lists set in the Symbol font read as paragraphs.** Their bullet is a private-use character, which
   the reader drops as invisible.
 - **Untrusted PDFs belong in a separate process.** MuPDF parses in memory, and a library cannot bound

@@ -30,6 +30,12 @@ All notable changes to this project are documented here. The format follows
 - Glossaries and note lists (M2c): definition blocks from quoted, bold, and hanging terms in
   definitions sections, and from quoted terms with a defining verb anywhere; two-column grids of note
   labels or terms beside prose read as footnotes and definitions.
+- Footnotes and continuation (M3): note openers, glued note numbers (split by the reader), and titled
+  note tables as footnote blocks; superscript, parenthetical, and named footnote calls, each resolved
+  forward, left unresolved with `call_unresolved`, or rejected by a named drafting convention, as
+  `footnote_call` links; `continuation` links between the parts of a table across a page, carrying
+  the header as carried cells; and paragraphs broken by a page joined into one block.
+  `header_not_found` is now raised after continuation.
 - `Document.to_markdown()`, the HTML inspector, and the `inkgrid read` command with `--markdown`,
   `--inspector`, and `--strict`.
 - A layer-table test on the import graph, and CI across Linux, Windows, and macOS.

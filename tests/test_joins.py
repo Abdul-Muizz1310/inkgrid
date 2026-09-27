@@ -5,7 +5,7 @@ import pytest
 
 from inkgrid.core.assemble import assemble
 from inkgrid.core.furniture import FoundFurniture
-from inkgrid.core.joins import join_tables
+from inkgrid.core.joins import join_paragraphs, join_tables
 from inkgrid.core.lines import group_lines
 from inkgrid.core.prose import ProtoBlock
 from inkgrid.core.tables.lattice import lattice_tables
@@ -162,11 +162,11 @@ def assembled(
 ) -> Document:
     """Assemble pages of tables and blocks whose words carry dense ids in page order."""
     prose = [tuple(p) for p in blocks] if blocks is not None else [() for _ in tables]
+    every = [w for page in tables for t in page for w in t.words]
+    every += [w for page in prose for b in page for line in b.lines for w in line.words]
     pages = []
-    for number, (page_tables, page_blocks) in enumerate(zip(tables, prose, strict=True), 1):
-        own = [w for t in page_tables for w in t.words]
-        own += [w for b in page_blocks for line in b.lines for w in line.words]
-        own.sort(key=lambda w: w.id)
+    for number in range(1, len(tables) + 1):
+        own = sorted((w for w in every if w.page == number), key=lambda w: w.id)
         layer = "full" if own else "none"
         pages.append(mk_page(number=number, words=tuple(own), text_layer=layer))
     reading = mk_reading(tuple(pages))
@@ -226,3 +226,90 @@ def test_TC_a_carried_cell_holds_a_text_and_a_source_and_no_words() -> None:
         ProtoCell(head.cell, (), source=((0, 0),))
     with pytest.raises(ValueError, match="owns no words"):
         ProtoCell(head.cell, head.lines, carried="Fee", source=((0, 0),))
+
+
+# --- Paragraph continuation (spec 09 section 5) --------------------------------------------------
+
+
+def para(kind: str, text: str, *, page: int, y: float, first_id: int) -> ProtoBlock:
+    words = place(text_line(text.split(), x=72, y=y, size=10), page=page, first_id=first_id)
+    lines = group_lines(words, PROFILE)
+    return ProtoBlock(kind, lines, lines[0].size, label="1" if kind == "footnote" else None)  # type: ignore[arg-type]
+
+
+def broken(
+    end: str, start: str, *, below: str | None = None, above: str | None = None
+) -> list[tuple[ProtoBlock, ...]]:
+    """A paragraph ending page 1 with `end`, and page 2 opening with `start`."""
+    first = para("paragraph", end, page=1, y=700, first_id=0)
+    n = len(end.split())
+    page1: list[ProtoBlock] = [first]
+    if below is not None:
+        page1.append(para("footnote", below, page=1, y=740, first_id=n))
+        n += len(below.split())
+    page2: list[ProtoBlock] = []
+    if above is not None:
+        page2.append(para("heading", above, page=2, y=60, first_id=n))
+        n += len(above.split())
+    page2.append(para("paragraph", start, page=2, y=80, first_id=n))
+    return [tuple(page1), tuple(page2)]
+
+
+def texts(pages: Sequence[Sequence[ProtoBlock]]) -> list[list[tuple[str, str]]]:
+    return [[(b.kind, block_text(b.lines)[0]) for b in page] for page in pages]
+
+
+def test_PJ1_a_sentence_broken_by_the_page_is_one_paragraph() -> None:
+    pages = broken("the fee is charged per", "executed order.")
+    joined = join_paragraphs(pages, [(), ()])
+    assert texts(joined) == [[("paragraph", "the fee is charged per executed order.")], []]
+    doc = assembled([(), ()], joined)
+    (block,) = doc.blocks
+    assert [r.page for r in block.regions] == [1, 2]
+
+
+def test_PJ2_a_finished_sentence_is_not_continued() -> None:
+    pages = broken("the fee is charged per order.", "executed orders are billed.")
+    assert len([b for page in join_paragraphs(pages, [(), ()]) for b in page]) == 2
+
+
+def test_PJ3_an_upper_case_opening_is_not_a_continuation() -> None:
+    pages = broken("the fee is charged per", "Executed orders are billed.")
+    assert len([b for page in join_paragraphs(pages, [(), ()]) for b in page]) == 2
+
+
+def test_PJ4_a_hyphen_at_the_foot_joins_across_the_page() -> None:
+    joined = join_paragraphs(broken("the fee applies to execu-", "tions are billed."), [(), ()])
+    doc = assembled([(), ()], joined)
+    (block,) = doc.blocks
+    assert block.text == "the fee applies to executions are billed."
+    assert len(block.hyphen_joins) == 1
+
+
+def test_PJ5_a_heading_opening_the_next_page_breaks_the_flow() -> None:
+    pages = broken("the fee is charged per", "executed order.", above="Other fees")
+    assert len([b for page in join_paragraphs(pages, [(), ()]) for b in page]) == 3
+
+
+def test_PJ6_a_footnote_at_the_foot_does_not_break_the_flow() -> None:
+    pages = broken("the fee is charged per", "executed order.", below="1 Applies to members only")
+    joined = join_paragraphs(pages, [(), ()])
+    assert texts(joined) == [
+        [
+            ("paragraph", "the fee is charged per executed order."),
+            ("footnote", "1 Applies to members only"),
+        ],
+        [],
+    ]
+
+
+def test_PJ_a_chain_of_pages_is_one_paragraph() -> None:
+    first = para("paragraph", "the fee is charged", page=1, y=700, first_id=0)
+    middle = para("paragraph", "per executed order and", page=2, y=80, first_id=4)
+    last = para("paragraph", "per side.", page=3, y=80, first_id=8)
+    joined = join_paragraphs([(first,), (middle,), (last,)], [(), (), ()])
+    assert texts(joined) == [
+        [("paragraph", "the fee is charged per executed order and per side.")],
+        [],
+        [],
+    ]

@@ -20,6 +20,7 @@ from inkgrid.model.geometry import Rect
 
 EDGE_TOL_EM = 0.5  # column edges agree within this share of the tables' median word size (L10)
 MIN_BAND = 0.05  # pt: a carried header band never has zero height
+TERMINAL = (".", ":", ";", "?", "!")  # a sentence that ends in one does not run on
 
 
 def _flow(
@@ -136,4 +137,43 @@ def join_tables(
         else:
             continue
         out[p + 1] = [joined if t is child else t for t in out[p + 1]]
+    return [tuple(page) for page in out]
+
+
+def _continues(parent: ProtoBlock, child: ProtoBlock) -> bool:
+    """A sentence broken by the page: no terminal punctuation, then a lower-case opening."""
+    last = parent.lines[-1].words[-1].text
+    first = child.lines[0].words[0].text
+    return not last.endswith(TERMINAL) and first[:1].islower()
+
+
+def join_paragraphs(
+    pages: Sequence[Sequence[ProtoBlock]], tables: Sequence[Sequence[ProtoTable]]
+) -> list[tuple[ProtoBlock, ...]]:
+    """Each page's blocks, a paragraph broken by the page joined into the first part (s. 5).
+
+    The joined block keeps the first part's place; a page the paragraph fills keeps the chain going.
+    """
+    out = [list(page) for page in pages]
+    tail: tuple[int, int] | None = None  # (page, index) of the paragraph the flow last ended on
+    for p, page_tables in enumerate(tables):
+        flow = _flow(out[p], page_tables)
+        if tail is not None and flow:
+            first = flow[0]
+            parent = out[tail[0]][tail[1]]
+            if (
+                isinstance(first, ProtoBlock)
+                and first.kind == "paragraph"
+                and _continues(parent, first)
+            ):
+                out[tail[0]][tail[1]] = replace(parent, lines=(*parent.lines, *first.lines))
+                out[p] = [b for b in out[p] if b is not first]
+                flow = flow[1:]
+                if not flow:
+                    continue  # the page only continued the paragraph: the chain goes on
+        last = flow[-1] if flow else None
+        if isinstance(last, ProtoBlock) and last.kind == "paragraph":
+            tail = (p, next(i for i, b in enumerate(out[p]) if b is last))
+        else:
+            tail = None
     return [tuple(page) for page in out]

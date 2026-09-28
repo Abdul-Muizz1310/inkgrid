@@ -1,0 +1,2 @@
+Table 1:  GT size: 46 corrDet: 30 detected: 40  Precision: 30 / 40 = 0.75  Recall: 30 / 46 = 0.65
+Table 2: no matching result found

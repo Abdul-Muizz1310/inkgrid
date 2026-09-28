@@ -1,0 +1,7 @@
+GT Regions: 2
+Result Regions: 3
+Region: 1  GT Items: 218  correct items: 129  result items: 129  result reg: 2  complete: false  pure: true
+Region: 2  GT Items: 395  complete: false  pure: N/A
+FP regions: 1
+FP Region: 1  items: 89  FP items: 89
+Overall Result for Document:  Completeness: 0 / 2 = 0  Purity: 1 / 1 = 1

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document filename="x.pdf">
+<table id="1"><region id="1" page="1">
+<cell id="1" start-col="0" start-row="0"><bounding-box x1="100" x2="200" y1="700" y2="742"/><content>Fee</content></cell>
+<cell id="2" start-col="1" start-row="0"><bounding-box x1="200" x2="300" y1="690" y2="742"/><content>0.30
+bp</content></cell>
+</region></table>
+</document>

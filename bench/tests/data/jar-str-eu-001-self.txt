@@ -1,0 +1,12 @@
+Using     GTFile: eu-001-str.xml
+Using resultFile: eu-001-res.xml
+Using    PDFFile: eu-001.pdf
+startPage: 1
+endPage: 2147483647
+Table 1:  GT size: 46 corrDet: 46 detected: 46  Precision: 46 / 46 = 1.0  Recall: 46 / 46 = 1.0
+Table 2:  GT size: 81 corrDet: 81 detected: 81  Precision: 81 / 81 = 1.0  Recall: 81 / 81 = 1.0
+Table 3:  GT size: 60 corrDet: 60 detected: 60  Precision: 60 / 60 = 1.0  Recall: 60 / 60 = 1.0
+Table 4:  GT size: 158 corrDet: 158 detected: 158  Precision: 158 / 158 = 1.0  Recall: 158 / 158 = 1.0
+Table 5:  GT size: 151 corrDet: 151 detected: 151  Precision: 151 / 151 = 1.0  Recall: 151 / 151 = 1.0
+Table 6:  GT size: 116 corrDet: 116 detected: 116  Precision: 116 / 116 = 1.0  Recall: 116 / 116 = 1.0
+Table 7:  GT size: 53 corrDet: 53 detected: 53  Precision: 53 / 53 = 1.0  Recall: 53 / 53 = 1.0

@@ -287,14 +287,25 @@ rectangles of its cells that are not carried.
 
 A character's **home** is the one cell rectangle containing it. A word of a cell is **placed** when
 its cell is the home of strictly more than half of the characters it owns. The characters it owns
-elsewhere are **overflow**: the word runs past its cell's edge, and its binding stands.
+elsewhere are **overflow**: the word runs past its cell's edge, and its binding stands, unless the
+overflow **crosses a drawn rule as a second text**. A merged rule (§ 1.4) lies between an overflow
+character and all of the word's characters in its cell, and spans it, and either:
+
+- PDFium breaks the word: a character that is not ink lies between the word's first and last ink
+  characters in PDFium's order (`10` and `5` glued by MuPDF into `105` across a column rule); or
+- decimal digits sit on both sides of the rule: a number cut by a rule is two numbers.
+
+Text that runs on over a border unbroken is one text: on the corpus, 15 words overflow across a
+drawn rule (`$0.0010/share` past a table's edge, the `r` of `/month/user`), and in none does PDFium
+break the word or a digit sit beyond the rule.
 
 ### 4.3 TEXT
 
 A cell has a TEXT defect when:
 
 - one of its words is not placed: most of its ink lies in another cell, or it is split exactly in
-  half, so the page does not say which cell it belongs to; or
+  half, so the page does not say which cell it belongs to;
+- one of its words' overflow crosses a drawn rule as a second text (§ 4.2); or
 - its rectangle holds ink owned by a word that is not in this table (**foreign ink**). A carried
   cell owns no words, so any foreign ink in its rectangle is a defect.
 
@@ -339,6 +350,9 @@ frame.
 | TB10 | as TB9, the rule spanning half the cell's height; the rule 0.8 inside the cell's edge | none; none |
 | TB11 | an `h` rule spanning a cell with lines above and below; an underline under the first line | HRULE; none |
 | TB12 | a table in frame 90 with ink made from its words; then TB4 in that frame | no defect; TEXT |
+| TB13 | `abc` bound to cell 0, its `c` past the drawn rule at the cell edge, PDFium breaking before `c`; the same unbroken | TEXT; overflow |
+| TB14 | `105` bound to cell 0, its `5` past the drawn rule, unbroken | TEXT |
+| TB15 | `user`, its `r` past the drawn rule, unbroken | overflow 1, no defect |
 
 ---
 

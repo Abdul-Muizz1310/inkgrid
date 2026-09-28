@@ -215,18 +215,64 @@ class Words:
         return cls(homes_of(doc), {w.id: w.text for w in doc.words})
 
 
+def _separates(rule: InkRule, inside: Sequence[Point], point: Point) -> bool:
+    """True when the rule lies between the point and every one of `inside`, and spans the point."""
+    along, across = (1, 0) if rule.axis == "v" else (0, 1)
+    if not rule.start <= point[along] <= rule.end:
+        return False
+    beyond = point[across]
+    return all(p[across] < rule.at < beyond for p in inside) or all(
+        beyond < rule.at < p[across] for p in inside
+    )
+
+
+def _crosses_rule(
+    chars: Sequence[InkChar],
+    anchor: Anchor,
+    placed: _Placed,
+    page: InkPage,
+    rules: Sequence[InkRule],
+) -> bool:
+    """Section 4.3: a placed word's overflow runs across a drawn rule as two texts, not one.
+
+    Text that runs on over a border, unbroken, is overflow. Two texts glued into one word show at
+    the rule: PDFium breaks the word there, or digits sit on both sides of it.
+    """
+    inside = [c for c in chars if placed.home.get(c.index) == anchor]
+    points = [placed.centre[c.index] for c in inside]
+    crossed = [
+        c
+        for c in chars
+        if placed.home.get(c.index) != anchor
+        and any(_separates(r, points, placed.centre[c.index]) for r in rules)
+    ]
+    if not crossed:
+        return False
+    first, last = min(c.index for c in chars), max(c.index for c in chars)
+    broken = any(not ch.is_ink for ch in page.chars[first : last + 1])
+    digits = [any(unicodedata.category(c.char) == "Nd" for c in part) for part in (inside, crossed)]
+    return broken or all(digits)
+
+
 def _problems(
-    cell: Cell, placed: _Placed, owner: Mapping[int, int], words: Words, table: Table
+    cell: Cell,
+    placed: _Placed,
+    owner: Mapping[int, int],
+    words: Words,
+    context: tuple[Table, InkPage, Sequence[InkRule]],
 ) -> tuple[list[str], int]:
     """Section 4.3: the cell's misplaced words and foreign ink, and its words' overflow."""
+    table, page, rules = context
     anchor = (cell.row, cell.col)
     problems, overflow = [], 0
     for word_id in cell.word_ids:
         chars = placed.by_word.get(word_id, [])
         inside = sum(1 for c in chars if placed.home.get(c.index) == anchor)
+        text = words.texts[word_id]
         if chars and 2 * inside <= len(chars):
-            text = words.texts[word_id]
             problems.append(f"{text!r} has {inside} of its {len(chars)} characters in the cell")
+        elif inside < len(chars) and _crosses_rule(chars, anchor, placed, page, rules):
+            problems.append(f"{text!r} runs across a drawn rule into another cell")
         else:
             overflow += len(chars) - inside
     foreign = []
@@ -260,7 +306,7 @@ def table_checks(
         anchor = (cell.row, cell.col)
         rect = grid.cell_rect(cell)
         where = _Where(page.number, table.id, anchor, turn.unbox(rect))
-        problems, spilled = _problems(cell, placed, owner, words, table)
+        problems, spilled = _problems(cell, placed, owner, words, (table, page, rules))
         overflow += spilled
         if problems:
             defects.append(where.defect(DefectCode.TEXT, cell.text, "; ".join(problems)))

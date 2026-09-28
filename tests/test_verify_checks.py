@@ -316,3 +316,47 @@ def test_homes_name_each_words_block_and_cell() -> None:
     assert homes[0] == ("b1", (0, 0))
     assert homes[4] == ("b2", None)
     assert isinstance(doc.blocks[0], Table)
+
+
+EDGE_RULE = InkRule("v", 160, 199, 221)  # the drawn rule between columns 0 and 1
+
+
+def crossing(text: str, edges: Sequence[float], *, broken_after: int | None = None) -> TableResult:
+    """A word bound to cell (0, 0) whose glyphs sit between `edges`, the last past the drawn rule
+    at 160; with `broken_after`, PDFium reads a word break after that many characters."""
+    table = B(
+        "table",
+        [W(text, edges[0], 205, rect=Rect(edges[0], 205, edges[-1], 215))],
+        row_bands=[(200, 220)],
+        col_bands=[(100, 160), (160, 220)],
+        cells=[C(0, 0, [0]), C(0, 1, [])],
+    )
+    doc = build([table])
+    glyphs = [
+        InkChar(0, ch, Rect(x0, 205, x1, 215), "ink")
+        for ch, (x0, x1) in zip(text, pairwise(edges), strict=True)
+    ]
+    if broken_after is not None:
+        gap = glyphs[broken_after - 1].box
+        glyphs.insert(broken_after, InkChar(0, " ", Rect(gap.x1, 205, gap.x1, 215), "generated"))
+    ink = edited(ink_of(doc), lambda cs: [*glyphs, *cs[len(text) :]])
+    return check(doc, InkPage(ink.number, ink.width, ink.height, ink.chars, (EDGE_RULE,)))
+
+
+def test_TB13_a_word_broken_at_a_drawn_rule_is_two_texts_glued() -> None:
+    # `ab` | rule | `c`: letters on both sides, so only PDFium's break tells the texts apart
+    result = crossing("abc", [144, 150, 156, 166], broken_after=2)
+    assert codes(result) == [("text", (0, 0))]
+    assert "drawn rule" in result.defects[0].detail
+    assert codes(crossing("abc", [144, 150, 156, 166])) == []  # unbroken: one text, overflow
+
+
+def test_TB14_a_number_cut_by_a_drawn_rule_is_misbound() -> None:
+    result = crossing("105", [140, 146, 157, 166])  # `5` centred at 161.5, no break
+    assert codes(result) == [("text", (0, 0))]
+
+
+def test_TB15_text_running_unbroken_over_a_rule_is_overflow() -> None:
+    result = crossing("user", [140, 146, 152, 158, 166])  # the `r` of `/month/user`, past a rule
+    assert codes(result) == []
+    assert result.overflow == 1

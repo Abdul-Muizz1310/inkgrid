@@ -66,6 +66,17 @@ def _character_defects(page: InkPage, owned: PageOwnership, words: Words) -> lis
         )
         for run in owned.lost
     ]
+    out += [
+        Defect(
+            code=DefectCode.DECODE,
+            page=page.number,
+            block=words.homes[d.word.id][0],
+            text=d.read,
+            bbox=d.word.bbox,
+            detail=f"MuPDF reads {d.read!r} in the word {d.word.text!r}, PDFium {d.ink!r}",
+        )
+        for d in owned.decoded
+    ]
     for code, gaps, why in (
         (DefectCode.DOUBLED, owned.doubled, "is ink another word already owns"),
         (DefectCode.INVENTED, owned.invented, "is not on the page"),
@@ -117,6 +128,7 @@ def _verified(
         soft_hyphens=owned.soft_hyphens,
         unmapped_chars=owned.unmapped,
         overflow_chars=overflow,
+        ligature_chars=owned.ligatures,
         rules=len(page.rules),
     )
     return _Page(check, defects, advisories)

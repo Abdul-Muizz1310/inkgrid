@@ -4,8 +4,8 @@ from doc_builder import B, C, W, build
 from ink_builder import edited, ink_of, page, stray
 from inkgrid.model.document import Document
 from inkgrid.model.findings import Finding, FindingCode
-from inkgrid.model.verification import VerificationReport
-from inkgrid.verify.ink import Ink, InkPage
+from inkgrid.model.verification import DefectCode, VerificationReport
+from inkgrid.verify.ink import Ink, InkChar, InkPage
 from inkgrid.verify.report import verify_document
 
 VERSION = "0.1.0.dev0"
@@ -160,3 +160,21 @@ def pages_of(report: VerificationReport) -> Sequence[str]:
 def test_every_page_either_engine_counts_is_reported() -> None:
     doc = build([PARA], pages=2)
     assert pages_of(verify(doc, ink_of(doc))) == ["verified", "unverified"]
+
+
+def test_OW12_a_decode_disagreement_is_one_defect_naming_its_block() -> None:
+    doc = build([B("paragraph", [W("\u2022x", 72, 100)])])
+    ink = edited(ink_of(doc), lambda cs: [InkChar(0, "\u00ef", cs[0].box, "ink"), *cs[1:]])
+    report = verify(doc, ink)
+    (defect,) = report.defects
+    assert (defect.code, defect.block, defect.text) == (DefectCode.DECODE, "b1", "\u2022")
+    assert "\u00ef" in defect.detail
+    assert report.pages[0].owned_chars == 2
+
+
+def test_OW6_ligatures_are_counted_on_their_page() -> None:
+    doc = build([B("paragraph", [W("fit", 72, 100)])])
+    ink = edited(ink_of(doc), lambda cs: [InkChar(0, "\x1f", cs[0].box, "unmapped"), *cs[2:]])
+    report = verify(doc, ink)
+    assert report.ok
+    assert report.pages[0].ligature_chars == 1

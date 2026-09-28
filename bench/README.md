@@ -1,0 +1,16 @@
+# inkgrid's benchmark
+
+The harness behind `docs/specs/12-benchmark.md`. It lives in the repository and ships in neither the
+wheel nor the sdist.
+
+- `sources.toml` pins every dataset, scorer, and tool; `olmocr-tables.sha256` lists olmOCR-bench's table
+  PDFs. `inkgrid_bench.fetch` downloads them into `~/.cache/inkgrid-bench/` and checks every hash.
+  Nothing downloaded is committed.
+- Adapters run inside each tool's own pinned environment and write a normalized table per document.
+- The scorers are the datasets' own: the ICDAR-2013 competition's jar (under a Temurin 17 JRE), Soric et
+  al.'s evaluator at v1.0.0, and olmOCR-bench's scorer (`olmocr` 0.4.27).
+- `bench/results/` holds the committed results; `latest.md` is the newest report.
+
+Datasets are the property of their publishers: ICDAR-2013 (Göbel, Hassan, Oro and Orsi, 2013);
+olmOCR-bench (ODC-BY-1.0, Poznanski et al., arXiv 2502.18443); Soric et al.'s ICDAR-2013 ground truth
+(KDD '26).

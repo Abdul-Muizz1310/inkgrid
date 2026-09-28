@@ -1,0 +1,61 @@
+# Every dataset, scorer, and tool the benchmark uses, pinned (docs/specs/12-benchmark.md section 1).
+# Files are fetched into ~/.cache/inkgrid-bench/ by inkgrid_bench.fetch and never committed.
+
+[source.icdar2013-competition]
+url = "https://www.tamirhassan.com/html/files/icdar2013-competition-dataset-with-gt.zip"
+sha256 = "3c005732f5f829a0c1f5c50bf92cd13cbe935e5ad717a0631ca8d7a04b0e01e9"
+file = "icdar2013/competition-with-gt.zip"
+
+[source.icdar2013-practice-eu]
+url = "https://www.tamirhassan.com/html/files/eu-dataset-20130324.zip"
+sha256 = "8b5ce7e68fc1bccef88141fb148f160e26f1aba46712e953c9f6a53b7360cbaa"
+file = "icdar2013/practice/eu-dataset-20130324.zip"
+
+[source.icdar2013-practice-us]
+url = "https://www.tamirhassan.com/html/files/us-gov-dataset-20130324.zip"
+sha256 = "66a62f80acd59bcefb32df9f751516ae4edae7bfc23a1dd782055ec2015556bd"
+file = "icdar2013/practice/us-gov-dataset-20130324.zip"
+
+[source.icdar2013-jar]
+url = "https://www.tamirhassan.com/html/files/dataset-tools-20180206.jar"
+sha256 = "0633721ba192f48ce90fae3b4d295997cfda324f1c7fa7e9e4b384c3f8919856"
+file = "tools/dataset-tools-20180206.jar"
+
+[source.temurin-jre-17]
+url = "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.20.1%2B1/OpenJDK17U-jre_x64_linux_hotspot_17.0.20.1_1.tar.gz"
+sha256 = "0b2b640e3046b64c8ec504de0ab9d91bb5610182bda21fad454681ce54d45a62"
+file = "tools/OpenJDK17U-jre_x64_linux_hotspot_17.0.20.1_1.tar.gz"
+
+[source.soric-icdar2013]
+url = "https://huggingface.co/datasets/marijanic/table-extraction-scientific-datasets/resolve/db94734b3219404a2446ab305d8a7bbc97de2f86/icdar-2013.tar.gz"
+sha256 = "fc58dd8ef5cd77f08b485aafe00b4809b7a5576f672386a7ed85ddc313f8ee8c"
+file = "soric/icdar-2013.tar.gz"
+
+[source.soric-predictions]
+url = "https://huggingface.co/datasets/marijanic/table-extraction-scientific-datasets/resolve/db94734b3219404a2446ab305d8a7bbc97de2f86/experience-data/icdar-2013-predictions.tar.gz"
+sha256 = "822d2ae19635ee5f0389328e44e37e94b0744a26b9a8858f4226f397c10da23c"
+file = "soric/icdar-2013-predictions.tar.gz"
+
+[source.olmocr-table-tests]
+url = "https://huggingface.co/datasets/allenai/olmOCR-bench/resolve/54a96a6fb6a2bd3b297e59869491db4d3625b711/bench_data/table_tests.jsonl"
+sha256 = "e37a99bd60de56c62cd3f4c1b7910b603641901c15ae119f849ffefa86cde120"
+file = "olmocr/bench_data/table_tests.jsonl"
+
+# The 188 table PDFs: bench/olmocr-tables.sha256 lists each one's SHA-256 and path under bench_data/.
+[manifest.olmocr-tables]
+url = "https://huggingface.co/datasets/allenai/olmOCR-bench/resolve/54a96a6fb6a2bd3b297e59869491db4d3625b711/bench_data/"
+list = "olmocr-tables.sha256"
+root = "olmocr/bench_data"
+
+[scorer.soric]
+repository = "https://github.com/soricm/table-extraction-benchmark"
+tag = "v1.0.0"
+commit = "48367ea2"
+
+[scorer.olmocr]
+package = "olmocr[bench]==0.4.27"
+
+[tool]
+pdfplumber = "0.11.10"
+pymupdf = "1.28.2"
+camelot-py = "2.0.0"

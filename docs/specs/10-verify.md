@@ -143,24 +143,26 @@ thresholds differ from the reader's (`02-reader.md` § 5) on purpose, so agreeme
 ### 1.5 Pages PDFium cannot load
 
 A page PDFium cannot load becomes `InkPage(number, error=<PDFium's message>)` with no characters and
-no rules. A password PDFium refuses raises `PasswordError(wrong)`: `wrong` is False when no password
-was given.
+no rules. A password PDFium refuses raises `PasswordRequired` when none was given and
+`WrongPassword` otherwise (`inkgrid.errors`, which every layer may import). A PDF PDFium cannot open
+for any other reason gives `Ink(pages=(), error=<PDFium's message>)`.
 
 | Case | Input | Expected |
 |---|---|---|
-| VR1 | `simple_text`: the first ink character | its box's left and top equal the first word's within 0.5 |
+| VR1 | `simple_text` | every ink character's centre lies in the box of a word the reader read |
 | VR2 | `offset_mediabox`; `cropbox` | as VR1: the frame's origin is the page box's corner |
 | VR3 | `rotated`; `landscape` | as VR1: the frame is unrotated |
 | VR4 | kinds: a generated space; U+0002; `IsHyphen` on `-`; U+0020; U+00A0 | generated; hyphen `-`; hyphen `-`; space; space |
 | VR5 | kinds: U+200B, U+00AD, U+E000, U+0007; U+FFFD, U+D800, a map error on `A`; `A` | invisible; unmapped; ink |
 | VR6 | `clipped_text` | the 7 characters of `clipped` are clipped; `inside` is not |
 | VR7 | `outside_crop` | 18 ink characters are outside the frame |
-| VR8 | `ruled_grid` | every reader rule has a verifier rule on its axis within 1.0 of its `at`, `start`, and `end` |
+| VR8 | `ruled_grid` | every reader rule lies on a verifier rule: same axis, `at` within 1.0, and its extent covered within 1.0 |
 | VR9 | stroked segments: slant 0.9 and 1.1 over 20; length 2.9 and 3.0 | a rule; none; none; a rule |
 | VR10 | filled closed boxes 3.0 × 40 and 3.1 × 40; a stroked 40 × 20 box; alpha 0; a Bézier | a rule; none; 4 rules; none; none |
 | VR11 | collinear segments with a gap of 0.8 and 1.2; with `at` 0.4 and 0.6 apart | one rule; two; one; two |
 | VR12 | `formed_rules`: a ruled grid drawn in a Form XObject at half scale | as VR8 |
-| VR13 | `encrypted` with its password; with none; with a wrong one | pages; `PasswordError(wrong=False)`; `PasswordError(wrong=True)` |
+| VR13 | `ruled_encrypted("u")` with its password; with none; with a wrong one | pages; `PasswordRequired`; `WrongPassword` |
+| VR15 | bytes that are not a PDF | `Ink` with an error and no pages |
 | VR14 | `null_second_kid` | page 2 has an error and no characters |
 
 ---

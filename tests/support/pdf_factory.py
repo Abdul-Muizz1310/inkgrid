@@ -258,6 +258,14 @@ def ruled_grid(
     return _save(doc)
 
 
+def formed_rules() -> bytes:
+    """`ruled_grid` placed at half scale in (100, 100, 406, 496) as a Form XObject."""
+    source = pymupdf.open(stream=ruled_grid(), filetype="pdf")
+    doc = pymupdf.open()
+    _page(doc).show_pdf_page(pymupdf.Rect(100, 100, 406, 496), source, 0)
+    return _save(doc)
+
+
 def ruled_grid_pages(n: int = 3) -> bytes:
     """`ruled_grid` on each of `n` pages."""
     doc = pymupdf.open()
@@ -1078,6 +1086,7 @@ OPENABLE: dict[str, Callable[[], bytes]] = {
     "ruled_and_unruled": ruled_and_unruled,
     "unruled_landscape": unruled_landscape,
     "ruled_grid": ruled_grid,
+    "formed_rules": formed_rules,
     "ruled_landscape": ruled_landscape,
     "table_between_paragraphs": table_between_paragraphs,
     "boxed_paragraph": boxed_paragraph,

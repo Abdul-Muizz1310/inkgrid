@@ -100,8 +100,9 @@ Relative imports are banned by Ruff (TID252), so every internal import is absolu
 Within a layer, modules may import each other. The stdlib is `sys.stdlib_module_names`, plus
 `__future__`.
 
-**Extra rule inside `read/`.** Only `read/pymupdf_reader.py` may import pymupdf (and, from M2, only
-`read/camelot_reader.py` may import camelot). This keeps `words.py` and `rules.py` pure.
+**Extra rule inside `read/` and `verify/`.** Only `read/pymupdf_reader.py` may import pymupdf (and,
+from M2, only `read/camelot_reader.py` may import camelot; from M4, only `verify/pdfium_reader.py`
+may import pypdfium2). This keeps `words.py`, `rules.py`, and the verifier's checks pure.
 
 | # | case | expected |
 |---|---|---|
@@ -110,6 +111,7 @@ Within a layer, modules may import each other. The stdlib is `sys.stdlib_module_
 | T3 | a temporary tree where `verify/x.py` imports `inkgrid.core.lines` | one violation |
 | T4 | a temporary tree where `read/words.py` imports `pymupdf` | one violation |
 | T5 | a temporary tree where `core/x.py` imports `numpy` | one violation (third party outside the table) |
+| VR0 | a temporary tree where `verify/checks.py` imports `pypdfium2.raw` | one violation (spec 10) |
 
 ---
 
@@ -119,7 +121,7 @@ Within a layer, modules may import each other. The stdlib is `sys.stdlib_module_
   - build backend `uv_build>=0.12.19,<0.13`; `requires-python = ">=3.12"`;
   - `license = "MIT"` with `license-files = ["LICENSE"]`, and no license classifiers;
   - dependencies `pymupdf>=1.28.2,<2` and `pydantic>=2.11,<3`; Camelot and pypdfium2 are added by the
-    milestones that use them;
+    milestones that use them (`camelot-py>=2.0.0,<3` in M2, `pypdfium2>=5.13.0,<6` in M4);
   - dependency groups `test`, `lint`, `typecheck`, and `dev`;
   - `[project.scripts] inkgrid = "inkgrid.cli:main"`.
 - **Lint:** Ruff 0.16, configured with `extend-select` (0.16's larger default rule set, plus the house

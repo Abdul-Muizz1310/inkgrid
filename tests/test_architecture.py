@@ -25,7 +25,11 @@ THIRD_PARTY: dict[str, set[str]] = {
     "verify": {"pypdfium2"},
 }
 # Inside read/, only the adapter modules may import their library.
-ADAPTER = {"pymupdf": "read/pymupdf_reader.py", "camelot": "read/camelot_reader.py"}
+ADAPTER = {
+    "pymupdf": "read/pymupdf_reader.py",
+    "camelot": "read/camelot_reader.py",
+    "pypdfium2": "verify/pdfium_reader.py",
+}
 STDLIB = set(sys.stdlib_module_names) | {"__future__"}
 
 
@@ -100,6 +104,14 @@ def test_AP4_only_the_adapter_imports_camelot(tmp_path: Path) -> None:
     write(tmp_path, "read/words.py", "import camelot\n")
     write(tmp_path, "read/camelot_reader.py", "import camelot\n")
     assert violations(tmp_path) == ["read/words.py: only read/camelot_reader.py may import camelot"]
+
+
+def test_VR0_only_the_verifier_adapter_imports_pypdfium2(tmp_path: Path) -> None:
+    write(tmp_path, "verify/checks.py", "import pypdfium2.raw\n")
+    write(tmp_path, "verify/pdfium_reader.py", "import pypdfium2\n")
+    assert violations(tmp_path) == [
+        "verify/checks.py: only verify/pdfium_reader.py may import pypdfium2"
+    ]
 
 
 def test_T5_core_may_not_import_third_party(tmp_path: Path) -> None:

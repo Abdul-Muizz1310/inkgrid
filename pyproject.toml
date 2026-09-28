@@ -28,6 +28,7 @@ dependencies = [
     "opencv-python-headless>=4.14.0.94,!=5.0.0.93",
     "pydantic>=2.11,<3",
     "pymupdf>=1.28.2,<2",
+    "pypdfium2>=5.13.0,<6",
 ]
 
 [project.scripts]
@@ -85,7 +86,7 @@ ignore = ["COM812", "D105", "D107", "PLR0913", "TRY003"]
 # The design (00-design.md section 9) names these errors; the names are public API.
 "src/inkgrid/errors.py" = ["N818"]
 "scripts/**" = ["T20", "INP001", "D", "S603", "S607"]
-"typings/**" = ["D", "N", "FBT", "PLR0913", "A001", "A002", "ANN401"]
+"typings/**" = ["D", "N", "FBT", "PLR0913", "A001", "A002", "ANN401", "SLF001"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"

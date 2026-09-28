@@ -326,6 +326,7 @@ dependencies = [
     { name = "opencv-python-headless" },
     { name = "pydantic" },
     { name = "pymupdf" },
+    { name = "pypdfium2" },
 ]
 
 [package.dev-dependencies]
@@ -356,6 +357,7 @@ requires-dist = [
     { name = "opencv-python-headless", specifier = ">=4.14.0.94,!=5.0.0.93" },
     { name = "pydantic", specifier = ">=2.11,<3" },
     { name = "pymupdf", specifier = ">=1.28.2,<2" },
+    { name = "pypdfium2", specifier = ">=5.13.0,<6" },
 ]
 
 [package.metadata.requires-dev]

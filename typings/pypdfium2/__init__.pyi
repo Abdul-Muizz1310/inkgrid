@@ -1,0 +1,29 @@
+"""Local type stub: only the parts of pypdfium2 5.13 that `inkgrid.verify.pdfium_reader` calls.
+
+pypdfium2 ships no type hints. The shapes below were measured on pypdfium2 5.13.0 with PDFium
+153.0.7999.0 (docs/specs/10-verify.md section 0).
+"""
+
+from pypdfium2 import raw as raw
+from pypdfium2 import version as version
+from pypdfium2.raw import FPDF_PAGE, FPDF_TEXTPAGE
+
+class PdfiumError(RuntimeError):
+    # PDFium's FPDF_GetLastError code when a document fails to load; FPDF_ERR_PASSWORD is 4.
+    err_code: int | None
+
+class PdfTextPage:
+    raw: FPDF_TEXTPAGE
+    def close(self) -> None: ...
+
+class PdfPage:
+    raw: FPDF_PAGE
+    def get_textpage(self) -> PdfTextPage: ...
+    def close(self) -> None: ...
+
+class PdfDocument:
+    def __init__(self, input: bytes, password: str | None = None) -> None: ...
+    def __len__(self) -> int: ...
+    # Raises PdfiumError("Failed to load page.") for a page PDFium cannot load.
+    def __getitem__(self, index: int) -> PdfPage: ...
+    def close(self) -> None: ...

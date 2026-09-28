@@ -46,6 +46,18 @@ def test_VR6_a_clip_path_hides_its_characters() -> None:
     assert "".join(ch.char for ch in ink if not ch.clipped) == "inside"
 
 
+@pytest.mark.parametrize("nested", [False, True], ids=["page", "parent-form"])
+def test_VR16_a_clip_around_a_form_hides_the_forms_text(nested: bool) -> None:
+    data = pdf_factory.form_clipped(nested=nested)
+    reading = inkgrid.read_pages(data)
+    assert [w.text for w in reading.words()] == ["Shown"]  # MuPDF drops what the clip hides
+    assert reading.pages[0].clipped_chars == len("Hidden")
+    (page,) = read_ink(data, None).pages
+    ink = [ch for ch in page.chars if ch.is_ink]
+    assert "".join(ch.char for ch in ink if ch.clipped) == "Hidden"
+    assert "".join(ch.char for ch in ink if not ch.clipped) == "Shown"
+
+
 def test_VR7_characters_beyond_the_cropbox_are_outside() -> None:
     (page,) = read_ink(pdf_factory.outside_crop(), None).pages
     assert sum(1 for ch in page.chars if ch.is_ink and page.outside(ch)) == 18

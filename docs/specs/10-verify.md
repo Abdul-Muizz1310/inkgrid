@@ -113,9 +113,11 @@ MediaBox), unrotated, with y growing down: `(x - box.x0, box.y1 - y)`. This is t
 
 - **Outside:** the character's centre is outside the frame: `x < 0`, `x >= width`, `y < 0`, or
   `y >= height`.
-- **Clipped:** the character's text object has a clip path (`FPDFPageObj_GetClipPath`), and the
-  character's centre lies outside at least one of its paths. A path is the polygon through its
-  segment points; inside is the even-odd crossing test.
+- **Clipped:** the character's centre lies outside at least one path of a clip that applies to it:
+  its text object's clip (`FPDFPageObj_GetClipPath`), or the clip of any Form XObject enclosing it.
+  PDFium attaches a clip set before a form is drawn to the form object, not to the objects inside
+  it, so the verifier carries each form's clip down to what the form holds. A path is the polygon
+  through its segment points; inside is the even-odd crossing test.
 
 A character's *centre* is its loose box's centre, everywhere in this spec.
 
@@ -170,6 +172,7 @@ for any other reason gives `Ink(pages=(), error=<PDFium's message>)`.
 | VR12 | `formed_rules`: a ruled grid drawn in a Form XObject at half scale | as VR8 |
 | VR13 | `ruled_encrypted("u")` with its password; with none; with a wrong one | pages; `PasswordRequired`; `WrongPassword` |
 | VR15 | bytes that are not a PDF | `Ink` with an error and no pages |
+| VR16 | `form_clipped`: a clip set around a Form XObject, on the page or inside a parent form | the form's hidden text is clipped; MuPDF drops it too |
 | VR14 | `null_second_kid` | page 2 has an error and no characters |
 
 ---

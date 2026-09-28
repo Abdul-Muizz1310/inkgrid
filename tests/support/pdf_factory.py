@@ -953,6 +953,35 @@ _HELVETICA = b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>"
 _TEXT = b"BT /F1 12 Tf 72 700 Td (AB) Tj ET"
 
 
+_FORM_TEXT = b"BT /F1 12 Tf 10 700 Td (Hidden) Tj ET BT /F1 12 Tf 350 700 Td (Shown) Tj ET"
+_CLIP_RIGHT = (
+    b"q 300 0 200 792 re W n /F Do Q"  # a clip over x 300-500, set before the form is drawn
+)
+
+
+def _form(content: bytes, inner: int | None = None) -> bytes:
+    xobject = b"" if inner is None else b"/XObject << /F %d 0 R >> " % inner
+    resources = b"/Resources << /Font << /F1 5 0 R >> %s>> " % xobject
+    extra = b"/Type /XObject /Subtype /Form /BBox [0 0 612 792] " + resources
+    return _stream(content, extra)
+
+
+def form_clipped(*, nested: bool = False) -> bytes:
+    """`Hidden` and `Shown` in a Form XObject drawn inside a clip that hides `Hidden`.
+
+    With `nested`, the clip is set inside a parent form, around the child form holding the text.
+    """
+    page = (
+        b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] "
+        b"/Resources << /Font << /F1 5 0 R >> /XObject << /F 6 0 R >> >> /Contents 4 0 R >>"
+    )
+    if nested:
+        objects = [_stream(b"/F Do"), _HELVETICA, _form(_CLIP_RIGHT, inner=7), _form(_FORM_TEXT)]
+    else:
+        objects = [_stream(_CLIP_RIGHT), _HELVETICA, _form(_FORM_TEXT)]
+    return _build([_CATALOG, _ONE_PAGE, page, *objects])
+
+
 def zero_pages() -> bytes:
     """A hand-written PDF whose page tree is empty (`/Count 0`)."""
     return _build([_CATALOG, b"<< /Type /Pages /Kids [] /Count 0 >>"])
@@ -1070,6 +1099,8 @@ OPENABLE: dict[str, Callable[[], bytes]] = {
     "render_mode_7": lambda: render_mode(7),
     "alpha_zero": alpha_zero,
     "outside_crop": outside_crop,
+    "form_clipped": form_clipped,
+    "nested_form_clipped": lambda: form_clipped(nested=True),
     "two_column": two_column,
     "landscape": landscape,
     "unruled_table": unruled_table,

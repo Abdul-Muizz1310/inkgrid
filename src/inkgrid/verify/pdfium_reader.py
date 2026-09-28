@@ -62,11 +62,27 @@ def _point(segment: raw.FPDF_PATHSEGMENT) -> Point:
     return (x.value, y.value)
 
 
-def _paths(page: raw.FPDF_PAGE) -> Iterator[tuple[raw.FPDF_PAGEOBJECT, Matrix]]:
-    """Every path object with its matrix to page space, descending into Form XObjects."""
-    stack: list[tuple[raw.FPDF_PAGEOBJECT | None, Matrix]] = [(None, IDENTITY)]
+@dataclass(frozen=True, slots=True)
+class _Object:
+    """A page object with its matrix to page space and its enclosing forms' clip polygons."""
+
+    handle: raw.FPDF_PAGEOBJECT
+    kind: int
+    matrix: Matrix
+    enclosing: tuple[Polygon, ...]
+
+
+def _objects(page: raw.FPDF_PAGE, frame: _Frame) -> Iterator[_Object]:
+    """Every page object, descending into Form XObjects.
+
+    A clip set before a form is drawn belongs to the form object, not to the objects inside it, so
+    each form's clip is carried down to everything it holds.
+    """
+    stack: list[tuple[raw.FPDF_PAGEOBJECT | None, Matrix, tuple[Polygon, ...]]] = [
+        (None, IDENTITY, ())
+    ]
     while stack:
-        form, outer = stack.pop()
+        form, outer, enclosing = stack.pop()
         count = (
             raw.FPDFPage_CountObjects(page) if form is None else raw.FPDFFormObj_CountObjects(form)
         )
@@ -77,10 +93,14 @@ def _paths(page: raw.FPDF_PAGE) -> Iterator[tuple[raw.FPDF_PAGEOBJECT, Matrix]]:
                 else raw.FPDFFormObj_GetObject(form, i)
             )
             kind = raw.FPDFPageObj_GetType(obj)
+            matrix = _then(_matrix(obj), outer)
             if kind == raw.FPDF_PAGEOBJ_FORM:
-                stack.append((obj, _then(_matrix(obj), outer)))
-            elif kind == raw.FPDF_PAGEOBJ_PATH:
-                yield obj, _then(_matrix(obj), outer)
+                stack.append((obj, matrix, enclosing + _clip(obj, frame)))
+            yield _Object(obj, kind, matrix, enclosing)
+
+
+def _address(obj: raw.FPDF_PAGEOBJECT) -> int | None:
+    return ctypes.cast(obj, ctypes.c_void_p).value
 
 
 def _visible(obj: raw.FPDF_PAGEOBJECT) -> tuple[bool, bool]:
@@ -139,8 +159,10 @@ def _box(text_page: raw.FPDF_TEXTPAGE, index: int, frame: _Frame) -> Rect:
     return Rect(min(x0, x1), min(y0, y1), max(x0, x1), max(y0, y1))
 
 
-def _chars(text_page: raw.FPDF_TEXTPAGE, frame: _Frame) -> tuple[InkChar, ...]:
-    clips: dict[int | None, tuple[Polygon, ...]] = {}
+def _chars(
+    text_page: raw.FPDF_TEXTPAGE, frame: _Frame, clips: dict[int | None, tuple[Polygon, ...]]
+) -> tuple[InkChar, ...]:
+    """The page's characters; `clips` holds each text object's clip polygons and its forms'."""
     out = []
     for i in range(raw.FPDFText_CountChars(text_page)):
         kind, char = char_kind(
@@ -153,7 +175,7 @@ def _chars(text_page: raw.FPDF_TEXTPAGE, frame: _Frame) -> tuple[InkChar, ...]:
         clipped = False
         obj = raw.FPDFText_GetTextObject(text_page, i)
         if obj:
-            key = ctypes.cast(obj, ctypes.c_void_p).value
+            key = _address(obj)
             if key not in clips:
                 clips[key] = _clip(obj, frame)
             x, y = box.center
@@ -171,12 +193,19 @@ def _page(pdf: pdfium.PdfDocument, index: int) -> InkPage:
         bounds = raw.FS_RECTF()
         raw.FPDF_GetPageBoundingBox(page.raw, bounds)
         frame = _Frame(bounds.left, bounds.top)
+        objects = list(_objects(page.raw, frame))
+        clips = {
+            _address(o.handle): o.enclosing + _clip(o.handle, frame)
+            for o in objects
+            if o.kind == raw.FPDF_PAGEOBJ_TEXT
+        }
         text_page = page.get_textpage()
         try:
-            chars = _chars(text_page.raw, frame)
+            chars = _chars(text_page.raw, frame, clips)
         finally:
             text_page.close()
-        rules = extract_rules(_ink_path(obj, m, frame) for obj, m in _paths(page.raw))
+        paths = (o for o in objects if o.kind == raw.FPDF_PAGEOBJ_PATH)
+        rules = extract_rules(_ink_path(o.handle, o.matrix, frame) for o in paths)
         return InkPage(
             index + 1,
             bounds.right - bounds.left,

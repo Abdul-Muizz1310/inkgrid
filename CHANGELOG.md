@@ -42,6 +42,12 @@ All notable changes to this project are documented here. The format follows
   rule divides, values bound to two cells, and pages that cannot be compared; the command exits 1 on
   any defect, and `--inspector` draws the defects over the pages. `SourceMismatch` for a PDF that is
   not the document's. pypdfium2 is now a direct dependency.
+- The verifier on public corpora (M5a): PDFium's map-error and control-code glyphs read as
+  unmapped, surrogate pairs joined, ligatures, glyphs at the page edge or with disagreeing boxes,
+  greedy ownership repaired, value tokens split at gaps, diagonal overlays counted, clips inside
+  scaled Form XObjects placed through the form's matrix, and a new `decode` defect for a glyph the
+  two engines decode differently. A Camelot table with no cells is skipped with `lattice_failed`
+  instead of crashing the read.
 - `Document.to_markdown()`, the HTML inspector, and the `inkgrid read` command with `--markdown`,
   `--inspector`, and `--strict`.
 - A layer-table test on the import graph, and CI across Linux, Windows, and macOS.

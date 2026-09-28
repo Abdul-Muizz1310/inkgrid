@@ -101,4 +101,4 @@ def test_CK4_a_surrogate_without_its_partner_stays_unmapped() -> None:
     assert join_surrogates([(4, 0xD835), (5, 0x41)]) == [(4, 4, 0xD835), (5, 5, 0x41)]
     assert join_surrogates([(9, 0xD835)]) == [(9, 9, 0xD835)]  # the page's last character
     assert join_surrogates([(4, 0xDC51), (5, 0xD835)]) == [(4, 4, 0xDC51), (5, 5, 0xD835)]
-    assert kind(0xD835) == ("unmapped", "�")
+    assert kind(0xD835) == ("unmapped", "\ufffd")

@@ -51,6 +51,13 @@ Every defect was classified by its mechanism, from both engines' raw readings an
   overlap by tens of points (5), a glyph whose name says `≏` and whose drawing is `∼` (4).
 - **The crash:** Camelot returned a table whose rows hold no cells (CM11, fixed).
 
+**After M5a** (the same documents, re-verified one at a time on 2026-09-28): 74 defects on the
+competition set, 114 on the practice set, and 134 on olmOCR-bench's table pages. Each is one of
+inkgrid's errors (287, § 5), an ambiguous page (22), the FreeText annotation (1), or a DECODE (12:
+six Wingdings bullets PDFium reads as `ï`, a quote it reads as `í`, and five Dingbats and symbol
+glyphs MuPDF reads as `G` and `2`). None is an engine difference § 1–3 name. The 42 fee schedules
+still report their 8 cells (spec 10 § 0), and every fixture verifies with no defect.
+
 ---
 
 ## 1 · Characters
@@ -207,8 +214,8 @@ The ambiguous classes (26, § 0) stay reported as they are.
 
 ## 6 · Acceptance
 
-- [ ] Every case above has a test named `test_<CaseId>_<slug>`, and it failed before its code.
-- [ ] Re-verified, one document at a time: every defect on the three corpora is in § 5's classes, in
+- [x] Every case above has a test named `test_<CaseId>_<slug>`, and it failed before its code.
+- [x] Re-verified, one document at a time: every defect on the three corpora is in § 5's classes, in
       § 0's ambiguous classes, or a DECODE; none is an engine difference § 1–3 name.
-- [ ] Every `OPENABLE` fixture still verifies with no defect; the 42 fee schedules still report
+- [x] Every `OPENABLE` fixture still verifies with no defect; the 42 fee schedules still report
       the same 8 cells (spec 10 § 0) and nothing else.

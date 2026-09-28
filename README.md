@@ -90,7 +90,10 @@ Shipped so far (M0 to M4):
   character by character: nothing lost, invented, or doubled; every cell holding the ink inside it;
   no drawn rule dividing a cell; every value bound to one cell. It exits 1 on any defect. On the 42
   measured fee schedules it accounts for all 1,817,075 characters and reports 8 cells, among them two
-  values from two columns read as one word, and a note mark in the column after its word.
+  values from two columns read as one word, and a note mark in the column after its word. On
+  ICDAR-2013 and olmOCR-bench's table pages it names the ways the two engines read a page
+  differently (ligatures, unmappable glyphs, overprinted titles), so what it still reports there is
+  inkgrid's own errors: [`docs/specs/11-verify-on-public-corpora.md`](docs/specs/11-verify-on-public-corpora.md) § 5 lists them.
 - **The full output contract,** `inkgrid.document/1`, with its invariants enforced: every word owned
   exactly once, cells that tile their grid exactly, and block text spelled from its own words in
   their order.
@@ -100,6 +103,11 @@ Shipped so far (M0 to M4):
 - **Text is judged hidden from the text layer alone.** Text covered by an opaque shape or image,
   white text on a white page, and text too small to read all read as visible. The verifier reads the
   text layer too, so it does not catch them either.
+- **Errors the verifier finds on public corpora.** On ICDAR-2013 and olmOCR-bench, inkgrid reads
+  identical overprinted text twice (fake bold), drops Type 3 glyphs coded as control characters,
+  lets some ruled grids reach over page frames and charts, and takes repeated table titles for
+  running headers. They are listed with their documents, and fixed after the benchmark records its
+  baseline, so the benchmark is not tuned on its own test documents.
 - **Left-to-right scripts only.** Right-to-left and bidirectional text is not reordered in v0.1.
 - **Unruled tables have no row spans.** A label centred beside several rows splits across them
   (`Charge per` / `executed order`), and a label whose value is centred beside it needs the rows to be

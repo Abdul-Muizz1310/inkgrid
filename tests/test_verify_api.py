@@ -52,5 +52,22 @@ def test_RP6_a_lost_lone_surrogate_is_reported_as_json() -> None:
     assert inkgrid.VerificationReport.model_validate_json(report.model_dump_json()) == report
 
 
+@pytest.mark.parametrize(
+    ("name", "statuses"),
+    [
+        ("nested_graphics_states", ["declared"]),
+        ("count_mismatch", ["verified", "declared"]),
+        ("null_second_kid", ["verified", "declared"]),
+    ],
+)
+def test_DC12_pages_the_reader_declared_unreadable_are_declared(
+    name: str, statuses: list[str]
+) -> None:
+    data = pdf_factory.OPENABLE[name]()
+    report = inkgrid.verify(inkgrid.read(data), data)
+    assert report.ok
+    assert [p.status for p in report.pages] == statuses
+
+
 def test_verify_is_public() -> None:
     assert "verify" in inkgrid.__all__

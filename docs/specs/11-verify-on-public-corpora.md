@@ -52,10 +52,12 @@ Every defect was classified by its mechanism, from both engines' raw readings an
 - **The crash:** Camelot returned a table whose rows hold no cells (CM11, fixed).
 
 **After M5a** (the same documents, re-verified one at a time on 2026-09-28): 74 defects on the
-competition set, 114 on the practice set, and 134 on olmOCR-bench's table pages. Each is one of
-inkgrid's errors (287, § 5), an ambiguous page (22), the FreeText annotation (1), or a DECODE (12:
-six Wingdings bullets PDFium reads as `ï`, a quote it reads as `í`, and five Dingbats and symbol
-glyphs MuPDF reads as `G` and `2`). None is an engine difference § 1–3 name. The 42 fee schedules
+competition set, 114 on the practice set, and 135 on olmOCR-bench's table pages. Each is one of
+inkgrid's errors (287, § 5), an ambiguous page (22), the FreeText annotation (1), a DECODE (12: six
+Wingdings bullets PDFium reads as `ï`, a quote it reads as `í`, and five Dingbats and symbol glyphs
+MuPDF reads as `G` and `2`), or one VALUE on olmOCR 1ec1f9, whose margin line numbers are stacked,
+touching, with no separator from PDFium: § 3.1's gap is direction-free, so they look like one
+value running down the page. None is an engine difference § 1–3 name that they could hide. The 42 fee schedules
 still report their 8 cells (spec 10 § 0), and every fixture verifies with no defect.
 
 ---

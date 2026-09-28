@@ -48,16 +48,19 @@ PRODUCER = Producer(
 
 @dataclass(frozen=True)
 class W:
-    """A word to place: its text, top-left corner, and page."""
+    """A word to place: its text, top-left corner, and page; `rect` overrides the laid-out box."""
 
     text: str
     x0: float
     y0: float
     page: int = 1
     superscript: bool = False
+    rect: Rect | None = None
 
     @property
     def box(self) -> Rect:
+        if self.rect is not None:
+            return self.rect
         return Rect(self.x0, self.y0, self.x0 + CHAR_WIDTH * len(self.text), self.y0 + WORD_HEIGHT)
 
 

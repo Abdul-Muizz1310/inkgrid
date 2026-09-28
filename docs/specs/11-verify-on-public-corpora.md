@@ -163,8 +163,10 @@ text runs: down a landscape page, upside down, or raised as a superscript agains
 ### 3.2 Overlays
 
 Ink inside a cell rectangle owned by a word of another block is foreign ink (spec 10 § 4.3), unless
-that word is neither horizontal nor the table's own orientation: a diagonal watermark (`ARTICLE IN
-PRESS` at 45°) crossing a table is an overlay. Its characters count in `PageCheck.overlay_chars`
+that word runs diagonally: MuPDF reads it as not horizontal, and its glyphs, as PDFium places them,
+run at 15° to 75° from its first to its last. A diagonal watermark (`ARTICLE IN PRESS` at 45°)
+crossing a table is an overlay. A word turned 90° is not: MuPDF's `horizontal` flag cannot tell the
+two apart, and a turned label in a cell is exactly what a misbinding looks like. Its characters count in `PageCheck.overlay_chars`
 and are not a TEXT defect. The exemption applies to tables in frame 0, whose words are horizontal;
 a table read in a turned frame keeps the strict rule.
 
@@ -173,7 +175,8 @@ a table read in a turned frame keeps the strict rule.
 | VF5 | the tokens `1` and `2` in two cells 57 pt apart with no separator between them | no VALUE |
 | VF6 | `12` glued, 1 pt apart, in two cells | VALUE |
 | VF7 | `1` above `2`, touching, owned by two blocks (a value running down a landscape page) | VALUE |
-| TB16 | a non-horizontal paragraph word's ink in a frame-0 cell | no defect; `overlay_chars` = its characters in the cell |
+| TB16 | a paragraph word's glyphs running at 37° through a frame-0 cell | no defect; `overlay_chars` = its characters in the cell |
+| TB18 | a paragraph word's glyphs running straight down a frame-0 cell (a label turned 90°) | TEXT |
 | TB17 | the same in a frame-90 table | TEXT |
 
 ---

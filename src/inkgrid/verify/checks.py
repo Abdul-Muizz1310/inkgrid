@@ -22,6 +22,7 @@ Home = tuple[str, Anchor | None]
 CROSS_MARGIN = 1.0
 EDGE = 2.0
 LINE_OVERLAP = 0.5
+DIAGONAL = (15.0, 75.0)  # degrees from the horizontal that a watermark runs at
 BAND = 20.0
 
 
@@ -157,6 +158,7 @@ class _Placed:
     home: dict[int, Anchor]
     by_cell: defaultdict[Anchor, list[InkChar]]
     by_word: defaultdict[int, list[InkChar]]
+    others: defaultdict[int, list[InkChar]]  # ink of words outside the table, by word
     orphans: list[InkChar]
     doubles: list[InkChar]
 
@@ -168,7 +170,7 @@ def _place(table: Table, page: InkPage, owner: Mapping[int, int], turn: _Frame) 
     live = [rect for cell, rect in zip(cells, rects, strict=True) if not cell.carried]
     extent = Rect.union_all(live) if live else None
     words = {w for c in cells for w in c.word_ids}
-    out = _Placed({}, {}, defaultdict(list), defaultdict(list), [], [])
+    out = _Placed({}, {}, defaultdict(list), defaultdict(list), defaultdict(list), [], [])
     for ch in page.chars:
         if not ch.is_ink:
             continue
@@ -177,6 +179,8 @@ def _place(table: Table, page: InkPage, owner: Mapping[int, int], turn: _Frame) 
         word = owner.get(ch.index)
         if word in words:
             out.by_word[word].append(ch)
+        elif word is not None:
+            out.others[word].append(ch)
         found = index.homes(x, y)
         if not found:
             if extent is not None and _inside(extent, x, y):
@@ -257,6 +261,18 @@ def _crosses_rule(
     return broken or all(digits)
 
 
+def _diagonal(chars: Sequence[InkChar]) -> bool:
+    """True when a word's glyphs run at 15 to 75 degrees: a watermark, not a turned label.
+
+    MuPDF's `horizontal` flag cannot tell 45 from 90 degrees; PDFium's glyph positions can.
+    """
+    if len(chars) < 2:  # noqa: PLR2004 - one glyph has no direction
+        return False
+    (x0, y0), (x1, y1) = chars[0].center, chars[-1].center
+    angle = math.degrees(math.atan2(abs(y1 - y0), abs(x1 - x0)))
+    return DIAGONAL[0] < angle < DIAGONAL[1]
+
+
 def _problems(
     cell: Cell,
     placed: _Placed,
@@ -284,7 +300,11 @@ def _problems(
         other = owner.get(ch.index)
         if other is None or words.homes[other][0] == table.id:
             continue
-        if table.grid.frame == 0 and not words.horizontal[other]:
+        if (
+            table.grid.frame == 0
+            and not words.horizontal[other]
+            and _diagonal(placed.others[other])
+        ):
             overlay += 1  # a diagonal watermark over a table (spec 11 section 3.2)
         else:
             foreign.append(ch.char)

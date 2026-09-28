@@ -311,11 +311,30 @@ def test_VF5_a_token_ends_at_a_line_change() -> None:
     assert values(doc, glued(doc, 0)) == []
 
 
+def stamped(text: str, step: tuple[float, float]) -> tuple[Document, InkPage]:
+    """RATES with another block's non-horizontal word in cell (1, 1), its glyphs stepping by
+    `step` from (185, 221): diagonal for a watermark, straight down for a rotated label."""
+    boxes = [
+        Rect(185 + step[0] * i, 221 + step[1] * i, 190 + step[0] * i, 226 + step[1] * i)
+        for i in range(len(text))
+    ]
+    area = Rect.union_all(boxes)
+    doc = build([grid_table(RATES), B("paragraph", [W(text, 0, 0, horizontal=False, rect=area)])])
+    ink = ink_of(doc)
+    glyphs = [InkChar(0, c, box, "ink") for c, box in zip(text, boxes, strict=True)]
+    return doc, edited(ink, lambda cs: [*cs[: -len(text) - 1], *glyphs])
+
+
 def test_TB16_a_diagonal_overlay_in_a_cell_is_counted_not_a_defect() -> None:
-    doc = build([grid_table(RATES), B("paragraph", [W("DRAFT", 185, 225, horizontal=False)])])
-    result = check(doc)
+    doc, ink = stamped("DRAFT", (4.0, 3.0))  # a 37 degree watermark
+    result = check(doc, ink)
     assert codes(result) == []
     assert result.overlay == 5
+
+
+def test_TB18_a_vertical_word_of_another_block_in_a_cell_is_foreign() -> None:
+    doc, ink = stamped("NEW", (0.0, 5.0))  # a label turned 90 degrees
+    assert codes(check(doc, ink)) == [("text", (1, 1))]
 
 
 def test_TB17_a_turned_tables_cells_keep_the_strict_rule() -> None:

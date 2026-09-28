@@ -147,3 +147,26 @@ def test_RP6_verification_schema_is_committed() -> None:
     spec.loader.exec_module(module)
     committed = json.loads((ROOT / "docs" / "schema" / "verification.schema.json").read_text())
     assert module.schemas()["verification.schema.json"] == committed
+
+
+def test_RP7_a_decode_defect_names_its_block_and_holds_its_text() -> None:
+    Defect(code=DefectCode.DECODE, page=1, block="b1", text="\u2022", detail="PDFium reads \u00ef")
+    with pytest.raises(ValidationError, match="block"):
+        Defect(code=DefectCode.DECODE, page=1, text="\u2022", detail="PDFium reads \u00ef")
+    with pytest.raises(ValidationError, match="text"):
+        Defect(code=DefectCode.DECODE, page=1, block="b1", detail="PDFium reads \u00ef")
+
+
+def test_RP7_decode_sorts_between_invented_and_value() -> None:
+    order = list(DefectCode)
+    assert order.index(DefectCode.INVENTED) + 1 == order.index(DefectCode.DECODE)
+    assert order.index(DefectCode.DECODE) + 1 == order.index(DefectCode.VALUE)
+
+
+def test_RP8_only_a_verified_page_counts_ligatures_and_overlays() -> None:
+    page(ligature_chars=1, overlay_chars=2)
+    for field in ("ligature_chars", "overlay_chars"):
+        with pytest.raises(ValidationError, match="unverified"):
+            page(status="unverified", ink_chars=0, owned_chars=0, **{field: 1})
+        with pytest.raises(ValidationError, match="declared"):
+            page(status="declared", ink_chars=2, owned_chars=0, declared_chars=2, **{field: 1})

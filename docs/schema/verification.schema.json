@@ -106,6 +106,7 @@
         "lost",
         "doubled",
         "invented",
+        "decode",
         "value",
         "orphan",
         "double",
@@ -139,6 +140,12 @@
           "title": "Ink Chars",
           "type": "integer"
         },
+        "ligature_chars": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Ligature Chars",
+          "type": "integer"
+        },
         "lost_chars": {
           "default": 0,
           "minimum": 0,
@@ -160,6 +167,12 @@
           "default": 0,
           "minimum": 0,
           "title": "Overflow Chars",
+          "type": "integer"
+        },
+        "overlay_chars": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Overlay Chars",
           "type": "integer"
         },
         "owned_chars": {
@@ -208,6 +221,8 @@
         "unmapped_chars",
         "declared_chars",
         "overflow_chars",
+        "ligature_chars",
+        "overlay_chars",
         "rules"
       ],
       "title": "PageCheck",

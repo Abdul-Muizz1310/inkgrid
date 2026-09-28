@@ -31,6 +31,7 @@ class DefectCode(StrEnum):
     LOST = "lost"
     DOUBLED = "doubled"
     INVENTED = "invented"
+    DECODE = "decode"
     VALUE = "value"
     ORPHAN = "orphan"
     DOUBLE = "double"
@@ -55,7 +56,10 @@ TABLE_CODES: Final = frozenset(
 CELL_CODES: Final = frozenset(
     {DefectCode.TEXT, DefectCode.VRULE, DefectCode.HRULE, DefectCode.ORDER}
 )
-CHARACTER_CODES: Final = frozenset({DefectCode.LOST, DefectCode.DOUBLED, DefectCode.INVENTED})
+CHARACTER_CODES: Final = frozenset(
+    {DefectCode.LOST, DefectCode.DOUBLED, DefectCode.INVENTED, DefectCode.DECODE}
+)
+BLOCK_CODES: Final = TABLE_CODES | {DefectCode.DECODE}
 
 
 class Defect(Frozen):
@@ -71,8 +75,8 @@ class Defect(Frozen):
 
     @model_validator(mode="after")
     def _where(self) -> Self:
-        if self.code in TABLE_CODES and self.block is None:
-            msg = f"a {self.code} defect names its table block"
+        if self.code in BLOCK_CODES and self.block is None:
+            msg = f"a {self.code} defect names its block"
             raise ValueError(msg)
         if self.code in CELL_CODES and self.cell is None:
             msg = f"a {self.code} defect names its cell"
@@ -97,6 +101,8 @@ class PageCheck(Frozen):
     unmapped_chars: NonNegativeInt = 0
     declared_chars: NonNegativeInt = 0
     overflow_chars: NonNegativeInt = 0
+    ligature_chars: NonNegativeInt = 0
+    overlay_chars: NonNegativeInt = 0
     rules: NonNegativeInt = 0
 
     @model_validator(mode="after")
@@ -121,12 +127,14 @@ class PageCheck(Frozen):
                     )
                     raise ValueError(msg)
             case "declared":
-                if parts or self.ink_chars != self.declared_chars:
+                extra = self.ligature_chars + self.overlay_chars
+                if parts or extra or self.ink_chars != self.declared_chars:
                     msg = f"{where}: a declared page's ink is all declared, and nothing else"
                     raise ValueError(msg)
             case "unverified":
                 counts = (self.ink_chars, parts, self.unmapped_chars, self.declared_chars)
-                if any(counts) or self.overflow_chars or self.rules:
+                later = (self.overflow_chars, self.ligature_chars, self.overlay_chars, self.rules)
+                if any(counts) or any(later):
                     msg = f"{where}: an unverified page counts nothing"
                     raise ValueError(msg)
         return self

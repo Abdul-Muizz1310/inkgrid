@@ -70,6 +70,7 @@ class _Object:
     kind: int
     matrix: Matrix
     enclosing: tuple[Polygon, ...]
+    outer: Matrix  # the enclosing forms' matrix: PDFium gives the object's clip in that space
 
 
 def _objects(page: raw.FPDF_PAGE, frame: _Frame) -> Iterator[_Object]:
@@ -95,8 +96,8 @@ def _objects(page: raw.FPDF_PAGE, frame: _Frame) -> Iterator[_Object]:
             kind = raw.FPDFPageObj_GetType(obj)
             matrix = _then(_matrix(obj), outer)
             if kind == raw.FPDF_PAGEOBJ_FORM:
-                stack.append((obj, matrix, enclosing + _clip(obj, frame)))
-            yield _Object(obj, kind, matrix, enclosing)
+                stack.append((obj, matrix, enclosing + _clip(obj, frame, outer)))
+            yield _Object(obj, kind, matrix, enclosing, outer)
 
 
 def _address(obj: raw.FPDF_PAGEOBJECT) -> int | None:
@@ -135,8 +136,12 @@ def _ink_path(obj: raw.FPDF_PAGEOBJECT, m: Matrix, frame: _Frame) -> InkPath:
     return InkPath(stroke=stroke, fill=fill, subpaths=tuple(subpaths))
 
 
-def _clip(obj: raw.FPDF_PAGEOBJECT, frame: _Frame) -> tuple[Polygon, ...]:
-    """The object's clip paths as polygons in the frame; none when it has no clip path."""
+def _clip(obj: raw.FPDF_PAGEOBJECT, frame: _Frame, outer: Matrix) -> tuple[Polygon, ...]:
+    """The object's clip paths as polygons in the frame; none when it has no clip path.
+
+    PDFium gives an object's clip in the space of the forms enclosing it (after a form's
+    `/Matrix`, before the `cm` that placed it), so `outer`, their matrix, takes it to the page.
+    """
     clip = raw.FPDFPageObj_GetClipPath(obj)
     if not clip:
         return ()
@@ -145,7 +150,7 @@ def _clip(obj: raw.FPDF_PAGEOBJECT, frame: _Frame) -> tuple[Polygon, ...]:
         count = raw.FPDFClipPath_CountPathSegments(clip, p)
         polygons.append(
             tuple(
-                frame.point(*_point(raw.FPDFClipPath_GetPathSegment(clip, p, s)))
+                frame.point(*_apply(outer, *_point(raw.FPDFClipPath_GetPathSegment(clip, p, s))))
                 for s in range(count)
             )
         )
@@ -177,7 +182,7 @@ def _chars(
         if obj:
             key = _address(obj)
             if key not in clips:
-                clips[key] = _clip(obj, frame)
+                clips[key] = _clip(obj, frame, IDENTITY)
             x, y = box.center
             clipped = any(not in_polygon(polygon, x, y) for polygon in clips[key])
         out.append(InkChar(i, char, box, kind, clipped))
@@ -195,7 +200,7 @@ def _page(pdf: pdfium.PdfDocument, index: int) -> InkPage:
         frame = _Frame(bounds.left, bounds.top)
         objects = list(_objects(page.raw, frame))
         clips = {
-            _address(o.handle): o.enclosing + _clip(o.handle, frame)
+            _address(o.handle): o.enclosing + _clip(o.handle, frame, o.outer)
             for o in objects
             if o.kind == raw.FPDF_PAGEOBJ_TEXT
         }

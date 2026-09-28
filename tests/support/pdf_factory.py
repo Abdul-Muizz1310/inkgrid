@@ -959,11 +959,28 @@ _CLIP_RIGHT = (
 )
 
 
-def _form(content: bytes, inner: int | None = None) -> bytes:
+def _form(content: bytes, inner: int | None = None, bbox: bytes = b"0 0 612 792") -> bytes:
     xobject = b"" if inner is None else b"/XObject << /F %d 0 R >> " % inner
     resources = b"/Resources << /Font << /F1 5 0 R >> %s>> " % xobject
-    extra = b"/Type /XObject /Subtype /Form /BBox [0 0 612 792] " + resources
+    extra = b"/Type /XObject /Subtype /Form /BBox [%s] " % bbox + resources
     return _stream(content, extra)
+
+
+def scaled_form_clipped() -> bytes:
+    """`Inside Outside` in a Form XObject built as olmOCR-bench's c45171 is: a `/Matrix` scaling
+    the form by 0.5, a `cm` before `Do` scaling it by 4, and a clip inside the form (x 0-94 in form
+    space, 50-238 on the page after both) that cuts the run between the words. PDFium keeps a clip
+    only on an object it cuts, and gives it after `/Matrix` but before the `cm`, so a clip must go
+    through the form object's matrix (M5a)."""
+    page = (
+        b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] "
+        b"/Resources << /Font << /F1 5 0 R >> /XObject << /F 6 0 R >> >> /Contents 4 0 R >>"
+    )
+    content = b"q 0 0 94 300 re W n BT /F1 12 Tf 60 20 Td (Inside Outside) Tj ET Q"
+    matrix = b"/Type /XObject /Subtype /Form /BBox [0 0 612 792] /Matrix [0.5 0 0 0.5 0 0] "
+    form = _stream(content, matrix + b"/Resources << /Font << /F1 5 0 R >> >> ")
+    objects = [_stream(b"q 4 0 0 4 50 50 cm /F Do Q"), _HELVETICA, form]
+    return _build([_CATALOG, _ONE_PAGE, page, *objects])
 
 
 def form_clipped(*, nested: bool = False) -> bytes:
@@ -1101,6 +1118,7 @@ OPENABLE: dict[str, Callable[[], bytes]] = {
     "outside_crop": outside_crop,
     "form_clipped": form_clipped,
     "nested_form_clipped": lambda: form_clipped(nested=True),
+    "scaled_form_clipped": scaled_form_clipped,
     "two_column": two_column,
     "landscape": landscape,
     "unruled_table": unruled_table,

@@ -116,8 +116,10 @@ MediaBox), unrotated, with y growing down: `(x - box.x0, box.y1 - y)`. This is t
 - **Clipped:** the character's centre lies outside at least one path of a clip that applies to it:
   its text object's clip (`FPDFPageObj_GetClipPath`), or the clip of any Form XObject enclosing it.
   PDFium attaches a clip set before a form is drawn to the form object, not to the objects inside
-  it, so the verifier carries each form's clip down to what the form holds. A path is the polygon
-  through its segment points; inside is the even-odd crossing test.
+  it, so the verifier carries each form's clip down to what the form holds. PDFium gives every
+  object's clip in the space of the forms enclosing it (after a form's `/Matrix`, before the `cm`
+  that placed it), so each clip goes through those forms' matrix to the page. A path is the
+  polygon through its segment points; inside is the even-odd crossing test.
 
 A character's *centre* is its loose box's centre, everywhere in this spec.
 
@@ -173,6 +175,7 @@ for any other reason gives `Ink(pages=(), error=<PDFium's message>)`.
 | VR13 | `ruled_encrypted("u")` with its password; with none; with a wrong one | pages; `PasswordRequired`; `WrongPassword` |
 | VR15 | bytes that are not a PDF | `Ink` with an error and no pages |
 | VR16 | `form_clipped`: a clip set around a Form XObject, on the page or inside a parent form | the form's hidden text is clipped; MuPDF drops it too |
+| VR17 | `scaled_form_clipped`: a form with a `/Matrix` and a `cm`, a clip inside it cutting `Inside Outside` between the words (olmOCR-bench's c45171) | `Outside` clipped, `Inside` not |
 | VR14 | `null_second_kid` | page 2 has an error and no characters |
 
 ---

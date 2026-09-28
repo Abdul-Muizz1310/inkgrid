@@ -357,10 +357,16 @@ def value_checks(page: InkPage, owner: Mapping[int, int], words: Words) -> list[
 
 
 def _apart(prev: InkChar, ch: InkChar) -> bool:
-    """Spec 11 section 3.1: PDFium runs far-apart characters together; a token ends at a jump."""
-    half = max(prev.box.height, ch.box.height) / 2
-    (px, py), (x, y) = prev.center, ch.center
-    return ch.box.x0 - prev.box.x1 > half or x < px or abs(y - py) > half
+    """Spec 11 section 3.1: PDFium runs far-apart characters together; a token ends at a gap.
+
+    The gap is the distance between the two boxes in any direction, so a run keeps together
+    whichever way its text goes: across the page, down a landscape page, or upside down.
+    """
+    a, b = prev.box, ch.box
+    dx = max(0.0, b.x0 - a.x1, a.x0 - b.x1)
+    dy = max(0.0, b.y0 - a.y1, a.y0 - b.y1)
+    size = max(a.width, a.height, b.width, b.height)
+    return math.hypot(dx, dy) > size / 2
 
 
 def _value(

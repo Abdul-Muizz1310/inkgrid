@@ -5,7 +5,7 @@ from hypothesis import given
 from hypothesis import strategies as st
 
 from doc_builder import B, C, W, build
-from ink_builder import edited, ink_of, stray
+from ink_builder import edited, ink_of, page, stray
 from inkgrid.model.document import Document, Link, LinkEnd, Table
 from inkgrid.model.geometry import Rect, unturn_rect
 from inkgrid.model.verification import DefectCode
@@ -306,7 +306,8 @@ def test_VF6_touching_digits_in_two_cells_are_one_value() -> None:
 
 
 def test_VF5_a_token_ends_at_a_line_change() -> None:
-    doc = build([B("paragraph", [W("2", 100, 100)]), B("paragraph", [W("7", 105, 115)])])
+    # `2` ends a line at x 100; `7` opens the next line back at x 40
+    doc = build([B("paragraph", [W("2", 100, 100)]), B("paragraph", [W("7", 40, 112)])])
     assert values(doc, glued(doc, 0)) == []
 
 
@@ -408,3 +409,15 @@ def test_TB15_text_running_unbroken_over_a_rule_is_overflow() -> None:
     result = crossing("user", [140, 146, 152, 158, 166])  # the `r` of `/month/user`, past a rule
     assert codes(result) == []
     assert result.overflow == 1
+
+
+def test_VF7_a_vertical_run_is_one_token() -> None:
+    # A landscape page's value runs down the unrotated page: `1` above `2`, touching.
+    doc = build([B("paragraph", [W("1", 100, 100)]), B("paragraph", [W("2", 100, 110)])])
+    ink = page(
+        [
+            InkChar(0, "1", Rect(100, 100, 105, 110), "ink"),
+            InkChar(0, "2", Rect(100, 110, 105, 120), "ink"),
+        ]
+    )
+    assert values(doc, ink) == ["12"]

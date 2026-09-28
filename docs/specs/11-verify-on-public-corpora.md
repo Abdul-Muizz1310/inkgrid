@@ -154,10 +154,11 @@ count as owned.
 
 ### 3.1 Value tokens
 
-A token also ends where PDFium's order jumps: when the next ink character's box starts more than
-half its height to the right of the previous one's end, lies to its left, or its centre is more
-than half its height above or below. PDFium emits no separator between far-apart characters
-(eu-029's column numbers `1 2 3 4 5 6 7`, 57 pt apart, came back `1234567`).
+A token also ends at a gap: when the distance between the next ink character's box and the
+previous one's, in any direction, is more than half the larger of their sizes. PDFium emits no
+separator between far-apart characters (eu-029's column numbers `1 2 3 4 5 6 7`, 57 pt apart,
+came back `1234567`). The distance is direction-free, so a value keeps together whichever way its
+text runs: down a landscape page, upside down, or raised as a superscript against its number.
 
 ### 3.2 Overlays
 
@@ -171,6 +172,7 @@ a table read in a turned frame keeps the strict rule.
 |---|---|---|
 | VF5 | the tokens `1` and `2` in two cells 57 pt apart with no separator between them | no VALUE |
 | VF6 | `12` glued, 1 pt apart, in two cells | VALUE |
+| VF7 | `1` above `2`, touching, owned by two blocks (a value running down a landscape page) | VALUE |
 | TB16 | a non-horizontal paragraph word's ink in a frame-0 cell | no defect; `overlay_chars` = its characters in the cell |
 | TB17 | the same in a frame-90 table | TEXT |
 

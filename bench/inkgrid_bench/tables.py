@@ -148,7 +148,7 @@ def cells_from_boxes(
     """Cells from a grid of cell boxes, `None` where a merged cell covers a position.
 
     Each cell spans the grid lines its box covers; the grid lines are every distinct cell edge
-    (spec 12 section 3.1).
+    (spec 12 section 3.1). A span stops before another cell's anchor (see `_stop_at_anchors`).
     """
     present = [(r, c, b) for r, row in enumerate(boxes) for c, b in enumerate(row) if b is not None]
     xs = _lines([v for _, _, b in present for v in (b[0], b[2])])
@@ -161,4 +161,34 @@ def cells_from_boxes(
         cells.append(
             NCell(row0, col0, rows=max(1, row1 - row0), cols=max(1, col1 - col0), text=text)
         )
-    return sorted(cells, key=lambda c: (c.row, c.col))
+    return _stop_at_anchors(sorted(cells, key=lambda c: (c.row, c.col)))
+
+
+def _stop_at_anchors(cells: Sequence[NCell]) -> list[NCell]:
+    """Each cell's span cut before any other cell's anchor it covers: rows first, then columns.
+
+    pdfplumber and PyMuPDF return a box that contains another cell's box (spec 12 section 3.1,
+    amended): its rows end at the first later row holding another anchor within its columns, and
+    its columns at the first later column holding another anchor within the rows left.
+    """
+    anchors = {(c.row, c.col) for c in cells}
+    out = []
+    for c in cells:
+        rows = next(
+            (
+                r - c.row
+                for r in range(c.row + 1, c.row + c.rows)
+                if any((r, k) in anchors for k in range(c.col, c.col + c.cols))
+            ),
+            c.rows,
+        )
+        cols = next(
+            (
+                k - c.col
+                for k in range(c.col + 1, c.col + c.cols)
+                if any((r, k) in anchors for r in range(c.row, c.row + rows))
+            ),
+            c.cols,
+        )
+        out.append(NCell(c.row, c.col, rows=rows, cols=cols, text=c.text, header=c.header))
+    return out

@@ -40,6 +40,28 @@ earlier runs on them were inkgrid's verifier (spec 11), which scores nothing.
   PyMuPDF return cells with boxes and `None` for a merged cell's covered positions; PyMuPDF also marks a
   header. Camelot returns its grid, per-cell edges, and span flags.
 
+**Measured while building the harness** (after §§ 1–5 were fixed; none of it changes a metric):
+
+- **The jar's region mode** reads the PDF and crashes without three libraries it does not bundle:
+  JAI 1.1.3's core, FontBox 1.8.2, and Commons Collections 3.2.2 (all pinned in `sources.toml`). With
+  them, eu-001's regions scored against themselves are 7 of 7 complete and pure. It pairs each
+  ground-truth region with one result region; every other result region is a false positive, and its
+  characters count as detected wrongly. Structure mode counts only result tables matched to a
+  ground-truth table, and prints no size for an unmatched one (the size comes from scoring the ground
+  truth against itself).
+- **Soric et al.'s evaluator** accepts only its own model names; every tool here is written as its
+  `pymu` model, the name selecting only how each box's HTML is unpacked. Their loader pairs each imaged
+  page's boxes with its HTML files, 156 tables over 67 documents.
+- **olmOCR-bench's scorer** (0.4.27) imports numpy without declaring it (pinned beside it), and its
+  `--output_failed` skips a candidate with any error. Per-test results come from its own
+  `evaluate_candidate`, checked against the score its command line prints.
+- **The text-layer stratum** is the 173 PDFs outside `bench/olmocr-no-text-layer.txt`: the 15 on which
+  poppler's `pdftotext` 26.01 finds fewer than 100 non-whitespace characters (12 find none), 84 tests,
+  as first measured.
+- **Binding's ceiling:** on the ground truth's own grids (82 tables that tile, 4,701 paths), 94.2% of
+  paths are leaf-bound and 87.9% bound. A label outside the value's row and column (a caption, a note)
+  never binds.
+
 ---
 
 ## 1 · Datasets
@@ -75,7 +97,11 @@ Every adapter writes, per document, the tables it finds: the page (1-based), the
 the origin at the page box's top-left corner, and the cells, each an anchor (row, column), a span (rows,
 columns), its text, and whether the tool marks it a header. Spans come from the tool where it states them
 (inkgrid, Camelot's edges); for pdfplumber and PyMuPDF, a cell spans the grid lines its box covers, the
-grid lines being every distinct cell edge of the table. A header flag comes from inkgrid's header rows
+grid lines being every distinct cell edge of the table. *Amended 2026-09-28, before any tool was scored:* a
+span stops before another cell's anchor. pdfplumber and PyMuPDF return boxes that contain another
+cell's box (on 32 and 21 of the 313 documents); such a cell's rows end at the first later row holding
+another anchor within its columns, then its columns at the first later column holding another anchor
+within those rows. Any other overlap is the adapter's crash. A header flag comes from inkgrid's header rows
 and PyMuPDF's header; the others mark none.
 
 ### 3.2 What each scorer reads
@@ -153,6 +179,7 @@ inkgrid, the verifier's defects by class (spec 11 § 5).
 |---|---|---|
 | NT1 | a 2 × 2 table with a cell spanning both columns of row 0, through the normalized JSON | round-trips; the grid tiles |
 | NT2 | pdfplumber-style cells with `None` for a covered position and boxes on 3 x-edges and 3 y-edges | the spans the boxes cover |
+| NT3 | a box covering rows 1-2 of three columns, with another box anchored in row 2 inside it (amended) | the outer cell keeps row 1; the grid tiles |
 | RD1 | NT1's table as ICDAR `-str.xml` | the jar scores it against itself 1.0 |
 | RD2 | NT1's table as HTML | one `<table>`, `colspan="2"` on the spanning cell, header rows in `<thead>` |
 | RD3 | a box on a 595 × 842 page, to Soric et al.'s pixels | × 1000 / 842 |

@@ -51,3 +51,26 @@ def test_NT1_a_page_knows_its_frame() -> None:
     page = NPage(box=(-100.0, -100.0, 512.0, 692.0), rotation=0)
     assert (page.width, page.height) == (612.0, 792.0)
     assert page.to_user(172.0, 92.0) == (72.0, 600.0)  # top-left frame to PDF user space
+
+
+def test_NT3_a_span_stops_before_another_cells_anchor() -> None:
+    # pdfplumber on eu-011: the first box covers rows 1-2 of columns 0-2, and a box anchored in
+    # row 2, column 1 lies inside it; the outer cell keeps row 1 only
+    boxes = [
+        [(0.0, 0.0, 10.0, 5.0), (10.0, 0.0, 20.0, 5.0), (20.0, 0.0, 30.0, 5.0)],
+        [(0.0, 5.0, 30.0, 20.0), None, None],
+        [None, (10.0, 10.0, 20.0, 20.0), None],
+    ]
+    texts = [["a", "b", "c"], ["outer", None, None], [None, "inner", None]]
+    cells = cells_from_boxes(boxes, texts)
+    assert NCell(1, 0, cols=3, text="outer") in cells
+    assert NCell(2, 1, text="inner") in cells
+    table = NTable.filled(page=1, bbox=(0, 0, 30, 20), cells=cells)
+    assert (table.n_rows, table.n_cols) == (3, 3)
+
+
+def test_NT3_rows_are_cut_before_columns() -> None:
+    # a 2 x 2 box with another anchor at its lower right keeps its first row, both columns
+    boxes = [[(0.0, 0.0, 20.0, 20.0), None], [None, (10.0, 10.0, 20.0, 20.0)]]
+    cells = cells_from_boxes(boxes, [["big", None], [None, "x"]])
+    assert cells[0] == NCell(0, 0, cols=2, text="big")

@@ -73,13 +73,38 @@ class NTable:
 
 
 @dataclass(frozen=True, slots=True)
+class NPage:
+    """A page's box in PDF user space (the CropBox clipped to the MediaBox) and its rotation.
+
+    Tables are placed in the unrotated box, with the origin at its top-left corner.
+    """
+
+    box: Box
+    rotation: int
+
+    @property
+    def width(self) -> float:
+        """The box's width in points."""
+        return self.box[2] - self.box[0]
+
+    @property
+    def height(self) -> float:
+        """The box's height in points."""
+        return self.box[3] - self.box[1]
+
+    def to_user(self, x: float, y: float) -> tuple[float, float]:
+        """A point of the top-left frame in PDF user space (origin at the bottom left)."""
+        return (x + self.box[0], self.box[3] - y)
+
+
+@dataclass(frozen=True, slots=True)
 class NDocument:
     """One tool's reading of one PDF; `error` is set when it crashed or timed out."""
 
     tool: str
     version: str
     pdf_sha256: str
-    pages: int
+    pages: tuple[NPage, ...]
     tables: tuple[NTable, ...] = field(default=())
     seconds: float = 0.0
     error: str | None = None
@@ -100,7 +125,8 @@ class NDocument:
             )
             for t in data.pop("tables")
         )
-        return cls(tables=tables, **data)
+        pages = tuple(NPage(box=tuple(p["box"]), rotation=p["rotation"]) for p in data.pop("pages"))
+        return cls(tables=tables, pages=pages, **data)
 
 
 def _lines(values: Sequence[float]) -> list[float]:

@@ -1,6 +1,6 @@
 import pytest
 
-from inkgrid_bench.tables import NCell, NDocument, NTable, cells_from_boxes
+from inkgrid_bench.tables import NCell, NDocument, NPage, NTable, cells_from_boxes
 
 
 def spanning() -> NTable:
@@ -13,8 +13,9 @@ def spanning() -> NTable:
 
 
 def test_NT1_a_table_round_trips_through_json() -> None:
+    pages = (NPage(box=(0.0, 0.0, 612.0, 792.0), rotation=90),)
     doc = NDocument(
-        tool="t", version="1", pdf_sha256="0" * 64, pages=1, tables=(spanning(),), seconds=0.5
+        tool="t", version="1", pdf_sha256="0" * 64, pages=pages, tables=(spanning(),), seconds=0.5
     )
     assert NDocument.from_json(doc.to_json()) == doc
     assert (spanning().n_rows, spanning().n_cols) == (2, 2)
@@ -44,3 +45,9 @@ def test_NT2_edges_within_a_point_are_one_edge() -> None:
         (0, 0, 1, 1),
         (0, 1, 1, 1),
     ]
+
+
+def test_NT1_a_page_knows_its_frame() -> None:
+    page = NPage(box=(-100.0, -100.0, 512.0, 692.0), rotation=0)
+    assert (page.width, page.height) == (612.0, 792.0)
+    assert page.to_user(172.0, 92.0) == (72.0, 600.0)  # top-left frame to PDF user space

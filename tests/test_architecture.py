@@ -131,7 +131,7 @@ def test_stdlib_errors_and_same_layer_imports_are_allowed(tmp_path: Path) -> Non
 def test_sources_are_ascii() -> None:
     offenders = [
         path.relative_to(ROOT).as_posix()
-        for folder in ("src", "tests", "scripts", "typings")
+        for folder in ("src", "tests", "scripts", "typings", "bench")
         for path in sorted((ROOT / folder).rglob("*.py*"))
         if path.suffix in {".py", ".pyi"} and not path.read_bytes().isascii()
     ]

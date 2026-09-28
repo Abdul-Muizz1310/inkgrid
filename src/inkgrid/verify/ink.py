@@ -37,7 +37,10 @@ def char_kind(code: int, *, generated: bool, hyphen: bool, map_error: bool) -> t
         ("unmapped", char == REPLACEMENT or category == "Cs" or map_error),
     )
     kind: CharKind = next((k for k, holds in rules if holds), "ink")
-    return kind, "-" if kind == "hyphen" else char
+    if kind == "hyphen":
+        return kind, "-"
+    # A lone surrogate is not text: it cannot be written as UTF-8 or JSON, so it reads as U+FFFD.
+    return kind, REPLACEMENT if category == "Cs" else char
 
 
 @dataclass(frozen=True, slots=True)

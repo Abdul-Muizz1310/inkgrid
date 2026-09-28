@@ -94,7 +94,9 @@ Each character of `FPDFText_LoadPage` becomes an `InkChar(index, char, box, kind
      keeps the first and counts the second as invisible (measured: `hard-` against `soft`);
   3. `space` for whitespace (`str.isspace`);
   4. `invisible` for categories Cc, Cf, Co, and Cn: never a word character (`02-reader.md` § 4);
-  5. `unmapped` for U+FFFD, a lone surrogate (Cs), or `FPDFText_HasUnicodeMapError` = 1;
+  5. `unmapped` for U+FFFD, a lone surrogate (Cs), or `FPDFText_HasUnicodeMapError` = 1. A lone
+     surrogate reads as U+FFFD: it is not text, and a report holding one could not be written as
+     JSON;
   6. `ink` otherwise.
 
 Characters of kind `ink`, `hyphen`, and `unmapped` are **ink**: what a word could hold. The rest
@@ -158,7 +160,7 @@ for any other reason gives `Ink(pages=(), error=<PDFium's message>)`.
 | VR2 | `offset_mediabox`; `cropbox` | as VR1: the frame's origin is the page box's corner |
 | VR3 | `rotated`; `landscape` | as VR1: the frame is unrotated |
 | VR4 | kinds: a generated space; U+0002; `IsHyphen` on `-`; U+0020; U+00A0 | generated; hyphen `-`; hyphen `-`; space; space |
-| VR5 | kinds: U+200B, U+00AD, U+E000, U+0007; U+FFFD, U+D800, a map error on `A`; `A` | invisible; unmapped; ink |
+| VR5 | kinds: U+200B, U+00AD, U+E000, U+0007; U+FFFD, U+D800, a map error on `A`; `A` | invisible; unmapped (U+D800 as U+FFFD); ink |
 | VR6 | `clipped_text` | the 7 characters of `clipped` are clipped; `inside` is not |
 | VR7 | `outside_crop` | 18 ink characters are outside the frame |
 | VR8 | `ruled_grid` | every reader rule lies on a verifier rule: same axis, `at` within 1.0, and its extent covered within 1.0 |

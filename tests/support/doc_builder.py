@@ -282,4 +282,7 @@ def without_last_paragraph(doc: Document) -> tuple[Document, str]:
     removed = [w["text"] for w in data["words"] if w["id"] in ids]
     data["words"] = [w for w in data["words"] if w["id"] not in ids]
     data["ledger"]["content_chars"] -= sum(len(t) for t in removed)
+    for page in data["pages"]:
+        if not any(w["page"] == page["number"] for w in data["words"]):
+            page["text_layer"], page["unmapped_chars"] = "none", 0  # a page left with no words
     return from_json(data), "".join(removed)

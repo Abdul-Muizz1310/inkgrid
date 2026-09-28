@@ -44,5 +44,13 @@ def test_VA5_a_removed_paragraph_is_lost_on_its_page() -> None:
     assert not report.ok
 
 
+def test_RP6_a_lost_lone_surrogate_is_reported_as_json() -> None:
+    data = pdf_factory.surrogate_tounicode()  # PDFium reads the A as U+D800, MuPDF as U+FFFD
+    doc, _ = without_last_paragraph(inkgrid.read(data))
+    report = inkgrid.verify(doc, data)
+    assert [(d.code.value, d.text) for d in report.defects] == [("lost", "\ufffdB")]
+    assert inkgrid.VerificationReport.model_validate_json(report.model_dump_json()) == report
+
+
 def test_verify_is_public() -> None:
     assert "verify" in inkgrid.__all__

@@ -23,7 +23,7 @@ def test_VR5_invisible_unmapped_and_ink() -> None:
     for code in (0x200B, 0x00AD, 0xE000, 0x0007):
         assert kind(code)[0] == "invisible", hex(code)
     assert kind(0xFFFD) == ("unmapped", "\ufffd")
-    assert kind(0xD800)[0] == "unmapped"
+    assert kind(0xD800) == ("unmapped", "\ufffd")  # a lone surrogate cannot be written as JSON
     assert kind(ord("A"), map_error=True) == ("unmapped", "A")
     assert kind(ord("A")) == ("ink", "A")
 

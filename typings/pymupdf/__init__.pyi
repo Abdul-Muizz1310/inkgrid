@@ -33,6 +33,25 @@ class Rect:
     def width(self) -> float: ...
     @property
     def height(self) -> float: ...
+    def __mul__(self, matrix: Matrix) -> Rect: ...
+
+class Matrix: ...
+
+# find_tables(): used only by the benchmark's PyMuPDF adapter (bench/), never by inkgrid itself.
+class TableRow:
+    cells: list[tuple[float, float, float, float] | None]
+
+class TableHeader:
+    external: bool
+
+class TableF:
+    bbox: tuple[float, float, float, float]
+    rows: list[TableRow]
+    header: TableHeader
+    def extract(self) -> list[list[str | None]]: ...
+
+class TableFinder:
+    tables: list[TableF]
 
 class Quad:
     ul: Point
@@ -120,6 +139,9 @@ class Page:
     def set_rotation(self, rotation: int) -> None: ...
     def set_mediabox(self, rect: Rect) -> None: ...
     def get_pixmap(self, *, dpi: int) -> Pixmap: ...
+    def find_tables(self) -> TableFinder: ...
+    @property
+    def derotation_matrix(self) -> Matrix: ...
 
 class Document:
     page_count: int

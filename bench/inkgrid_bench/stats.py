@@ -8,7 +8,6 @@ tools. A resample whose metric is undefined (NaN) is left out of the percentiles
 
 import math
 import random
-import statistics
 from collections.abc import Iterator, Mapping, Sequence
 from dataclasses import dataclass
 
@@ -16,8 +15,7 @@ from inkgrid_bench.scores.metrics import Counts, Metric
 
 RESAMPLES = 10_000
 SEED = 20260928
-# statistics.quantiles(n=40) cuts at 1/40 ... 39/40: the first and last are the 2.5th and 97.5th.
-QUANTILES = 40
+LOW, HIGH = 0.025, 0.975
 
 
 @dataclass(frozen=True, slots=True)
@@ -42,14 +40,24 @@ def _draws(n: int, resamples: int, seed: int) -> Iterator[list[int]]:
         yield [rng.randrange(n) for _ in range(n)]
 
 
+def _percentile(ordered: Sequence[float], q: float) -> float:
+    """The q-th quantile of sorted values, interpolated linearly between the two nearest.
+
+    Equal neighbours give exactly their value, so a constant metric's interval is the constant.
+    """
+    at = q * (len(ordered) - 1)
+    j = int(at)
+    if j + 1 >= len(ordered):
+        return ordered[-1]
+    lo, hi = ordered[j], ordered[j + 1]
+    return lo if lo == hi else lo + (hi - lo) * (at - j)
+
+
 def _interval(point: float, values: Sequence[float]) -> Interval:
     defined = sorted(v for v in values if not math.isnan(v))
     if math.isnan(point) or not defined:
         return Interval(point, math.nan, math.nan)
-    if len(defined) == 1:
-        return Interval(point, defined[0], defined[0])
-    cuts = statistics.quantiles(defined, n=QUANTILES, method="inclusive")
-    return Interval(point, cuts[0], cuts[-1])
+    return Interval(point, _percentile(defined, LOW), _percentile(defined, HIGH))
 
 
 def bootstrap(

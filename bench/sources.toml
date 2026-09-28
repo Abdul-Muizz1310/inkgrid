@@ -68,9 +68,21 @@ root = "olmocr/bench_data"
 repository = "https://github.com/soricm/table-extraction-benchmark"
 tag = "v1.0.0"
 commit = "48367ea2"
+# Their evaluator on CPU (spec 12 section 0): Python 3.10, PyTorch's CPU wheels, and their pins.
+python = "3.10"
+index = "https://download.pytorch.org/whl/cpu"
+with = [
+    "torch==1.13.1+cpu", "torchvision==0.14.1+cpu", "numpy==1.24.2", "scipy==1.15.2",
+    "tqdm==4.65.0", "apted==1.0.3", "beautifulsoup4==4.14.3", "lxml==5.3.1", "nltk==3.9.1",
+    "pillow==11.1.0", "pymupdf==1.25.3", "table-recognition-metric==0.0.4", "levenshtein==0.27.1",
+    "rapidfuzz==3.12.2", "editdistance==0.6.2", "matplotlib==3.9.4", "psutil==7.2.1",
+    "pyyaml==6.0.3", "scikit-image==0.25.2", "pycocotools==2.0.11", "pandas==2.3.3",
+]
 
 [scorer.olmocr]
 package = "olmocr[bench]==0.4.27"
+# olmocr 0.4.27's bench imports numpy without declaring it.
+with = ["numpy==2.3.3"]
 
 [tool]
 pdfplumber = "0.11.10"

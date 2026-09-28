@@ -11,10 +11,10 @@ import csv
 import io
 import re
 import unicodedata
-import xml.etree.ElementTree as ET
 from collections.abc import Sequence
 from dataclasses import dataclass
 
+from inkgrid_bench import icdar_gt
 from inkgrid_bench.tables import Box, NCell, NPage, NTable
 
 KEYS = ("paths", "value", "leaf", "bound")
@@ -81,26 +81,15 @@ def parse_fnc(text: str) -> list[list[AccessPath]]:
 
 def gt_tables(xml: str, pages: Sequence[NPage]) -> list[GtTable]:
     """The structure ground truth's tables; each region's box is the union of its cells' boxes."""
-    root = ET.fromstring(xml.encode("utf-8"))  # noqa: S314 - pinned ground truth, hash-verified
     out = []
-    for table in root.findall("table"):
-        regions: list[tuple[int, Box]] = []
-        texts: set[str] = set()
-        for region in table.findall("region"):
-            number = int(region.get("page", "0"))
-            boxes = []
-            for cell in region.findall("cell"):
-                texts.add(norm(cell.findtext("content") or ""))
-                bb = cell.find("bounding-box")
-                if bb is not None:
-                    boxes.append([float(bb.get(k, "nan")) for k in ("x1", "x2", "y1", "y2")])
-            if not boxes:
-                continue
-            x0, _, _, top = pages[number - 1].box
-            ux1, ux2 = min(b[0] for b in boxes), max(b[1] for b in boxes)
-            uy1, uy2 = min(b[2] for b in boxes), max(b[3] for b in boxes)
-            regions.append((number, (ux1 - x0, top - uy2, ux2 - x0, top - uy1)))
-        out.append(GtTable(regions=tuple(regions), texts=frozenset(texts)))
+    for regions in icdar_gt.parse(xml):
+        placed: list[tuple[int, Box]] = []
+        for region in regions:
+            box = region.bbox(pages[region.page - 1])
+            if box is not None:
+                placed.append((region.page, box))
+        texts = frozenset(norm(c.text) for r in regions for c in r.cells)
+        out.append(GtTable(regions=tuple(placed), texts=texts))
     return out
 
 

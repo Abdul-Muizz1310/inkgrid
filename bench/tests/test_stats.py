@@ -4,9 +4,9 @@ from collections.abc import Sequence
 import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
-from inkgrid_bench.stats import Interval, bootstrap, paired
 
 from inkgrid_bench.scores.metrics import Counts, mean_of, pooled
+from inkgrid_bench.stats import Interval, bootstrap, paired
 
 DOCS = {
     "a": {"num": 3, "den": 4},
@@ -19,6 +19,9 @@ def test_BS1_a_constant_metric_has_the_constant_as_its_interval() -> None:
     assert bootstrap(DOCS, lambda docs: 0.5, resamples=200) == Interval(0.5, 0.5, 0.5)
     same = {k: {"num": 2, "den": 4} for k in "abcd"}
     assert bootstrap(same, pooled("num", "den"), resamples=200) == Interval(0.5, 0.5, 0.5)
+    # a constant with no exact binary form stays exactly itself (found by the property below)
+    one = {"a": {"num": 5, "den": 11}}
+    assert bootstrap(one, pooled("num", "den"), resamples=50) == Interval(5 / 11, 5 / 11, 5 / 11)
 
 
 def test_BS2_identical_results_differ_by_zero_with_a_zero_width_interval() -> None:

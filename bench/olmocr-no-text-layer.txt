@@ -1,0 +1,17 @@
+# olmOCR-bench table PDFs without a text layer (spec 12 section 1): the 15 on which poppler's
+# pdftotext 26.01 finds fewer than 100 non-whitespace characters (RR-0016's measurement; 84 tests).
+tables/0684e33bd901b116725b6a0e0d21398f7315_pg4_pg1.pdf
+tables/11e12a3ddca3b1743f6ec1c22a52cdbf9ffe_pg8_pg1.pdf
+tables/2e5fbee1a02ad5dde299c81b1c11c16ad8c9_pg5.pdf
+tables/30c92c35171cd45479bd3083dbf574b31c9a_pg44.pdf
+tables/35a3f1c2f69f57fe3ca6da3ef2a1a2f59812_pg53.pdf
+tables/3d780cdcc987c65fdc7e1628c6a32af33d5d_pg22_pg1.pdf
+tables/426df27cf990a3426b9e0731ad346f28184f_pg9.pdf
+tables/4db371aebdbbfa28531a816f9bf26ed0a028_pg52_pg1.pdf
+tables/533600ba1ea641b726c0942b913f18529719_pg20_pg1.pdf
+tables/77895f72f448c6110497d01cdc5bbc18a143_pg1.pdf
+tables/8097792c7266cdd2875e30cdf31ddcde348b_pg1.pdf
+tables/9e6a5b213e4fd5906842ebe6b0c5538e9e7b_pg12.pdf
+tables/d896f9ae5405c8d6b147ae9c9c20a0abb6c4_pg4_pg1.pdf
+tables/df96e707adf064658b570d4cf4b6f98b4890_pg6_pg1.pdf
+tables/fcb362aa304b7b0bedec37f6c74f8ce3751a_pg2.pdf

@@ -93,6 +93,7 @@ class PageCheck(Frozen):
     lost_chars: NonNegativeInt = 0
     outside_chars: NonNegativeInt = 0
     clipped_chars: NonNegativeInt = 0
+    soft_hyphens: NonNegativeInt = 0
     unmapped_chars: NonNegativeInt = 0
     declared_chars: NonNegativeInt = 0
     overflow_chars: NonNegativeInt = 0
@@ -101,7 +102,13 @@ class PageCheck(Frozen):
     @model_validator(mode="after")
     def _accounted(self) -> Self:
         where = f"page {self.number}"
-        parts = self.owned_chars + self.lost_chars + self.outside_chars + self.clipped_chars
+        parts = (
+            self.owned_chars
+            + self.lost_chars
+            + self.outside_chars
+            + self.clipped_chars
+            + self.soft_hyphens
+        )
         match self.status:
             case "verified":
                 if self.declared_chars:
@@ -109,8 +116,8 @@ class PageCheck(Frozen):
                     raise ValueError(msg)
                 if self.ink_chars != parts:
                     msg = (
-                        f"{where}: {self.ink_chars} ink characters, but owned, lost, outside and "
-                        f"clipped add up to {parts}"
+                        f"{where}: {self.ink_chars} ink characters, but owned, lost, outside, "
+                        f"clipped and soft hyphens add up to {parts}"
                     )
                     raise ValueError(msg)
             case "declared":

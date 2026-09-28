@@ -54,6 +54,9 @@ def test_RP1_a_verified_page_accounts_for_every_ink_character() -> None:
     with pytest.raises(ValidationError, match="page 1"):
         page(ink_chars=4)
     page(ink_chars=6, lost_chars=1, outside_chars=1, clipped_chars=1)  # 3 + 1 + 1 + 1
+    page(ink_chars=4, soft_hyphens=1)
+    with pytest.raises(ValidationError, match="soft"):
+        page(ink_chars=3, soft_hyphens=1)
 
 
 def test_RP1_a_declared_page_holds_only_declared_ink() -> None:

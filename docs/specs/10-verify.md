@@ -84,13 +84,16 @@ Each character of `FPDFText_LoadPage` becomes an `InkChar(index, char, box, kind
 - `index` is PDFium's character index; `box` is `FPDFText_GetLooseCharBox`, in the frame (§ 1.2);
 - `kind` is decided in this order:
   1. `generated` when `FPDFText_IsGenerated` is 1: PDFium's own spaces and line breaks;
-  2. `ink`, char `-`, when `FPDFText_IsHyphen` is 1 or the code point is U+0002;
+  2. `hyphen`, char `-`, when `FPDFText_IsHyphen` is 1 or the code point is U+0002: a hyphen that
+     ends a line. PDFium reports a hard `-` and a soft hyphen (U+00AD) there alike, while MuPDF
+     keeps the first and counts the second as invisible (measured: `hard-` against `soft`);
   3. `space` for whitespace (`str.isspace`);
   4. `invisible` for categories Cc, Cf, Co, and Cn: never a word character (`02-reader.md` § 4);
   5. `unmapped` for U+FFFD, a lone surrogate (Cs), or `FPDFText_HasUnicodeMapError` = 1;
   6. `ink` otherwise.
 
-Characters of kind `ink` and `unmapped` are **ink**: what a word could hold. The rest are not.
+Characters of kind `ink`, `hyphen`, and `unmapped` are **ink**: what a word could hold. The rest
+are not.
 
 ### 1.2 The frame
 
@@ -148,7 +151,7 @@ was given.
 | VR1 | `simple_text`: the first ink character | its box's left and top equal the first word's within 0.5 |
 | VR2 | `offset_mediabox`; `cropbox` | as VR1: the frame's origin is the page box's corner |
 | VR3 | `rotated`; `landscape` | as VR1: the frame is unrotated |
-| VR4 | kinds: a generated space; U+0002; `IsHyphen` on `-`; U+0020; U+00A0 | generated; ink `-`; ink `-`; space; space |
+| VR4 | kinds: a generated space; U+0002; `IsHyphen` on `-`; U+0020; U+00A0 | generated; hyphen `-`; hyphen `-`; space; space |
 | VR5 | kinds: U+200B, U+00AD, U+E000, U+0007; U+FFFD, U+D800, a map error on `A`; `A` | invisible; unmapped; ink |
 | VR6 | `clipped_text` | the 7 characters of `clipped` are clipped; `inside` is not |
 | VR7 | `outside_crop` | 18 ink characters are outside the frame |
@@ -196,7 +199,8 @@ Each word's characters are compared with the ink it owns, as multisets:
 1. an owned character equal to a word character pairs with it;
 2. an unmapped owned character, or a word's U+FFFD, pairs with any remaining character on the
    other side (counted as `unmapped`);
-3. a remaining owned character is **LOST**: ink the word's box holds but the word does not;
+3. a remaining owned character is **LOST**: ink the word's box holds but the word does not. A
+   remaining `hyphen` is a **soft hyphen** instead (§ 3.2);
 4. a remaining word character is **DOUBLED** when an ink character equal to it, contained by this
    word, went to another word; otherwise it is **INVENTED**: text that is not on the page.
 
@@ -205,6 +209,9 @@ Each word's characters are compared with the ink it owns, as multisets:
 - **outside** or **clipped** (§ 1.3): benign, the reader's `clipped_text`. The class is accepted
   while the page's outside and clipped characters number at most its `clipped_chars`; beyond that,
   every one of them is LOST, since the reader stated a smaller count than the page shows.
+- a `hyphen`: a **soft hyphen**, benign, which the reader counted as invisible. The class is accepted
+  while the page's soft hyphens, unowned or left over in a word, number at most its
+  `invisible_chars`; beyond that, every one of them is LOST.
 - otherwise **LOST**.
 
 LOST characters are reported as runs: consecutive PDFium indices on one page form one defect, whose
@@ -235,6 +242,8 @@ it either, it is unverified.
 | DC5 | the word `�B` over ink `AB`; the word `AB` over ink `�B` (unmapped) | no defect; `unmapped` 1 each |
 | DC6 | one stray character outside the frame; the page's `clipped_chars` 1, then 0 | outside 1; then LOST |
 | DC7 | as DC6, clipped instead of outside | clipped 1; then LOST |
+| DC13 | the word `soft` with a `hyphen` after it; the page's `invisible_chars` 1, then 0 | soft hyphen 1; then LOST |
+| DC14 | the word `hard-` over ink `hard` and a `hyphen` | no defect |
 | DC8 | a page with an `unreadable_page` finding and ink | status declared; its ink declared; no defect |
 | DC9 | a document page PDFium cannot load; a page PDFium does not count | UNVERIFIED each |
 | DC10 | an extra PDFium page with ink; the same with a pageless `unreadable_page` finding | LOST; declared |
@@ -354,7 +363,7 @@ class Defect(Frozen):
 class PageCheck(Frozen):
     number: PositiveInt
     status: Literal["verified", "declared", "unverified"]
-    ink_chars, owned_chars, lost_chars, outside_chars, clipped_chars,
+    ink_chars, owned_chars, lost_chars, outside_chars, clipped_chars, soft_hyphens,
     unmapped_chars, declared_chars, overflow_chars, rules: NonNegativeInt
 
 class Verifier(Frozen):
@@ -372,7 +381,8 @@ class VerificationReport(Frozen):
 
 Its invariants are validators:
 
-- a verified page's ink is fully accounted for: `ink = owned + lost + outside + clipped`, and
+- a verified page's ink is fully accounted for: `ink = owned + lost + outside + clipped +
+  soft_hyphens`, where `owned` counts the characters paired with a word character, and
   `declared = 0`; a declared page has `ink = declared` and nothing else; an unverified page has
   every count 0;
 - a page's `lost_chars` equals the length of its LOST defects' text;

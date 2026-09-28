@@ -287,9 +287,57 @@ def glued(doc: Document, first: int) -> InkPage:
 
 
 def test_VF1_a_value_token_bound_to_two_cells() -> None:
-    doc = build([grid_table([["1.20", "%"]])])
+    # `1.20` ends on the cell edge at 160 and `%` starts there: one run of glyphs across two cells
+    doc = build(
+        [grid_table([["1.20", "%"]], at={(0, 0): (140.0, Y0 + 5), (0, 1): (160.0, Y0 + 5)})]
+    )
     assert values(doc) == []
     assert values(doc, glued(doc, 0)) == ["1.20%"]
+
+
+def test_VF5_a_token_ends_at_a_wide_gap() -> None:
+    doc = build([grid_table([["1", "2"]])])  # `1` at 105 and `2` at 165: 55 pt apart
+    assert values(doc, glued(doc, 0)) == []
+
+
+def test_VF6_touching_digits_in_two_cells_are_one_value() -> None:
+    doc = build([grid_table([["1", "2"]], at={(0, 0): (155.0, Y0 + 5), (0, 1): (161.0, Y0 + 5)})])
+    assert values(doc, glued(doc, 0)) == ["12"]
+
+
+def test_VF5_a_token_ends_at_a_line_change() -> None:
+    doc = build([B("paragraph", [W("2", 100, 100)]), B("paragraph", [W("7", 105, 115)])])
+    assert values(doc, glued(doc, 0)) == []
+
+
+def test_TB16_a_diagonal_overlay_in_a_cell_is_counted_not_a_defect() -> None:
+    doc = build([grid_table(RATES), B("paragraph", [W("DRAFT", 185, 225, horizontal=False)])])
+    result = check(doc)
+    assert codes(result) == []
+    assert result.overlay == 5
+
+
+def test_TB17_a_turned_tables_cells_keep_the_strict_rule() -> None:
+    doc, _ = turned(165.0)
+    (table,) = doc.tables()
+    cell = unturn_rect(table.grid.cell_rect(table.grid.cells[0]), 90, 612.0, 792.0)
+    stamp = W(
+        "DRAFT",
+        cell.x0 + 1,
+        cell.y0 + 20,
+        horizontal=False,
+        rect=Rect(cell.x0 + 1, cell.y0 + 20, cell.x0 + 9, cell.y0 + 45),
+    )
+    table_block = B(
+        "table",
+        [W("Charge", 0, 0, rect=next(w.bbox for w in doc.words))],
+        row_bands=[(Y0, Y0 + ROW)],
+        col_bands=bands(2, X0, COL),
+        cells=[C(0, 0, []), C(0, 1, [0])],
+        frame=90,
+    )
+    doc = build([table_block, B("paragraph", [stamp])])
+    assert [c for c, _ in codes(check(doc))] == ["text"]
 
 
 def test_VF2_a_value_token_bound_to_two_blocks() -> None:

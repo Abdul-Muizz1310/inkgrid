@@ -110,12 +110,13 @@ def _verified(
     )
     defects = _character_defects(page, owned, index)
     advisories: list[Defect] = []
-    overflow = 0
+    overflow = overlay = 0
     for table in tables:
         result = table_checks(table, page, owned.owner, index)
         defects += result.defects
         advisories += result.advisories
         overflow += result.overflow
+        overlay += result.overlay
     defects += value_checks(page, owned.owner, index)
     check = PageCheck(
         number=page.number,
@@ -129,6 +130,7 @@ def _verified(
         unmapped_chars=owned.unmapped,
         overflow_chars=overflow,
         ligature_chars=owned.ligatures,
+        overlay_chars=overlay,
         rules=len(page.rules),
     )
     return _Page(check, defects, advisories)

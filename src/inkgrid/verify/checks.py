@@ -146,6 +146,7 @@ class TableResult:
     defects: tuple[Defect, ...]
     advisories: tuple[Defect, ...]
     overflow: int
+    overlay: int = 0
 
 
 @dataclass
@@ -208,11 +209,13 @@ class Words:
 
     homes: Mapping[int, Home]
     texts: Mapping[int, str]
+    horizontal: Mapping[int, bool]
 
     @classmethod
     def of(cls, doc: Document) -> "Words":
         """The document's words, indexed."""
-        return cls(homes_of(doc), {w.id: w.text for w in doc.words})
+        texts = {w.id: w.text for w in doc.words}
+        return cls(homes_of(doc), texts, {w.id: w.horizontal for w in doc.words})
 
 
 def _separates(rule: InkRule, inside: Sequence[Point], point: Point) -> bool:
@@ -260,7 +263,7 @@ def _problems(
     owner: Mapping[int, int],
     words: Words,
     context: tuple[Table, InkPage, Sequence[InkRule]],
-) -> tuple[list[str], int]:
+) -> tuple[list[str], int, int]:
     """Section 4.3: the cell's misplaced words and foreign ink, and its words' overflow."""
     table, page, rules = context
     anchor = (cell.row, cell.col)
@@ -276,13 +279,18 @@ def _problems(
         else:
             overflow += len(chars) - inside
     foreign = []
+    overlay = 0
     for ch in placed.by_cell.get(anchor, []):
         other = owner.get(ch.index)
-        if other is not None and words.homes[other][0] != table.id:
+        if other is None or words.homes[other][0] == table.id:
+            continue
+        if table.grid.frame == 0 and not words.horizontal[other]:
+            overlay += 1  # a diagonal watermark over a table (spec 11 section 3.2)
+        else:
             foreign.append(ch.char)
     if foreign:
         problems.append(f"it holds ink of another block: {''.join(foreign)!r}")
-    return problems, overflow
+    return problems, overflow, overlay
 
 
 def table_checks(
@@ -301,13 +309,14 @@ def table_checks(
             _spread(DefectCode.DOUBLE, table, page.number, placed.doubles, "in two cells")
         )
     rules = [turn.rule(r) for r in page.rules]
-    overflow = 0
+    overflow = overlay = 0
     for cell in grid.cells:
         anchor = (cell.row, cell.col)
         rect = grid.cell_rect(cell)
         where = _Where(page.number, table.id, anchor, turn.unbox(rect))
-        problems, spilled = _problems(cell, placed, owner, words, (table, page, rules))
+        problems, spilled, over = _problems(cell, placed, owner, words, (table, page, rules))
         overflow += spilled
+        overlay += over
         if problems:
             defects.append(where.defect(DefectCode.TEXT, cell.text, "; ".join(problems)))
             continue
@@ -328,7 +337,7 @@ def table_checks(
             if rule is not None:
                 detail = f"a drawn {axis} rule at {rule.at:.2f} divides the cell's ink"
                 defects.append(where.defect(code, cell.text, detail))
-    return TableResult(tuple(defects), tuple(advisories), overflow)
+    return TableResult(tuple(defects), tuple(advisories), overflow, overlay)
 
 
 def value_checks(page: InkPage, owner: Mapping[int, int], words: Words) -> list[Defect]:
@@ -336,15 +345,22 @@ def value_checks(page: InkPage, owner: Mapping[int, int], words: Words) -> list[
     out: list[Defect] = []
     token: list[InkChar] = []
     for ch in (*page.chars, None):
-        if ch is not None and ch.is_ink:
+        if ch is not None and ch.is_ink and not (token and _apart(token[-1], ch)):
             token.append(ch)
             continue
         if any(unicodedata.category(c.char) == "Nd" for c in token):
             defect = _value(token, page.number, owner, words)
             if defect is not None:
                 out.append(defect)
-        token = []
+        token = [ch] if ch is not None and ch.is_ink else []
     return out
+
+
+def _apart(prev: InkChar, ch: InkChar) -> bool:
+    """Spec 11 section 3.1: PDFium runs far-apart characters together; a token ends at a jump."""
+    half = max(prev.box.height, ch.box.height) / 2
+    (px, py), (x, y) = prev.center, ch.center
+    return ch.box.x0 - prev.box.x1 > half or x < px or abs(y - py) > half
 
 
 def _value(

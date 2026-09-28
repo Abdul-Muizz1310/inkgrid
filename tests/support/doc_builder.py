@@ -56,6 +56,7 @@ class W:
     page: int = 1
     superscript: bool = False
     rect: Rect | None = None
+    horizontal: bool = True
 
     @property
     def box(self) -> Rect:
@@ -156,7 +157,7 @@ def build(
                     italic=False,
                     superscript=w.superscript,
                     hidden=False,
-                    horizontal=True,
+                    horizontal=w.horizontal,
                 )
             )
         ids = tuple(range(first, len(words)))

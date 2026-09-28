@@ -11,7 +11,7 @@ A `Document` that exists satisfies every invariant of `docs/specs/01-model.md` s
 from itertools import pairwise
 from typing import Annotated, Final, Literal, Self
 
-from pydantic import Field, NonNegativeInt, PositiveInt, model_validator
+from pydantic import Field, NonNegativeInt, PositiveInt, ValidationError, model_validator
 
 from inkgrid.model import export
 from inkgrid.model.base import Frozen
@@ -439,3 +439,19 @@ class Document(Frozen):
                 case Furniture():
                     pass
         return export.join(parts)
+
+
+def document_from_json(text: bytes | str) -> Document:
+    """A `Document` parsed from its JSON, through every validator.
+
+    Raises:
+        ValueError: the text is not JSON, or not a valid `inkgrid.document/1`; the message is one
+            line naming the first problem and where it is.
+    """
+    try:
+        return Document.model_validate_json(text)
+    except ValidationError as exc:
+        first = exc.errors()[0]
+        where = ".".join(str(part) for part in first["loc"])
+        msg = first["msg"] + (f" (at {where})" if where else "")
+        raise ValueError(msg) from None

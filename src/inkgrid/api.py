@@ -1,15 +1,21 @@
 """The public entry points: the only module where the shell meets the core."""
 
+import importlib.metadata
+
 from inkgrid.core.pipeline import build_document
 from inkgrid.core.tables.pages import lattice_pages
-from inkgrid.errors import StrictModeError
+from inkgrid.errors import SourceMismatch, StrictModeError
+from inkgrid.model.canonical import sha256_hex
 from inkgrid.model.config import Lexicon, Profile
 from inkgrid.model.document import Document, Lattice
 from inkgrid.model.findings import Severity, summarize
 from inkgrid.model.page import Reading
+from inkgrid.model.verification import VerificationReport
 from inkgrid.read.camelot_reader import read_lattice
 from inkgrid.read.pymupdf_reader import lattice_copy, page_frames, read_pdf
 from inkgrid.read.source import SourceLike, load_source
+from inkgrid.verify.pdfium_reader import read_ink
+from inkgrid.verify.report import verify_document
 
 
 def read_pages(source: SourceLike, *, password: str | None = None) -> Reading:
@@ -121,3 +127,41 @@ def read(
         msg = f"strict mode: the document carries error findings: {summarize(errors)}"
         raise StrictModeError(msg)
     return doc
+
+
+def _document(value: object) -> Document:
+    """The document to verify: callers without type checking can pass anything."""
+    if not isinstance(value, Document):
+        msg = f"doc must be an inkgrid.Document, not {type(value).__name__}"
+        raise TypeError(msg)
+    return value
+
+
+def verify(doc: Document, source: SourceLike, *, password: str | None = None) -> VerificationReport:
+    """Grade `doc` against the PDF it was read from, as a second engine (PDFium) reads it.
+
+    Every character PDFium reads must be owned by exactly one word that holds it, every table's
+    cells must hold the ink inside them, and every value must be bound to one block and one cell
+    (docs/specs/10-verify.md). A defect is reported, never raised.
+
+    Args:
+        doc: the document `read` returned for `source`.
+        source: a path, bytes-like object, or binary stream holding the same PDF.
+        password: the user password, for an encrypted PDF.
+
+    Raises:
+        TypeError: `doc` is not a `Document`, or `source` is not a supported input type.
+        SourceMismatch: `source` is not the PDF `doc` was read from.
+        PdfOpenError, PasswordRequired, WrongPassword: as for `read_pages`.
+    """
+    checked = _document(doc)
+    loaded = load_source(source)
+    digest = sha256_hex(loaded.data)
+    if digest != checked.source.sha256:
+        msg = (
+            f"the PDF's SHA-256 {digest[:16]}... differs from the document's "
+            f"{checked.source.sha256[:16]}...; it was read from another PDF"
+        )
+        raise SourceMismatch(msg)
+    ink = read_ink(loaded.data, password)
+    return verify_document(checked, ink, inkgrid_version=importlib.metadata.version("inkgrid"))

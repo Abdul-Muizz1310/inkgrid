@@ -7,10 +7,13 @@ from pathlib import Path
 
 import pytest
 
+import inkgrid
 import pdf_factory
+from doc_builder import without_last_paragraph
 from inkgrid.cli import main
 from inkgrid.model.document import Document
 from inkgrid.model.page import Reading
+from inkgrid.model.verification import VerificationReport
 
 
 def write_pdf(tmp_path: Path, data: bytes, name: str = "in.pdf") -> Path:
@@ -257,3 +260,73 @@ def test_AP3_the_cli_takes_a_lattice_engine(
     doc = Document.model_validate_json(capsysbinary.readouterr().out)
     assert doc.producer.lattice == "raster"
     assert [b.kind for b in doc.blocks] == ["table"]
+
+
+# --- inkgrid verify (spec 10 section 7) -----------------------------------------------------------
+
+
+def read_to(tmp_path: Path, data: bytes) -> tuple[Path, Path]:
+    pdf = write_pdf(tmp_path, data)
+    doc = tmp_path / "doc.json"
+    assert main(["read", str(pdf), "-o", str(doc)]) == 0
+    return pdf, doc
+
+
+def test_VC1_verify_prints_a_clean_report(
+    tmp_path: Path, capsysbinary: pytest.CaptureFixture[bytes]
+) -> None:
+    pdf, doc = read_to(tmp_path, pdf_factory.ruled_grid())
+    capsysbinary.readouterr()
+    assert main(["verify", str(pdf), str(doc)]) == 0
+    out, err = capsysbinary.readouterr()
+    assert err == b""
+    assert VerificationReport.model_validate_json(out).ok
+
+
+def test_VC2_a_defect_exits_1_with_a_summary_line(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    data = pdf_factory.table_between_paragraphs()
+    pdf = write_pdf(tmp_path, data)
+    broken, _ = without_last_paragraph(inkgrid.read(pdf))
+    doc = tmp_path / "doc.json"
+    doc.write_text(broken.model_dump_json())
+    assert main(["verify", str(pdf), str(doc), "-o", str(tmp_path / "r.json")]) == 1
+    assert capsys.readouterr().err == "inkgrid: verify: 1 defect: lost 1\n"
+
+
+@pytest.mark.parametrize("case", ["not-json", "not-a-document", "missing"])
+def test_VC3_a_document_that_cannot_be_read_exits_2(
+    case: str, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    pdf = write_pdf(tmp_path, pdf_factory.simple_text())
+    doc = tmp_path / "doc.json"
+    if case == "not-json":
+        doc.write_text("{not json")
+    elif case == "not-a-document":
+        doc.write_text('{"schema": "inkgrid.document/1"}')
+    assert main(["verify", str(pdf), str(doc)]) == 2
+    err = capsys.readouterr().err
+    assert err.startswith("inkgrid: ")
+    assert err.count("\n") == 1
+
+
+def test_VC4_a_document_of_another_pdf_exits_2(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    _, doc = read_to(tmp_path, pdf_factory.simple_text())
+    other = write_pdf(tmp_path, pdf_factory.two_column(), "other.pdf")
+    assert main(["verify", str(other), str(doc)]) == 2
+    assert "SHA-256" in capsys.readouterr().err
+
+
+def test_VC5_report_file_pretty_and_inspector(
+    tmp_path: Path, capsysbinary: pytest.CaptureFixture[bytes]
+) -> None:
+    pdf, doc = read_to(tmp_path, pdf_factory.ruled_grid())
+    report, html = tmp_path / "r.json", tmp_path / "i.html"
+    argv = ["verify", str(pdf), str(doc), "-o", str(report), "--pretty", "--inspector", str(html)]
+    assert main(argv) == 0
+    assert capsysbinary.readouterr().out == b""
+    assert b'\n  "schema": "inkgrid.verification/1"' in report.read_bytes()
+    assert "verified: 0 defects, 0 advisories" in html.read_text(encoding="utf-8")

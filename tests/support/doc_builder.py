@@ -266,3 +266,20 @@ def as_json(doc: Document) -> dict[str, Any]:
 def from_json(data: dict[str, Any]) -> Document:
     """Parse JSON data back through every validator."""
     return Document.model_validate_json(json.dumps(data))
+
+
+def without_last_paragraph(doc: Document) -> tuple[Document, str]:
+    """The document with its last block, a paragraph holding the last words, removed.
+
+    Returns the document and the removed words' characters, run together, as a verifier would see
+    them lost.
+    """
+    data = as_json(doc)
+    last = data["blocks"].pop()
+    assert last["kind"] == "paragraph"
+    ids = set(last["word_ids"])
+    assert ids == set(range(len(data["words"]) - len(ids), len(data["words"])))
+    removed = [w["text"] for w in data["words"] if w["id"] in ids]
+    data["words"] = [w for w in data["words"] if w["id"] not in ids]
+    data["ledger"]["content_chars"] -= sum(len(t) for t in removed)
+    return from_json(data), "".join(removed)

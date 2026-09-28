@@ -413,8 +413,9 @@ Its invariants are validators:
 bytes, or binary stream) with PDFium and grades `doc` against it. It never raises for a defect.
 
 - `TypeError` when `doc` is not a `Document`;
-- `ValueError` when the PDF's SHA-256 is not `doc.source.sha256`: the boxes would be compared with
-  the wrong pages;
+- `SourceMismatch` when the PDF's SHA-256 is not `doc.source.sha256`: the boxes would be compared
+  with the wrong pages. Like every inkgrid error it subclasses `InkgridError` and never `ValueError`
+  (`03-cli-and-packaging.md` A3);
 - `PdfOpenError`, `PasswordRequired`, `WrongPassword` as for `read`. A PDF PDFium cannot open for any
   other reason gives a report whose every document page is unverified.
 
@@ -431,7 +432,7 @@ bytes, or binary stream) with PDFium and grades `doc` against it. It never raise
 | Case | Input | Expected |
 |---|---|---|
 | VA1 | every fixture of `OPENABLE`, read then verified (the M4 exit) | no defect |
-| VA2 | a document verified against another fixture's PDF | `ValueError` naming both hashes |
+| VA2 | a document verified against another fixture's PDF | `SourceMismatch` naming both hashes |
 | VA3 | `verify("doc", pdf)` | `TypeError` |
 | VA4 | `ruled_encrypted("u")`: its password; none; a wrong one | a report; `PasswordRequired`; `WrongPassword` |
 | VA5 | `table_between_paragraphs`' document with its last paragraph removed (the composed flow) | LOST, the paragraph's text, on its page |

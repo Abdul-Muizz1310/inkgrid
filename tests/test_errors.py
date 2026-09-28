@@ -11,6 +11,7 @@ ERROR_CLASSES = [
     errors.WrongPassword,
     errors.InvariantError,
     errors.StrictModeError,
+    errors.SourceMismatch,
 ]
 
 

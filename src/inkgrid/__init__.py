@@ -1,17 +1,18 @@
 """inkgrid: exact tables and text from born-digital PDFs.
 
-`read()` turns a PDF into a validated `Document`; `read_pages()` returns the raw page model, for
-debugging a reading.
+`read()` turns a PDF into a validated `Document`; `verify()` grades it against its PDF with a second
+engine; `read_pages()` returns the raw page model, for debugging a reading.
 """
 
 import importlib.metadata
 
-from inkgrid.api import read, read_pages
+from inkgrid.api import read, read_pages, verify
 from inkgrid.errors import (
     InkgridError,
     InvariantError,
     PasswordRequired,
     PdfOpenError,
+    SourceMismatch,
     StrictModeError,
     WrongPassword,
 )
@@ -86,6 +87,7 @@ __all__ = [
     "Region",
     "Rule",
     "Severity",
+    "SourceMismatch",
     "StrictModeError",
     "Table",
     "VerificationReport",
@@ -94,4 +96,5 @@ __all__ = [
     "__version__",
     "read",
     "read_pages",
+    "verify",
 ]

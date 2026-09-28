@@ -267,7 +267,7 @@ def table_checks(
             continue
         own = [c for w in cell.word_ids for c in placed.by_word.get(w, [])]
         want = "".join(words.texts[w] for w in cell.word_ids)
-        if own and "�" not in want and all(c.kind != "unmapped" for c in own):
+        if own and "\ufffd" not in want and all(c.kind != "unmapped" for c in own):
             seq = "".join(
                 c.char for c in reading_sequence(own, grid.frame, page.width, page.height)
             )

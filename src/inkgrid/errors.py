@@ -21,6 +21,10 @@ class WrongPassword(InkgridError):
     """The PDF is encrypted and the given password does not open it."""
 
 
+class SourceMismatch(InkgridError):
+    """The PDF given is not the one the document was read from: its SHA-256 differs."""
+
+
 class InvariantError(InkgridError):
     """A guarantee failed to hold: a bug in inkgrid, never an input problem."""
 

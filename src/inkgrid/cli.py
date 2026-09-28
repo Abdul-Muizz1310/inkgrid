@@ -1,25 +1,30 @@
-"""The `inkgrid` command line: `inkgrid read` (the `Document`) and `inkgrid words` (the page model).
+"""The `inkgrid` command line: `read`, `verify`, and `words`.
 
-Exit codes: 0 success; 1 strict mode found an error-severity finding (and, from M4, defects); 2
-usage errors and unreadable input. Output is always UTF-8 bytes, whatever the console's encoding.
+`read` prints the `Document`, `verify` its report against the PDF, and `words` the page model. Exit
+codes: 0 success; 1 strict mode found an error-severity finding, or verification found a
+defect; 2 usage errors and unreadable input. Output is always UTF-8 bytes, whatever the console's
+encoding.
 """
 
 import argparse
 import importlib.metadata
 import os
 import sys
+from collections import Counter
 from collections.abc import Callable, Sequence
 from pathlib import Path
 
-from inkgrid.api import read, read_pages
-from inkgrid.errors import PasswordRequired, PdfOpenError, WrongPassword
-from inkgrid.model.document import Document
+from inkgrid.api import read, read_pages, verify
+from inkgrid.errors import PasswordRequired, PdfOpenError, SourceMismatch, WrongPassword
+from inkgrid.model.document import Document, document_from_json
 from inkgrid.model.findings import Severity, summarize
 from inkgrid.model.page import Reading
+from inkgrid.model.verification import DefectCode, VerificationReport
 from inkgrid.render.inspector import build_inspector
 
 EXIT_OK = 0
 EXIT_STRICT = 1
+EXIT_DEFECTS = 1
 EXIT_USAGE = 2
 INPUT_ERRORS = (PdfOpenError, PasswordRequired, WrongPassword)
 
@@ -60,6 +65,16 @@ def _parser() -> argparse.ArgumentParser:
         choices=("combined", "vector", "raster"),
         default="combined",
         help="Camelot's engine for ruled tables (default: combined)",
+    )
+    verify_command = commands.add_parser(
+        "verify", help="grade a Document against its PDF; exit 1 on any defect"
+    )
+    _add_common(verify_command)
+    verify_command.add_argument(
+        "document", type=Path, help="the Document JSON `inkgrid read` wrote"
+    )
+    verify_command.add_argument(
+        "--inspector", type=Path, help="also write the HTML inspector with the defects drawn"
     )
     words = commands.add_parser("words", help="print the raw page model (words, rules) as JSON")
     _add_common(words)
@@ -115,7 +130,7 @@ def _write_file(path: Path, data: bytes) -> None:
         raise _UsageError(msg) from exc
 
 
-def _emit(model: Reading | Document, args: argparse.Namespace) -> None:
+def _emit(model: Reading | Document | VerificationReport, args: argparse.Namespace) -> None:
     text = model.model_dump_json(indent=2) if args.pretty else model.model_dump_json()
     data = text.encode("utf-8") + b"\n"
     if args.output is not None:
@@ -152,7 +167,48 @@ def _read(args: argparse.Namespace) -> int:
     return EXIT_OK
 
 
-COMMANDS: dict[str, Callable[[argparse.Namespace], int]] = {"read": _read, "words": _words}
+def _load_document(path: Path) -> Document:
+    try:
+        text = path.read_bytes()
+    except OSError as exc:
+        msg = f"cannot read {path}: {exc.strerror or exc}"
+        raise _UsageError(msg) from exc
+    try:
+        return document_from_json(text)
+    except ValueError as exc:
+        msg = f"{path} is not an inkgrid document: {exc}"
+        raise _UsageError(msg) from exc
+
+
+def _defect_summary(report: VerificationReport) -> str:
+    counts = Counter(d.code for d in report.defects)
+    total = len(report.defects)
+    codes = ", ".join(f"{code.value} {counts[code]}" for code in DefectCode if counts[code])
+    return f"{total} defect{'' if total == 1 else 's'}: {codes}"
+
+
+def _verify(args: argparse.Namespace) -> int:
+    password = _password(args)
+    doc = _load_document(args.document)
+    try:
+        report = verify(doc, args.pdf, password=password)
+    except SourceMismatch as exc:
+        raise _UsageError(str(exc)) from exc
+    _emit(report, args)
+    if args.inspector is not None:
+        html = build_inspector(doc, args.pdf, password, report)
+        _write_file(args.inspector, html.encode("utf-8"))
+    if not report.ok:
+        sys.stderr.write(f"inkgrid: verify: {_defect_summary(report)}\n")
+        return EXIT_DEFECTS
+    return EXIT_OK
+
+
+COMMANDS: dict[str, Callable[[argparse.Namespace], int]] = {
+    "read": _read,
+    "verify": _verify,
+    "words": _words,
+}
 
 
 def main(argv: Sequence[str] | None = None) -> int:

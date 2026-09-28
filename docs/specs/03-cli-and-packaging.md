@@ -22,11 +22,11 @@ inkgrid.__version__                                        # "0.1.0.dev0" during
   - the model types a caller needs: `Reading`, `PageModel`, `PageInfo`, `Word`, `Rule`, `Rect`,
     `Interval`, `Finding`, `FindingCode`, `Severity`, and the `Document` family;
   - from M4, the report types: `VerificationReport`, `PageCheck`, `Defect`, and `DefectCode`;
-  - `read_pages` and `__version__`.
+  - `read`, `read_pages`, from M4 `verify`, and `__version__`.
 
   `__all__` lists exactly these.
 - `errors.py` defines `InkgridError`, and under it `PdfOpenError`, `PasswordRequired`,
-  `WrongPassword`, `InvariantError`, and `StrictModeError`.
+  `WrongPassword`, `InvariantError`, `StrictModeError`, and, from M4, `SourceMismatch`.
 
 | # | case | expected |
 |---|---|---|
@@ -41,8 +41,11 @@ inkgrid.__version__                                        # "0.1.0.dev0" during
 
 ```
 inkgrid words IN.pdf [-o OUT.json] [--pretty] [--password-stdin]
+inkgrid verify IN.pdf DOC.json [-o REPORT.json] [--pretty] [--inspector OUT.html] [--password-stdin]
 inkgrid --version
 ```
+
+`read` arrives in M1 (`05-read-and-inspector.md`); `verify` in M4 (`10-verify.md` section 7).
 
 - `words` prints the `Reading` as canonical JSON to stdout, or writes it to `-o`. `--pretty` indents
   by 2 for reading; the canonical form is compact.
@@ -56,9 +59,10 @@ inkgrid --version
   no traceback. The output already produced was correct.
 - Exit codes:
   - 0: success;
-  - 1: reserved for defects (`verify`, M4) and strict mode (M1);
+  - 1: a defect (`verify`, M4) or strict mode's error-severity finding (M1);
   - 2: usage errors (argparse's convention) and unreadable input: `PdfOpenError`,
-    `PasswordRequired`, or `WrongPassword`. The message goes to stderr, with no traceback.
+    `PasswordRequired`, `WrongPassword`, or, for `verify`, a document JSON that is not a document,
+    or `SourceMismatch`. The message goes to stderr, with no traceback.
 - The CLI imports only `api`, `model`, `errors`, and the stdlib (argparse).
 
 | # | case | expected |

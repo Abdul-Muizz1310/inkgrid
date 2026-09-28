@@ -167,7 +167,7 @@ may import pypdfium2). This keeps `words.py`, `rules.py`, and the verifier's che
 |---|---|---|
 | K1 | `uv build --no-sources` | a wheel and an sdist; the wheel contains `inkgrid/py.typed` |
 | K2 | the wheel's `METADATA` | `License-Expression: MIT`, no `License ::` classifier, `Requires-Python: >=3.12` |
-| K3 | `tests/smoke_test.py` in a fresh environment with only the wheel installed | builds a one-word PDF with pymupdf, reads it with `inkgrid.read_pages`, and asserts the word |
+| K3 | `tests/smoke_test.py` in a fresh environment with only the wheel installed | builds a one-word PDF with pymupdf, reads it with `inkgrid.read_pages`, and asserts the word; from M4, reads and verifies it, and asserts a clean report |
 | K4 | `scripts/check_coverage_floors.py` on a report where one `src/` file is below 80% | exit 1 naming the file |
 | K5 | `scripts/export_schemas.py` then `git diff --exit-code docs/schema` | no diff |
 | K6 | `uv run pip-audit` against the locked environment | no known vulnerabilities (or a documented, justified exception) |

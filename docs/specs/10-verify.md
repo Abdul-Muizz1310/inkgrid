@@ -67,8 +67,13 @@ of the look-back corpus (974 pages) on 2026-09-28, one process at a time.
   0.39`). No rule separates the tiers on the page: the one thin rectangle between them is a white
   fill under one column. The verifier checks the output against the page's ink and drawn rules; a
   merge with no drawn rule is for M5's binding metric.
-- **Speed.** 105 s for 974 pages, 0.11 s per page. The prototype's ownership is quadratic, and
-  Cboe's 24 pages took 15.6 s. The implementation indexes words and cells by band.
+- **Speed.** The prototype took 105 s for 974 pages; its ownership was quadratic, and Cboe's 24
+  pages took 15.6 s. The implementation indexes words and cells by 20 pt band.
+
+**The implementation, on the same 42 documents** (2026-09-28, one at a time): all 974 pages verified;
+all 1,817,075 ink characters owned; the same 7 TEXT defects and 1 VALUE defect as above, 84
+overflow characters, and 2 ORDER advisories (Cboe's `Penny Classes` over `Non-Penny Classes`, and
+`BBO` stacked over `Maker`); 52 s in all, 0.05 s per page, and Cboe's 24 pages in 4.8 s.
 
 ---
 

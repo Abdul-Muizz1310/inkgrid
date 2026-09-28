@@ -16,11 +16,11 @@
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue"></a>
 </p>
 
-> **Status: pre-alpha (milestone M3 of M6 complete).** Today inkgrid reads a PDF into a validated
+> **Status: pre-alpha (milestone M4 of M6 complete).** Today inkgrid reads a PDF into a validated
 > `Document`: every word in exactly one block, in reading order, with running headers and footers set
 > apart, tables, ruled or not, as explicit cell grids, glossaries as definitions, and footnote calls
-> linked to their notes. Tables and sentences that run onto the next page are joined. Independent
-> verification arrives in M4. The roadmap is in
+> linked to their notes. Tables and sentences that run onto the next page are joined. `inkgrid.verify`
+> then grades the document against its PDF with a second engine, PDFium. The roadmap is in
 > [`docs/specs/00-design.md`](docs/specs/00-design.md) § 14.
 
 ## What it does
@@ -35,7 +35,7 @@ cell grids, with merged cells as spans and headers carried across page breaks, m
 Links record the relationships the page prints: footnote calls to their notes, and tables that
 continue onto the next page.
 
-Shipped so far (M0 to M3):
+Shipped so far (M0 to M4):
 
 - **Words rebuilt from characters.** A superscript marker printed tight against a value stays its own
   word (`$0.40` and `2`, never `$0.402`). A font change in the middle of a word keeps it one word.
@@ -85,7 +85,12 @@ Shipped so far (M0 to M3):
   links the parts without carrying. A sentence broken by the page joins into one paragraph with a
   region on each page.
 - **Markdown and an HTML inspector.** The inspector draws every block over its rendered page, for
-  looking at a reading rather than trusting it.
+  looking at a reading rather than trusting it, and a verification report's defects over the page.
+- **An independent verifier.** `inkgrid verify` re-reads the PDF with PDFium and grades the document
+  character by character: nothing lost, invented, or doubled; every cell holding the ink inside it;
+  no drawn rule dividing a cell; every value bound to one cell. It exits 1 on any defect. On the 42
+  measured fee schedules it accounts for all 1,817,075 characters and reports 8 cells, among them two
+  values from two columns read as one word, and a note mark in the column after its word.
 - **The full output contract,** `inkgrid.document/1`, with its invariants enforced: every word owned
   exactly once, cells that tile their grid exactly, and block text spelled from its own words in
   their order.
@@ -93,8 +98,8 @@ Shipped so far (M0 to M3):
 ### Known limitations
 
 - **Text is judged hidden from the text layer alone.** Text covered by an opaque shape or image,
-  white text on a white page, and text too small to read all read as visible. The independent
-  verifier (M4) is where those checks belong.
+  white text on a white page, and text too small to read all read as visible. The verifier reads the
+  text layer too, so it does not catch them either.
 - **Left-to-right scripts only.** Right-to-left and bidirectional text is not reordered in v0.1.
 - **Unruled tables have no row spans.** A label centred beside several rows splits across them
   (`Charge per` / `executed order`), and a label whose value is centred beside it needs the rows to be
@@ -125,8 +130,12 @@ can tell. inkgrid commits to four guarantees instead:
 
 1. **No invented text.** Every output character is a codepoint the PDF encodes.
 2. **No lost or doubled text.** Each document carries a proof that every word is owned exactly once.
-3. **Independently verified structure.** A verifier re-reads the PDF with a different engine (PDFium)
-   and checks every table cell by cell (milestone M4).
+3. **Independently verified structure.** A verifier re-reads the PDF with a different engine,
+   PDFium, without importing the code that built the document. Every character PDFium reads must
+   belong to exactly one word that holds it, every cell must hold the ink inside its rectangle, no
+   drawn rule may divide a cell, and every value must be bound to one cell. On the 42 fee schedules
+   of the look-back corpus, all 1,817,075 characters are accounted for, and 8 cells are reported
+   (`docs/specs/10-verify.md` § 0).
 4. **Never silent.** Anything degraded becomes a typed finding on the result.
 
 Whether this beats OCR and vision parsers at *table structure* is an open question, and the public
@@ -139,7 +148,8 @@ inkgrid is not on PyPI yet. From a clone:
 
 ```bash
 uv sync --all-groups
-uv run inkgrid read path/to/file.pdf --pretty --markdown out.md --inspector out.html
+uv run inkgrid read path/to/file.pdf -o doc.json --markdown out.md --inspector out.html
+uv run inkgrid verify path/to/file.pdf doc.json --inspector checked.html   # exit 1 on any defect
 uv run inkgrid words path/to/file.pdf --pretty    # the raw page model, for debugging a reading
 ```
 
@@ -156,6 +166,11 @@ for finding in doc.findings:
 print(doc.to_markdown())
 
 doc = inkgrid.read("fees.pdf", strict=True)     # raises StrictModeError on an error finding
+
+report = inkgrid.verify(doc, "fees.pdf")        # PDFium's reading against the document's
+for defect in report.defects:                   # lost, invented, text, vrule, value, ...
+    print(defect.page, defect.code, defect.block, defect.cell, defect.detail)
+print(report.ok)
 ```
 
 `inkgrid.read_pages()` returns the raw page model (words, rules, measurements) for debugging. An
@@ -171,9 +186,9 @@ advance in [`docs/specs/00-design.md`](docs/specs/00-design.md) § 11.
 
 ## Architecture
 
-A pure core sits between two thin shells. Only `inkgrid.read` touches PDF libraries, and a test
-enforces the layer table on the import graph. The verifier (M4) cannot import the code that builds
-the output, so its independence is structural. Details:
+A pure core sits between two thin shells. Only `inkgrid.read` touches MuPDF and Camelot, and only
+`inkgrid.verify`'s reader touches PDFium; a test enforces the layer table on the import graph. The
+verifier cannot import the code that builds the output, so its independence is structural. Details:
 [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
 ## Tech stack
@@ -183,7 +198,7 @@ with the `uv_build` backend, Ruff, mypy `--strict`, pytest 9 with Hypothesis, an
 Camelot 2.0 reads ruled tables. The default engine is `lattice="combined"`, because it never fused or
 split a cell across 42 measured fee schedules. `"vector"` is about twice as fast end to end, but it
 malformed cells on 3% of their ruled pages, mostly tables drawn as Word draws borders. `"raster"` is
-also available. From M4, pypdfium2 powers the independent verifier.
+also available. pypdfium2 5.13 (PDFium) powers the independent verifier.
 
 ## Deployment
 

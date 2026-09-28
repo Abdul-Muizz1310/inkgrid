@@ -36,6 +36,12 @@ All notable changes to this project are documented here. The format follows
   `footnote_call` links; `continuation` links between the parts of a table across a page, carrying
   the header as carried cells; and paragraphs broken by a page joined into one block.
   `header_not_found` is now raised after continuation.
+- Verification (M4): `inkgrid.verify(doc, pdf)` and `inkgrid verify in.pdf doc.json` re-read the PDF
+  with PDFium and report, as a typed `VerificationReport` (schema `inkgrid.verification/1`), every
+  lost, invented, or doubled character, table cells whose ink disagrees with them or that a drawn
+  rule divides, values bound to two cells, and pages that cannot be compared; the command exits 1 on
+  any defect, and `--inspector` draws the defects over the pages. `SourceMismatch` for a PDF that is
+  not the document's. pypdfium2 is now a direct dependency.
 - `Document.to_markdown()`, the HTML inspector, and the `inkgrid read` command with `--markdown`,
   `--inspector`, and `--strict`.
 - A layer-table test on the import graph, and CI across Linux, Windows, and macOS.

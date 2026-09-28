@@ -20,27 +20,56 @@ INVISIBLE_CATEGORIES = frozenset({"Cc", "Cf", "Co", "Cn"})
 LINE_END_HYPHEN = 0x02  # PDFium's code point for a hyphen that ends a line
 REPLACEMENT = "\ufffd"
 UNICODE_END = 0x110000
+MAPPED_SPACES = frozenset({0x20, 0xA0})
+C1_CONTROLS = range(0x80, 0xA0)
+HIGH_SURROGATES = (0xD800, 0xDBFF)
+LOW_SURROGATES = (0xDC00, 0xDFFF)
 POLYGON_MIN = 3  # points a polygon needs to enclose anything
 
 
 def char_kind(code: int, *, generated: bool, hyphen: bool, map_error: bool) -> tuple[CharKind, str]:
-    """A PDFium character's kind and text, decided in the order of spec 10 section 1.1."""
+    """A PDFium character's kind and text, decided in the order of spec 11 section 1.1."""
     if code >= UNICODE_END:
         return "unmapped", REPLACEMENT
     char = chr(code)
     category = unicodedata.category(char)
+    # PDFium returns a control code, or sets its map-error flag, for a drawn glyph its font cannot
+    # map (U+001F for a ligature, U+0083 for a bullet); a flagged space is still a space.
+    drawn_unmapped = (map_error and code not in MAPPED_SPACES) or code == 0 or code in C1_CONTROLS
     rules: tuple[tuple[CharKind, bool], ...] = (
         ("generated", generated),
-        ("hyphen", hyphen or code == LINE_END_HYPHEN),
+        ("hyphen", hyphen or (code == LINE_END_HYPHEN and not map_error)),
+        ("unmapped", drawn_unmapped),
         ("space", char.isspace()),
         ("invisible", category in INVISIBLE_CATEGORIES),
-        ("unmapped", char == REPLACEMENT or category == "Cs" or map_error),
+        ("unmapped", char == REPLACEMENT or category == "Cs"),
     )
     kind: CharKind = next((k for k, holds in rules if holds), "ink")
     if kind == "hyphen":
         return kind, "-"
     # A lone surrogate is not text: it cannot be written as UTF-8 or JSON, so it reads as U+FFFD.
     return kind, REPLACEMENT if category == "Cs" else char
+
+
+def join_surrogates(units: Sequence[tuple[int, int]]) -> list[tuple[int, int, int]]:
+    """(index, code unit) pairs as (first index, last index, code point).
+
+    PDFium reports a character beyond U+FFFF as a high and a low surrogate at consecutive indexes
+    (spec 11 section 1.2); a surrogate without its partner stays as it is.
+    """
+    out: list[tuple[int, int, int]] = []
+    i = 0
+    while i < len(units):
+        index, code = units[i]
+        if HIGH_SURROGATES[0] <= code <= HIGH_SURROGATES[1] and i + 1 < len(units):
+            low_index, low = units[i + 1]
+            if LOW_SURROGATES[0] <= low <= LOW_SURROGATES[1]:
+                out.append((index, low_index, 0x10000 + ((code - 0xD800) << 10) + (low - 0xDC00)))
+                i += 2
+                continue
+        out.append((index, index, code))
+        i += 1
+    return out
 
 
 @dataclass(frozen=True, slots=True)

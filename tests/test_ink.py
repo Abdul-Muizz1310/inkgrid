@@ -1,7 +1,7 @@
 import pytest
 
 from inkgrid.model.geometry import Rect
-from inkgrid.verify.ink import InkChar, InkPage, char_kind, in_polygon
+from inkgrid.verify.ink import InkChar, InkPage, char_kind, in_polygon, join_surrogates
 
 SQUARE = ((0.0, 0.0), (10.0, 0.0), (10.0, 10.0), (0.0, 10.0))
 
@@ -69,3 +69,36 @@ def test_outside_the_frame_is_half_open() -> None:
 def test_an_error_page_holds_nothing() -> None:
     with pytest.raises(ValueError, match="error"):
         InkPage(1, 10, 10, chars=(InkChar(0, "a", Rect(0, 0, 1, 1), "ink"),), error="no")
+
+
+def test_CK1_map_errors_nul_and_c1_controls_are_unmapped() -> None:
+    for code in (0x1F, 0x1C):
+        assert kind(code, map_error=True) == ("unmapped", chr(code))
+    for code in (0x83, 0x92, 0x00):
+        assert kind(code)[0] == "unmapped", hex(code)
+    assert kind(ord("A"), map_error=True) == ("unmapped", "A")
+
+
+def test_CK2_spaces_c0_controls_and_line_end_hyphens() -> None:
+    assert kind(0x20, map_error=True)[0] == "space"
+    assert kind(0x09)[0] == "space"
+    assert kind(0x1C)[0] == "space"
+    assert kind(0x07)[0] == "invisible"
+    assert kind(0x02, map_error=True)[0] == "unmapped"
+    assert kind(0x02) == ("hyphen", "-")
+
+
+def test_CK3_a_surrogate_pair_is_one_character() -> None:
+    assert join_surrogates([(3, 0x41), (4, 0xD835), (5, 0xDC51), (6, 0x42)]) == [
+        (3, 3, 0x41),
+        (4, 5, 0x1D451),
+        (6, 6, 0x42),
+    ]
+    assert kind(0x1D451) == ("ink", "\U0001d451")
+
+
+def test_CK4_a_surrogate_without_its_partner_stays_unmapped() -> None:
+    assert join_surrogates([(4, 0xD835), (5, 0x41)]) == [(4, 4, 0xD835), (5, 5, 0x41)]
+    assert join_surrogates([(9, 0xD835)]) == [(9, 9, 0xD835)]  # the page's last character
+    assert join_surrogates([(4, 0xDC51), (5, 0xD835)]) == [(4, 4, 0xDC51), (5, 5, 0xD835)]
+    assert kind(0xD835) == ("unmapped", "�")

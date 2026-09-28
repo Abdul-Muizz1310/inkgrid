@@ -13,7 +13,15 @@ from pypdfium2 import raw, version
 
 from inkgrid.errors import PasswordRequired, WrongPassword
 from inkgrid.model.geometry import Rect
-from inkgrid.verify.ink import Ink, InkChar, InkPage, Point, char_kind, in_polygon
+from inkgrid.verify.ink import (
+    Ink,
+    InkChar,
+    InkPage,
+    Point,
+    char_kind,
+    in_polygon,
+    join_surrogates,
+)
 from inkgrid.verify.rules import InkPath, InkSubpath, extract_rules
 
 Matrix = tuple[float, float, float, float, float, float]
@@ -168,24 +176,26 @@ def _chars(
     text_page: raw.FPDF_TEXTPAGE, frame: _Frame, clips: dict[int | None, tuple[Polygon, ...]]
 ) -> tuple[InkChar, ...]:
     """The page's characters; `clips` holds each text object's clip polygons and its forms'."""
+    count = raw.FPDFText_CountChars(text_page)
+    units = [(i, raw.FPDFText_GetUnicode(text_page, i)) for i in range(count)]
     out = []
-    for i in range(raw.FPDFText_CountChars(text_page)):
+    for first, last, code in join_surrogates(units):
         kind, char = char_kind(
-            raw.FPDFText_GetUnicode(text_page, i),
-            generated=raw.FPDFText_IsGenerated(text_page, i) == 1,
-            hyphen=raw.FPDFText_IsHyphen(text_page, i) == 1,
-            map_error=raw.FPDFText_HasUnicodeMapError(text_page, i) == 1,
+            code,
+            generated=raw.FPDFText_IsGenerated(text_page, first) == 1,
+            hyphen=raw.FPDFText_IsHyphen(text_page, first) == 1,
+            map_error=raw.FPDFText_HasUnicodeMapError(text_page, first) == 1,
         )
-        box = _box(text_page, i, frame)
+        box = Rect.union_all(_box(text_page, i, frame) for i in range(first, last + 1))
         clipped = False
-        obj = raw.FPDFText_GetTextObject(text_page, i)
+        obj = raw.FPDFText_GetTextObject(text_page, first)
         if obj:
             key = _address(obj)
             if key not in clips:
                 clips[key] = _clip(obj, frame, IDENTITY)
             x, y = box.center
             clipped = any(not in_polygon(polygon, x, y) for polygon in clips[key])
-        out.append(InkChar(i, char, box, kind, clipped))
+        out.append(InkChar(first, char, box, kind, clipped))
     return tuple(out)
 
 

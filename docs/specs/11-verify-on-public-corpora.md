@@ -62,11 +62,12 @@ Every defect was classified by its mechanism, from both engines' raw readings an
 1. `generated` when `FPDFText_IsGenerated` is 1;
 2. `hyphen` when `FPDFText_IsHyphen` is 1, or the code point is U+0002 **and** the map-error flag
    is 0 (a mapped glyph named `/difference` at code 2 came back U+0002 with the flag set);
-3. `unmapped` when the map-error flag is 1 and the character is not U+0020 or U+00A0; or the code
-   point is U+0000, or a C0 or C1 control other than tab, line feed, vertical tab, form feed, and
-   carriage return. PDFium returns such codes for drawn glyphs its font cannot map (U+001F for a
-   ligature, U+0083 and U+0099 for Wingdings bullets); Python's `isspace` counts U+001C–U+001F as
-   whitespace, so the test comes before the space test;
+3. `unmapped` when the map-error flag is 1 and the character is not U+0020 or U+00A0, or the code
+   point is U+0000 or a C1 control (U+0080–U+009F). PDFium returns such codes for drawn glyphs its
+   font cannot map (U+001F with the flag for a ligature; U+0083 and U+0099 for Wingdings bullets;
+   U+0092, which is cp1252's `’`, from a broken ToUnicode). The test comes before the space test,
+   because Python's `isspace` counts U+001C–U+001F as whitespace. A C0 control without the flag
+   (U+0007) stays invisible, as the reader counts it (`02-reader.md` W-9);
 4. `space`, `invisible`, `unmapped` (U+FFFD, a lone surrogate), `ink`, as before.
 
 An unmapped character still pairs with any one character of the word that owns it (spec 10 § 3.1),
@@ -81,8 +82,8 @@ the union of the two boxes, and the first index. A surrogate without its partner
 
 | Case | Input | Expected |
 |---|---|---|
-| CK1 | kinds: U+001F with the map error; U+0083; U+0000; U+001C; `A` with the map error | unmapped, each |
-| CK2 | U+0020 with the map error; tab; U+0002 with the map error; U+0002 without it | space; space; unmapped; hyphen |
+| CK1 | kinds: U+001F and U+001C with the map error; U+0083; U+0092; U+0000; `A` with the map error | unmapped, each |
+| CK2 | U+0020 with the map error; tab; U+001C and U+0007 without it; U+0002 with it; U+0002 without it | space; space; space; invisible; unmapped; hyphen |
 | CK3 | the code units U+D835, U+DC51 at indexes 4 and 5 | one ink character `𝑑` at index 4, boxes united |
 | CK4 | U+D835 followed by `A` | U+FFFD (unmapped), then `A` |
 

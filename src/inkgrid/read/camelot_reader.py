@@ -55,6 +55,8 @@ def merged_groups(edges: Sequence[Sequence[Edges]]) -> list[Box]:
     that does not fill its bounding box exactly is split back into single cells: a guessed merge
     would fuse values (L2).
     """
+    if not edges or not all(edges):
+        return []  # a degenerate grid: no rows, or rows that hold no cells
     rows, cols = len(edges), len(edges[0])
     parent = {(r, c): (r, c) for r in range(rows) for c in range(cols)}
 
@@ -161,6 +163,10 @@ def read_lattice(
             findings.append(Finding.of(FindingCode.LATTICE_FAILED, detail, page=number))
             continue
         for table in tables:
+            if not table.cells or not all(table.cells):
+                detail = "Camelot returned a table with no cells; it is skipped"
+                findings.append(Finding.of(FindingCode.LATTICE_FAILED, detail, page=number))
+                continue
             place = _placer(table, by_number[number])
             if place is None:
                 detail = "Camelot turned an unrotated page; its grid cannot be placed"

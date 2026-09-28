@@ -142,6 +142,7 @@ decides structure. The grammar, matched against the whole text after trimming:
 | CM10 | edge flags `lt rtb / lb rbt`: the four cells connect, but the edge between the two right-hand cells is drawn | four single cells |
 | CM8 | CM1–CM5 with each `engine`: `vector`, `combined`, and `raster` | the same cells, within 1 pt |
 | CM9 | `ruled_grid` encrypted with only an owner password (AES-256); with a user password, read with it | the table, both times |
+| CM11 | Camelot returns, beside a real table, a table whose rows hold no cells (an olmOCR-bench page, M5a) | `lattice_failed` on that page; the real table kept; no exception |
 
 ---
 

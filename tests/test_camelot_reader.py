@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing import Any
+from typing import Any, ClassVar
 
 import camelot
 import pytest
@@ -114,6 +114,31 @@ def test_CM6_a_camelot_failure_costs_one_page(monkeypatch: pytest.MonkeyPatch) -
     assert sorted(g.page for g in reading.grids) == [1, 3]
     assert [(f.code.value, f.page) for f in reading.findings] == [("lattice_failed", 2)]
     assert "RuntimeError: rendering failed" in reading.findings[0].detail
+
+
+def test_CM11_a_table_with_no_cells_is_skipped_with_a_finding(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    real = camelot.read_pdf
+
+    class Empty:  # the shape Camelot returned for a degenerate grid: rows that hold no cells
+        cells: ClassVar[list[list[Any]]] = [[], []]
+        pdf_size = (612.0, 792.0)
+        shape = (2, 0)
+
+    def with_empty(data: bytes, pages: str, **kw: Any) -> Any:
+        return [*real(data, pages, **kw), Empty()]
+
+    monkeypatch.setattr(camelot, "read_pdf", with_empty)
+    reading = lattice(pdf_factory.ruled_grid())
+    assert [g.page for g in reading.grids] == [1]
+    assert [(f.code.value, f.page) for f in reading.findings] == [("lattice_failed", 1)]
+    assert "no cells" in reading.findings[0].detail
+
+
+def test_CM11_merged_groups_of_no_cells_is_empty() -> None:
+    assert merged_groups([]) == []
+    assert merged_groups([[], []]) == []
 
 
 def edges(rows: Sequence[str]) -> list[list[Edges]]:

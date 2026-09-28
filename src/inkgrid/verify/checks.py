@@ -256,7 +256,7 @@ def _crosses_rule(
     if not crossed:
         return False
     first, last = min(c.index for c in chars), max(c.index for c in chars)
-    broken = any(not ch.is_ink for ch in page.chars[first : last + 1])
+    broken = any(not ch.is_ink for ch in page.span(first, last))
     digits = [any(unicodedata.category(c.char) == "Nd" for c in part) for part in (inside, crossed)]
     return broken or all(digits)
 

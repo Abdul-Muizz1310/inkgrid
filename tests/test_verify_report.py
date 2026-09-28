@@ -4,6 +4,7 @@ from doc_builder import B, C, W, build
 from ink_builder import edited, ink_of, page, stray
 from inkgrid.model.document import Document
 from inkgrid.model.findings import Finding, FindingCode
+from inkgrid.model.geometry import Rect
 from inkgrid.model.verification import DefectCode, VerificationReport
 from inkgrid.verify.ink import Ink, InkChar, InkPage
 from inkgrid.verify.report import verify_document
@@ -178,3 +179,15 @@ def test_OW6_ligatures_are_counted_on_their_page() -> None:
     report = verify(doc, ink)
     assert report.ok
     assert report.pages[0].ligature_chars == 1
+
+
+def test_a_lost_runs_quote_is_read_by_position_after_a_joined_pair() -> None:
+    doc = build([PARA])
+    run = [*stray("ab", 300, 300), *stray(" ", 310, 300, kind="space"), *stray("cd", 315, 300)]
+    ink = edited(ink_of(doc), lambda cs: [*cs, *run])
+    math = InkChar(0, "\U0001d451", Rect(400, 400, 406, 410), "ink")  # PDFium indexes 0 and 1
+    chars = (math, *(InkChar(c.index + 2, c.char, c.box, c.kind) for c in ink.chars))
+    report = verify(doc, InkPage(ink.number, ink.width, ink.height, chars))
+    quoted = [d.detail for d in report.defects if d.text == "abcd"]
+    assert len(quoted) == 1
+    assert "'ab cd'" in quoted[0]

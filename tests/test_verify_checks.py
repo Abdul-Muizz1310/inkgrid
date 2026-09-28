@@ -389,9 +389,12 @@ def test_homes_name_each_words_block_and_cell() -> None:
 EDGE_RULE = InkRule("v", 160, 199, 221)  # the drawn rule between columns 0 and 1
 
 
-def crossing(text: str, edges: Sequence[float], *, broken_after: int | None = None) -> TableResult:
+def crossing(
+    text: str, edges: Sequence[float], *, broken_after: int | None = None, joined: bool = False
+) -> TableResult:
     """A word bound to cell (0, 0) whose glyphs sit between `edges`, the last past the drawn rule
-    at 160; with `broken_after`, PDFium reads a word break after that many characters."""
+    at 160; with `broken_after`, PDFium reads a word break after that many characters; with
+    `joined`, a math letter PDFium gave as a surrogate pair comes first, so indexes skip one."""
     table = B(
         "table",
         [W(text, edges[0], 205, rect=Rect(edges[0], 205, edges[-1], 215))],
@@ -408,7 +411,11 @@ def crossing(text: str, edges: Sequence[float], *, broken_after: int | None = No
         gap = glyphs[broken_after - 1].box
         glyphs.insert(broken_after, InkChar(0, " ", Rect(gap.x1, 205, gap.x1, 215), "generated"))
     ink = edited(ink_of(doc), lambda cs: [*glyphs, *cs[len(text) :]])
-    return check(doc, InkPage(ink.number, ink.width, ink.height, ink.chars, (EDGE_RULE,)))
+    chars = ink.chars
+    if joined:
+        math = InkChar(0, "\U0001d451", Rect(400, 400, 406, 410), "ink")  # indexes 0 and 1
+        chars = (math, *(InkChar(c.index + 2, c.char, c.box, c.kind) for c in chars))
+    return check(doc, InkPage(ink.number, ink.width, ink.height, chars, (EDGE_RULE,)))
 
 
 def test_TB13_a_word_broken_at_a_drawn_rule_is_two_texts_glued() -> None:
@@ -417,6 +424,12 @@ def test_TB13_a_word_broken_at_a_drawn_rule_is_two_texts_glued() -> None:
     assert codes(result) == [("text", (0, 0))]
     assert "drawn rule" in result.defects[0].detail
     assert codes(crossing("abc", [144, 150, 156, 166])) == []  # unbroken: one text, overflow
+
+
+def test_TB15_indexes_after_a_joined_surrogate_pair_are_not_positions() -> None:
+    assert codes(crossing("user", [140, 146, 152, 158, 166], joined=True)) == []
+    broken = crossing("abc", [144, 150, 156, 166], broken_after=2, joined=True)
+    assert codes(broken) == [("text", (0, 0))]
 
 
 def test_TB14_a_number_cut_by_a_drawn_rule_is_misbound() -> None:

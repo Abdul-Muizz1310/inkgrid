@@ -49,9 +49,7 @@ def _unverified(number: int, why: str) -> _Page:
 def _quote(page: InkPage, run: tuple[InkChar, ...]) -> str:
     """The run as it reads on the page, spaces included, cut to QUOTE_MAX characters."""
     first, last = run[0].index, run[-1].index
-    text = "".join(
-        ch.char if ch.kind != "generated" else " " for ch in page.chars[first : last + 1]
-    )
+    text = "".join(ch.char if ch.kind != "generated" else " " for ch in page.span(first, last))
     return text if len(text) <= QUOTE_MAX else text[: QUOTE_MAX - 3] + "..."
 
 

@@ -4,6 +4,7 @@ Every box is in the page's frame: the unrotated page box, y growing down, as a `
 are.
 """
 
+import bisect
 import unicodedata
 from collections.abc import Sequence
 from dataclasses import dataclass
@@ -118,6 +119,15 @@ class InkPage:
         if self.error is not None and (self.chars or self.rules):
             msg = f"page {self.number} failed to load ({self.error}), so it holds no error-free ink"
             raise ValueError(msg)
+
+    def span(self, first: int, last: int) -> tuple[InkChar, ...]:
+        """The page's characters from PDFium index `first` to `last`, inclusive.
+
+        An index is not a position: a joined surrogate pair takes two indexes and one place.
+        """
+        lo = bisect.bisect_left(self.chars, first, key=lambda c: c.index)
+        hi = bisect.bisect_right(self.chars, last, key=lambda c: c.index)
+        return self.chars[lo:hi]
 
     def outside(self, ch: InkChar) -> bool:
         """True when the character's centre lies outside the frame (half-open)."""

@@ -169,8 +169,10 @@ for any other reason gives `Ink(pages=(), error=<PDFium's message>)`.
 
 ## 2 · Ownership: every character to one word
 
-`own(page, words) -> Ownership` assigns each ink character of a page to at most one of the page's
-words. A word *contains* a character when its box contains the character's centre, half-open:
+`own_page(page, words, *, clipped_chars, invisible_chars) -> PageOwnership` assigns each ink
+character of a page to at most one of the page's words. A character outside the frame or clipped
+(§ 1.3) is not offered to any word: MuPDF never read it, and a clipped glyph under a visible word
+would otherwise count against that word; § 3.2 classes it. A word *contains* a character when its box contains the character's centre, half-open:
 `x0 <= x < x1` and `y0 <= y < y1` (L15). A box of zero width or height is closed on that axis
 (`x0 <= x <= x1`), so a zero-width glyph's word still contains it.
 
@@ -216,8 +218,10 @@ Each word's characters are compared with the ink it owns, as multisets:
   `invisible_chars`; beyond that, every one of them is LOST.
 - otherwise **LOST**.
 
-LOST characters are reported as runs: consecutive PDFium indices on one page form one defect, whose
-text is the run and whose box is the union of its characters' boxes. DOUBLED and INVENTED characters
+LOST characters are reported as runs: LOST characters with no other ink character between them, in
+PDFium's order, form one defect, whose text is the run's characters (so the texts add up to the
+page's `lost_chars`), whose box is the union of their boxes, and whose detail quotes the run with
+its spaces. DOUBLED and INVENTED characters
 form one defect per word, whose text is the missing characters in word order and whose box is the
 word's.
 

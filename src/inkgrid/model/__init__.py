@@ -22,11 +22,14 @@ from inkgrid.model.document import (
 from inkgrid.model.findings import SEVERITY, Finding, FindingCode, Severity
 from inkgrid.model.geometry import Interval, Rect
 from inkgrid.model.page import PageInfo, PageModel, ReaderInfo, Reading, Rule, Source, Word
+from inkgrid.model.verification import Defect, DefectCode, PageCheck, VerificationReport, Verifier
 
 __all__ = [
     "SEVERITY",
     "Block",
     "Cell",
+    "Defect",
+    "DefectCode",
     "Definition",
     "Document",
     "Finding",
@@ -41,6 +44,7 @@ __all__ = [
     "Link",
     "LinkEnd",
     "ListItem",
+    "PageCheck",
     "PageInfo",
     "PageModel",
     "Paragraph",
@@ -54,5 +58,7 @@ __all__ = [
     "Severity",
     "Source",
     "Table",
+    "VerificationReport",
+    "Verifier",
     "Word",
 ]

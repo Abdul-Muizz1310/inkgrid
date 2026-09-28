@@ -68,6 +68,10 @@ def test_A2_public_surface_is_exactly_the_spec() -> None:
         "Region",
         "Ledger",
         "Producer",
+        "VerificationReport",
+        "PageCheck",
+        "Defect",
+        "DefectCode",
     }
 
 

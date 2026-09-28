@@ -10,6 +10,7 @@ from pathlib import Path
 
 from inkgrid.model.document import Document
 from inkgrid.model.page import Reading
+from inkgrid.model.verification import VerificationReport
 
 OUT = Path(__file__).resolve().parents[1] / "docs" / "schema"
 
@@ -19,6 +20,7 @@ def schemas() -> dict[str, dict[str, object]]:
     return {
         "document.schema.json": Document.model_json_schema(mode="serialization"),
         "reading.schema.json": Reading.model_json_schema(mode="serialization"),
+        "verification.schema.json": VerificationReport.model_json_schema(mode="serialization"),
     }
 
 

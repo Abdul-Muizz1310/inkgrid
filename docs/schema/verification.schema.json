@@ -1,0 +1,320 @@
+{
+  "$defs": {
+    "Defect": {
+      "additionalProperties": false,
+      "description": "One disagreement between the document and the page, pinned to where it is.",
+      "properties": {
+        "bbox": {
+          "anyOf": [
+            {
+              "maxItems": 4,
+              "minItems": 4,
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Bbox"
+        },
+        "block": {
+          "anyOf": [
+            {
+              "pattern": "^b[1-9][0-9]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Block"
+        },
+        "cell": {
+          "anyOf": [
+            {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Cell"
+        },
+        "code": {
+          "$ref": "#/$defs/DefectCode"
+        },
+        "detail": {
+          "minLength": 1,
+          "title": "Detail",
+          "type": "string"
+        },
+        "page": {
+          "exclusiveMinimum": 0,
+          "title": "Page",
+          "type": "integer"
+        },
+        "text": {
+          "default": "",
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "page",
+        "block",
+        "cell",
+        "text",
+        "bbox",
+        "detail"
+      ],
+      "title": "Defect",
+      "type": "object"
+    },
+    "DefectCode": {
+      "description": "The closed set of verification codes, in report order. ORDER is the only advisory.",
+      "enum": [
+        "lost",
+        "doubled",
+        "invented",
+        "value",
+        "orphan",
+        "double",
+        "text",
+        "vrule",
+        "hrule",
+        "unverified",
+        "order"
+      ],
+      "title": "DefectCode",
+      "type": "string"
+    },
+    "PageCheck": {
+      "additionalProperties": false,
+      "description": "One page's status and where each of its ink characters went.",
+      "properties": {
+        "clipped_chars": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Clipped Chars",
+          "type": "integer"
+        },
+        "declared_chars": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Declared Chars",
+          "type": "integer"
+        },
+        "ink_chars": {
+          "minimum": 0,
+          "title": "Ink Chars",
+          "type": "integer"
+        },
+        "lost_chars": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Lost Chars",
+          "type": "integer"
+        },
+        "number": {
+          "exclusiveMinimum": 0,
+          "title": "Number",
+          "type": "integer"
+        },
+        "outside_chars": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Outside Chars",
+          "type": "integer"
+        },
+        "overflow_chars": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Overflow Chars",
+          "type": "integer"
+        },
+        "owned_chars": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Owned Chars",
+          "type": "integer"
+        },
+        "rules": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Rules",
+          "type": "integer"
+        },
+        "status": {
+          "enum": [
+            "verified",
+            "declared",
+            "unverified"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "unmapped_chars": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Unmapped Chars",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "number",
+        "status",
+        "ink_chars",
+        "owned_chars",
+        "lost_chars",
+        "outside_chars",
+        "clipped_chars",
+        "unmapped_chars",
+        "declared_chars",
+        "overflow_chars",
+        "rules"
+      ],
+      "title": "PageCheck",
+      "type": "object"
+    },
+    "Source": {
+      "additionalProperties": false,
+      "description": "Which file was read: its SHA-256, page count, and base name when read from a path.",
+      "properties": {
+        "file_name": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "File Name"
+        },
+        "pages": {
+          "exclusiveMinimum": 0,
+          "title": "Pages",
+          "type": "integer"
+        },
+        "sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        }
+      },
+      "required": [
+        "sha256",
+        "pages",
+        "file_name"
+      ],
+      "title": "Source",
+      "type": "object"
+    },
+    "Verifier": {
+      "additionalProperties": false,
+      "description": "The versions that produced a report.",
+      "properties": {
+        "inkgrid": {
+          "title": "Inkgrid",
+          "type": "string"
+        },
+        "pdfium": {
+          "title": "Pdfium",
+          "type": "string"
+        },
+        "pypdfium2": {
+          "title": "Pypdfium2",
+          "type": "string"
+        }
+      },
+      "required": [
+        "inkgrid",
+        "pypdfium2",
+        "pdfium"
+      ],
+      "title": "Verifier",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "A document graded against its PDF: its pages, defects, and advisories.",
+  "properties": {
+    "advisories": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/Defect"
+      },
+      "title": "Advisories",
+      "type": "array"
+    },
+    "defects": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/Defect"
+      },
+      "title": "Defects",
+      "type": "array"
+    },
+    "pages": {
+      "items": {
+        "$ref": "#/$defs/PageCheck"
+      },
+      "minItems": 1,
+      "title": "Pages",
+      "type": "array"
+    },
+    "schema": {
+      "const": "inkgrid.verification/1",
+      "default": "inkgrid.verification/1",
+      "title": "Schema",
+      "type": "string"
+    },
+    "source": {
+      "$ref": "#/$defs/Source"
+    },
+    "verifier": {
+      "$ref": "#/$defs/Verifier"
+    }
+  },
+  "required": [
+    "schema",
+    "source",
+    "verifier",
+    "pages",
+    "defects",
+    "advisories"
+  ],
+  "title": "VerificationReport",
+  "type": "object"
+}

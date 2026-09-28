@@ -21,6 +21,7 @@ inkgrid.__version__                                        # "0.1.0.dev0" during
   - the error classes;
   - the model types a caller needs: `Reading`, `PageModel`, `PageInfo`, `Word`, `Rule`, `Rect`,
     `Interval`, `Finding`, `FindingCode`, `Severity`, and the `Document` family;
+  - from M4, the report types: `VerificationReport`, `PageCheck`, `Defect`, and `DefectCode`;
   - `read_pages` and `__version__`.
 
   `__all__` lists exactly these.

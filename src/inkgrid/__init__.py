@@ -18,6 +18,8 @@ from inkgrid.errors import (
 from inkgrid.model import (
     Block,
     Cell,
+    Defect,
+    DefectCode,
     Definition,
     Document,
     Finding,
@@ -32,6 +34,7 @@ from inkgrid.model import (
     Link,
     LinkEnd,
     ListItem,
+    PageCheck,
     PageInfo,
     PageModel,
     Paragraph,
@@ -43,6 +46,7 @@ from inkgrid.model import (
     Rule,
     Severity,
     Table,
+    VerificationReport,
     Word,
 )
 
@@ -51,6 +55,8 @@ __version__ = importlib.metadata.version("inkgrid")
 __all__ = [
     "Block",
     "Cell",
+    "Defect",
+    "DefectCode",
     "Definition",
     "Document",
     "Finding",
@@ -67,6 +73,7 @@ __all__ = [
     "Link",
     "LinkEnd",
     "ListItem",
+    "PageCheck",
     "PageInfo",
     "PageModel",
     "Paragraph",
@@ -81,6 +88,7 @@ __all__ = [
     "Severity",
     "StrictModeError",
     "Table",
+    "VerificationReport",
     "Word",
     "WrongPassword",
     "__version__",

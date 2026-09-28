@@ -2,9 +2,9 @@ import math
 from pathlib import Path
 
 import pytest
-from inkgrid_bench.scores.binding import AccessPath, Binding
 
 from inkgrid_bench.scores import binding, icdar, metrics, olmocr, soric
+from inkgrid_bench.scores.binding import AccessPath, Binding
 from inkgrid_bench.tables import NCell, NDocument, NPage, NTable
 
 DATA = Path(__file__).parent / "data"
@@ -26,9 +26,27 @@ def test_SC1_the_jars_output_parses_to_per_table_counts() -> None:
     assert metrics.mean_of("correct", "gt")([counts]) == 1.0
 
 
+def test_SC1_a_warning_without_a_newline_does_not_hide_a_table() -> None:
+    # practice eu-014 against itself (measured): the jar's GT warning runs into the table line
+    out = (DATA / "jar-str-eu-014-self.txt").read_text(encoding="ascii")
+    assert icdar.gt_sizes(out) == {1: 130}
+    with pytest.raises(ValueError, match="twice"):
+        icdar.structure_counts(out + out, {1: 130})
+
+
 def test_SC1_an_unmatched_table_counts_its_ground_truth_only() -> None:
     counts = icdar.structure_counts(ONE_FOUND, {1: 46, 2: 81})
     assert counts == {"correct": 30, "detected": 40, "gt": 127}
+
+
+def test_SC1_false_positive_tables_count_as_detected_relations() -> None:
+    # inkgrid on practice eu-012 (measured): two tables matched, two more matching none
+    out = (DATA / "jar-str-eu-012-inkgrid.txt").read_text(encoding="ascii")
+    assert icdar.structure_counts(out, {1: 103, 2: 103}) == {
+        "correct": 2, "detected": 4 + 4 + 4 + 4, "gt": 206,
+    }  # fmt: skip
+    with pytest.raises(ValueError, match="FALSE POSITIVE"):
+        icdar.structure_counts(out.replace("2 FALSE", "3 FALSE"), {1: 103, 2: 103})
 
 
 def test_SC1_a_table_the_jar_did_not_report_is_an_error() -> None:
@@ -43,6 +61,25 @@ def test_SC1_regions_count_items_and_false_positives_as_detected() -> None:
     assert counts == {"correct": 129, "detected": 129 + 89, "gt": 218 + 395}
     with pytest.raises(ValueError, match="GT Regions"):
         icdar.region_counts(REG_SPLIT.replace("GT Regions: 2", "GT Regions: 3"))
+
+
+def test_SC1_several_false_positive_regions_share_one_line_and_a_total() -> None:
+    # pdfplumber on eu-011 (measured): seven FP regions on one line, then their total
+    counts = icdar.region_counts((DATA / "jar-reg-eu-011-pdfplumber.txt").read_text())
+    assert counts == {"correct": 183, "detected": 183 + 3082, "gt": 183}
+    broken = (DATA / "jar-reg-eu-011-pdfplumber.txt").read_text().replace("3082", "3081")
+    with pytest.raises(ValueError, match="FP items"):
+        icdar.region_counts(broken)
+
+
+def test_SC1_the_jar_runs_with_the_sort_it_was_written_for() -> None:
+    # Java 7's TimSort rejects the jar's comparator on practice eu-014 (measured)
+    cmd = icdar.command(
+        Path("java"), Path("t"), "-reg", gt=Path("a-reg.xml"), result=Path("b"), pdf=Path("a.pdf")
+    )
+    assert cmd[:2] == ["java", "-Djava.util.Arrays.useLegacyMergeSort=true"]
+    assert cmd[-4:] == ["-reg", "a-reg.xml", "b", "a.pdf"]
+    assert "t/fontbox-1.8.2.jar" in cmd[3]
 
 
 def test_SC2_a_document_with_nothing_detected_has_no_precision_and_zero_recall() -> None:

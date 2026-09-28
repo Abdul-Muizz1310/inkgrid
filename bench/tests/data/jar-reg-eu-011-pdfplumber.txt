@@ -1,0 +1,7 @@
+GT Regions: 1
+Result Regions: 8
+Region: 1  GT Items: 183  correct items: 183  result items: 183  result reg: 6  complete: true  pure: true
+--------------- FALSE POSITIVE REGIONS FOUND! --------------
+FP regions: 7
+FP Region: 1  items: 301  FP Region: 2  items: 32  FP Region: 3  items: 32  FP Region: 4  items: 32  FP Region: 5  items: 32  FP Region: 7  items: 1269  FP Region: 8  items: 1384  FP items: 3082
+Overall Result for Document:  Completeness: 1 / 1 = 1  Purity: 1 / 1 = 1

@@ -1,0 +1,6 @@
+Using     GTFile: eu-014-str.xml
+Using resultFile: eu-014-str.xml
+Using    PDFFile: eu-014.pdf
+startPage: 1
+endPage: 2147483647
+setting c: 3 r: 1 with: MALEsetting c: 3 r: 1 with: MALETable 1:  GT size: 130 corrDet: 130 detected: 130  Precision: 130 / 130 = 1.0  Recall: 130 / 130 = 1.0

@@ -49,3 +49,16 @@ def test_the_table_lists_tools_in_order_and_marks_findings() -> None:
     diff = report.markdown_differences(scored, SPECS)
     assert "| inkgrid - peer | +0.938 [" in diff
     assert "] * |" in diff  # the finding is marked
+
+
+def test_the_reproduction_table_says_how_many_numbers_are_within_a_hundredth() -> None:
+    docs = {"d": {"pred": 2, "gt": 2, "tp": 2, "top": 1.8, "con": 1.6, "teds": 1.5}}
+    close = {"d": {"pred": 2, "gt": 2, "tp": 2, "top": 1.81, "con": 1.6, "teds": 1.5}}
+    far = {"d": {"pred": 2, "gt": 2, "tp": 2, "top": 1.8, "con": 1.6, "teds": 1.46}}
+    text = report.reproduction_table(
+        {"cam": {"here": docs, "released": close}, "doc": {"here": docs, "released": far}}
+    )
+    assert "| Camelot | 1.0000 / 1.0000 | 0.9000 / 0.9050 |" in text
+    assert text.rstrip().endswith(
+        "Within 0.01 of their released results: 7 of 8 (largest gap 0.0200)."
+    )

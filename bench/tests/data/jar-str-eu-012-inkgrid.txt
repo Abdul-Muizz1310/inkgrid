@@ -1,0 +1,7 @@
+startPage: 1
+endPage: 2147483647
+Table 1:  GT size: 103 corrDet: 1 detected: 4  Precision: 1 / 4 = 0.25  Recall: 1 / 103 = 0.009708738
+Table 2:  GT size: 103 corrDet: 1 detected: 4  Precision: 1 / 4 = 0.25  Recall: 1 / 103 = 0.009708738
+!!!!!!!!!! 2 FALSE POSITIVE TABLES FOUND !!!!!!!!!!!!
+FP table with 4 adjacency relations
+FP table with 4 adjacency relations

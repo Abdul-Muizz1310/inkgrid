@@ -52,6 +52,11 @@ earlier runs on them were inkgrid's verifier (spec 11), which scores nothing.
 - **Soric et al.'s evaluator** accepts only its own model names; every tool here is written as its
   `pymu` model, the name selecting only how each box's HTML is unpacked. Their loader pairs each imaged
   page's boxes with its HTML files, 156 tables over 67 documents.
+- **The reproduction gap is not file-listing order**, as first guessed above: their evaluator gives
+  the same numbers here with a sorted listing and under two hash seeds, with their own environment's
+  library pins. Box scores reproduce exactly; of the 16 structure and box F1s of their four released
+  predictions, 15 reproduce within 0.01, and PyMuPDF's F1-TEDS by 0.0100 (0.4798 here, 0.4898
+  released). The cause is not found.
 - **olmOCR-bench's scorer** (0.4.27) imports numpy without declaring it (pinned beside it), and its
   `--output_failed` skips a candidate with any error. Per-test results come from its own
   `evaluate_candidate`, checked against the score its command line prints.

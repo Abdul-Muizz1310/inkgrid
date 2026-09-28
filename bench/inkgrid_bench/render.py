@@ -1,5 +1,6 @@
 """Normalized tables as each scorer's input (spec 12 section 3.2)."""
 
+import re
 from html import escape
 from xml.sax.saxutils import quoteattr
 
@@ -48,6 +49,16 @@ def table_html(table: NTable, *, header: bool) -> str:
     return "".join(parts)
 
 
+# Characters XML 1.0 cannot carry: C0 controls but tab, newline and carriage return; surrogates;
+# U+FFFE and U+FFFF. A tool's text can hold them (PyMuPDF returns U+0000 on practice us-008).
+_NOT_XML = re.compile("[\x00-\x08\x0b\x0c\x0e-\x1f\ud800-\udfff\ufffe\uffff]")
+
+
+def _xml_chars(text: str) -> str:
+    """The text without the characters XML 1.0 forbids."""
+    return _NOT_XML.sub("", text)
+
+
 def _user_box(box: Box, page: NPage) -> tuple[int, int, int, int]:
     """A top-left-frame box in PDF user space, rounded outward to whole points."""
     x0, y1 = page.to_user(box[0], box[1])
@@ -84,7 +95,7 @@ def icdar_str_xml(doc: NDocument, pdf_name: str) -> str:
                 ends = f' end-row="{c.row + c.rows - 1}" end-col="{c.col + c.cols - 1}"'
             parts.append(
                 f'<cell id="{k}" start-row="{c.row}" start-col="{c.col}"{ends}>'
-                f"{box}<content>{escape(c.text, quote=False)}</content></cell>"
+                f"{box}<content>{escape(_xml_chars(c.text), quote=False)}</content></cell>"
             )
         parts.append("</region></table>")
     parts.append("</document>\n")

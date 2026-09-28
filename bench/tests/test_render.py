@@ -72,3 +72,17 @@ def test_RD1_the_competition_jar_scores_a_rendering_against_itself(tmp_path: Pat
     )  # fmt: skip
     (line,) = [x for x in out.stdout.splitlines() if x.startswith("Table 1:")]
     assert line.count("= 1.0") == 2, line
+
+
+def test_RD1_characters_xml_forbids_are_dropped_from_icdar_files() -> None:
+    # PyMuPDF on practice us-008 (measured) returns U+0000 inside a cell
+    import xml.etree.ElementTree as ET  # noqa: PLC0415
+
+    cells = (NCell(0, 0, text="0.30\x00 bp\x0b"), NCell(0, 1, text="tab\tok"))
+    doc = NDocument(
+        tool="t", version="1", pdf_sha256="0" * 64, pages=(PORTRAIT,),
+        tables=(NTable(page=1, bbox=(100.0, 299.0, 482.0, 391.0), cells=cells),),
+    )  # fmt: skip
+    structure = icdar_str_xml(doc, "x.pdf")
+    contents = [c.text for c in ET.fromstring(structure.encode()).iter("content")]  # noqa: S314
+    assert contents == ["0.30 bp", "tab\tok"]

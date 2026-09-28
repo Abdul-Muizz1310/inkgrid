@@ -185,7 +185,10 @@ SORIC_KEYS = (
 )
 
 
-def _reproduction(reproduction: Mapping[str, Mapping[str, Mapping[str, Counts]]]) -> str:
+REPRODUCTION_TOLERANCE = 0.01  # spec 12 section 7
+
+
+def reproduction_table(reproduction: Mapping[str, Mapping[str, Mapping[str, Counts]]]) -> str:
     """Soric et al.'s released predictions re-scored here against their released results."""
     names = {"cam": "Camelot", "pymu": "PyMuPDF", "plum": "pdfplumber", "doc": "Docling"}
     head = [
@@ -194,14 +197,21 @@ def _reproduction(reproduction: Mapping[str, Mapping[str, Mapping[str, Counts]]]
         "Largest gap",
     ]
     lines = [_row(head), _row(["---"] * len(head))]
+    gaps: list[float] = []
     for model, runs in reproduction.items():
-        cells, gaps = [], []
+        cells, row_gaps = [], []
         for key, _ in SORIC_KEYS:
             here = dice(key, "pred", "gt")(list(runs["here"].values()))
             theirs = dice(key, "pred", "gt")(list(runs["released"].values()))
             cells.append(f"{here:.4f} / {theirs:.4f}")
-            gaps.append(abs(here - theirs))
-        lines.append(_row([names.get(model, model), *cells, f"{max(gaps):.4f}"]))
+            row_gaps.append(abs(here - theirs))
+        gaps += row_gaps
+        lines.append(_row([names.get(model, model), *cells, f"{max(row_gaps):.4f}"]))
+    within = sum(g <= REPRODUCTION_TOLERANCE for g in gaps)
+    lines.append(
+        f"\nWithin 0.01 of their released results: {within} of {len(gaps)} "
+        f"(largest gap {max(gaps):.4f})."
+    )
     return "\n".join(lines) + "\n"
 
 
@@ -238,10 +248,13 @@ def document(data: Mapping[str, Any], *, head: str, date: str, resamples: int = 
                 check = score(
                     {CHECK: counts[dataset][CHECK]}, specs, baseline=None, resamples=resamples
                 )
-                parts.append("Check:\n\n" + markdown_table(check, specs))
+                parts.append(
+                    "Check, the ICDAR ground truth read as a tool:\n\n"
+                    + markdown_table(check, specs)
+                )
     parts += [
         "## Soric et al.'s released predictions, re-scored here\n",
-        _reproduction(data["reproduction"]),
+        reproduction_table(data["reproduction"]),
     ]
     parts.append("## Crashes and timeouts (each scored as no tables)\n")
     crash_rows = [_row(["Tool", "Dataset", "Documents"]), _row(["---"] * 3)]

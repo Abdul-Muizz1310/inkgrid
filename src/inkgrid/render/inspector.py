@@ -1,7 +1,8 @@
 """The HTML inspector: each page's image with its blocks drawn over it (docs/specs/05 section 4).
 
 It is for looking, not for gates. The page is static: inline CSS, no scripts, no external requests,
-and every document string is HTML-escaped.
+and every document string is HTML-escaped. Given a verification report, it also draws each defect
+over its page and lists it beside the page (docs/specs/10-verify.md section 8).
 """
 
 import base64
@@ -13,6 +14,7 @@ from inkgrid.model.document import Block, Document, Table
 from inkgrid.model.findings import Finding
 from inkgrid.model.geometry import unturn_rect
 from inkgrid.model.page import PageInfo
+from inkgrid.model.verification import Defect, VerificationReport
 from inkgrid.read.pymupdf_reader import render_pages
 from inkgrid.read.source import SourceLike, load_source
 
@@ -44,6 +46,12 @@ text { font: 9px sans-serif; }
 .error { color: #cf222e; } .warning { color: #bf8700; }
 @media (max-width: 720px) { .page { grid-template-columns: 1fr; } }
 @media print { body { padding: 0; } .page { break-inside: avoid; } }
+"""
+REPORT_STYLE = """
+rect.defect { stroke: #cf222e; stroke-width: 1.6; fill: #cf222e; fill-opacity: 0.12; }
+rect.advisory { stroke: #bf8700; stroke-width: 1; stroke-dasharray: 3 2; }
+text.defect { fill: #cf222e; font-weight: 600; } text.advisory { fill: #bf8700; }
+.defects { margin: 0 0 12px; padding-left: 18px; }
 """
 KINDS = ("heading", "paragraph", "list_item", "footnote", "definition", "table", "furniture")
 STYLE += "".join(
@@ -111,7 +119,42 @@ def _cells(table: Table, page: PageInfo) -> str:
     return "".join(out)
 
 
-def _page(doc: Document, page: PageInfo, png: bytes | None) -> str:
+def _where(defect: Defect) -> str:
+    cell = "" if defect.cell is None else f" ({defect.cell[0]}, {defect.cell[1]})"
+    return "" if defect.block is None else f" {escape(defect.block)}{cell}"
+
+
+def _marks(report: VerificationReport | None, number: int) -> tuple[str, str]:
+    """A page's defect and advisory overlays, and its list of them with its status."""
+    if report is None:
+        return "", ""
+    rects, items = [], []
+    for kind, defects in (("defect", report.defects), ("advisory", report.advisories)):
+        for d in defects:
+            if d.page != number:
+                continue
+            code = escape(d.code.value)
+            items.append(f'<li class="{kind}"><b>{code}</b>{_where(d)}: {escape(d.detail)}</li>')
+            if d.bbox is not None:
+                b = d.bbox
+                rects.append(
+                    f'<rect class="{kind} d-{code}" x="{b.x0}" y="{b.y0}" '
+                    f'width="{b.x1 - b.x0}" height="{b.y1 - b.y0}"/>'
+                    f'<text class="{kind}" x="{b.x0}" y="{b.y1 + 8}">{code}</text>'
+                )
+    status = report.pages[number - 1].status if number <= len(report.pages) else "unverified"
+    notes = {
+        "verified": "",
+        "declared": '<p class="muted">The reader declared this page unreadable: not checked.</p>',
+        "unverified": '<p class="error">This page is unverified.</p>',
+    }
+    listed = f'<ul class="defects">{"".join(items)}</ul>' if items else ""
+    return "".join(rects), notes[status] + listed
+
+
+def _page(
+    doc: Document, page: PageInfo, png: bytes | None, report: VerificationReport | None
+) -> str:
     boxes: list[str] = []
     cards: list[str] = []
     for number, block in enumerate(doc.blocks, 1):
@@ -128,17 +171,37 @@ def _page(doc: Document, page: PageInfo, png: bytes | None) -> str:
                 boxes.append(_cells(block, page))
             cards.append(_card(number, block))
     findings = [f for f in doc.findings if f.page == page.number]
+    overlay, listed = _marks(report, page.number)
     return (
         f'<section class="page" id="page-{page.number}"><h2>Page {page.number}</h2>'
-        f"<div>{_sheet(page, png, ''.join(boxes))}</div>"
-        f"<div>{_findings(findings)}{''.join(cards)}</div></section>"
+        f"<div>{_sheet(page, png, ''.join(boxes) + overlay)}</div>"
+        f"<div>{listed}{_findings(findings)}{''.join(cards)}</div></section>"
     )
 
 
-def inspector_html(doc: Document, pages_png: Sequence[bytes | None]) -> str:
-    """A self-contained HTML page for the document, given one rendered image per page."""
+def _summary(report: VerificationReport) -> str:
+    n, m = len(report.defects), len(report.advisories)
+    defects = f"{n} defect" + ("" if n == 1 else "s")
+    advisories = f"{m} advisor" + ("y" if m == 1 else "ies")
+    return f'<p class="meta">verified: {defects}, {advisories}</p>'
+
+
+def inspector_html(
+    doc: Document, pages_png: Sequence[bytes | None], report: VerificationReport | None = None
+) -> str:
+    """A self-contained HTML page for the document, given one rendered image per page.
+
+    Raises:
+        ValueError: the images do not match the pages, or `report` grades another document.
+    """
     if len(pages_png) != len(doc.pages):
         msg = f"the document has {len(doc.pages)} pages but {len(pages_png)} page images were given"
+        raise ValueError(msg)
+    if report is not None and report.source.sha256 != doc.source.sha256:
+        msg = (
+            f"the report grades the PDF {report.source.sha256[:16]}..., not the document's "
+            f"{doc.source.sha256[:16]}..."
+        )
         raise ValueError(msg)
     name = doc.source.file_name or "PDF"
     title = f"inkgrid inspector: {name}"
@@ -146,22 +209,32 @@ def inspector_html(doc: Document, pages_png: Sequence[bytes | None]) -> str:
         f"<h1>{escape(title)}</h1>"
         f'<p class="meta">{len(doc.pages)} pages, {len(doc.blocks)} blocks, sha256 '
         f"{doc.source.sha256[:16]}&hellip;</p>"
+        f"{'' if report is None else _summary(report)}"
         f"{_findings([f for f in doc.findings if f.page is None])}"
     )
-    pages = "".join(_page(doc, page, png) for page, png in zip(doc.pages, pages_png, strict=True))
+    pages = "".join(
+        _page(doc, page, png, report) for page, png in zip(doc.pages, pages_png, strict=True)
+    )
+    style = STYLE if report is None else STYLE + REPORT_STYLE
     return (
         '<!doctype html><html lang="en"><head><meta charset="utf-8">'
         '<meta name="viewport" content="width=device-width, initial-scale=1">'
-        f"<title>{escape(title)}</title><style>{STYLE}</style></head>"
+        f"<title>{escape(title)}</title><style>{style}</style></head>"
         f"<body>{header}{pages}</body></html>\n"
     )
 
 
-def build_inspector(doc: Document, source: SourceLike, password: str | None = None) -> str:
-    """Render the document's own PDF and build the inspector page.
+def build_inspector(
+    doc: Document,
+    source: SourceLike,
+    password: str | None = None,
+    report: VerificationReport | None = None,
+) -> str:
+    """Render the document's own PDF and build the inspector page, with `report`'s overlays.
 
     Raises:
-        ValueError: `source` is not the PDF the document was read from.
+        ValueError: `source` is not the PDF the document was read from, or `report` grades
+            another document.
     """
     loaded = load_source(source)
     digest = sha256_hex(loaded.data)
@@ -171,4 +244,4 @@ def build_inspector(doc: Document, source: SourceLike, password: str | None = No
             f"{doc.source.sha256[:16]}...; boxes would be drawn over the wrong pages"
         )
         raise ValueError(msg)
-    return inspector_html(doc, render_pages(loaded.data, password, DPI))
+    return inspector_html(doc, render_pages(loaded.data, password, DPI), report)

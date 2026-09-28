@@ -459,7 +459,7 @@ report=None)`:
 | Case | Input | Expected |
 |---|---|---|
 | VI1 | a report with one TEXT defect on page 1 | a `d-text` rect on page 1; the detail in page 1's column |
-| VI2 | no report | the output of M3's inspector, byte for byte |
+| VI2 | no report | no defect markup, style, or summary: the page is as before |
 | VI3 | a report of another document | `ValueError` |
 | VI4 | a defect whose detail holds `<b>` | escaped |
 

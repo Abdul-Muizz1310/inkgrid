@@ -7,6 +7,7 @@ import pytest
 import inkgrid
 import pdf_factory
 from doc_builder import B, build, line
+from inkgrid.model.verification import Verifier
 from inkgrid.read.pymupdf_reader import render_pages
 from inkgrid.render.inspector import build_inspector, inspector_html
 from lattice_builder import read_with_tables
@@ -107,3 +108,81 @@ def test_EX5_the_inspector_draws_every_cell() -> None:
     data = pdf_factory.ruled_grid()
     html = build_inspector(read_with_tables(data), data)
     assert html.count('<rect class="cell"') == 10
+
+
+# --- Verification overlays (spec 10 section 8) ----------------------------------------------------
+
+
+def report_for(doc: inkgrid.Document, *defects: inkgrid.Defect) -> inkgrid.VerificationReport:
+    pages = tuple(
+        inkgrid.PageCheck(number=p.number, status="verified", ink_chars=0) for p in doc.pages
+    )
+    return inkgrid.VerificationReport(
+        source=doc.source,
+        verifier=Verifier(inkgrid="0.1.0.dev0", pypdfium2="5.13.0", pdfium="153.0.7999.0"),
+        pages=pages,
+        defects=defects,
+    )
+
+
+def text_defect(detail: str = "'Rate' has 1 of its 4 characters in the cell") -> inkgrid.Defect:
+    return inkgrid.Defect(
+        code=inkgrid.DefectCode.TEXT,
+        page=1,
+        block="b1",
+        cell=(0, 1),
+        text="Rate",
+        bbox=inkgrid.Rect(100, 100, 160, 120),
+        detail=detail,
+    )
+
+
+def test_VI1_a_defect_is_drawn_on_its_page_and_listed_beside_it() -> None:
+    data = pdf_factory.ruled_grid()
+    doc = inkgrid.read(data)
+    html = build_inspector(doc, data, report=report_for(doc, text_defect()))
+    (page,) = re.findall(r'<section class="page" id="page-1">.*?</section>', html, re.DOTALL)
+    assert '<rect class="defect d-text" x="100.0" y="100.0" width="60.0" height="20.0"' in page
+    assert "has 1 of its 4 characters" in page
+    assert "verified: 1 defect, 0 advisories" in html
+
+
+def test_VI2_without_a_report_nothing_is_added() -> None:
+    data = pdf_factory.ruled_grid()
+    html = build_inspector(inkgrid.read(data), data)
+    assert "defect" not in html
+    assert "advisor" not in html
+    assert "verified:" not in html
+
+
+def test_VI3_a_report_of_another_document_is_refused() -> None:
+    doc = inkgrid.read(pdf_factory.ruled_grid())
+    other = inkgrid.read(pdf_factory.simple_text())
+    with pytest.raises(ValueError, match="report"):
+        inspector_html(doc, [None], report_for(other))
+
+
+def test_VI4_defect_text_is_escaped() -> None:
+    data = pdf_factory.ruled_grid()
+    doc = inkgrid.read(data)
+    html = build_inspector(doc, data, report=report_for(doc, text_defect("holds <b>x</b>")))
+    assert "holds &lt;b&gt;x&lt;/b&gt;" in html
+    assert "<b>x</b>" not in html
+
+
+def test_VI1_an_unverified_page_says_so() -> None:
+    data = pdf_factory.simple_text()
+    doc = inkgrid.read(data)
+    report = inkgrid.VerificationReport(
+        source=doc.source,
+        verifier=Verifier(inkgrid="0.1.0.dev0", pypdfium2="5.13.0", pdfium="153.0.7999.0"),
+        pages=(inkgrid.PageCheck(number=1, status="unverified", ink_chars=0),),
+        defects=(
+            inkgrid.Defect(
+                code=inkgrid.DefectCode.UNVERIFIED, page=1, detail="PDFium cannot load page 1"
+            ),
+        ),
+    )
+    html = build_inspector(doc, data, report=report)
+    assert "This page is unverified" in html
+    assert "PDFium cannot load page 1" in html

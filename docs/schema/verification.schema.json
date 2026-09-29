@@ -175,6 +175,12 @@
           "title": "Overlay Chars",
           "type": "integer"
         },
+        "overprint_chars": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Overprint Chars",
+          "type": "integer"
+        },
         "owned_chars": {
           "default": 0,
           "minimum": 0,
@@ -223,6 +229,7 @@
         "overflow_chars",
         "ligature_chars",
         "overlay_chars",
+        "overprint_chars",
         "rules"
       ],
       "title": "PageCheck",

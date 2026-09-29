@@ -56,6 +56,7 @@ def _page_info(page: PageModel) -> PageInfo:
         unmapped_chars=page.unmapped_chars,
         hidden_chars=page.hidden_chars,
         image_area_ratio=page.image_area_ratio,
+        overprinted_chars=page.overprinted_chars,
     )
 
 
@@ -312,6 +313,7 @@ def assemble(
                 furniture_chars=furniture_chars,
                 invisible_chars=sum(p.invisible_chars for p in reading.pages),
                 clipped_chars=sum(p.clipped_chars for p in reading.pages),
+                overprinted_chars=sum(p.overprinted_chars for p in reading.pages),
             ),
         )
     except ValueError as exc:  # pydantic's ValidationError: the core never imports pydantic

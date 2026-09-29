@@ -375,6 +375,7 @@ class Ledger(Frozen):
     furniture_chars: NonNegativeInt
     invisible_chars: NonNegativeInt
     clipped_chars: NonNegativeInt
+    overprinted_chars: NonNegativeInt = 0
     partition: Literal["proved"] = "proved"
 
 

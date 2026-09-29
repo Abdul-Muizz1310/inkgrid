@@ -61,6 +61,7 @@
         "hidden_text",
         "type3_font",
         "clipped_text",
+        "overprinted_text",
         "pdf_engine_warning",
         "unreadable_page",
         "lattice_failed",
@@ -107,6 +108,12 @@
         "number": {
           "exclusiveMinimum": 0,
           "title": "Number",
+          "type": "integer"
+        },
+        "overprinted_chars": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Overprinted Chars",
           "type": "integer"
         },
         "rotation": {
@@ -164,6 +171,7 @@
         "unmapped_chars",
         "hidden_chars",
         "image_area_ratio",
+        "overprinted_chars",
         "words",
         "rules"
       ],

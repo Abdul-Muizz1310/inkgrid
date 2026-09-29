@@ -245,6 +245,7 @@
         "hidden_text",
         "type3_font",
         "clipped_text",
+        "overprinted_text",
         "pdf_engine_warning",
         "unreadable_page",
         "lattice_failed",
@@ -673,6 +674,12 @@
           "title": "Invisible Chars",
           "type": "integer"
         },
+        "overprinted_chars": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Overprinted Chars",
+          "type": "integer"
+        },
         "partition": {
           "const": "proved",
           "default": "proved",
@@ -685,6 +692,7 @@
         "furniture_chars",
         "invisible_chars",
         "clipped_chars",
+        "overprinted_chars",
         "partition"
       ],
       "title": "Ledger",
@@ -949,6 +957,12 @@
           "title": "Number",
           "type": "integer"
         },
+        "overprinted_chars": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Overprinted Chars",
+          "type": "integer"
+        },
         "rotation": {
           "enum": [
             0,
@@ -989,7 +1003,8 @@
         "clipped_chars",
         "unmapped_chars",
         "hidden_chars",
-        "image_area_ratio"
+        "image_area_ratio",
+        "overprinted_chars"
       ],
       "title": "PageInfo",
       "type": "object"

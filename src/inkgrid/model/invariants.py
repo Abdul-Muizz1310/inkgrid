@@ -271,6 +271,7 @@ def _check_ledger(doc: "Document", words: Sequence["Word"]) -> None:
         "furniture_chars": furniture,
         "invisible_chars": sum(p.invisible_chars for p in doc.pages),
         "clipped_chars": sum(p.clipped_chars for p in doc.pages),
+        "overprinted_chars": sum(p.overprinted_chars for p in doc.pages),
     }
     for name, want in expected.items():
         got = getattr(doc.ledger, name)

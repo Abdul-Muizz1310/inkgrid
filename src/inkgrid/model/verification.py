@@ -103,6 +103,8 @@ class PageCheck(Frozen):
     overflow_chars: NonNegativeInt = 0
     ligature_chars: NonNegativeInt = 0
     overlay_chars: NonNegativeInt = 0
+    # Copies of text the reader read once, and PDFium still shows (spec 13 section 1.3).
+    overprint_chars: NonNegativeInt = 0
     rules: NonNegativeInt = 0
 
     @model_validator(mode="after")
@@ -114,6 +116,7 @@ class PageCheck(Frozen):
             + self.outside_chars
             + self.clipped_chars
             + self.soft_hyphens
+            + self.overprint_chars
         )
         match self.status:
             case "verified":
@@ -123,7 +126,7 @@ class PageCheck(Frozen):
                 if self.ink_chars != parts:
                     msg = (
                         f"{where}: {self.ink_chars} ink characters, but owned, lost, outside, "
-                        f"clipped and soft hyphens add up to {parts}"
+                        f"clipped, soft hyphens and overprint copies add up to {parts}"
                     )
                     raise ValueError(msg)
             case "declared":

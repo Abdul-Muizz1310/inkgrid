@@ -96,6 +96,8 @@ class PageInfo(Frozen):
     unmapped_chars: NonNegativeInt
     hidden_chars: NonNegativeInt
     image_area_ratio: Annotated[float, Field(ge=0, le=1)]
+    # Characters of words drawn again at the same place and read once (spec 13 section 1).
+    overprinted_chars: NonNegativeInt = 0
 
 
 def expected_text_layer(word_count: int, unmapped_chars: int) -> TextLayer:

@@ -11,6 +11,7 @@ EXPECTED_ORDER = [
     "hidden_text",
     "type3_font",
     "clipped_text",
+    "overprinted_text",
     "pdf_engine_warning",
     "unreadable_page",
     "lattice_failed",
@@ -67,3 +68,8 @@ def test_finding_block_id_shape() -> None:
     assert Finding.of(FindingCode.CALL_UNRESOLVED, "x", block="b12").block == "b12"
     with pytest.raises(ValidationError):
         Finding.of(FindingCode.CALL_UNRESOLVED, "x", block="b0")
+
+
+def test_OP1_overprinted_text_is_an_info_finding() -> None:
+    f = Finding.of(FindingCode.OVERPRINTED_TEXT, "14 characters", page=1)
+    assert f.severity == Severity.INFO

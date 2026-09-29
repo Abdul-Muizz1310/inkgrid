@@ -480,6 +480,22 @@ def test_D28_ledger_must_balance() -> None:
         broken(paragraph_doc(), clipped)
 
 
+def test_OP8_the_ledger_counts_overprinted_characters() -> None:
+    def counted(d: dict[str, Any]) -> None:
+        d["pages"][0]["overprinted_chars"] = 14
+        d["ledger"]["overprinted_chars"] = 14
+
+    def uncounted(d: dict[str, Any]) -> None:
+        d["pages"][0]["overprinted_chars"] = 14
+
+    data = as_json(paragraph_doc())
+    counted(data)
+    assert from_json(data).ledger.overprinted_chars == 14
+    assert paragraph_doc().pages[0].overprinted_chars == 0
+    with pytest.raises(ValidationError, match="overprinted_chars"):
+        broken(paragraph_doc(), uncounted)
+
+
 def test_ledger_counts_furniture_separately() -> None:
     doc = build(
         [

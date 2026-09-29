@@ -59,6 +59,16 @@ def test_RP1_a_verified_page_accounts_for_every_ink_character() -> None:
         page(ink_chars=3, soft_hyphens=1)
 
 
+def test_VO4_a_verified_page_counts_its_overprint_copies() -> None:
+    page(ink_chars=5, overprint_chars=2)
+    with pytest.raises(ValidationError, match="overprint"):
+        page(ink_chars=3, overprint_chars=2)
+    with pytest.raises(ValidationError, match="declared"):
+        page(status="declared", ink_chars=5, owned_chars=0, declared_chars=5, overprint_chars=1)
+    with pytest.raises(ValidationError, match="counts nothing"):
+        page(status="unverified", ink_chars=0, owned_chars=0, overprint_chars=1)
+
+
 def test_RP1_a_declared_page_holds_only_declared_ink() -> None:
     page(status="declared", ink_chars=5, owned_chars=0, declared_chars=5)
     with pytest.raises(ValidationError, match="declared"):

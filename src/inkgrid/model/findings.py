@@ -33,6 +33,7 @@ class FindingCode(StrEnum):
     HIDDEN_TEXT = "hidden_text"
     TYPE3_FONT = "type3_font"
     CLIPPED_TEXT = "clipped_text"
+    OVERPRINTED_TEXT = "overprinted_text"
     PDF_ENGINE_WARNING = "pdf_engine_warning"
     UNREADABLE_PAGE = "unreadable_page"
     LATTICE_FAILED = "lattice_failed"
@@ -53,6 +54,7 @@ SEVERITY: Final = MappingProxyType(
         FindingCode.HIDDEN_TEXT: Severity.WARNING,
         FindingCode.TYPE3_FONT: Severity.WARNING,
         FindingCode.CLIPPED_TEXT: Severity.INFO,
+        FindingCode.OVERPRINTED_TEXT: Severity.INFO,
         FindingCode.PDF_ENGINE_WARNING: Severity.INFO,
         FindingCode.UNREADABLE_PAGE: Severity.ERROR,
         FindingCode.LATTICE_FAILED: Severity.WARNING,

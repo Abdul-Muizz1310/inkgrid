@@ -208,8 +208,9 @@ def _extract(page: pymupdf.Page) -> _Extracted:
 
 def _page_model(page: pymupdf.Page, number: int, first_id: int) -> tuple[PageModel, PageSignals]:
     got = _extract(page)
-    out = build_words(got.lines, number, first_id)
-    seen = build_words(got.unclipped, number, first_id)
+    type3 = _type3_names(list(got.fonts))
+    out = build_words(got.lines, number, first_id, type3_fonts=type3)
+    seen = build_words(got.unclipped, number, first_id, type3_fonts=type3)
     width, height = page.cropbox.width, page.cropbox.height
     model = PageModel(
         number=number,
@@ -222,10 +223,10 @@ def _page_model(page: pymupdf.Page, number: int, first_id: int) -> tuple[PageMod
         unmapped_chars=out.unmapped_chars,
         hidden_chars=out.hidden_chars,
         image_area_ratio=_image_area_ratio(list(got.images), width, height),
+        overprinted_chars=out.overprinted_chars,
         words=out.words,
         rules=extract_rules(got.paths, number),
     )
-    type3 = _type3_names(list(got.fonts))
     signals = PageSignals(
         has_image=bool(got.images),
         has_curves=any(isinstance(i, CurveItem) for path in got.paths for i in path.items),

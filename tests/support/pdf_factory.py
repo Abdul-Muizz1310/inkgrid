@@ -45,6 +45,20 @@ def _raw_content(content: bytes, *, mediabox: str | None = None) -> bytes:
     return _save(doc)
 
 
+def overprinted_banner() -> bytes:
+    """A banner drawn twice at the same place, another word drawn between (competition us-020)."""
+    return _raw_content(
+        b"BT /F1 10 Tf 72 700 Td (HIGHLIGHTS FROM) Tj ET "
+        b"BT /F1 10 Tf 72 600 Td (between) Tj ET "
+        b"BT /F1 10 Tf 72 700 Td (HIGHLIGHTS FROM) Tj ET"
+    )
+
+
+def stroked_then_filled() -> bytes:
+    """`PRESS` stroked, then filled at the same origin: `0 TL`, so `T*` stays (olmOCR c8cdd4)."""
+    return _raw_content(b"BT /F1 24 Tf 0 TL 1 Tr 72 700 Td (PRESS) Tj 0 Tr T* (PRESS) Tj ET")
+
+
 def simple_text() -> bytes:
     """A bold 14 pt heading, a 10 pt sentence, and an italic word."""
     doc = pymupdf.open()
@@ -1089,6 +1103,8 @@ def outside_crop() -> bytes:
 
 OPENABLE: dict[str, Callable[[], bytes]] = {
     "simple_text": simple_text,
+    "overprinted_banner": overprinted_banner,
+    "stroked_then_filled": stroked_then_filled,
     "superscript": superscript,
     "font_change": font_change,
     "euro_text": euro_text,

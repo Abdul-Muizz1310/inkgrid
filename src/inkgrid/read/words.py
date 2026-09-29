@@ -1,4 +1,4 @@
-"""Build words from characters (pure). Rules W1-W6 of `docs/specs/02-reader.md` section 4.
+"""Build words from characters (pure). Rules W1-W8 of `docs/specs/02-reader.md` section 4.
 
 A word is a maximal run of word characters within one span. Across a span boundary within one line
 it continues only when nothing separates the two runs and both share their superscript and hidden
@@ -6,7 +6,8 @@ states: a font change mid-word stays one word, and `$0.40` followed by a raised 
 
 A span is hidden when its fill alpha is 0 or it is neither filled nor stroked (render modes 3 and 7,
 alpha-0 fills). Render modes 4-6 come back twice, the visible span and a clip copy; the copy is
-dropped so no word is doubled (W7).
+dropped so no word is doubled (W7). A word drawn again at the same place (a banner painted twice,
+fake bold, stroke then fill) is read once, its copy's characters counted (W8, spec 13 section 1).
 """
 
 import unicodedata
@@ -27,6 +28,9 @@ MARK_SMALLER = 0.92
 MARK_RAISED = 0.2
 DIRECTION_TOL = 1e-3
 EPS = 1e-6
+# A copy's box edges lie within this much of its size of the kept word's (W8): copies measured
+# 0.042 em apart at most, legitimate same-text neighbours 0.166 em at least (spec 13 section 0).
+OVERPRINT_EM = 0.1
 
 SUPERSCRIPT = 1
 ITALIC = 2
@@ -158,10 +162,59 @@ class WordsOut:
     invisible_chars: int
     unmapped_chars: int
     hidden_chars: int
+    overprinted_chars: int = 0
 
 
-def build_words(lines: Sequence[RawLine], page: int, first_id: int) -> WordsOut:
-    """Turn a page's raw lines into words numbered from `first_id`, in `rawdict` order."""
+_Identity = tuple[str, str, float, bool, bool, bool]
+
+
+def _identity(word: Word) -> _Identity:
+    return (word.text, word.font, word.size, word.hidden, word.horizontal, word.superscript)
+
+
+def _covers(kept: Rect, copy: Rect, tolerance: float) -> bool:
+    return (
+        abs(kept.x0 - copy.x0) <= tolerance + EPS
+        and abs(kept.y0 - copy.y0) <= tolerance + EPS
+        and abs(kept.x1 - copy.x1) <= tolerance + EPS
+        and abs(kept.y1 - copy.y1) <= tolerance + EPS
+    )
+
+
+def _read_once(words: Sequence[Word], type3_fonts: frozenset[str]) -> tuple[list[Word], int]:
+    """The words with every copy of an earlier kept word dropped, and the copies' characters (W8).
+
+    A copy has the kept word's text, font, size, and states, and each box edge within
+    OVERPRINT_EM of its size. A U+FFFD or Type 3 word is never a copy: pictures share codes.
+    """
+    kept: list[Word] = []
+    boxes: dict[_Identity, list[Rect]] = {}
+    dropped = 0
+    for word in words:
+        key = _identity(word)
+        comparable = REPLACEMENT not in word.text and word.font not in type3_fonts
+        if comparable and any(
+            _covers(box, word.bbox, OVERPRINT_EM * word.size) for box in boxes.get(key, ())
+        ):
+            dropped += len(word.text)
+            continue
+        kept.append(word)
+        if comparable:
+            boxes.setdefault(key, []).append(word.bbox)
+    return kept, dropped
+
+
+def build_words(
+    lines: Sequence[RawLine],
+    page: int,
+    first_id: int,
+    *,
+    type3_fonts: frozenset[str] = frozenset(),
+) -> WordsOut:
+    """Turn a page's raw lines into words numbered from `first_id`, in `rawdict` order.
+
+    `type3_fonts` names the page's Type 3 fonts, as PyMuPDF names their spans.
+    """
     tokens: list[_Token] = []
     invisible = 0
     span_id = 0
@@ -210,7 +263,9 @@ def build_words(lines: Sequence[RawLine], page: int, first_id: int) -> WordsOut:
                     current.add(text, char.bbox, span_id, span)
                     at_start = False
             carry = current
-    words = tuple(_to_word(t, first_id + i, page) for i, t in enumerate(tokens))
+    built = [_to_word(t, first_id + i, page) for i, t in enumerate(tokens)]
+    once, overprinted = _read_once(built, type3_fonts)
+    words = tuple(w.model_copy(update={"id": first_id + i}) for i, w in enumerate(once))
     unmapped = sum(w.text.count(REPLACEMENT) for w in words)
     hidden_chars = sum(len(w.text) for w in words if w.hidden)
-    return WordsOut(words, invisible, unmapped, hidden_chars)
+    return WordsOut(words, invisible, unmapped, hidden_chars, overprinted)

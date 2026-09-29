@@ -217,3 +217,43 @@ def test_W21_lone_surrogate_reads_as_replacement_character() -> None:
     out = build_words([line(span("\ud800B", 72))], page=1, first_id=0)
     assert [w.text for w in out.words] == ["\ufffdB"]
     assert out.unmapped_chars == 1
+
+
+# --- W8: overprinted words (spec 13 section 1) ----------------------------------------------------
+
+
+def test_OP3_a_copy_within_a_tenth_of_its_size_is_read_once() -> None:
+    near = build_words(
+        [line(span("Fee", 72)), line(span("Fee", 73.0, y0=101.0))], page=1, first_id=4
+    )
+    assert [(w.id, w.text) for w in near.words] == [(4, "Fee")]
+    assert near.overprinted_chars == 3
+    far = build_words(
+        [line(span("Fee", 72)), line(span("Fee", 73.1, y0=101.1))], page=1, first_id=4
+    )
+    assert [(w.id, w.text) for w in far.words] == [(4, "Fee"), (5, "Fee")]
+    assert far.overprinted_chars == 0
+
+
+def test_OP4_the_unit_is_the_word_and_its_text_must_match() -> None:
+    # practice us-022: `FY 2008` in white under an image, then `FY 2011` 0.44 pt away
+    years = build_words(
+        [line(span("FY 2008", 72)), line(span("FY 2011", 72.44))], page=1, first_id=0
+    )
+    assert [w.text for w in years.words] == ["FY", "2008", "2011"]
+    assert years.overprinted_chars == 2
+    apart = build_words([line(span("1.00", 72)), line(span("1.00", 112))], page=1, first_id=0)
+    assert [w.text for w in apart.words] == ["1.00", "1.00"]
+
+
+def test_OP5_hidden_twins_pictures_and_type3_glyphs_stay() -> None:
+    hidden = span("Fee", 72, char_flags=0, alpha=0)
+    assert texts(line(hidden), line(span("Fee", 72))) == ["Fee", "Fee"]
+    assert texts(line(span("\ufffd\ufffd", 72)), line(span("\ufffd\ufffd", 72))) == [
+        "\ufffd\ufffd",
+        "\ufffd\ufffd",
+    ]
+    type3 = "Type3 (12 0 R)"
+    drawn = [line(span("ab", 72, font=type3)), line(span("ab", 72, font=type3))]
+    out = build_words(drawn, page=1, first_id=0, type3_fonts=frozenset({type3}))
+    assert [w.text for w in out.words] == ["ab", "ab"]

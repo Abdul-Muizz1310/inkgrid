@@ -68,6 +68,12 @@ def page_findings(page: PageModel, signals: PageSignals) -> tuple[Finding, ...]:
             f"{page.clipped_chars} characters are clipped, outside the CropBox, or off the page"
         )
         out.append(Finding.of(FindingCode.CLIPPED_TEXT, detail, page=n))
+    if page.overprinted_chars:
+        detail = (
+            f"{page.overprinted_chars} characters are drawn again at the same place (a banner "
+            "painted twice, fake bold, stroke then fill); they are read once"
+        )
+        out.append(Finding.of(FindingCode.OVERPRINTED_TEXT, detail, page=n))
     if signals.type3_chars:
         detail = (
             f"{signals.type3_chars} characters are drawn in a Type 3 font; their Unicode mapping "

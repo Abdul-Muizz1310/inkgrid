@@ -153,6 +153,28 @@ def test_X19_text_outside_the_cropbox_is_counted_as_clipped() -> None:
     assert codes(reading) == [FindingCode.CLIPPED_TEXT]
 
 
+def test_OP1_a_banner_drawn_twice_is_read_once() -> None:
+    reading = read(pdf_factory.overprinted_banner())
+    assert [w.text for w in reading.words()] == ["HIGHLIGHTS", "FROM", "between"]
+    assert reading.pages[0].overprinted_chars == len("HIGHLIGHTSFROM")
+    (finding,) = reading.findings
+    assert finding.code is FindingCode.OVERPRINTED_TEXT
+    assert finding.severity is Severity.INFO
+    assert "14" in finding.detail
+
+
+def test_OP2_text_stroked_then_filled_is_read_once() -> None:
+    reading = read(pdf_factory.stroked_then_filled())
+    assert [w.text for w in reading.words()] == ["PRESS"]
+    assert reading.pages[0].overprinted_chars == len("PRESS")
+
+
+def test_OP7_a_copy_is_never_counted_as_clipped() -> None:
+    reading = read(pdf_factory.overprinted_banner())
+    assert reading.pages[0].clipped_chars == 0
+    assert FindingCode.CLIPPED_TEXT not in codes(reading)
+
+
 def test_X20_type3_font_is_reported() -> None:
     reading = read(pdf_factory.type3_font())
     assert [w.text for w in reading.words()] == ["aaa", "plain"]

@@ -1,4 +1,3 @@
-<!-- the newest report: bench/results/2026-09-29-b33b3cb/report.md -->
 # inkgrid benchmark: the M5b baseline
 
 Measured on 2026-09-29 at commit `b33b3cb` by `bench/inkgrid_bench/run.py`, under the pre-registered protocol of `docs/specs/12-benchmark.md`. **inkgrid's numbers are its baseline**: its reading as of M4, before any fix for the reading errors found on these documents (DR-0023); the one change since, from M5a, stops a crash on a Camelot table with no cells. Later runs are labelled as tuned on these documents.

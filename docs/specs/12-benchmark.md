@@ -63,18 +63,21 @@ earlier runs on them were inkgrid's verifier (spec 11), which scores nothing.
   library pins. Box scores reproduce exactly; of the 16 F1s of their four released predictions, 15
   reproduce within 0.01 of their released results, and PyMuPDF's F1-TEDS misses by 0.00002 (0.4798
   here against 0.4898, a gap of 0.01002). The cause is not found.
-- **The baseline** (`bench/results/2026-09-29-9107c84/`, readings and scores of 2026-09-28): no tool
-  crashed or timed out on any of the 313 documents; the verifier's defects on inkgrid's readings are
-  spec 11's 74, 114, and 135.
+- **The baseline** (`bench/results/2026-09-29-b33b3cb/`): no tool crashed or timed out on any of the
+  313 documents; the verifier's defects on inkgrid's readings are spec 11's 74, 114, and 135. The
+  first scoring (`2026-09-29-9107c84/`, kept and marked superseded) had turned pages in the wrong
+  frame and four access-path files misread (§§ 0, 3.2); the run was repeated in full after both fixes.
+  Of its structure and olmOCR numbers, none moved; Soric et al.'s F1s rose by 0.01 to 0.03 for every
+  tool, and one finding fell away (inkgrid's practice region precision over pdfplumber's).
 - **olmOCR-bench's scorer** (0.4.27) imports numpy without declaring it (pinned beside it), and its
   `--output_failed` skips a candidate with any error. Per-test results come from its own
   `evaluate_candidate`, checked against the score its command line prints.
 - **The text-layer stratum** is the 173 PDFs outside `bench/olmocr-no-text-layer.txt`: the 15 on which
   poppler's `pdftotext` 26.01 finds fewer than 100 non-whitespace characters (12 find none), 84 tests,
   as first measured.
-- **Binding's ceiling:** on the ground truth's own grids (82 tables that tile, 4,701 paths), 94.2% of
-  paths are leaf-bound and 87.9% bound. A label outside the value's row and column (a caption, a note)
-  never binds.
+- **Binding's ceiling:** the ICDAR ground truth read as a tool binds 86.8% of the 5,603 checkable
+  paths and leaf-binds 92.5%. A label outside the value's row and column (a caption, a note) never
+  binds.
 
 ---
 

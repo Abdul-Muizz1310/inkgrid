@@ -257,3 +257,14 @@ def test_OP5_hidden_twins_pictures_and_type3_glyphs_stay() -> None:
     drawn = [line(span("ab", 72, font=type3)), line(span("ab", 72, font=type3))]
     out = build_words(drawn, page=1, first_id=0, type3_fonts=frozenset({type3}))
     assert [w.text for w in out.words] == ["ab", "ab"]
+
+
+def test_T32_a_control_code_is_a_glyph_without_unicode_only_in_a_type3_font() -> None:
+    type3 = "Type3 (9 0 R)"
+    drawn = [line(span("a\x01b\tc", 72, font=type3))]
+    out = build_words(drawn, page=1, first_id=0, type3_fonts=frozenset({type3}))
+    assert [w.text for w in out.words] == ["a\ufffdb\ufffdc"]
+    assert (out.unmapped_chars, out.invisible_chars) == (2, 0)
+    plain = build_words([line(span("a\x01b\tc", 72))], page=1, first_id=0)
+    assert [w.text for w in plain.words] == ["ab", "c"]
+    assert (plain.unmapped_chars, plain.invisible_chars) == (0, 1)

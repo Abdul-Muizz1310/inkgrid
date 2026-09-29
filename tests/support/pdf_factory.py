@@ -1088,6 +1088,29 @@ def type3_font() -> bytes:
     return _build([_CATALOG, _ONE_PAGE, page, _stream(content), font, glyph, _HELVETICA])
 
 
+def type3_digits() -> bytes:
+    """A Type 3 font naming its digit glyphs `/1` and `/9`, with no ToUnicode (olmOCR e247cacc).
+
+    MuPDF reads such a name as a code point (U+0001, U+0009): `t` and a lowered `1`, then `[9,`.
+    """
+    page = (
+        b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] "
+        b"/Resources << /Font << /T3 5 0 R /F1 8 0 R >> >> /Contents 4 0 R >>"
+    )
+    content = (
+        b"BT /F1 12 Tf 72 700 Td (t) Tj ET BT /T3 8 Tf 80 697 Td (1) Tj ET "
+        b"BT /F1 12 Tf 72 650 Td ([) Tj /T3 12 Tf (9) Tj /F1 12 Tf (,) Tj ET"
+    )
+    font = (
+        b"<< /Type /Font /Subtype /Type3 /FontBBox [0 0 600 700] /FontMatrix [0.001 0 0 0.001 0 0] "
+        b"/CharProcs << /1 6 0 R /9 7 0 R >> /Encoding << /Type /Encoding /Differences "
+        b"[49 /1 57 /9] >> /FirstChar 49 /LastChar 57 /Widths [600 0 0 0 0 0 0 0 600] "
+        b"/Resources << >> >>"
+    )
+    glyph = _stream(b"600 0 0 0 600 700 d1 100 0 400 700 re f")
+    return _build([_CATALOG, _ONE_PAGE, page, _stream(content), font, glyph, glyph, _HELVETICA])
+
+
 def render_mode(mode: int) -> bytes:
     """The word `mode<N>` drawn in text render mode N (0-7)."""
     return _raw_content(b"BT /F1 10 Tf %d Tr 72 700 Td (mode%d) Tj ET" % (mode, mode))
@@ -1118,6 +1141,7 @@ OPENABLE: dict[str, Callable[[], bytes]] = {
     "overprinted_banner": overprinted_banner,
     "stroked_then_filled": stroked_then_filled,
     "wordart_shadow": wordart_shadow,
+    "type3_digits": type3_digits,
     "superscript": superscript,
     "font_change": font_change,
     "euro_text": euro_text,

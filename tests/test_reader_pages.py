@@ -175,6 +175,13 @@ def test_OP7_a_copy_is_never_counted_as_clipped() -> None:
     assert FindingCode.CLIPPED_TEXT not in codes(reading)
 
 
+def test_T31_type3_digit_glyphs_read_as_glyphs_without_unicode() -> None:
+    reading = read(pdf_factory.type3_digits())
+    assert [w.text for w in reading.words()] == ["t", "\ufffd", "[\ufffd,"]
+    assert reading.pages[0].unmapped_chars == 2
+    assert reading.pages[0].invisible_chars == 0
+
+
 def test_X20_type3_font_is_reported() -> None:
     reading = read(pdf_factory.type3_font())
     assert [w.text for w in reading.words()] == ["aaa", "plain"]

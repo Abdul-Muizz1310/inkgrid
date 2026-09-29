@@ -49,16 +49,20 @@ INVISIBLE_CATEGORIES = frozenset({"Cc", "Cf", "Co", "Cn"})
 class _Kind(Enum):
     SPACE = auto()
     INVISIBLE = auto()
-    SURROGATE = auto()
+    NO_UNICODE = auto()  # a drawn glyph with no Unicode meaning: read as U+FFFD
     WORD = auto()
 
 
-def _classify(cp: str) -> _Kind:
+def _classify(cp: str, *, type3: bool) -> _Kind:
+    category = unicodedata.category(cp)
+    if type3 and category == "Cc":
+        # Every Type 3 code runs a glyph procedure; MuPDF's control code came from a glyph name
+        # no Unicode mapping defines, such as `/1` (spec 13 section 2).
+        return _Kind.NO_UNICODE
     if cp.isspace() or cp == ZERO_WIDTH_SPACE:
         return _Kind.SPACE
-    category = unicodedata.category(cp)
     if category == "Cs":
-        return _Kind.SURROGATE
+        return _Kind.NO_UNICODE
     if category in INVISIBLE_CATEGORIES:
         return _Kind.INVISIBLE
     return _Kind.WORD
@@ -228,11 +232,12 @@ def build_words(
             span_id += 1
             superscript = bool(span.flags & SUPERSCRIPT)
             hidden = _is_hidden(span)
+            type3 = span.font in type3_fonts
             current: _Token | None = None
             at_start = True
             for char in span.chars:
                 for cp in char.c:
-                    kind = _classify(cp)
+                    kind = _classify(cp, type3=type3)
                     if kind is _Kind.SPACE:
                         if cp == ZERO_WIDTH_SPACE:
                             invisible += 1
@@ -242,7 +247,7 @@ def build_words(
                     if kind is _Kind.INVISIBLE:
                         invisible += 1
                         continue
-                    text = REPLACEMENT if kind is _Kind.SURROGATE else cp
+                    text = REPLACEMENT if kind is _Kind.NO_UNICODE else cp
                     if current is None:
                         joins = (
                             at_start

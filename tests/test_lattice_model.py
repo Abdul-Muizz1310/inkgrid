@@ -37,3 +37,11 @@ def test_page_frames_report_rotation_and_cropbox_size() -> None:
     assert crop == PageFrame(number=1, rotation=0, width=500, height=700)
     (turned,) = page_frames(pdf_factory.rotated(), None)
     assert (turned.rotation, turned.width, turned.height) == (90, 612, 792)
+
+
+def test_FR2_a_grids_core_lies_inside_it() -> None:
+    cells = (Rect(0, 0, 50, 10), Rect(50, 0, 100, 10), Rect(0, 10, 100, 40))
+    assert RuledGrid(page=1, cells=cells).core is None
+    assert RuledGrid(page=1, cells=cells, core=Rect(10, 5, 90, 35)).core == Rect(10, 5, 90, 35)
+    with pytest.raises(ValidationError, match="core"):
+        RuledGrid(page=1, cells=cells, core=Rect(10, 5, 110, 35))

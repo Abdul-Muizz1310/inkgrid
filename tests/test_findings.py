@@ -19,6 +19,7 @@ EXPECTED_ORDER = [
     "word_crosses_rule",
     "header_not_found",
     "table_left_as_text",
+    "chart_left_as_text",
     "call_unresolved",
     "no_furniture_long_document",
 ]
@@ -72,4 +73,9 @@ def test_finding_block_id_shape() -> None:
 
 def test_OP1_overprinted_text_is_an_info_finding() -> None:
     f = Finding.of(FindingCode.OVERPRINTED_TEXT, "14 characters", page=1)
+    assert f.severity == Severity.INFO
+
+
+def test_CH1_a_chart_left_as_text_is_an_info_finding() -> None:
+    f = Finding.of(FindingCode.CHART_LEFT_AS_TEXT, "a bar chart", page=1)
     assert f.severity == Severity.INFO

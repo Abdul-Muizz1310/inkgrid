@@ -188,3 +188,16 @@ def test_P15_reading_json_round_trip_is_canonical(reading: Reading) -> None:
     again = Reading.model_validate_json(text)
     assert again == reading
     assert again.model_dump_json() == text
+
+
+def test_DG2_a_diagonal_word_is_not_horizontal() -> None:
+    assert mk_word().diagonal is False
+    assert mk_word(diagonal=True, horizontal=False).diagonal is True
+    with pytest.raises(ValidationError, match="diagonal"):
+        mk_word(diagonal=True, horizontal=True)
+
+
+def test_CH1_a_page_carries_its_filled_shapes() -> None:
+    fills = (Rect(72, 100, 90, 300),)
+    assert mk_page().fills == ()
+    assert mk_page(fills=fills).fills == fills

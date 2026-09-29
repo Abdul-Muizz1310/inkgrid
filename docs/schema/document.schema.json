@@ -253,6 +253,7 @@
         "word_crosses_rule",
         "header_not_found",
         "table_left_as_text",
+        "chart_left_as_text",
         "call_unresolved",
         "no_furniture_long_document"
       ],
@@ -1362,6 +1363,11 @@
           "title": "Bold",
           "type": "boolean"
         },
+        "diagonal": {
+          "default": false,
+          "title": "Diagonal",
+          "type": "boolean"
+        },
         "font": {
           "title": "Font",
           "type": "string"
@@ -1413,7 +1419,8 @@
         "italic",
         "superscript",
         "hidden",
-        "horizontal"
+        "horizontal",
+        "diagonal"
       ],
       "title": "Word",
       "type": "object"

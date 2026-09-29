@@ -41,6 +41,7 @@ class FindingCode(StrEnum):
     WORD_CROSSES_RULE = "word_crosses_rule"
     HEADER_NOT_FOUND = "header_not_found"
     TABLE_LEFT_AS_TEXT = "table_left_as_text"
+    CHART_LEFT_AS_TEXT = "chart_left_as_text"
     CALL_UNRESOLVED = "call_unresolved"
     NO_FURNITURE_LONG_DOCUMENT = "no_furniture_long_document"
 
@@ -62,6 +63,7 @@ SEVERITY: Final = MappingProxyType(
         FindingCode.WORD_CROSSES_RULE: Severity.WARNING,
         FindingCode.HEADER_NOT_FOUND: Severity.INFO,
         FindingCode.TABLE_LEFT_AS_TEXT: Severity.WARNING,
+        FindingCode.CHART_LEFT_AS_TEXT: Severity.INFO,
         FindingCode.CALL_UNRESOLVED: Severity.WARNING,
         FindingCode.NO_FURNITURE_LONG_DOCUMENT: Severity.INFO,
     }

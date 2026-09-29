@@ -38,6 +38,15 @@ class Word(Frozen):
     superscript: bool
     hidden: bool
     horizontal: bool
+    # Set 15-75 degrees from the horizontal, modulo 90: a watermark, never a cell's (spec 14 s. 7).
+    diagonal: bool = False
+
+    @model_validator(mode="after")
+    def _diagonal_is_not_horizontal(self) -> Self:
+        if self.diagonal and self.horizontal:
+            msg = f"word {self.id} is both diagonal and horizontal"
+            raise ValueError(msg)
+        return self
 
     @field_validator("text")
     @classmethod
@@ -112,6 +121,8 @@ class PageModel(PageInfo):
 
     words: tuple[Word, ...]
     rules: tuple[Rule, ...]
+    # Visible filled rectangles thicker than a rule on both sides: bars, shading (spec 14 s. 6).
+    fills: tuple[Rect, ...] = ()
 
     @model_validator(mode="after")
     def _consistent(self) -> Self:

@@ -69,6 +69,7 @@
         "word_crosses_rule",
         "header_not_found",
         "table_left_as_text",
+        "chart_left_as_text",
         "call_unresolved",
         "no_furniture_long_document"
       ],
@@ -83,6 +84,30 @@
           "minimum": 0,
           "title": "Clipped Chars",
           "type": "integer"
+        },
+        "fills": {
+          "default": [],
+          "items": {
+            "maxItems": 4,
+            "minItems": 4,
+            "prefixItems": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              }
+            ],
+            "type": "array"
+          },
+          "title": "Fills",
+          "type": "array"
         },
         "height": {
           "gt": 0,
@@ -173,7 +198,8 @@
         "image_area_ratio",
         "overprinted_chars",
         "words",
-        "rules"
+        "rules",
+        "fills"
       ],
       "title": "PageModel",
       "type": "object"
@@ -322,6 +348,11 @@
           "title": "Bold",
           "type": "boolean"
         },
+        "diagonal": {
+          "default": false,
+          "title": "Diagonal",
+          "type": "boolean"
+        },
         "font": {
           "title": "Font",
           "type": "string"
@@ -373,7 +404,8 @@
         "italic",
         "superscript",
         "hidden",
-        "horizontal"
+        "horizontal",
+        "diagonal"
       ],
       "title": "Word",
       "type": "object"

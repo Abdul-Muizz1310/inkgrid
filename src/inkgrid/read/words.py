@@ -10,6 +10,7 @@ dropped so no word is doubled (W7). A word drawn again at the same place (a bann
 fake bold, stroke then fill) is read once, its copy's characters counted (W8, spec 13 section 1).
 """
 
+import math
 import unicodedata
 from collections.abc import Sequence
 from dataclasses import dataclass, field
@@ -27,6 +28,10 @@ JOIN_OVERLAP = 0.3
 MARK_SMALLER = 0.92
 MARK_RAISED = 0.2
 DIRECTION_TOL = 1e-3
+# A line this far from the horizontal, modulo 90 degrees, is diagonal: the verifier's overlay band
+# (spec 11 section 3.2; spec 14 section 7).
+DIAGONAL_MIN_DEG = 15.0
+DIAGONAL_MAX_DEG = 75.0
 EPS = 1e-6
 # A copy's box edges lie within this much of its size of the kept word's (W8): copies measured
 # 0.042 em apart at most, legitimate same-text neighbours 0.166 em at least (spec 13 section 0).
@@ -96,6 +101,7 @@ class _Token:
     superscript: bool
     hidden: bool
     horizontal: bool
+    diagonal: bool = False
     text: list[str] = field(default_factory=list)
     box: list[float] = field(default_factory=list)
     span_counts: dict[int, int] = field(default_factory=dict)
@@ -140,6 +146,12 @@ def _is_horizontal(direction: tuple[float, float]) -> bool:
     return abs(dx - 1.0) < DIRECTION_TOL and abs(dy) < DIRECTION_TOL
 
 
+def _is_diagonal(direction: tuple[float, float]) -> bool:
+    dx, dy = direction
+    angle = math.degrees(math.atan2(abs(dy), abs(dx)))
+    return DIAGONAL_MIN_DEG <= angle <= DIAGONAL_MAX_DEG
+
+
 def _to_word(token: _Token, word_id: int, page: int) -> Word:
     span = token.dominant()
     font_lower = span.font.lower()
@@ -155,6 +167,7 @@ def _to_word(token: _Token, word_id: int, page: int) -> Word:
         superscript=token.superscript,
         hidden=token.hidden,
         horizontal=token.horizontal,
+        diagonal=token.diagonal and not token.horizontal,
     )
 
 
@@ -225,6 +238,7 @@ def build_words(
     drawn = {_signature(s) for line in lines for s in line.spans if not _is_clip_copy(s)}
     for line in lines:
         horizontal = _is_horizontal(line.direction)
+        diagonal = _is_diagonal(line.direction)
         carry: _Token | None = None
         for span in line.spans:
             if _is_clip_copy(span) and _signature(span) in drawn:
@@ -263,7 +277,7 @@ def build_words(
                         if joins and carry is not None:
                             current = carry
                         else:
-                            current = _Token(superscript, hidden, horizontal)
+                            current = _Token(superscript, hidden, horizontal, diagonal)
                             tokens.append(current)
                     current.add(text, char.bbox, span_id, span)
                     at_start = False

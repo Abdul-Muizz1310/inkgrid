@@ -34,7 +34,7 @@ from inkgrid.read.raw import (
     RawSpan,
     RectItem,
 )
-from inkgrid.read.rules import extract_rules
+from inkgrid.read.rules import extract_fills, extract_rules
 from inkgrid.read.words import WordsOut, build_words
 
 # CID fallback, ligatures and images are all off on purpose: see docs/specs/02-reader.md section 3.
@@ -358,6 +358,7 @@ def _page_model(
         overprinted_chars=out.overprinted_chars,
         words=out.words,
         rules=extract_rules(got.paths, number),
+        fills=extract_fills(got.paths),
     )
     signals = PageSignals(
         has_image=bool(got.images),

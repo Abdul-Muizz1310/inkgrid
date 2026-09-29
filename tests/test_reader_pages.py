@@ -246,6 +246,13 @@ def test_GN6_an_encoding_past_the_xref_leaves_mupdfs_reading() -> None:
     assert FindingCode.UNREADABLE_PAGE not in codes(reading)
 
 
+def test_CH1_a_page_reads_its_fills_and_a_thin_fill_as_a_rule() -> None:
+    (page,) = read(pdf_factory.fills_and_thin_rules()).pages
+    ((x0, y0, x1, y1),) = [(f.x0, f.y0, f.x1, f.y1) for f in page.fills]
+    assert (x0, y0, x1, y1) == (100.0, 192.0, 120.0, 292.0)
+    assert [(r.axis, r.thickness) for r in page.rules] == [("v", 2.75)]
+
+
 def test_X20_type3_font_is_reported() -> None:
     reading = read(pdf_factory.type3_font())
     assert [w.text for w in reading.words()] == ["aaa", "plain"]

@@ -87,6 +87,59 @@ def merged_groups(edges: Sequence[Sequence[Edges]]) -> list[Box]:
     return sorted(boxes)
 
 
+def _v_drawn(edges: Sequence[Sequence[Edges]], r: int, k: int) -> bool:
+    """The vertical line k (between columns k - 1 and k) is drawn in row r."""
+    return 0 < k < len(edges[0]) and (edges[r][k - 1].right or edges[r][k].left)
+
+
+def _h_drawn(edges: Sequence[Sequence[Edges]], k: int, c: int) -> bool:
+    """The horizontal line k (between rows k - 1 and k) is drawn in column c."""
+    return 0 < k < len(edges) and (edges[k - 1][c].bottom or edges[k][c].top)
+
+
+def _boundary_drawn(edges: Sequence[Sequence[Edges]], box: Box) -> bool:
+    r0, c0, r1, c1 = box
+    rows, cols = len(edges), len(edges[0])
+    top = all(edges[r0][c].top or (r0 > 0 and edges[r0 - 1][c].bottom) for c in range(c0, c1))
+    bottom = all(edges[r1 - 1][c].bottom or (r1 < rows and edges[r1][c].top) for c in range(c0, c1))
+    left = all(edges[r][c0].left or (c0 > 0 and edges[r][c0 - 1].right) for r in range(r0, r1))
+    right = all(edges[r][c1 - 1].right or (c1 < cols and edges[r][c1].left) for r in range(r0, r1))
+    return top and bottom and left and right
+
+
+def frame_core(edges: Sequence[Sequence[Edges]]) -> Box | None:
+    """The closed table inside a frame's open ring, or None (spec 14 section 4.2).
+
+    A core has its boundary drawn along its full length, no drawn line crossing into its span from
+    the rows or columns around it, at least 2 x 2 cells, and the lattice reaching past it on the
+    left, the right, and above or below. The largest one is returned.
+    """
+    if not edges or not all(edges):
+        return None
+    rows, cols = len(edges), len(edges[0])
+    best: tuple[int, Box] | None = None
+    for c0 in range(cols):
+        for c1 in range(c0 + 2, cols + 1):
+            drawn = [
+                r for r in range(rows) if any(_v_drawn(edges, r, k) for k in range(c0 + 1, c1))
+            ]
+            if not drawn:
+                continue
+            r0, r1 = drawn[0], drawn[-1] + 1
+            box: Box = (r0, c0, r1, c1)
+            if r1 - r0 < 2 or not (c0 > 0 and c1 < cols and (r0 > 0 or r1 < rows)):  # noqa: PLR2004
+                continue
+            outside = (*range(c0), *range(c1, cols))
+            if any(_h_drawn(edges, k, c) for c in outside for k in range(r0 + 1, r1)):
+                continue
+            if not _boundary_drawn(edges, box):
+                continue
+            area = (r1 - r0) * (c1 - c0)
+            if best is None or area > best[0]:
+                best = (area, box)
+    return None if best is None else best[1]
+
+
 def _placer(table: camelot.Table, frame: PageFrame) -> Place | None:
     """Camelot's y-up point to unrotated page coordinates, or None when it cannot be placed.
 
@@ -122,13 +175,17 @@ def _placer(table: camelot.Table, frame: PageFrame) -> Place | None:
 
 def _grid(table: camelot.Table, place: Place, page: int) -> RuledGrid:
     edges = [[Edges(c.left, c.right, c.top, c.bottom) for c in row] for row in table.cells]
-    cells: list[Rect] = []
-    for r0, c0, r1, c1 in merged_groups(edges):
+
+    def rect(box: Box) -> Rect:
+        r0, c0, r1, c1 = box
         first, last = table.cells[r0][c0], table.cells[r1 - 1][c1 - 1]
         x0, y0 = place(first.x1, first.y2)  # top-left, y-up
         x1, y1 = place(last.x2, last.y1)  # bottom-right, y-up
-        cells.append(Rect(min(x0, x1), min(y0, y1), max(x0, x1), max(y0, y1)))
-    return RuledGrid(page=page, cells=tuple(cells))
+        return Rect(min(x0, x1), min(y0, y1), max(x0, x1), max(y0, y1))
+
+    core = frame_core(edges)
+    cells = tuple(rect(box) for box in merged_groups(edges))
+    return RuledGrid(page=page, cells=cells, core=None if core is None else rect(core))
 
 
 def read_lattice(

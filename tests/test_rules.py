@@ -2,9 +2,10 @@ import random
 
 import pytest
 
+from inkgrid.model.geometry import Rect
 from inkgrid.model.page import Rule
 from inkgrid.read.raw import CurveItem, LineItem, PathItem, QuadItem, RawPath, RectItem
-from inkgrid.read.rules import extract_rules
+from inkgrid.read.rules import extract_fills, extract_rules
 
 BLACK = (0.0, 0.0, 0.0)
 
@@ -152,3 +153,24 @@ def test_R14_output_is_sorted_whatever_the_input_order() -> None:
 
 def test_rules_carry_their_page() -> None:
     assert extract_rules([stroked(LineItem((0, 5), (50, 5)))], page=3)[0].page == 3
+
+
+# --- spec 14 sections 1 and 6 --------------------------------------------------------------------
+
+
+def test_RU1_a_fill_2_75_pt_wide_is_a_rule() -> None:
+    # practice us-008: grey fill-only column rules 2.75 pt wide
+    (rule,) = extract_rules([filled(RectItem((291.45, 471.25, 294.2, 719.35)))], page=1)
+    assert (rule.axis, rule.thickness) == ("v", 2.75)
+    assert abs(rule.at - 292.825) < 0.01
+
+
+def test_RU2_fills_3_6_and_4_08_pt_wide_are_no_rules_but_fills() -> None:
+    paths = [
+        filled(RectItem((72.0, 100.0, 75.6, 190.0))),
+        filled(RectItem((72.0, 200.0, 76.08, 211.0))),
+    ]
+    assert extract_rules(paths, page=1) == ()
+    assert extract_fills(paths) == (Rect(72.0, 100.0, 75.6, 190.0), Rect(72.0, 200.0, 76.08, 211.0))
+    assert extract_fills([filled(RectItem((72.0, 100.0, 74.75, 348.0)))]) == ()
+    assert extract_fills([stroked(RectItem((72.0, 100.0, 90.0, 190.0)))]) == ()

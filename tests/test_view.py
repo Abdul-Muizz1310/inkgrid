@@ -34,3 +34,15 @@ def test_VW2_mostly_horizontal_text_keeps_the_unrotated_frame() -> None:
 def test_VW3_an_unrotated_page_is_unchanged() -> None:
     page = mk_page(words=(mk_word(horizontal=False),))
     assert upright(page) is page
+
+
+def test_DG2_a_diagonal_word_stays_diagonal_on_a_turned_page() -> None:
+    upright_words = tuple(
+        mk_word(id=i, bbox=Rect(10, 20 + 20 * i, 30, 30 + 20 * i), horizontal=False)
+        for i in range(3)
+    )
+    watermark = mk_word(id=3, bbox=Rect(100, 100, 300, 300), horizontal=False, diagonal=True)
+    page = upright(mk_page(rotation=90, words=(*upright_words, watermark)))
+    turned = page.words[-1]
+    assert (turned.diagonal, turned.horizontal) == (True, False)
+    type(turned).model_validate_json(turned.model_dump_json())  # a valid word

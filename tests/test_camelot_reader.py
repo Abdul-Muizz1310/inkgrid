@@ -7,7 +7,7 @@ import pytest
 import pdf_factory
 from inkgrid.model.geometry import Rect, turn_rect
 from inkgrid.model.lattice import LatticeReading, RuledGrid
-from inkgrid.read.camelot_reader import Edges, merged_groups, read_lattice
+from inkgrid.read.camelot_reader import Edges, frame_core, merged_groups, read_lattice
 from inkgrid.read.pymupdf_reader import lattice_copy, page_frames, read_pdf
 
 
@@ -195,3 +195,35 @@ def test_LC1_the_lattice_copy_is_decrypted() -> None:
 def test_CM10_a_group_with_a_drawn_edge_inside_stays_split() -> None:
     crossed = edges(["lt rtb", "lb rbt"])
     assert merged_groups(crossed) == [(0, 0, 1, 1), (0, 1, 1, 2), (1, 0, 2, 1), (1, 1, 2, 2)]
+
+
+# --- a frame's core (spec 14 section 4.2) ---------------------------------------------------------
+
+US022 = """lrt- l-tb --tb --tb --tb --tb --tb --tb --tb --tb --tb -rt-
+lr-- lrtb lrtb lrtb lrtb lrtb lrtb lrtb lrtb lrtb lrtb lr--
+lr-- lrtb lrtb lrtb lrtb lrtb lrtb lrtb lrtb lrtb lrtb lr--
+lr-- lrtb lrtb lrtb lrtb lrtb lrtb lrtb lrtb lrtb lrtb lr--
+lr-- lrtb lrtb lrtb lrtb lrtb lrtb lrtb lrtb lrtb lrtb lr--
+lr-- lrtb lrtb lrtb lrtb lrtb lrtb lrtb lrtb lrtb lrtb lr--
+lr-- lrtb lrtb lrtb lrtb lrtb lrtb lrtb lrtb lrtb lrtb lr--
+lr-- lrtb lrtb lrtb lrtb lrtb lrtb lrtb lrtb lrtb lrtb lr--
+lr-- lrtb lrtb lrtb lrtb lrtb lrtb lrtb lrtb lrtb lrtb lr--
+lr-b l-t- --t- --t- --t- --t- --t- --t- --t- --t- --t- -r--
+lrtb l--b ---b ---b ---b ---b ---b ---b ---b ---b ---b -r-b"""
+C45171 = """l-t- --tb --tb --tb --tb --tb --tb --tb --tb --tb --tb --tb --tb --tb --tb -rt-
+lr-- lrtb lrtb lrtb lrtb lrtb lrtb lrtb lrtb lrtb lrtb lrtb lrtb lrtb lrtb lr--
+lr-- lrtb lrtb lrtb lrtb lrtb lrtb lrtb lrtb lrtb lrtb lrtb lrtb lrtb lrtb lr--
+lr-- lrtb lrtb lrtb lrtb lrtb lrtb lrtb lrtb lrtb lrtb lrtb lrtb lrtb lrtb lr--
+lr-- lrtb lrtb lrtb lrtb lrtb lrtb lrtb lrtb lrtb lrtb lrtb lrtb lrtb lrtb lr--
+l--b --tb --tb --tb --tb --tb --tb --tb --tb --tb --tb --tb --tb --tb --tb -r-b"""
+CAPTION_IN_BOX = """lrt- l-tb --tb -rtb
+lrtb lrtb lrtb lrtb
+lrtb lrtb lrtb lrtb"""
+
+
+def test_FR2_a_frames_core_is_found_from_its_edge_flags() -> None:
+    # practice us-022 and olmOCR c45171 (measured): a ruled table inside a frame's open ring
+    assert frame_core(edges(US022.splitlines())) == (1, 1, 9, 11)
+    assert frame_core(edges(C45171.splitlines())) == (1, 1, 5, 15)
+    assert frame_core(edges(CAPTION_IN_BOX.splitlines())) is None
+    assert frame_core(edges(["lrtb lrtb", "lrtb lrtb"])) is None  # a plain table is its own grid

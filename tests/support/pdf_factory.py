@@ -1219,6 +1219,14 @@ def clip_hidden_then_visible() -> bytes:
     )
 
 
+def fills_and_thin_rules() -> bytes:
+    """A grey bar 20 x 100 pt, a grey column rule filled 2.75 pt wide, and a word."""
+    return _raw_content(
+        b"0.8 g 100 500 20 100 re f 291.45 72.65 2.75 248.1 re f 0 g "
+        b"BT /F1 10 Tf 72 700 Td (Fee) Tj ET"
+    )
+
+
 def marked_value() -> bytes:
     """`.54` with a raised mark glued on, beside a line in the next column set 7 pt higher.
 

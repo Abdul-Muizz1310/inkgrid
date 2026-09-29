@@ -10,14 +10,16 @@ from inkgrid.model.page import PageModel, Word
 
 def _turned(word: Word, page: PageModel) -> Word:
     box = turn_rect(word.bbox, page.rotation, page.width, page.height)
-    # The reader flags only the direction (1, 0) as horizontal: turning flips which words are.
-    return word.model_copy(update={"bbox": box, "horizontal": not word.horizontal})
+    # The reader flags only the direction (1, 0) as horizontal: turning flips which words are. A
+    # diagonal word stays diagonal under a quarter turn, so it is never horizontal.
+    horizontal = not word.horizontal and not word.diagonal
+    return word.model_copy(update={"bbox": box, "horizontal": horizontal})
 
 
 def upright(page: PageModel) -> PageModel:
     """The page turned to its screen frame when most of its text is upright only there.
 
-    The upright page carries no rules; M2 maps rules when it first reads them.
+    The upright page carries no rules and no fills; M2 maps rules when it first reads them.
     """
     chars = sum(len(w.text) for w in page.words)
     across = sum(len(w.text) for w in page.words if not w.horizontal)

@@ -7,13 +7,15 @@ thresholds on purpose, so agreement between the two is evidence rather than rest
 from collections.abc import Sequence
 from typing import Literal, assert_never
 
-from inkgrid.model.geometry import quantize
+from inkgrid.model.geometry import Rect, quantize
 from inkgrid.model.page import Rule
 from inkgrid.read.raw import Box, CurveItem, LineItem, Point, QuadItem, RawPath, RectItem
 
 SLANT_MAX = 0.5
 MIN_LENGTH = 2.0
-THIN_MAX = 2.5
+# A fill this thin is a rule: the thickest word-free fill measured is 3.24 pt, the thinnest fill
+# holding a word 4.08 pt (spec 14 section 1; the verifier keeps 3.0 on purpose).
+THIN_MAX = 3.5
 QUAD_AXIS_TOL = 0.5
 
 type Axis = Literal["h", "v"]
@@ -79,6 +81,29 @@ class _Collector:
             self.emit("h", y1, x0, x1, width)
             self.emit("v", x0, y0, y1, width)
             self.emit("v", x1, y0, y1, width)
+
+
+def extract_fills(paths: Sequence[RawPath]) -> tuple[Rect, ...]:
+    """The visible filled rectangles thicker than a rule on both sides, sorted (spec 14 s. 6)."""
+    out: set[Rect] = set()
+    for path in paths:
+        if not _fill_visible(path):
+            continue
+        for item in path.items:
+            match item:
+                case RectItem():
+                    box: Box | None = item.rect
+                case QuadItem():
+                    box = _axis_box(item.corners)
+                case _:
+                    box = None
+            if box is None:
+                continue
+            x0, x1 = sorted((box[0], box[2]))
+            y0, y1 = sorted((box[1], box[3]))
+            if x1 - x0 > THIN_MAX and y1 - y0 > THIN_MAX:
+                out.add(Rect(quantize(x0), quantize(y0), quantize(x1), quantize(y1)))
+    return tuple(sorted(out, key=lambda r: (r.y0, r.x0, r.y1, r.x1)))
 
 
 def extract_rules(paths: Sequence[RawPath], page: int) -> tuple[Rule, ...]:

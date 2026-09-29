@@ -268,3 +268,20 @@ def test_T32_a_control_code_is_a_glyph_without_unicode_only_in_a_type3_font() ->
     plain = build_words([line(span("a\x01b\tc", 72))], page=1, first_id=0)
     assert [w.text for w in plain.words] == ["ab", "c"]
     assert (plain.unmapped_chars, plain.invisible_chars) == (0, 1)
+
+
+@pytest.mark.parametrize(
+    ("direction", "diagonal"),
+    [
+        ((0.0, -1.0), False),
+        ((0.9848, -0.1736), False),
+        ((0.6225, -0.7826), True),
+        ((0.7071, 0.7071), True),
+    ],
+    ids=["90deg", "10deg", "51.5deg", "45deg-down"],
+)
+def test_DG2_a_line_15_to_75_degrees_from_the_horizontal_is_diagonal(
+    direction: tuple[float, float], diagonal: bool
+) -> None:
+    (word,) = build_words([line(span("DRAFT", 72), direction=direction)], page=1, first_id=0).words
+    assert (word.diagonal, word.horizontal) == (diagonal, False)

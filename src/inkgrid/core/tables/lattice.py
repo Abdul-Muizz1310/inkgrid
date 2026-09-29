@@ -120,19 +120,28 @@ def _in_core(rects: Sequence[Rect], core: Rect | None, words: Sequence[Word]) ->
 
 
 def _merged(page: PageModel) -> list[_Line]:
-    """The page's rules, merged along each line (same axis, `at` within MERGE_AT, small gaps)."""
+    """The page's rules merged along each line.
+
+    A line holds the rules whose `at` lies within MERGE_AT of its first; along it, rules join where
+    they touch or leave a gap of at most MERGE_GAP.
+    """
     out: list[_Line] = []
-    for rule in sorted(page.rules, key=lambda r: (r.axis, r.at, r.start)):
-        last = out[-1] if out else None
-        if (
-            last is not None
-            and last.axis == rule.axis
-            and abs(last.at - rule.at) <= MERGE_AT
-            and rule.start <= last.end + MERGE_GAP
-        ):
-            out[-1] = _Line(last.axis, last.at, last.start, max(last.end, rule.end))
-        else:
-            out.append(_Line(rule.axis, rule.at, rule.start, rule.end))
+    for axis in ("h", "v"):
+        rules = sorted((r for r in page.rules if r.axis == axis), key=lambda r: (r.at, r.start))
+        k = 0
+        while k < len(rules):
+            at = rules[k].at
+            line = [r for r in rules[k:] if r.at - at <= MERGE_AT]
+            k += len(line)
+            spans = sorted((r.start, r.end) for r in line)
+            lo, hi = spans[0]
+            for start, end in spans[1:]:
+                if start <= hi + MERGE_GAP:
+                    hi = max(hi, end)
+                else:
+                    out.append(_Line(axis, at, lo, hi))
+                    lo, hi = start, end
+            out.append(_Line(axis, at, lo, hi))
     return out
 
 

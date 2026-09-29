@@ -290,6 +290,7 @@ def test_LT16_an_empty_cell_spanning_the_body_does_not_make_it_header() -> None:
 
 # --- spec 14: overlaps, frame cores, splits at the page's rules --------------------------------
 
+
 def dims(table: ProtoTable) -> tuple[int, int]:
     return len(table.shape.row_edges) - 1, len(table.shape.col_edges) - 1
 
@@ -379,3 +380,28 @@ def test_LS4_a_rejected_grid_is_never_split() -> None:
         page, [[Rect(*b) for b in cells.values()]], words, PROFILE, frame=0, read=True
     )
     assert stage.tables == ()
+
+
+def test_LS2_two_pieces_of_a_rule_far_apart_along_it_are_two_rules() -> None:
+    # olmOCR 008d1d: the column rule is drawn in two pieces 32 pt apart, 0.24 pt apart across
+    upper = Rule(page=1, axis="v", at=60.24, start=0.0, end=40.0, thickness=0.96)
+    lower = Rule(page=1, axis="v", at=60.0, start=72.0, end=150.0, thickness=0.96)
+    cells = {
+        "Band": (0, 0, 120, 20),
+        "Rate": (120, 0, 240, 20),
+        "Band 1  0.10": (0, 20, 120, 40),
+        "5": (120, 20, 240, 40),
+    }
+    words = place(
+        [
+            centred("Band", cells["Band"]),
+            centred("Rate", cells["Rate"]),
+            P("Band", 10, 25),
+            P("0.10", 80, 25),
+            centred("5", cells["5"]),
+        ]
+    )
+    page = mk_page(words=words, rules=(lower, upper))
+    grids = [[Rect(*b) for b in cells.values()]]
+    (table,) = lattice_tables(page, grids, words, PROFILE, frame=0, read=True).tables
+    assert dims(table)[1] == 3

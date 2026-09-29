@@ -106,7 +106,8 @@ hidden_chars)`.
 
 **Character classes.** A character is:
 - *whitespace* if `c.isspace()`, or if it is U+200B (the zero-width space, which marks a word break);
-- *invisible* if its Unicode category is Cc, Cf, Co, or Cn and it is not whitespace;
+- *invisible* if its Unicode category is Cc, Cf, Co, or Cn and it is not whitespace — except that in
+  a Type 3 font's span a Cc character is a glyph with no Unicode, read as U+FFFD (spec 13 § 2);
 - a *surrogate* (category Cs) is a word character read as U+FFFD, and counted as unmapped. A
   ToUnicode map can name a lone surrogate, which no UTF-8 output can hold;
 - otherwise a *word character*.
@@ -155,6 +156,12 @@ hidden_chars)`.
 
   A clip copy that duplicates a visible span on the same page is dropped before words are built, so it
   is never a second word. A clip copy with no visible twin (mode 7) is kept, as hidden text.
+- **W8. An overprinted word is read once** (spec 13 § 1): a word with an earlier kept word's text,
+  font, size, and states, and each box edge within 0.1 × its size of that word's, is dropped and its
+  characters counted in `overprinted_chars`. U+FFFD and Type 3 words are never copies.
+- **Glyph names** (spec 13 § 3): in an embedded Type 1 font with no ToUnicode, a glyph named outside
+  the Adobe Glyph List by digits (`a71`) reads by the ZapfDingbats list in a Dingbats font, and as
+  U+FFFD elsewhere, never as MuPDF's letter from the digits.
 
 **Why the superscript flag and not a size test.** MuPDF flags a character as superscript when its
 origin sits more than 0.1 × size above the origin of the line's first character. So a marker that
@@ -247,8 +254,9 @@ different thresholds on purpose.
 ## 6 · Page geometry and findings
 
 **Geometry.**
-- `width` and `height` are the unrotated CropBox dimensions. `rotation` is `page.rotation`.
-- Coordinates are measured from the CropBox's top-left corner, y pointing down, in the unrotated page.
+- `width` and `height` are the unrotated dimensions of the CropBox clipped to the MediaBox (spec 13
+  § 4; a CropBox that misses the MediaBox leaves an `unreadable_page`). `rotation` is `page.rotation`.
+- Coordinates are measured from that box's top-left corner, y pointing down, in the unrotated page.
   A 90° page keeps its unrotated coordinates, and so does an offset MediaBox (probe: text at PDF
   (72, 600) in MediaBox `[-100 -100 512 692]` reads at x = 172).
 
@@ -275,6 +283,7 @@ different thresholds on purpose.
    `image_area_ratio ≥ 0.5`. Otherwise `hidden_text`, whenever `hidden_chars > 0`. The detail gives the
    count.
 4. `clipped_text`, when `clipped_chars > 0`.
+4a. `overprinted_text` (info), when `overprinted_chars > 0` (spec 13 § 1.2).
 5. `type3_font`, when `type3_chars > 0`; the detail gives the count.
 6. `pdf_engine_warning` for each distinct MuPDF warning line raised while this page was read, pinned to
    the page. After 20, a single finding says how many more there were.

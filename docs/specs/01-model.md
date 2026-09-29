@@ -157,7 +157,8 @@ This is what the reader produces (`02-reader.md`) and what `inkgrid words` print
   thickened bounding box.
 - `PageInfo`: `number` (≥ 1), `width` and `height` (> 0, the unrotated CropBox), `rotation` (0, 90,
   180, or 270), `text_layer` (`full`, `partial`, or `none`), the counts `invisible_chars`,
-  `clipped_chars`, `unmapped_chars`, and `hidden_chars` (each ≥ 0), and `image_area_ratio` (0 to 1).
+  `clipped_chars`, `unmapped_chars`, and `hidden_chars` (each ≥ 0), `image_area_ratio` (0 to 1), and
+  `overprinted_chars` (≥ 0, default 0; spec 13 § 1).
 - `PageModel(PageInfo)` adds `words` and `rules`. Validators:
   - every word's and every rule's `page` equals `number`;
   - `text_layer == "none"` exactly when there are no words;
@@ -228,8 +229,8 @@ stage builds against a fixed contract. Its field list is `00-design.md` § 8.1, 
   `(row, col)` anchor or `None`; the Python attribute is `from_`, and JSON uses `"from"`), `to`,
   `label`, `method` (`superscript`, `parenthetical`, or `named`), `status` (`resolved`, `unresolved`,
   or `rejected`), and `reason`.
-- `Ledger`: `content_chars`, `furniture_chars`, `invisible_chars`, `clipped_chars` (each ≥ 0), and
-  `partition` (the literal `"proved"`).
+- `Ledger`: `content_chars`, `furniture_chars`, `invisible_chars`, `clipped_chars`,
+  `overprinted_chars` (each ≥ 0), and `partition` (the literal `"proved"`).
 - `Producer`: the versions of `inkgrid`, `pymupdf`, and `mupdf`; `camelot` and `pypdfium2` (`None`
   until a milestone uses them); and the `lexicon` and `profile` ids and the `lattice` engine
   (`combined` or `raster`).
@@ -310,8 +311,8 @@ a row, and none at either end.
 **Findings and ledger.**
 22. A finding's `page` is `≤ n` and its `block` exists.
 23. `content_chars` is the character count of the words in non-furniture blocks, and
-    `furniture_chars` the count in furniture blocks. `invisible_chars` and `clipped_chars` equal the
-    sums over pages.
+    `furniture_chars` the count in furniture blocks. `invisible_chars`, `clipped_chars`, and
+    `overprinted_chars` equal the sums over pages.
 
 Serialization is `model_dump_json()` in declaration order, using aliases. That output is canonical:
 parsing it and dumping again returns the same bytes.

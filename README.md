@@ -103,11 +103,12 @@ Shipped so far (M0 to M4):
 - **Text is judged hidden from the text layer alone.** Text covered by an opaque shape or image,
   white text on a white page, and text too small to read all read as visible. The verifier reads the
   text layer too, so it does not catch them either.
-- **Errors the verifier finds on public corpora.** On ICDAR-2013 and olmOCR-bench, inkgrid reads
-  identical overprinted text twice (fake bold), drops Type 3 glyphs coded as control characters,
-  lets some ruled grids reach over page frames and charts, and takes repeated table titles for
-  running headers. They are listed with their documents, and they stay in the benchmark's baseline
-  above; fixes come after it, and the runs that follow are labelled as tuned on these documents.
+- **Errors the verifier finds on public corpora.** On ICDAR-2013 and olmOCR-bench, inkgrid lets
+  some ruled grids reach over page frames and charts, misses some thin drawn rules, and takes
+  repeated table titles for running headers. They are listed with their documents and stay in the
+  benchmark's baseline above. The text-layer errors found there (overprinted text read twice,
+  Type 3 digit glyphs dropped, Dingbats names read as letters) are fixed since the baseline, and any
+  run after these fixes is labelled as tuned on those documents.
 - **Left-to-right scripts only.** Right-to-left and bidirectional text is not reordered in v0.1.
 - **Unruled tables have no row spans.** A label centred beside several rows splits across them
   (`Charge per` / `executed order`), and a label whose value is centred beside it needs the rows to be

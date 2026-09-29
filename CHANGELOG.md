@@ -57,3 +57,15 @@ All notable changes to this project are documented here. The format follows
 - `Document.to_markdown()`, the HTML inspector, and the `inkgrid read` command with `--markdown`,
   `--inspector`, and `--strict`.
 - A layer-table test on the import graph, and CI across Linux, Windows, and macOS.
+
+### Fixed
+
+- The text layer on public corpora (M5c-1, tuned on ICDAR-2013 and olmOCR-bench):
+  - text drawn twice at one place (a banner painted twice, stroke then fill, a WordArt shadow) is
+    read once, counted in `overprinted_chars` with an `overprinted_text` finding; the verifier
+    accepts the copies PDFium still shows, up to that count;
+  - a control code in a Type 3 font (a digit glyph named `/1`) reads U+FFFD instead of vanishing;
+  - a glyph named outside the Adobe Glyph List by digits reads by the ZapfDingbats list in a
+    Dingbats font and as U+FFFD elsewhere, never as a letter made from its digits;
+  - a CropBox reaching past the MediaBox is clipped to it;
+  - a raised mark glued to a value stays on the value's line.

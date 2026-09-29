@@ -1168,8 +1168,9 @@ def marked_value() -> bytes:
     )
     font = (
         b"<< /Type /Font /Subtype /Type3 /FontBBox [0 0 500 600] /FontMatrix [0.001 0 0 0.001 0 0] "
-        b"/CharProcs << /asterisk 6 0 R >> /Encoding << /Type /Encoding /Differences [42 /asterisk] "
-        b">> /FirstChar 42 /LastChar 42 /Widths [500] /Resources << >> >>"
+        b"/CharProcs << /asterisk 6 0 R >> "
+        b"/Encoding << /Type /Encoding /Differences [42 /asterisk] >> "
+        b"/FirstChar 42 /LastChar 42 /Widths [500] /Resources << >> >>"
     )
     glyph = _stream(b"500 0 0 0 500 600 d1 100 300 300 300 re f")
     return _build([_CATALOG, _ONE_PAGE, page, _stream(content), font, glyph, _HELVETICA])

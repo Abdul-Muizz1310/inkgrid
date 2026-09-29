@@ -131,6 +131,8 @@ The Lexicon grows in M2 (numbers, money, ranges).
   - A word joins the first existing line whose current vertical extent overlaps the word by more
     than `line_overlap` × the smaller of the two heights, and the line's extent grows to cover it.
   - Otherwise the word starts a new line.
+  - After clustering, a superscript word glued on its left to a non-superscript word on another
+    line moves to that word's line, unless it is glued to a word of its own line (spec 13 § 5).
   - Lines come out sorted by their top, and each line's words by `x0`, then id.
   - Clustering by overlap rather than a fixed band is L15.
 - **`Line`**: its words, `top`, `bottom`, `x0`, `x1`, the median `size`, and `bold` (at least half

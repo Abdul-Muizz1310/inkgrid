@@ -229,6 +229,8 @@ Each word's characters are compared with the ink it owns, as multisets:
 - a `hyphen`: a **soft hyphen**, benign, which the reader counted as invisible. The class is accepted
   while the page's soft hyphens, unowned or left over in a word, number at most its
   `invisible_chars`; beyond that, every one of them is LOST.
+- an **overprint copy** (spec 13 § 1.3): a copy of an owned character at its place and size, benign
+  while the page's copies number at most the reader's `overprinted_chars`.
 - otherwise **LOST**.
 
 LOST characters are reported as runs: LOST characters with no other ink character between them, in
@@ -415,7 +417,7 @@ class VerificationReport(Frozen):
 Its invariants are validators:
 
 - a verified page's ink is fully accounted for: `ink = owned + lost + outside + clipped +
-  soft_hyphens`, where `owned` counts the characters paired with a word character, and
+  soft_hyphens + overprint` (spec 13 § 1.3), where `owned` counts the characters paired with a word character, and
   `declared = 0`; a declared page has `ink = declared` and nothing else; an unverified page has
   every count 0;
 - a page's `lost_chars` equals the length of its LOST defects' text;

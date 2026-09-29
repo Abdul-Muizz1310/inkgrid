@@ -206,11 +206,18 @@ Every existing case keeps passing: W-1…W-23, X1…X19, LN1…LN9, OW1…OW5, a
 
 ## 7 · Acceptance
 
-- [ ] Every case above has a test named `test_<CaseId>_<slug>`, and it failed before its code.
-- [ ] On the named documents, one at a time: the defects of these classes are gone (us-020, us-021,
+- [x] Every case above has a test named `test_<CaseId>_<slug>`, and it failed before its code (OP7,
+      MK2, MK3, and MK4 guard what must not change, and passed before it).
+- [x] On the named documents, one at a time: the defects of these classes are gone (us-020, us-021,
       f86995, c8cdd4, e247cacc, 529eeb, 4fafd7, 30c92c, 2d54e9), none is new, and olmOCR 6fedb9 reads
       its table once.
-- [ ] The 42 fee schedules read exactly as before (the M5c gate's full-text dumps), with their 8
+- [x] The 42 fee schedules read exactly as before (the M5c gate's full-text dumps), with their 8
       cells.
-- [ ] Every `OPENABLE` fixture verifies with no defect; `docs/schema/` is regenerated; README,
+- [x] Every `OPENABLE` fixture verifies with no defect; `docs/schema/` is regenerated; README,
       CHANGELOG, and the amended specs say what changed.
+
+**Measured** (2026-09-29, the M5c gate at `2761d07` against the baseline at `4a900cf`, one document
+at a time): the 31 named documents' defects fall from 316 to 217, exactly the 99 of these classes,
+on exactly the nine documents above; no other document's count moves. Of the others, only practice
+us-022's text changes, and rightly: its overprinted `FY` reads once (`FY 2008 2011`, not `FY FY 2008
+2011`). The 42 fee schedules' dumps are byte-identical.

@@ -1150,6 +1150,31 @@ def glyph_named(base: bytes, code: int, name: bytes) -> bytes:
     )
 
 
+def marked_value() -> bytes:
+    """`.54` with a raised mark glued on, beside a line in the next column set 7 pt higher.
+
+    The mark (a Type 3 glyph, whose box has no descender, as tight as the measured one) overlaps
+    that line by more than half its height and is reached before its own row when lines are
+    clustered by centre, while the row stays below the line (olmOCR 2d54e9).
+    """
+    page = (
+        b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] "
+        b"/Resources << /Font << /T3 5 0 R /F1 7 0 R >> >> /Contents 4 0 R >>"
+    )
+    content = (
+        b"BT /F1 9 Tf 72 700 Td (.54) Tj /T3 5.5 Tf 3.8 Ts (*) Tj /F1 9 Tf 0 Ts ( \\(.17\\)) Tj ET "
+        b"BT /F1 9 Tf 120 707.1 Td (chological Bulletin, 111, 203) Tj ET "
+        b"BT /F1 9 Tf 72 680 Td (Note. Values in parentheses.) Tj ET"
+    )
+    font = (
+        b"<< /Type /Font /Subtype /Type3 /FontBBox [0 0 500 600] /FontMatrix [0.001 0 0 0.001 0 0] "
+        b"/CharProcs << /asterisk 6 0 R >> /Encoding << /Type /Encoding /Differences [42 /asterisk] "
+        b">> /FirstChar 42 /LastChar 42 /Widths [500] /Resources << >> >>"
+    )
+    glyph = _stream(b"500 0 0 0 500 600 d1 100 300 300 300 re f")
+    return _build([_CATALOG, _ONE_PAGE, page, _stream(content), font, glyph, _HELVETICA])
+
+
 def render_mode(mode: int) -> bytes:
     """The word `mode<N>` drawn in text render mode N (0-7)."""
     return _raw_content(b"BT /F1 10 Tf %d Tr 72 700 Td (mode%d) Tj ET" % (mode, mode))
@@ -1185,6 +1210,7 @@ OPENABLE: dict[str, Callable[[], bytes]] = {
     "glyph_digit_name": lambda: glyph_named(b"ABCDEF+LASY10", 50, b"a50"),
     "cropbox_beyond": cropbox_beyond,
     "cropbox_overhang": lambda: cropbox_beyond("0 -4.3 602.29 800"),
+    "marked_value": marked_value,
     "superscript": superscript,
     "font_change": font_change,
     "euro_text": euro_text,

@@ -80,3 +80,12 @@ def test_PL6_a_landscape_page_reads_as_the_reader_sees_it() -> None:
 def test_PL7_sideways_text_keeps_the_unrotated_frame() -> None:
     doc = build(pdf_factory.rotated())
     assert content(doc) == [("paragraph", "Rotated")]
+
+
+def test_MK1_a_marked_value_keeps_its_mark_on_its_row() -> None:
+    doc = build(pdf_factory.marked_value())
+    by_text = {w.text: w.id for w in doc.words}
+    (home,) = [b for b in doc.blocks if by_text[".54"] in b.word_ids]
+    ids = list(home.word_ids)
+    assert ids.index(by_text["*"]) == ids.index(by_text[".54"]) + 1
+    assert {b.kind for b in doc.blocks} == {"paragraph"}

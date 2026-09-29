@@ -9,6 +9,13 @@ from functools import cached_property
 from inkgrid.model.config import Profile
 from inkgrid.model.page import Word
 
+# W3's join geometry (02-reader.md section 4), restated here since the core never imports the
+# reader: a mark glued to a word (spec 13 section 5).
+GLUE_GAP_MIN = -1.0
+GLUE_GAP_MAX = 0.6
+GLUE_OVERLAP = 0.3
+EPS = 1e-6
+
 
 @dataclass(frozen=True)
 class Line:
@@ -61,6 +68,46 @@ def _by_x(words: Sequence[Word]) -> tuple[Word, ...]:
     return tuple(sorted(words, key=lambda w: (w.bbox.x0, w.id)))
 
 
+def _glued(left: Word, right: Word) -> bool:
+    """True when `right` starts where `left` ends, overlapping it as W3 joins a word."""
+    gap = right.bbox.x0 - left.bbox.x1
+    if not GLUE_GAP_MIN - EPS <= gap <= GLUE_GAP_MAX + EPS:
+        return False
+    overlap = min(left.bbox.y1, right.bbox.y1) - max(left.bbox.y0, right.bbox.y0)
+    smaller = min(left.bbox.y1 - left.bbox.y0, right.bbox.y1 - right.bbox.y0)
+    return overlap >= GLUE_OVERLAP * smaller - EPS
+
+
+def _marks_home(groups: list[list[Word]]) -> list[list[Word]]:
+    """Each raised mark moved to the line of the value it is glued to (spec 13 section 5).
+
+    MuPDF flags a mark superscript against its own line, so a flagged mark glued on its left to a
+    value was read on that value's line; clustering by centre can put it on a line above.
+    """
+    home = {w.id: i for i, group in enumerate(groups) for w in group}
+    for i, group in enumerate(groups):
+        for mark in [w for w in group if w.superscript]:
+            if any(_glued(w, mark) or _glued(mark, w) for w in group if w is not mark):
+                continue
+            value = next(
+                (
+                    w
+                    for j, other in enumerate(groups)
+                    if j != i
+                    for w in other
+                    if not w.superscript and _glued(w, mark)
+                ),
+                None,
+            )
+            if value is not None:
+                home[mark.id] = home[value.id]
+    moved: list[list[Word]] = [[] for _ in groups]
+    for group in groups:
+        for w in group:
+            moved[home[w.id]].append(w)
+    return [group for group in moved if group]
+
+
 def group_lines(words: Sequence[Word], profile: Profile) -> tuple[Line, ...]:
     """Cluster words into lines by vertical overlap (L15), top to bottom."""
     if not words:
@@ -85,7 +132,7 @@ def group_lines(words: Sequence[Word], profile: Profile) -> tuple[Line, ...]:
             active.append(len(groups))
             groups.append([word])
             extents.append([word.bbox.y0, word.bbox.y1])
-    lines = [Line(_by_x(group)) for group in groups]
+    lines = [Line(_by_x(group)) for group in _marks_home(groups)]
     return tuple(sorted(lines, key=lambda line: (line.top, line.x0)))
 
 

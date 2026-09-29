@@ -106,6 +106,26 @@ def test_X14_cropbox_sets_size_and_origin() -> None:
     assert page.words[0].bbox.x0 == 50.0
 
 
+def test_CB1_a_cropbox_beyond_the_mediabox_is_clipped_to_it() -> None:
+    reading = read(pdf_factory.cropbox_beyond())
+    (page,) = reading.pages
+    assert (page.width, page.height) == (600, 800)
+    (word,) = reading.words()
+    assert word.text == "Crop"
+    assert abs(word.bbox.x0 - 100) < 0.5
+
+
+def test_CB2_a_cropbox_overhanging_one_edge_is_clipped_too() -> None:
+    (page,) = read(pdf_factory.cropbox_beyond("0 -4.3 602.29 800")).pages
+    assert (page.width, page.height) == (600, 800)
+
+
+def test_CB3_a_cropbox_off_the_mediabox_leaves_no_page() -> None:
+    reading = read(pdf_factory.cropbox_beyond("700 900 800 1000"))
+    assert list(reading.words()) == []
+    assert FindingCode.UNREADABLE_PAGE in codes(reading)
+
+
 def test_X15_word_ids_run_densely_across_pages() -> None:
     reading = read(pdf_factory.multipage(3))
     assert reading.source.pages == 3

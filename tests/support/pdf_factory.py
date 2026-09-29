@@ -818,6 +818,18 @@ def cropbox() -> bytes:
     return _save(doc)
 
 
+def cropbox_beyond(box: str = "-50 -50 650 850") -> bytes:
+    """A 600 x 800 page whose CropBox `box` reaches past its MediaBox, `Crop` drawn at (100, 100).
+
+    PDF 32000-1 section 14.11.2 clips such a box to the MediaBox (olmOCR 30c92c).
+    """
+    doc = pymupdf.open()
+    page = _page(doc, (600, 800))
+    page.insert_text((100, 100), "Crop", fontsize=10)
+    doc.xref_set_key(page.xref, "CropBox", f"[{box}]")
+    return _save(doc)
+
+
 def multipage(n: int = 3) -> bytes:
     """`n` pages, each holding two words."""
     doc = pymupdf.open()
@@ -1171,6 +1183,8 @@ OPENABLE: dict[str, Callable[[], bytes]] = {
     "type3_digits": type3_digits,
     "glyph_dingbats": lambda: glyph_named(b"ABCDEF+ZapfDingbatsITC", 3, b"a71"),
     "glyph_digit_name": lambda: glyph_named(b"ABCDEF+LASY10", 50, b"a50"),
+    "cropbox_beyond": cropbox_beyond,
+    "cropbox_overhang": lambda: cropbox_beyond("0 -4.3 602.29 800"),
     "superscript": superscript,
     "font_change": font_change,
     "euro_text": euro_text,

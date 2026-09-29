@@ -287,14 +287,40 @@ def _extract(page: pymupdf.Page, glyph_fonts: _GlyphFonts) -> _Extracted:
         return _Extracted(error=f"{type(exc).__name__}: {exc}")
 
 
+def _page_box(page: pymupdf.Page) -> pymupdf.Rect | None:
+    """The CropBox clipped to the MediaBox, in PDF coordinates; None when they do not meet.
+
+    PDF 32000-1 section 14.11.2 reduces a box reaching past the MediaBox to their intersection.
+    PyMuPDF measures `cropbox` down from the MediaBox top, and `mediabox` in PDF coordinates.
+    """
+    crop, media = page.cropbox, page.mediabox
+    x0, x1 = max(crop.x0, media.x0), min(crop.x1, media.x1)
+    y0, y1 = max(media.y1 - crop.y1, media.y0), min(media.y1 - crop.y0, media.y1)
+    if x1 <= x0 or y1 <= y0:
+        return None
+    return pymupdf.Rect(x0, y0, x1, y1)
+
+
+def _page_size(page: pymupdf.Page) -> tuple[float, float]:
+    """The page's unrotated size: its clipped CropBox's, or the MediaBox's when none is left."""
+    box = _page_box(page) or page.mediabox
+    return box.width, box.height
+
+
 def _page_model(
     page: pymupdf.Page, number: int, first_id: int, glyph_fonts: _GlyphFonts
 ) -> tuple[PageModel, PageSignals]:
-    got = _extract(page, glyph_fonts)
+    if _page_box(page) is None:
+        c, m = page.cropbox, page.mediabox
+        crop = f"({c.x0:g}, {m.y1 - c.y1:g}, {c.x1:g}, {m.y1 - c.y0:g})"
+        media = f"({m.x0:g}, {m.y0:g}, {m.x1:g}, {m.y1:g})"
+        got = _Extracted(error=f"its CropBox {crop} does not meet its MediaBox {media}")
+    else:
+        got = _extract(page, glyph_fonts)
     type3 = _type3_names(list(got.fonts))
     out = build_words(got.lines, number, first_id, type3_fonts=type3)
     seen = build_words(got.unclipped, number, first_id, type3_fonts=type3)
-    width, height = page.cropbox.width, page.cropbox.height
+    width, height = _page_size(page)
     model = PageModel(
         number=number,
         width=width,
@@ -418,12 +444,13 @@ def page_frames(data: bytes, password: str | None) -> tuple[PageFrame, ...]:
                     page = doc.load_page(index)
                 except LOAD_ERRORS:
                     break
+                width, height = _page_size(page)
                 frames.append(
                     PageFrame(
                         number=index + 1,
                         rotation=_rotation(page.rotation),
-                        width=page.cropbox.width,
-                        height=page.cropbox.height,
+                        width=width,
+                        height=height,
                     )
                 )
         finally:
@@ -435,9 +462,8 @@ def lattice_copy(data: bytes, password: str | None) -> bytes:
     """The document as Camelot must read it: decrypted, each page's MediaBox set to its CropBox.
 
     Camelot's raster engines render the CropBox but scale it by the MediaBox, and its parser needs
-    an optional package for AES. With the two boxes equal and no encryption, every engine places
-    its grids in the page model's frame. PyMuPDF reports the CropBox measured down from the
-    MediaBox top; `set_mediabox` takes PDF coordinates.
+    an optional package for AES. With the two boxes equal (the CropBox clipped to the MediaBox)
+    and no encryption, every engine places its grids in the page model's frame.
     """
     with _quiet():
         doc = _open(data, password)
@@ -449,10 +475,9 @@ def lattice_copy(data: bytes, password: str | None) -> bytes:
                     break
                 rotation = page.rotation
                 page.set_rotation(0)
-                crop, media = page.cropbox, page.mediabox
-                page.set_mediabox(
-                    pymupdf.Rect(crop.x0, media.y1 - crop.y1, crop.x1, media.y1 - crop.y0)
-                )
+                box = _page_box(page)
+                if box is not None:
+                    page.set_mediabox(box)
                 page.set_rotation(rotation)
             return doc.tobytes(encryption=pymupdf.PDF_ENCRYPT_NONE)
         finally:

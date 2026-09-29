@@ -105,6 +105,7 @@ def _verified(
         words,
         clipped_chars=0 if info is None else info.clipped_chars,
         invisible_chars=0 if info is None else info.invisible_chars,
+        overprinted_chars=0 if info is None else info.overprinted_chars,
     )
     defects = _character_defects(page, owned, index)
     advisories: list[Defect] = []
@@ -129,6 +130,7 @@ def _verified(
         overflow_chars=overflow,
         ligature_chars=owned.ligatures,
         overlay_chars=overlay,
+        overprint_chars=owned.overprints,
         rules=len(page.rules),
     )
     return _Page(check, defects, advisories)

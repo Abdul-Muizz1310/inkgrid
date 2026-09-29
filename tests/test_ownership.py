@@ -328,3 +328,40 @@ def test_OW11_repair_terminates_and_counts_every_character_once(
     lost = sum(len(run) for run in result.lost)
     assert result.owned + lost + result.outside + result.clipped + result.soft_hyphens == len(chars)
     assert len(set(result.owner)) == len(result.owner)
+
+
+# --- overprint copies (spec 13 section 1.3) -------------------------------------------------------
+
+
+def _widened(ch: InkChar, dw: float) -> InkChar:
+    b = ch.box
+    return InkChar(ch.index, ch.char, Rect(b.x0, b.y0, b.x1 + dw, b.y1), ch.kind, ch.clipped)
+
+
+def _copies(word: Word, *offsets: float) -> list[InkChar]:
+    return [moved(ch, d, d) for d in offsets for ch in word_chars(word)]
+
+
+def test_VO1_copies_pdfium_keeps_are_accepted_up_to_the_readers_count() -> None:
+    (fee,) = words_on_line(["Fee"])
+    ink = page([*word_chars(fee), *_copies(fee, 0.3, -0.3)])
+    result = own_page(ink, [fee], clipped_chars=0, invisible_chars=0, overprinted_chars=6)
+    assert (result.owned, result.overprints) == (3, 6)
+    assert clean(result)
+
+
+def test_VO2_one_copy_more_than_the_reader_counted_makes_every_copy_lost() -> None:
+    (fee,) = words_on_line(["Fee"])
+    ink = page([*word_chars(fee), *_copies(fee, 0.3, -0.3)])
+    result = own_page(ink, [fee], clipped_chars=0, invisible_chars=0, overprinted_chars=5)
+    assert result.overprints == 0
+    assert sum(len(run) for run in result.lost) == 6
+
+
+def test_VO3_a_copy_of_another_size_is_lost() -> None:
+    (fee,) = words_on_line(["Fee"])
+    first, *rest = _copies(fee, 0.3)
+    ink = page([*word_chars(fee), _widened(first, 0.6), *rest])
+    result = own_page(ink, [fee], clipped_chars=0, invisible_chars=0, overprinted_chars=3)
+    assert result.overprints == 2
+    assert [ch.char for run in result.lost for ch in run] == ["F"]

@@ -71,3 +71,12 @@ def test_DC12_pages_the_reader_declared_unreadable_are_declared(
 
 def test_verify_is_public() -> None:
     assert "verify" in inkgrid.__all__
+
+
+def test_OP6_a_shadow_drawn_five_times_verifies_clean() -> None:
+    data = pdf_factory.wordart_shadow()
+    doc = inkgrid.read(data)
+    assert [w.text for w in doc.words] == ["Y", "a", "h", "o", "o", "!"]
+    report = inkgrid.verify(doc, data)
+    assert report.ok, report.defects
+    assert report.pages[0].overprint_chars > 0  # PDFium kept some copies

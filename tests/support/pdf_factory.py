@@ -59,6 +59,18 @@ def stroked_then_filled() -> bytes:
     return _raw_content(b"BT /F1 24 Tf 0 TL 1 Tr 72 700 Td (PRESS) Tj 0 Tr T* (PRESS) Tj ET")
 
 
+def wordart_shadow() -> bytes:
+    """A title drawn five times within 0.03 em, as WordArt's shadow is (olmOCR f86995).
+
+    The text matrix scales a 1 pt font by 30, so PDFium's own copy test, which uses the 1 pt size,
+    keeps some of the copies; MuPDF returns all five.
+    """
+    title = b"(Y a h o o !) Tj "
+    moves = (b"-0.03 0 TD ", b"0.03 0.03 TD ", b"-0.03 0 TD ", b"0.015 -0.015 TD ")
+    body = b"BT /F1 1 Tf 30 0 0 30 101.13 473.63 Tm " + title + b"".join(m + title for m in moves)
+    return _raw_content(body + b"ET")
+
+
 def simple_text() -> bytes:
     """A bold 14 pt heading, a 10 pt sentence, and an italic word."""
     doc = pymupdf.open()
@@ -1105,6 +1117,7 @@ OPENABLE: dict[str, Callable[[], bytes]] = {
     "simple_text": simple_text,
     "overprinted_banner": overprinted_banner,
     "stroked_then_filled": stroked_then_filled,
+    "wordart_shadow": wordart_shadow,
     "superscript": superscript,
     "font_change": font_change,
     "euro_text": euro_text,

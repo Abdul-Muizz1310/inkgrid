@@ -18,6 +18,10 @@ from inkgrid.verify.ink import REPLACEMENT, InkChar, InkPage
 BAND = 20.0  # the height of the vertical bands words are indexed by, in points
 LIGATURES = ("ffi", "ffl", "ff", "fi", "fl", "st")  # longest first (spec 11 section 2.1)
 LIGATURE_POINTS = range(0xFB00, 0xFB07)
+# An overprint copy: an owned character's code point, its box's size within this many points, and a
+# centre within this fraction of its height (spec 13 section 1.3).
+OVERPRINT_SIZE_TOL = 0.5
+OVERPRINT_CENTRE = 0.1
 
 
 @dataclass(frozen=True, slots=True)
@@ -42,7 +46,7 @@ class PageOwnership:
     """Where each of a page's ink characters went.
 
     `owner` maps a character's index to the id of the word it pairs with. Every ink character is
-    counted once: owned, in a lost run, outside, clipped, or a soft hyphen.
+    counted once: owned, in a lost run, outside, clipped, a soft hyphen, or an overprint copy.
     """
 
     owner: Mapping[int, int]
@@ -55,6 +59,7 @@ class PageOwnership:
     unmapped: int
     ligatures: int = 0
     decoded: tuple[Decode, ...] = ()
+    overprints: int = 0
 
     @property
     def owned(self) -> int:
@@ -332,13 +337,44 @@ def _runs(page: InkPage, lost: set[int]) -> tuple[tuple[InkChar, ...], ...]:
     return tuple(tuple(run) for run in runs)
 
 
-def own_page(
-    page: InkPage, words: Sequence[Word], *, clipped_chars: int, invisible_chars: int
-) -> PageOwnership:
-    """Assign and compare a page's ink (spec 10 sections 2, 3.1 and 3.2).
+def _is_copy(ch: InkChar, owned: Sequence[InkChar]) -> bool:
+    """True when an owned character of the same code point is drawn at `ch`'s place and size."""
+    return any(
+        abs(o.box.width - ch.box.width) <= OVERPRINT_SIZE_TOL
+        and abs(o.box.height - ch.box.height) <= OVERPRINT_SIZE_TOL
+        and math.dist(o.center, ch.center) <= OVERPRINT_CENTRE * o.box.height
+        for o in owned
+    )
 
-    `clipped_chars` and `invisible_chars` are the reader's counts for the page: they bound the
-    outside-and-clipped class and the soft-hyphen class.
+
+def _overprints(
+    page: InkPage, owner: Mapping[int, int], lost: Sequence[InkChar], counted: int
+) -> set[int]:
+    """The lost characters that are copies of owned ones, when no more than `counted` are."""
+    owned: defaultdict[str, list[InkChar]] = defaultdict(list)
+    for ch in page.chars:
+        if ch.index in owner:
+            owned[ch.char].append(ch)
+    copies = {
+        ch.index
+        for ch in lost
+        if ch.kind in {"ink", "unmapped"} and _is_copy(ch, owned.get(ch.char, ()))
+    }
+    return copies if len(copies) <= counted else set()
+
+
+def own_page(
+    page: InkPage,
+    words: Sequence[Word],
+    *,
+    clipped_chars: int,
+    invisible_chars: int,
+    overprinted_chars: int = 0,
+) -> PageOwnership:
+    """Assign and compare a page's ink (spec 10 sections 2, 3.1 and 3.2; spec 13 section 1.3).
+
+    `clipped_chars`, `invisible_chars` and `overprinted_chars` are the reader's counts for the
+    page: they bound the outside-and-clipped class, the soft-hyphen class, and overprint copies.
     """
     assignment = _assign(page, words)
     comparison = _Comparison({}, [], [], [], [])
@@ -351,6 +387,8 @@ def own_page(
     loose = [*assignment.unowned, *comparison.surplus]
     hyphens = [ch for ch in loose if ch.kind == "hyphen" and ch.index not in hidden]
     lost = [ch for ch in loose if ch.kind != "hyphen" and ch.index not in hidden]
+    copies = _overprints(page, comparison.owner, lost, overprinted_chars)
+    lost = [ch for ch in lost if ch.index not in copies]
     if len(outside) + len(clipped) > clipped_chars:
         lost += [*outside, *clipped]
         outside, clipped = [], []
@@ -368,4 +406,5 @@ def own_page(
         unmapped=comparison.unmapped,
         ligatures=comparison.ligatures,
         decoded=tuple(comparison.decoded),
+        overprints=len(copies),
     )

@@ -62,3 +62,15 @@ def test_CP4_an_unruled_landscape_table_reads_in_screen_order() -> None:
 @pytest.mark.parametrize("name", pdf_factory.OPENABLE)
 def test_CP5_every_fixture_builds_a_valid_document(name: str) -> None:
     assert isinstance(build(pdf_factory.OPENABLE[name]()), Document)
+
+
+def test_CR1_a_drawn_rule_divides_an_unruled_tables_columns() -> None:
+    import inkgrid
+
+    data = pdf_factory.ruled_corridor()
+    doc = read_with_tables(data, engine="combined")
+    (table,) = [b for b in doc.blocks if b.kind == "table"]
+    assert table.grid.n_cols == 3
+    header = sorted((c for c in table.grid.cells if c.row == 0), key=lambda c: c.col)
+    assert [c.text for c in header] == ["Area", "Army", "Navy"]
+    assert inkgrid.verify(doc, data).ok

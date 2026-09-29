@@ -1365,6 +1365,35 @@ def stub_column_rule() -> bytes:
     return _save(doc)
 
 
+def ruled_corridor() -> bytes:
+    """A table ruled only by one horizontal rule under its header (so Camelot reads nothing) and
+    a vertical rule between its label and value columns: each label ends 4.7 pt left of the rule
+    and each value starts 4.8 pt right of it, 9.5 pt apart at 11 pt (practice us-012)."""
+    doc = pymupdf.open()
+    page = _page(doc)
+    labels = ("Area", "United States", "Territories", "Overseas", "Total")
+    values = (
+        ("Army", "Navy"),
+        ("1,768", "8,250"),
+        ("25", "4,500"),
+        ("371", "1,540"),
+        ("2,164", "1,024"),
+    )
+    top, pitch, size = 300, 14, 11
+    rule_x = 72 + pymupdf.get_text_length("United States", fontsize=size) + 4.7
+    shape = page.new_shape()
+    shape.draw_line((72, top + pitch + 1), (rule_x + 120, top + pitch + 1))
+    shape.draw_line((rule_x, top - 10), (rule_x, top + pitch * 5))
+    shape.finish(color=BLACK, width=0.5)
+    shape.commit()
+    for i, (label, (a, b)) in enumerate(zip(labels, values, strict=True)):
+        y = top + pitch * i + 10
+        page.insert_text((72, y), label, fontsize=size)
+        page.insert_text((rule_x + 4.8, y), a, fontsize=size)
+        page.insert_text((rule_x + 70, y), b, fontsize=size)
+    return _save(doc)
+
+
 def marked_value() -> bytes:
     """`.54` with a raised mark glued on, beside a line in the next column set 7 pt higher.
 
@@ -1432,6 +1461,7 @@ OPENABLE: dict[str, Callable[[], bytes]] = {
     "watermarked_table": watermarked_table,
     "grey_column_rule": grey_column_rule,
     "stub_column_rule": stub_column_rule,
+    "ruled_corridor": ruled_corridor,
     "shadow_outside": shadow_outside,
     "superscript": superscript,
     "font_change": font_change,

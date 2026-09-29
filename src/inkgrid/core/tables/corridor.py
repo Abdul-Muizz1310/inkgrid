@@ -104,15 +104,63 @@ class Row:
         return tuple(w for line in self.lines for w in line.words)
 
 
-def _row(lines: Sequence[Line], profile: Profile) -> Row:
-    pieces = sorted((p for line in lines for p in fragments(line, profile)), key=lambda p: p.x0)
+@dataclass(frozen=True, slots=True)
+class _Walls:
+    """The page's vertical rules by position: a drawn rule between two words ends a piece."""
+
+    ats: tuple[float, ...]
+    rules: tuple[Rule, ...]
+
+    @classmethod
+    def of(cls, rules: Sequence[Rule]) -> "_Walls":
+        vertical = sorted((r for r in rules if r.axis == "v"), key=lambda r: r.at)
+        return cls(tuple(r.at for r in vertical), tuple(vertical))
+
+    def between(self, a: Word, b: Word) -> bool:
+        """True when a rule stands in the gap from `a` to `b`, across both words' centres."""
+        lo = bisect.bisect_left(self.ats, a.bbox.x1)
+        hi = bisect.bisect_right(self.ats, b.bbox.x0)
+        top, bottom = sorted((a.bbox.center[1], b.bbox.center[1]))
+        return any(r.start <= top and bottom <= r.end for r in self.rules[lo:hi])
+
+
+NO_WALLS = _Walls((), ())
+
+
+def _pieces(line: Line, profile: Profile, walls: _Walls = NO_WALLS) -> tuple[Line, ...]:
+    """The line's fragments, each split again where a drawn vertical rule stands between two words.
+
+    A drawn horizontal rule ends a row (section 2); a vertical one ends a piece (spec 14 s. 3).
+    """
+    parts = fragments(line, profile)
+    if not walls.ats:
+        return parts
+    out: list[Line] = []
+    for part in parts:
+        group = [part.words[0]]
+        for a, b in pairwise(part.words):
+            if walls.between(a, b):
+                out.append(Line(tuple(group)))
+                group = [b]
+            else:
+                group.append(b)
+        out.append(Line(tuple(group)))
+    return tuple(out)
+
+
+def _row(lines: Sequence[Line], profile: Profile, walls: _Walls = NO_WALLS) -> Row:
+    pieces = sorted(
+        (p for line in lines for p in _pieces(line, profile, walls)), key=lambda p: p.x0
+    )
     return Row(tuple(lines), tuple(pieces))
 
 
-def _clash(line: Line, row: Sequence[Line], profile: Profile) -> bool:
+def _clash(line: Line, row: Sequence[Line], profile: Profile, walls: _Walls = NO_WALLS) -> bool:
     """True when the line holds a value-like piece over one the row already holds (L2)."""
-    mine = [p for p in fragments(line, profile) if _counts_as_value(p.words)]
-    theirs = [p for other in row for p in fragments(other, profile) if _counts_as_value(p.words)]
+    mine = [p for p in _pieces(line, profile, walls) if _counts_as_value(p.words)]
+    theirs = [
+        p for other in row for p in _pieces(other, profile, walls) if _counts_as_value(p.words)
+    ]
     return any(a.x0 < b.x1 and b.x0 < a.x1 for a in mine for b in theirs)
 
 
@@ -129,19 +177,21 @@ def _ruled_between(a: Line, b: Line, rules: Sequence[Rule]) -> bool:
     )
 
 
-def _same_weight(line: Line, row: Sequence[Line], profile: Profile) -> bool:
+def _same_weight(
+    line: Line, row: Sequence[Line], profile: Profile, walls: _Walls = NO_WALLS
+) -> bool:
     """True when each piece of the line is bold, or not, as every piece of the row it lies under."""
-    theirs = [q for other in row for q in fragments(other, profile)]
+    theirs = [q for other in row for q in _pieces(other, profile, walls)]
     return all(
         p.bold == q.bold
-        for p in fragments(line, profile)
+        for p in _pieces(line, profile, walls)
         for q in theirs
         if p.x0 < q.x1 and q.x0 < p.x1
     )
 
 
 def _fold_by_pitch(
-    lines: Sequence[Line], profile: Profile, rules: Sequence[Rule]
+    lines: Sequence[Line], profile: Profile, rules: Sequence[Rule], walls: _Walls = NO_WALLS
 ) -> list[list[Line]]:
     """Rows by pitch alone, for a run with fewer than two value lines (spec 07 section 2)."""
     pitches = [b.top - a.top for a, b in pairwise(lines)]
@@ -151,7 +201,7 @@ def _fold_by_pitch(
         current = groups[-1]
         if (
             line.top - prev.top <= wrap
-            and not _clash(line, current, profile)
+            and not _clash(line, current, profile, walls)
             and not _ruled_between(prev, line, rules)
         ):
             current.append(line)
@@ -166,6 +216,8 @@ def _value_rows(
     pitch: float,
     profile: Profile,
     rules: Sequence[Rule],
+    *,
+    walls: _Walls = NO_WALLS,
 ) -> list[list[int]]:
     """Each value line starts a row, unless it wraps the last (close, no clash, no rule between)."""
     groups: list[list[int]] = []
@@ -175,7 +227,7 @@ def _value_rows(
             close = _centre(lines[i]) - _centre(lines[last]) <= VALUE_WRAP * pitch
             if (
                 close
-                and not _clash(lines[i], [lines[j] for j in groups[-1]], profile)
+                and not _clash(lines[i], [lines[j] for j in groups[-1]], profile, walls)
                 and not _ruled_between(lines[last], lines[i], rules)
             ):
                 groups[-1].append(i)
@@ -193,6 +245,7 @@ def _nearest_row(
     reach: float,
     profile: Profile,
     rules: Sequence[Rule],
+    walls: _Walls = NO_WALLS,
 ) -> int | None:
     """The row of the value line nearest this line's centre, within reach and no rule between.
 
@@ -207,7 +260,7 @@ def _nearest_row(
             anchor = lines[anchors[k]]
             distance = abs(_centre(anchor) - _centre(line))
             nearer = best is None or distance < best[0]
-            alike = _same_weight(line, [anchor], profile)
+            alike = _same_weight(line, [anchor], profile, walls)
             if distance <= reach and nearer and alike and not _ruled_between(anchor, line, rules):
                 best = (distance, owner[anchors[k]])
     return None if best is None else best[1]
@@ -222,6 +275,7 @@ def _wrapped_row(
     height: float,
     profile: Profile,
     rules: Sequence[Rule],
+    walls: _Walls = NO_WALLS,
 ) -> int | None:
     """The value row directly above that this line wraps: close under its last line, continuing it.
 
@@ -235,7 +289,9 @@ def _wrapped_row(
     members = [lines[i] for i in groups[row]]
     last = max(members, key=lambda other: other.top)
     close = line.top - last.top <= min(WRAP_PITCH * pitch, HEIGHT_REACH * height)
-    continues = _continues(members, line, profile) and _same_weight(line, members, profile)
+    continues = _continues(members, line, profile, walls) and _same_weight(
+        line, members, profile, walls
+    )
     if close and continues and not _ruled_between(last, line, rules):
         return row
     return None
@@ -249,6 +305,7 @@ def _wrap_lone_values(
     limit: float,
     profile: Profile,
     rules: Sequence[Rule],
+    walls: _Walls = NO_WALLS,
 ) -> list[list[int]]:
     """Fold a lone one-piece value line into the value-free row it wraps (a banner's second line).
 
@@ -262,11 +319,11 @@ def _wrap_lone_values(
         if (
             i is not None
             and above is not None
-            and len(fragments(lines[i], profile)) == 1
+            and len(_pieces(lines[i], profile, walls)) == 1
             and lines[i].top - lines[i - 1].top <= limit
             and not _ruled_between(lines[i - 1], lines[i], rules)
-            and _continues([lines[j] for j in above], lines[i], profile)
-            and not _clash(lines[i], [lines[j] for j in above], profile)
+            and _continues([lines[j] for j in above], lines[i], profile, walls)
+            and not _clash(lines[i], [lines[j] for j in above], profile, walls)
         ):
             above.append(i)
             continue
@@ -274,13 +331,13 @@ def _wrap_lone_values(
     return kept
 
 
-def _continues(row: Sequence[Line], line: Line, profile: Profile) -> bool:
+def _continues(row: Sequence[Line], line: Line, profile: Profile, walls: _Walls = NO_WALLS) -> bool:
     """True when the line wraps the row: it continues columns the row has already opened.
 
     Pieces side by side open columns under a row of one column (a header under a paragraph).
     """
-    above = [p for other in row for p in fragments(other, profile)]
-    mine = fragments(line, profile)
+    above = [p for other in row for p in _pieces(other, profile, walls)]
+    mine = _pieces(line, profile, walls)
     side_by_side = any(a.x1 <= b.x0 for a, b in pairwise(sorted(above, key=lambda p: p.x0)))
     overlaps = all(any(p.x0 < q.x1 and q.x0 < p.x1 for q in above) for p in mine)
     if overlaps and (len(mine) == 1 or side_by_side):
@@ -300,35 +357,52 @@ def fold_rows(
     """
     if not lines:
         return ()
-    valued = [any(_holds_value(p.words) for p in fragments(line, profile)) for line in lines]
+    walls = _Walls.of(rules)
+    valued = [any(_holds_value(p.words) for p in _pieces(line, profile, walls)) for line in lines]
     anchors = [i for i, v in enumerate(valued) if v]
     steps = [_centre(lines[b]) - _centre(lines[a]) for a, b in pairwise(anchors)]
     if not steps:
-        return tuple(_row(group, profile) for group in _fold_by_pitch(lines, profile, rules))
+        return tuple(
+            _row(group, profile, walls) for group in _fold_by_pitch(lines, profile, rules, walls)
+        )
     pitch = statistics.median(steps)
     height = statistics.median(line.bottom - line.top for line in lines)
     reach = min(REACH * pitch, HEIGHT_REACH * height)
-    groups = _value_rows(lines, anchors, pitch, profile, rules)
+    groups = _value_rows(lines, anchors, pitch, profile, rules, walls=walls)
     owner = {i: g for g, members in enumerate(groups) for i in members}
     loose: list[list[int]] = []
     for i, line in enumerate(lines):
         if valued[i]:
             continue
         # A label wraps within its column: pieces side by side wrap only the row above, by cell.
-        single = len(fragments(line, profile)) == 1
+        single = len(_pieces(line, profile, walls)) == 1
         row = (
             _nearest_row(
-                line, lines, anchors, owner=owner, reach=reach, profile=profile, rules=rules
+                line,
+                lines,
+                anchors,
+                owner=owner,
+                reach=reach,
+                profile=profile,
+                rules=rules,
+                walls=walls,
             )
             if single
             else None
         )
         if row is None:
             row = _wrapped_row(
-                line, lines, groups, pitch=pitch, height=height, profile=profile, rules=rules
+                line,
+                lines,
+                groups,
+                pitch=pitch,
+                height=height,
+                profile=profile,
+                rules=rules,
+                walls=walls,
             )
         # Never into a row whose column already holds a value (L2), however close.
-        if row is not None and not _clash(line, [lines[j] for j in groups[row]], profile):
+        if row is not None and not _clash(line, [lines[j] for j in groups[row]], profile, walls):
             groups[row].append(i)
             continue
         prev = loose[-1][-1] if loose else None
@@ -336,8 +410,8 @@ def fold_rows(
             prev == i - 1
             and line.top - lines[prev].top <= min(WRAP_PITCH * pitch, HEIGHT_REACH * height)
             and not _ruled_between(lines[prev], line, rules)
-            and _continues([lines[j] for j in loose[-1]], line, profile)
-            and not _clash(line, [lines[j] for j in loose[-1]], profile)
+            and _continues([lines[j] for j in loose[-1]], line, profile, walls)
+            and not _clash(line, [lines[j] for j in loose[-1]], profile, walls)
         ):
             loose[-1].append(i)
         else:
@@ -349,10 +423,11 @@ def fold_rows(
         limit=min(WRAP_PITCH * pitch, HEIGHT_REACH * height),
         profile=profile,
         rules=rules,
+        walls=walls,
     )
     rows = [sorted(group) for group in [*groups, *loose]]
     rows.sort(key=lambda group: min(lines[i].top for i in group))
-    return tuple(_row([lines[i] for i in group], profile) for group in rows)
+    return tuple(_row([lines[i] for i in group], profile, walls) for group in rows)
 
 
 def is_value_row(row: Row) -> bool:
@@ -505,6 +580,35 @@ def _row_cells(
     return out
 
 
+def _across(word: Word, x0: float, x1: float) -> bool:
+    return x0 <= word.bbox.center[0] < x1
+
+
+def _outer_edges(
+    rows: Sequence[Row], edges: list[float], foreign: Sequence[Word], x0: float, x1: float
+) -> list[float]:
+    """The table's top and bottom edges moved in past the nearest foreign word they hold.
+
+    The interior-edge rule (spec 07 section 5 item 4) against that word: the middle of the gap,
+    kept strictly between its centre and the row's nearest word centre (spec 14 section 5). An
+    edge only ever moves in.
+    """
+    out = list(edges)
+    first = min(w.bbox.center[1] for w in rows[0].words)
+    above = [w for w in foreign if _across(w, x0, x1) and edges[0] <= w.bbox.center[1] < first]
+    if above:
+        near = max(above, key=lambda w: w.bbox.center[1])
+        lo, mid = near.bbox.center[1], (near.bbox.y1 + rows[0].top) / 2
+        out[0] = mid if lo < mid <= first else (lo + first) / 2
+    last = max(w.bbox.center[1] for w in rows[-1].words)
+    below = [w for w in foreign if _across(w, x0, x1) and last < w.bbox.center[1] < edges[-1]]
+    if below:
+        near = min(below, key=lambda w: w.bbox.center[1])
+        hi, mid = near.bbox.center[1], (rows[-1].bottom + near.bbox.y0) / 2
+        out[-1] = mid if last < mid <= hi else (last + hi) / 2
+    return out
+
+
 def corridor_table(
     rows: Sequence[Row],
     spans: Sequence[Span],
@@ -512,8 +616,13 @@ def corridor_table(
     *,
     page: int,
     frame: Rotation,
+    others: Sequence[Word] = (),
 ) -> ProtoTable | None:
-    """The rows as a grid on the columns `spans`, or None when they do not make one safely."""
+    """The rows as a grid on the columns `spans`, or None when they do not make one safely.
+
+    `others` are the page's other content words: the table's edges keep clear of them, and a
+    table that would still hold one is refused (spec 14 section 5).
+    """
     if len(spans) < MIN_COLUMNS or len(rows) < MIN_ROWS:
         return None
     bounds = [_boundary(a[1], b[0], rows) for a, b in pairwise(spans)]
@@ -522,6 +631,13 @@ def corridor_table(
     row_edges = _row_edges(rows)
     if row_edges is None:
         return None
+    mine = {w.id for w in words}
+    foreign = [w for w in others if w.id not in mine]
+    if foreign:
+        row_edges = _outer_edges(rows, row_edges, foreign, col_edges[0], col_edges[-1])
+        box = Rect(col_edges[0], row_edges[0], col_edges[-1], row_edges[-1])
+        if any(box.contains_point(*w.bbox.center) for w in foreign):
+            return None
     cells: list[ProtoCell] = []
     for r, row in enumerate(rows):
         found = _row_cells(row, bounds, profile)
@@ -595,13 +711,29 @@ def _size_runs(lines: Sequence[Line], profile: Profile) -> list[list[Line]]:
     return runs
 
 
+def _level_with(row: Row, spans: Sequence[Span], foreign: Sequence[Word]) -> bool:
+    """True when a word outside the run sits level with the row, within the table's width."""
+    x0, x1 = spans[0][0], spans[-1][1]
+    return any(
+        row.top <= w.bbox.center[1] <= row.bottom and x0 <= w.bbox.center[0] <= x1 for w in foreign
+    )
+
+
 def _extent(
-    run: Sequence[Row], start: int, first: int, take: int
+    run: Sequence[Row],
+    start: int,
+    first: int,
+    take: int,
+    *,
+    others: Sequence[Word] = (),
 ) -> tuple[int, int, tuple[Span, ...], int]:
     """The rows (lo, hi) of the table whose first value row is `first`, and its columns.
 
-    It takes at most `take` value rows, and says how many it took.
+    It takes at most `take` value rows, and says how many it took. A row level with a word of
+    `others` outside the run (another region's line) is not taken above or below (spec 14 s. 5).
     """
+    in_run = {w.id for row in run for w in row.words}
+    foreign = [w for w in others if w.id not in in_run]
     taken = 1
     last = first
     spans = _merged((), run[first])
@@ -628,6 +760,8 @@ def _extent(
         below = run[hi + 1]
         if _has_value_piece(below) or not _fits(below, spans, tol):
             break
+        if _level_with(below, spans, foreign):
+            break
         hi += 1
     # Rows that lead up to another value row are the next table's header: give them back.
     if hi + 1 < len(run) and is_value_row(run[hi + 1]):
@@ -637,6 +771,8 @@ def _extent(
         above = run[lo - 1]
         if _has_value_piece(above) or not _fits(above, spans, tol):
             break
+        if _level_with(above, spans, foreign):
+            break
         lo -= 1
     return lo, hi, spans, taken
 
@@ -645,7 +781,14 @@ Found = tuple[int, int, ProtoTable]  # a table's first and last rows in its run,
 
 
 def _grown(
-    run: Sequence[Row], start: int, first: int, profile: Profile, *, page: int, frame: Rotation
+    run: Sequence[Row],
+    start: int,
+    first: int,
+    profile: Profile,
+    *,
+    page: int,
+    frame: Rotation,
+    others: Sequence[Word] = (),
 ) -> tuple[Found | None, tuple[int, int] | None]:
     """The table from `first` with the most value rows that grid, and its extent if refused.
 
@@ -658,8 +801,10 @@ def _grown(
 
     def attempt(take: int) -> tuple[int, tuple[int, int] | None]:
         nonlocal best
-        lo, hi, spans, taken = _extent(run, start, first, take)
-        table = corridor_table(run[lo : hi + 1], spans, profile, page=page, frame=frame)
+        lo, hi, spans, taken = _extent(run, start, first, take, others=others)
+        table = corridor_table(
+            run[lo : hi + 1], spans, profile, page=page, frame=frame, others=others
+        )
         if table is not None:
             best = (lo, hi, table)
         elif len(spans) >= MIN_COLUMNS and hi - lo + 1 >= MIN_ROWS:
@@ -686,7 +831,12 @@ def _grown(
 
 
 def _run_tables(
-    run: Sequence[Row], profile: Profile, *, page: int, frame: Rotation
+    run: Sequence[Row],
+    profile: Profile,
+    *,
+    page: int,
+    frame: Rotation,
+    others: Sequence[Word] = (),
 ) -> tuple[list[Found], list[list[int]]]:
     """Every table in one size run, and the runs of rows that read as a table but are in none."""
     found: list[Found] = []
@@ -696,7 +846,7 @@ def _run_tables(
         first = next((k for k in range(start, len(run)) if is_value_row(run[k])), None)
         if first is None:
             break
-        best, wide = _grown(run, start, first, profile, page=page, frame=frame)
+        best, wide = _grown(run, start, first, profile, page=page, frame=frame, others=others)
         if wide is not None:
             refused.update(range(wide[0], wide[1] + 1))
         if best is None:
@@ -749,10 +899,13 @@ def corridor_tables(
     page: int,
     frame: Rotation,
     rules: Sequence[Rule] = (),
+    others: Sequence[Word] = (),
 ) -> CorridorStage:
     """Unruled tables in each run of stacked regions; the other lines go back to prose.
 
-    `rules` are the page's drawn rules, in the regions' frame; horizontal ones end rows.
+    `rules` are the page's drawn rules, in the regions' frame: horizontal ones end rows, vertical
+    ones end pieces. `others` are the page's content words, which no table may hold unless they
+    are its own (spec 14 section 5).
     """
     tables: list[ProtoTable] = []
     out: list[Region] = []
@@ -768,7 +921,7 @@ def corridor_tables(
         # Fold each size run on its own: the headings' pitch must not set the table's.
         for lines in _size_runs([line for region in group for line in region.lines], profile):
             run = fold_rows(lines, profile, rules=rules)
-            found, left = _run_tables(run, profile, page=page, frame=frame)
+            found, left = _run_tables(run, profile, page=page, frame=frame, others=others)
             for lo, hi, table in found:
                 tables.append(table)
                 claimed |= {id(line) for row in run[lo : hi + 1] for line in row.lines}

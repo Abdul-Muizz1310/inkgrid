@@ -15,6 +15,7 @@ from inkgrid.core.tables.corridor import (
     Row,
     _blanks,
     _boundary,
+    _extent,
     _row,
     _split,
     columns,
@@ -29,7 +30,7 @@ from inkgrid.model.config import Profile
 from inkgrid.model.findings import FindingCode
 from inkgrid.model.page import Rule, Word
 from lattice_builder import read_with_tables
-from layout_builder import P, place, text_line
+from layout_builder import CHAR_EM, P, place, text_line
 
 PROFILE = Profile()
 
@@ -793,3 +794,49 @@ def test_RW18_a_bold_header_under_a_value_row_is_a_row_of_its_own() -> None:
     header += text_line(["Charge"], x=282, y=149, size=9, bold=True)
     rows = rows_of(value_rows(100, 3) + header + value_rows(160, 2))
     assert row_texts(rows)[2:4] == [["Row2 0.25"], ["Tier Charge"]]
+
+
+# --- spec 14 sections 3 and 5 ------------------------------------------------------------------
+
+
+def _walled(dy: float, rule: Rule) -> Row:
+    label = P("States", 72, 100, size=11)
+    value = P("1,768", 72 + CHAR_EM * 11 * 6 + 9.5, 100 + dy, size=11)
+    (row,) = fold_rows(group_lines(place([label, value]), PROFILE), PROFILE, rules=(rule,))
+    return row
+
+
+def test_CR2_a_drawn_rule_between_two_words_ends_the_piece() -> None:
+    at = 72 + CHAR_EM * 11 * 6 + 4.7
+    assert (
+        len(_walled(0, Rule(page=1, axis="v", at=at, start=90, end=120, thickness=0.5)).pieces) == 2
+    )
+
+
+def test_CR2_a_short_tick_crossing_one_words_centre_does_not() -> None:
+    at = 72 + CHAR_EM * 11 * 6 + 4.7
+    tick = Rule(page=1, axis="v", at=at, start=100, end=107, thickness=0.5)
+    assert len(_walled(3, tick).pieces) == 1
+
+
+def test_CX1_a_word_just_above_a_table_stays_out_of_it() -> None:
+    rows = rows_of(value_rows(100, 3))
+    above = place([P("2.2SE-OOl", 150, 100.1 - 4.5, size=9)], first_id=90)
+    table = corridor_table(rows, columns(rows), PROFILE, page=1, frame=0, others=above)
+    assert table is not None
+    assert table.shape.row_edges[0] > 100.1
+
+
+def test_CX2_a_row_level_with_another_regions_word_is_not_taken_upward() -> None:
+    header = [P("Fee", 72, 80, size=9), P("Rate", 282, 80, size=9)]
+    run = rows_of(header + value_rows(100, 3))
+    beside = place([P("FTIR", 180, 80, size=9)], first_id=90)
+    assert _extent(run, 0, 1, len(run))[0] == 0
+    assert _extent(run, 0, 1, len(run), others=beside)[0] == 1
+
+
+def test_CX3_a_foreign_word_between_value_rows_refuses_the_table() -> None:
+    rows = rows_of(value_rows(100, 3))
+    between = place([P("note", 150, 110, size=9)], first_id=90)
+    assert corridor_table(rows, columns(rows), PROFILE, page=1, frame=0) is not None
+    assert corridor_table(rows, columns(rows), PROFILE, page=1, frame=0, others=between) is None

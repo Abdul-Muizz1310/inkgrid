@@ -8,6 +8,7 @@ region its character counts, and every unmatched result region as a false positi
 detected wrongly.
 """
 
+import os
 import re
 from collections.abc import Mapping
 from pathlib import Path
@@ -44,7 +45,7 @@ def command(java: Path, tools: Path, mode: str, *, gt: Path, result: Path, pdf: 
     if mode not in ("-str", "-reg"):
         msg = f"unknown mode {mode!r}"
         raise ValueError(msg)
-    classpath = ":".join(str(tools / part) for part in CLASSPATH)
+    classpath = os.pathsep.join(str(tools / part) for part in CLASSPATH)
     return [str(java), LEGACY_SORT, "-cp", classpath, MAIN, mode, gt.name, result.name, pdf.name]
 
 

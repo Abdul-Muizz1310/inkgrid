@@ -1,4 +1,5 @@
 import math
+import os
 from pathlib import Path
 
 import pytest
@@ -79,7 +80,7 @@ def test_SC1_the_jar_runs_with_the_sort_it_was_written_for() -> None:
     )
     assert cmd[:2] == ["java", "-Djava.util.Arrays.useLegacyMergeSort=true"]
     assert cmd[-4:] == ["-reg", "a-reg.xml", "b", "a.pdf"]
-    assert "t/fontbox-1.8.2.jar" in cmd[3]
+    assert str(Path("t") / "fontbox-1.8.2.jar") in cmd[3].split(os.pathsep)
 
 
 def test_SC2_a_document_with_nothing_detected_has_no_precision_and_zero_recall() -> None:

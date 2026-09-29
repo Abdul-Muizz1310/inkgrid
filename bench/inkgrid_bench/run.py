@@ -88,7 +88,10 @@ def run_process(
     try:
         out, err = proc.communicate(timeout=timeout)
     except subprocess.TimeoutExpired:
-        os.killpg(proc.pid, signal.SIGKILL)
+        if sys.platform == "win32":
+            proc.kill()  # the run itself needs POSIX; this keeps its tests portable
+        else:
+            os.killpg(proc.pid, signal.SIGKILL)  # the tool's children too (`uv run` spawns them)
         proc.communicate()
         msg = f"timeout after {timeout:g} s"
         raise TimeoutError(msg) from None

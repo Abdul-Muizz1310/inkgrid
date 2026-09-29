@@ -106,8 +106,8 @@ Shipped so far (M0 to M4):
 - **Errors the verifier finds on public corpora.** On ICDAR-2013 and olmOCR-bench, inkgrid reads
   identical overprinted text twice (fake bold), drops Type 3 glyphs coded as control characters,
   lets some ruled grids reach over page frames and charts, and takes repeated table titles for
-  running headers. They are listed with their documents, and fixed after the benchmark records its
-  baseline, so the benchmark is not tuned on its own test documents.
+  running headers. They are listed with their documents, and they stay in the benchmark's baseline
+  above; fixes come after it, and the runs that follow are labelled as tuned on these documents.
 - **Left-to-right scripts only.** Right-to-left and bidirectional text is not reordered in v0.1.
 - **Unruled tables have no row spans.** A label centred beside several rows splits across them
   (`Charge per` / `executed order`), and a label whose value is centred beside it needs the rows to be
@@ -147,8 +147,9 @@ can tell. inkgrid commits to four guarantees instead:
 4. **Never silent.** Anything degraded becomes a typed finding on the result.
 
 Whether this beats OCR and vision parsers at *table structure* is an open question, and the public
-evidence so far favors the vision hybrids. The benchmark in milestone M5 decides it, and this README
-will claim only what those numbers support.
+evidence so far favors the vision hybrids. The first benchmark (below) compares inkgrid only with other
+readers of the text layer; OCR and vision parsers come next, and until they are measured this README
+claims nothing against them.
 
 ## Quick start
 
@@ -187,10 +188,43 @@ encrypted PDF takes `password=`. On the command line, the password is read from 
 
 ## Benchmarks / Evals
 
-None yet. The benchmark runs in milestone M5, on ICDAR-2013, FinTabNet.c, and olmOCR-bench's table
-tests, plus a held-out set of fee schedules. It compares inkgrid against OCR, vision, and hybrid
-parsers, and adds a metric for values filed under the wrong row or column. The method is fixed in
-advance in [`docs/specs/00-design.md`](docs/specs/00-design.md) § 11.
+**The baseline, against other text-layer readers** (pdfplumber 0.11.10, PyMuPDF 1.28.2's
+`find_tables()`, and Camelot 2.0.0's lattice, each with its defaults). These are inkgrid's numbers
+*before* any fix for the errors its verifier found on these same documents; runs after those fixes
+will be labelled as tuned on them. Each number is a point estimate with its 95% interval from 10,000
+resamples of documents. The protocol was fixed before anything was scored:
+[`docs/specs/12-benchmark.md`](docs/specs/12-benchmark.md). The full report, with every metric and
+every paired difference, is [`bench/results/latest.md`](bench/results/latest.md).
+
+| Dataset (documents) | Metric | inkgrid | Camelot | PyMuPDF | pdfplumber |
+|---|---|---|---|---|---|
+| ICDAR-2013 competition (67) | Structure F, the competition's scorer | **0.777** [0.700, 0.850] | 0.637 [0.531, 0.735] | 0.611 [0.512, 0.702] | 0.591 [0.493, 0.683] |
+| ICDAR-2013 competition (67) | F1-TEDS, Soric et al.'s protocol | 0.598 [0.439, 0.759] | 0.604 [0.470, 0.722] | 0.501 [0.364, 0.625] | 0.399 [0.274, 0.531] |
+| ICDAR-2013 practice (58) | Structure F, the competition's scorer | **0.664** [0.569, 0.756] | 0.499 [0.381, 0.611] | 0.457 [0.346, 0.568] | 0.420 [0.314, 0.527] |
+| ICDAR-2013 practice (58) | Values filed under their labels | **0.341** [0.212, 0.499] | 0.278 [0.161, 0.419] | 0.265 [0.151, 0.409] | 0.191 [0.104, 0.303] |
+| olmOCR-bench tables (188) | Table tests passed | **0.481** [0.410, 0.552] | 0.273 [0.213, 0.338] | 0.321 [0.256, 0.390] | 0.294 [0.231, 0.361] |
+
+A bold number is ahead of all three peers, with every paired difference's interval excluding 0.
+
+- **Where inkgrid is ahead:** table structure by the ICDAR competition's own scorer, on both sets,
+  mostly through recall; the olmOCR-bench table tests, on all 188 PDFs and on the 173 with a text
+  layer; and values filed under their row and column labels (the practice set's 5,053 checkable
+  access paths). That last metric tops out at 0.854 even when the ground truth itself is read as a
+  tool, partly because some labels sit outside the value's row and column.
+- **Where it is not:** under Soric et al.'s protocol no difference from Camelot or PyMuPDF is
+  distinguishable from 0, and inkgrid is ahead of pdfplumber on the three structure scores but not on
+  table boxes. Its pooled structure precision on the competition set is below Camelot's (0.794
+  against 0.934), and so is its region precision on the practice set (0.864 against 0.925).
+- **It is the slowest:** 0.31 to 0.51 seconds per page, against 0.26 to 0.35 for Camelot and under 0.13
+  for PyMuPDF and pdfplumber. inkgrid runs Camelot's lattice for ruled grids, so its comparison with
+  Camelot measures what inkgrid adds on top of it.
+- **No tool crashed** on any of the 313 documents. Soric et al.'s own released predictions, re-scored
+  here with their evaluator, reproduce their results within 0.01 on 15 of 16 numbers (PyMuPDF's
+  F1-TEDS misses by 0.00002).
+
+Not measured yet: OCR, vision, and hybrid parsers (Docling, marker, unstructured, Tesseract),
+FinTabNet, and a held-out set of fee schedules that no fix has seen. Headline claims wait for that
+held-out set.
 
 ## Architecture
 

@@ -11,6 +11,17 @@ wheel nor the sdist.
   al.'s evaluator at v1.0.0, and olmOCR-bench's scorer (`olmocr` 0.4.27).
 - `bench/results/` holds the committed results; `latest.md` is the newest report.
 
+Run it from the repository root, on a clean tree (results name the commit they measure):
+
+```bash
+PYTHONPATH=bench uv run python -m inkgrid_bench.run all   # or: prepare, read, verify, score, report
+```
+
+Everything it fetches and writes lives in `~/.cache/inkgrid-bench/`; each stage skips the documents
+an earlier run of it finished. The datasets and tools take about 0.6 GB there; uv builds each tool's
+and scorer's environment on first use (PyTorch's CPU build among them). It runs one document at a
+time, niced, in about two and a half hours.
+
 Datasets are the property of their publishers: ICDAR-2013 (Göbel, Hassan, Oro and Orsi, 2013);
 olmOCR-bench (ODC-BY-1.0, Poznanski et al., arXiv 2502.18443); Soric et al.'s ICDAR-2013 ground truth
 (KDD '26).

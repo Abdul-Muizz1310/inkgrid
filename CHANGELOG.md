@@ -48,6 +48,12 @@ All notable changes to this project are documented here. The format follows
   scaled Form XObjects placed through the form's matrix, and a new `decode` defect for a glyph the
   two engines decode differently. A Camelot table with no cells is skipped with `lattice_failed`
   instead of crashing the read.
+- The benchmark (M5b): `bench/`, a harness in the repository but not the package. It reads ICDAR-2013
+  (competition and practice) and olmOCR-bench's table pages with inkgrid, pdfplumber, PyMuPDF, and
+  Camelot, each in its own pinned environment. It scores them with the competition's jar, Soric et
+  al.'s evaluator, olmOCR-bench's scorer, and a binding metric over the practice set's access paths,
+  and reports clustered-bootstrap intervals and paired differences. inkgrid's baseline is in
+  `bench/results/`.
 - `Document.to_markdown()`, the HTML inspector, and the `inkgrid read` command with `--markdown`,
   `--inspector`, and `--strict`.
 - A layer-table test on the import graph, and CI across Linux, Windows, and macOS.

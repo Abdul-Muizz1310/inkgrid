@@ -54,9 +54,12 @@ earlier runs on them were inkgrid's verifier (spec 11), which scores nothing.
   page's boxes with its HTML files, 156 tables over 67 documents.
 - **The reproduction gap is not file-listing order**, as first guessed above: their evaluator gives
   the same numbers here with a sorted listing and under two hash seeds, with their own environment's
-  library pins. Box scores reproduce exactly; of the 16 structure and box F1s of their four released
-  predictions, 15 reproduce within 0.01, and PyMuPDF's F1-TEDS by 0.0100 (0.4798 here, 0.4898
-  released). The cause is not found.
+  library pins. Box scores reproduce exactly; of the 16 F1s of their four released predictions, 15
+  reproduce within 0.01 of their released results, and PyMuPDF's F1-TEDS misses by 0.00002 (0.4798
+  here against 0.4898, a gap of 0.01002). The cause is not found.
+- **The baseline** (`bench/results/2026-09-29-9107c84/`, readings and scores of 2026-09-28): no tool
+  crashed or timed out on any of the 313 documents; the verifier's defects on inkgrid's readings are
+  spec 11's 74, 114, and 135.
 - **olmOCR-bench's scorer** (0.4.27) imports numpy without declaring it (pinned beside it), and its
   `--output_failed` skips a candidate with any error. Per-test results come from its own
   `evaluate_candidate`, checked against the score its command line prints.
@@ -200,8 +203,9 @@ inkgrid, the verifier's defects by class (spec 11 § 5).
 
 ## 7 · Acceptance
 
-- [ ] Every case above has a test named `test_<CaseId>_<slug>`, and it failed before its code.
-- [ ] The run completes on the three datasets for the four tools; results with intervals are committed
+- [x] Every case above has a test named `test_<CaseId>_<slug>`, and it failed before its code.
+- [x] The run completes on the three datasets for the four tools; results with intervals are committed
       under `bench/results/<date>-<commit>/`, with `bench/results/latest.md`.
-- [ ] Soric et al.'s released predictions reproduce within 0.01 of their published F1s here.
-- [ ] README states only what the intervals support, with the baseline labelled as such.
+- [ ] Soric et al.'s released predictions reproduce within 0.01 of their published F1s here. *Not
+      met:* 15 of 16 do; PyMuPDF's F1-TEDS misses by 0.00002 (§ 0).
+- [x] README states only what the intervals support, with the baseline labelled as such.

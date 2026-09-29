@@ -180,6 +180,31 @@ def test_BD_access_paths_parse_by_table_with_dimensions_split_on_empty_fields() 
     ]
 
 
+def test_BD_a_file_separated_by_semicolons_parses_as_one() -> None:
+    # practice eu-020 separates its fields with semicolons; read with commas, none of its 624
+    # paths was checkable
+    text = '"0";;;;;\n1;;"Management staff";"C";;"10,005.12"\n'
+    assert binding.parse_fnc(text) == [
+        [AccessPath(value="10,005.12", dimensions=(("1",), ("Management staff", "C")))]
+    ]
+
+
+def test_BD_a_table_id_padded_with_empty_fields_starts_a_table() -> None:
+    # practice us-007, us-008 and us-009 write `,,,,,"0",,,,,`
+    text = ',,,,,"0",,,,,\n"A",,"5"\n,,,,,"2",,,,,\n"B",,"6"\n'
+    assert binding.parse_fnc(text) == [
+        [AccessPath(value="5", dimensions=(("A",),))],
+        [AccessPath(value="6", dimensions=(("B",),))],
+    ]
+
+
+def test_BD_a_path_without_a_label_is_an_error() -> None:
+    with pytest.raises(ValueError, match="no label"):
+        binding.parse_fnc('"0",,\n"junk;;field"\n')
+    with pytest.raises(ValueError, match="no label"):
+        AccessPath(value="5", dimensions=())
+
+
 STR_XML = (DATA / "icdar-str-two-cells.xml").read_text(encoding="ascii")
 
 
@@ -187,6 +212,17 @@ def test_BD_ground_truth_regions_come_from_the_cells_in_the_top_left_frame() -> 
     (gt,) = binding.gt_tables(STR_XML, [PORTRAIT])
     assert gt.regions == ((1, (100.0, 100.0, 300.0, 152.0)),)
     assert gt.texts == frozenset({"fee", "0.30bp"})
+
+
+def test_BD_a_turned_pages_ground_truth_comes_back_to_the_unrotated_frame() -> None:
+    # ICDAR measures a /Rotate 90 page as it displays; the tools' boxes are unrotated
+    turned = NPage(box=(0.0, 0.0, 595.0, 842.0), rotation=90)
+    xml = STR_XML.replace(
+        'x1="100" x2="200" y1="700" y2="742"', 'x1="60" x2="356" y1="292" y2="505"'
+    )
+    xml = xml.replace('x1="200" x2="300" y1="690" y2="742"', 'x1="60" x2="356" y1="292" y2="505"')
+    (gt,) = binding.gt_tables(xml, [turned])
+    assert gt.regions == ((1, (90.0, 486.0, 303.0, 782.0)),)
 
 
 def test_BD_a_ground_truth_table_matches_the_tool_table_it_overlaps_most() -> None:
@@ -307,3 +343,31 @@ def test_olmocr_results_split_heading_and_neighbour_tests_per_pdf() -> None:
     assert counts["tables/b.pdf"]["heading"] == 1
     with pytest.raises(ValueError, match="no result"):
         olmocr.result_counts(tests, {"1": True, "2": False})
+
+
+def test_soric_a_score_their_evaluator_set_to_zero_on_failure_stops_the_run() -> None:
+    # their evaluator logs an HTML it cannot score and records 0 for it, then carries on
+    clean = "UserWarning: The parameter 'pretrained' is deprecated\n  2%|| 1/60 [00:04<04:19]\n"
+    soric.check_log(clean)
+    for marker in (
+        "Failed to evaluate TE metrics for image eu-001_0.jpg",
+        "IndexError: i=2 out of range for html_pred with length 1",
+        "--- Logging error ---",
+        "Traceback (most recent call last):",
+    ):
+        with pytest.raises(ValueError, match="evaluator"):
+            soric.check_log(clean + marker + "\n")
+
+
+CLI_OK = "Candidate: inkgrid-bench-t\ninkgrid-bench-t      : Average Score: 48.1% \u00b1 3.1%\n"
+CLI_FAILED = "inkgrid-bench-t      : Average Score: FAILED (errors) \n"
+
+
+def test_olmocr_the_command_lines_score_must_agree_with_the_tests() -> None:
+    assert olmocr.cli_score(CLI_OK, "inkgrid-bench-t", passed=491, total=1020) == 48.1
+    with pytest.raises(ValueError, match=r"says 48\.1%"):
+        olmocr.cli_score(CLI_OK, "inkgrid-bench-t", passed=400, total=1020)
+    with pytest.raises(ValueError, match="errors"):
+        olmocr.cli_score(CLI_FAILED, "inkgrid-bench-t", passed=491, total=1020)
+    with pytest.raises(ValueError, match="no score"):
+        olmocr.cli_score("", "inkgrid-bench-t", passed=491, total=1020)

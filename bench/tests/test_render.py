@@ -41,10 +41,25 @@ def test_RD3_boxes_go_to_soric_pixels_as_their_ground_truth_does() -> None:
     # eu-001's first ICDAR region (100, 451, 482, 543) is their ground-truth [119, 355, 573, 464]
     box = soric_box((100.0, 842.0 - 543.0, 482.0, 842.0 - 451.0), PORTRAIT)
     assert [round(v) for v in box] == [119, 355, 572, 464]
-    # eu-015 page 1 (/Rotate 90): ICDAR (60, 292, 356, 505) is their [101, 151, 599, 509]
+    # competition eu-015 page 1 (/Rotate 90): the table ICDAR puts at (60, 292, 356, 505), in the
+    # turned frame, lies at (90, 486, 303, 782) unrotated; it is their [101, 151, 599, 509]
     turned = NPage(box=(0.0, 0.0, 595.0, 842.0), rotation=90)
-    box = soric_box((60.0, 842.0 - 505.0, 356.0, 842.0 - 292.0), turned)
+    box = soric_box((90.0, 486.0, 303.0, 782.0), turned)
     assert [round(v) for v in box] == [101, 151, 598, 509]
+    # a box that does not start at the origin: pixels count from the page box's top
+    shifted = NPage(box=(0.0, 100.0, 595.0, 942.0), rotation=0)
+    box = soric_box((100.0, 299.0, 482.0, 391.0), shifted)
+    assert [round(v) for v in box] == [119, 355, 572, 464]
+
+
+def test_RD1_a_turned_page_goes_to_the_jar_in_the_frame_it_displays_in() -> None:
+    # practice eu-015 page 1: inkgrid's box as first rendered scored 219 of the region's 815
+    # characters; turned, all 815 (the jar, measured)
+    turned = NPage(box=(0.0, 0.0, 595.0, 842.0), rotation=90)
+    table = NTable(page=1, bbox=(90.0, 486.0, 303.0, 782.0), cells=(NCell(0, 0, text="x"),))
+    doc = NDocument(tool="t", version="1", pdf_sha256="0" * 64, pages=(turned,), tables=(table,))
+    assert '<bounding-box x1="60" y1="292" x2="356" y2="505"' in icdar_reg_xml(doc, "x.pdf")
+    assert '<bounding-box x1="60" y1="292" x2="356" y2="505"' in icdar_str_xml(doc, "x.pdf")
 
 
 def test_RD1_icdar_xml_carries_regions_and_cells() -> None:
@@ -86,3 +101,19 @@ def test_RD1_characters_xml_forbids_are_dropped_from_icdar_files() -> None:
     structure = icdar_str_xml(doc, "x.pdf")
     contents = [c.text for c in ET.fromstring(structure.encode()).iter("content")]  # noqa: S314
     assert contents == ["0.30 bp", "tab\tok"]
+
+
+def test_RD2_an_empty_filler_cell_does_not_end_the_header_rows() -> None:
+    # PyMuPDF marks its header row; a position no cell covers is filled with an unflagged cell
+    cells = [
+        NCell(0, 0, text="Fee", header=True),
+        NCell(1, 0, text="Equity"),
+        NCell(1, 1, text="0.30"),
+    ]
+    table = NTable.filled(page=1, bbox=(0.0, 0.0, 1.0, 1.0), cells=cells)
+    html = table_html(table, header=True)
+    assert html.startswith("<table><thead><tr><th>Fee</th><th></th></tr></thead>")
+    unflagged = NTable.filled(
+        page=1, bbox=(0.0, 0.0, 1.0, 1.0), cells=[NCell(0, 0), NCell(1, 0, text="x")]
+    )
+    assert "<thead>" not in table_html(unflagged, header=True)

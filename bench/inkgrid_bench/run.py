@@ -8,7 +8,6 @@ a stage skips what an earlier run of it already wrote. `report` writes `bench/re
 import hashlib
 import json
 import os
-import re
 import shutil
 import signal
 import subprocess
@@ -419,6 +418,7 @@ def _soric_eval(cfg: dict[str, Any], model: str, pred_dir: Path, save_dir: Path)
     if code != 0 or not result.exists():
         msg = f"Soric et al.'s evaluator failed for {model}: {_last_line(err)}"
         raise RuntimeError(msg)
+    soric.check_log(out + "\n" + err)
     return result
 
 
@@ -450,9 +450,6 @@ def score_soric(run: Path, cfg: dict[str, Any]) -> None:
             soric.result_counts(_load(SORIC_RELEASED / f"results_{model}_final_bbox.json"), gt),
         )
         log(f"soric released {model}")
-
-
-_CLI_SCORE = r"^{name}\s+: Average Score: (?:([\d.]+)%|FAILED \(errors\))"
 
 
 def score_olmocr(run: Path, cfg: dict[str, Any]) -> None:
@@ -487,19 +484,18 @@ def score_olmocr(run: Path, cfg: dict[str, Any]) -> None:
         code, stdout, err = run_process(
             [*cli, "--candidate", candidate, "--skip_baseline"], timeout=SCORER_TIMEOUT
         )
-        match = re.search(_CLI_SCORE.format(name=re.escape(candidate)), stdout, re.MULTILINE)
-        if code != 0 or match is None:
-            msg = f"olmOCR's command line printed no score for {tool.name}: {_last_line(err)}"
+        if code != 0:
+            msg = f"olmOCR's command line failed for {tool.name}: {_last_line(err)}"
             raise RuntimeError(msg)
         result = _load(driver)
+        if result["errors"]:
+            msg = f"olmOCR's scorer met errors for {tool.name}: {result['errors'][0]}"
+            raise RuntimeError(msg)
         tests = [json.loads(line) for line in (OLMOCR_DATA / "table_tests.jsonl").open()]
         counts = olmocr.result_counts(tests, result["passed"])
-        passed = sum(c["passed"] for c in counts.values())
-        total = sum(c["tests"] for c in counts.values())
-        cli_score = None if match[1] is None else float(match[1])
-        if cli_score is not None and abs(cli_score - round(100 * passed / total, 1)) > 0.05:  # noqa: PLR2004
-            msg = f"{tool.name}: the command line says {cli_score}%, the tests {passed}/{total}"
-            raise RuntimeError(msg)
+        passed = int(sum(c["passed"] for c in counts.values()))
+        total = int(sum(c["tests"] for c in counts.values()))
+        cli_score = olmocr.cli_score(stdout, candidate, passed=passed, total=total)
         _save(out, {"counts": counts, "errors": result["errors"], "cli_score": cli_score})
         log(f"olmocr {tool.name} {passed}/{total} (command line {cli_score}%)")
 

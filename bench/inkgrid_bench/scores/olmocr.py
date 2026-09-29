@@ -6,6 +6,7 @@ one, since the scorer zeroes a candidate with a missing page. A heading test nam
 `left_heading`; every other table test is a neighbour test.
 """
 
+import re
 from collections.abc import Mapping, Sequence
 from typing import Any
 
@@ -52,3 +53,27 @@ def result_counts(
         counts[kind] += 1
         counts[f"{kind}_passed"] += ok
     return out
+
+
+_CLI_SCORE = r"^{name}\s+: Average Score: (?:([\d.]+)%|(FAILED) \(errors\))"
+ROUNDING = 0.05  # the command line prints one decimal of a percentage
+
+
+def cli_score(stdout: str, candidate: str, *, passed: int, total: int) -> float:
+    """The score olmOCR's command line printed, checked against the tests' own pass rate.
+
+    Raises:
+        ValueError: it printed no score, failed the candidate with errors, or disagrees.
+    """
+    match = re.search(_CLI_SCORE.format(name=re.escape(candidate)), stdout, re.MULTILINE)
+    if match is None:
+        msg = f"olmOCR's command line printed no score for {candidate}"
+        raise ValueError(msg)
+    if match[2]:
+        msg = f"olmOCR's command line failed {candidate} with errors"
+        raise ValueError(msg)
+    score = float(match[1])
+    if abs(score - 100 * passed / total) > ROUNDING:
+        msg = f"{candidate}: the command line says {score}%, the tests {passed}/{total}"
+        raise ValueError(msg)
+    return score

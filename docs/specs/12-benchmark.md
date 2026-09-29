@@ -27,7 +27,12 @@ earlier runs on them were inkgrid's verifier (spec 11), which scores nothing.
   labels along each of the table's dimensions (`Country`, `AT` | `Gross sample *`, `Number` | `848`),
   dimensions separated by empty fields. Mapped to the structure ground truth by table order, 5,053
   paths (87.5%) have a value that appears exactly among that table's cells; the other 719 are
-  ground-truth inconsistencies (a path with no value, `3,6` against `3.6`).
+  ground-truth inconsistencies (a path with no value, `3,6` against `3.6`). *Corrected 2026-09-29,
+  after the first scoring:* those counts came from a parser that misread four files: eu-020
+  separates its fields with semicolons, and us-007, us-008, and us-009 pad their table ids with empty
+  fields (`,,,,,"0",,,,,`). Read correctly there are 92 tables (each file matching its structure
+  ground truth) and 5,767 paths, of which 5,603 (97.2%) are checkable; the other 164 are the
+  ground-truth inconsistencies.
 - **Soric et al.** (KDD '26): their evaluator (v1.0.0) runs here on CPU from their released predictions.
   It reproduces their box scores and matching exactly. The per-table structure scores differ on 12 of
   Camelot's 130 matched tables, so F1-TEDS comes out 0.4931 here against their published 0.4983:
@@ -46,9 +51,10 @@ earlier runs on them were inkgrid's verifier (spec 11), which scores nothing.
   JAI 1.1.3's core, FontBox 1.8.2, and Commons Collections 3.2.2 (all pinned in `sources.toml`). With
   them, eu-001's regions scored against themselves are 7 of 7 complete and pure. It pairs each
   ground-truth region with one result region; every other result region is a false positive, and its
-  characters count as detected wrongly. Structure mode counts only result tables matched to a
-  ground-truth table, and prints no size for an unmatched one (the size comes from scoring the ground
-  truth against itself).
+  characters count as detected wrongly. Structure mode prints each ground-truth table's counts
+  against the result table matched to it, and no size for an unmatched one (the size comes from
+  scoring the ground truth against itself); it then lists every result table matched to none, whose
+  relations count as detected and none as correct.
 - **Soric et al.'s evaluator** accepts only its own model names; every tool here is written as its
   `pymu` model, the name selecting only how each box's HTML is unpacked. Their loader pairs each imaged
   page's boxes with its HTML files, 156 tables over 67 documents.
@@ -87,7 +93,7 @@ committed.
 
 | Tool | Version | Tables from |
 |---|---|---|
-| inkgrid | this commit (reading as of M4, `11871a7`) | `inkgrid.read(pdf)`: every `Table` block |
+| inkgrid | this commit (reading as of M4, `11871a7`, and M5a's fix for a crash on a Camelot table with no cells, `4a6a751`) | `inkgrid.read(pdf)`: every `Table` block |
 | pdfplumber | 0.11.10 | `page.find_tables()` with its defaults |
 | PyMuPDF | 1.28.2 | `page.find_tables()` with its defaults |
 | Camelot | 2.0.0 | `camelot.read_pdf(pages="all", flavor="lattice")` with its defaults |
@@ -116,9 +122,15 @@ and PyMuPDF's header; the others mark none.
 
 - **ICDAR structure and regions:** `-str.xml` and `-reg.xml` in the competition's schema (one region
   per table, page 1-based, boxes in PDF points with the origin at the bottom left, cells with their
-  start and end rows and columns and their content).
+  start and end rows and columns and their content). *Amended 2026-09-29, after the first scoring:*
+  a page turned by `/Rotate` goes in the frame it displays in, as the ground truth measures it
+  (practice eu-015's cells reach x = 745 on a page 595 points wide); the first scoring used the
+  unrotated frame on the five turned pages (competition eu-015, practice eu-014, eu-015, eu-018).
 - **Soric et al.:** their predictions file: per page image (`<doc>_<page index>.jpg`), the table boxes
-  in image pixels (PDF points × 1000 / the page's longer side) and one HTML table per box.
+  in image pixels and one HTML table per box. *Amended 2026-09-29:* the image shows the page as it
+  displays, 1,000 pixels tall, so a box is turned into the displayed frame and scaled by 1,000 / the
+  displayed height (not the longer side: us-015 page 4 and us-033 page 1 are wider than tall and
+  their images 1,000 pixels tall).
 - **olmOCR-bench:** one `.md` per page, `<stem>_pg1_repeat1.md`, holding every table as HTML:
   `<table>`, `<tr>`, `<td>` with `rowspan` and `colspan`, and the tool's header rows in `<thead>` as
   `<th>`. HTML keeps spans, and for every tool the same writer. inkgrid's prose is omitted, so only
@@ -161,10 +173,14 @@ dimensions `D1 … Dk`, each a list of labels:
   covers, or entirely left of it in a row it covers;
 - a dimension `D = (l1 … lm)` is **leaf-bound** when a cell aligned with the value cell holds `lm`, and
   **bound** when, in addition, each of `l1 … lm-1` is held by a cell aligned with that leaf cell or with
-  a cell holding a later label of `D`.
+  a cell holding a later label of `D`. *Clarified 2026-09-29:* "a cell holding a later label" is the
+  cell already bound for that label on the leaf's chain, not any cell with its text (otherwise a
+  `Gross sample *` column label binds a value under `Net sample **` through the other column's
+  `Number`).
 
 A path is **bound** (strict) when every dimension is bound, and **leaf-bound** when every dimension is
-leaf-bound, for some value cell. **Binding accuracy** (strict, leaf) is the share of the 5,053
+leaf-bound, for some value cell. **Binding accuracy** (strict, leaf) is the share of the 5,053 (5,603
+read correctly, § 0)
 evaluable paths bound; **value recall** is the share with a value cell. The metric needs no header flag
 from the tool: values filed under the wrong row or column fail it whichever way the tool labels headers.
 

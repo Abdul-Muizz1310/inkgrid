@@ -30,14 +30,18 @@ class GtRegion:
     cells: tuple[GtCell, ...]
 
     def bbox(self, page: NPage) -> Box | None:
-        """The union of the cells' boxes, in the page's top-left frame."""
+        """The union of the cells' boxes, in the unrotated page's top-left frame.
+
+        The boxes are in ICDAR-2013's frame, a turned page as it displays (`NPage.to_icdar`).
+        """
         boxes = [c.box for c in self.cells if c.box is not None]
         if not boxes:
             return None
-        x0, _, _, top = page.box
         ux0, uy0 = min(b[0] for b in boxes), min(b[1] for b in boxes)
         ux1, uy1 = max(b[2] for b in boxes), max(b[3] for b in boxes)
-        return (ux0 - x0, top - uy1, ux1 - x0, top - uy0)
+        ax, ay = page.from_icdar(ux0, uy0)
+        bx, by = page.from_icdar(ux1, uy1)
+        return (min(ax, bx), min(ay, by), max(ax, bx), max(ay, by))
 
 
 def _int(element: ET.Element, name: str, default: int | None = None) -> int:

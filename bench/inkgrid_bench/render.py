@@ -1,6 +1,7 @@
 """Normalized tables as each scorer's input (spec 12 section 3.2)."""
 
 import re
+from collections.abc import Callable
 from html import escape
 from xml.sax.saxutils import quoteattr
 
@@ -10,11 +11,15 @@ SORIC_HEIGHT = 1000.0  # their page images are this many pixels tall
 
 
 def _header_rows(table: NTable) -> int:
-    """How many leading rows hold only header cells."""
+    """How many leading rows are header rows: a header cell, and no other cell with text.
+
+    An empty cell does not end the header rows: `NTable.filled` fills a position no cell covers
+    with an unflagged empty cell (PyMuPDF's header rows hold them).
+    """
     rows = 0
     for r in range(table.n_rows):
         anchored = [c for c in table.cells if c.row == r]
-        if anchored and all(c.header for c in anchored):
+        if any(c.header for c in anchored) and all(c.header or not c.text for c in anchored):
             rows += 1
         else:
             break
@@ -59,10 +64,16 @@ def _xml_chars(text: str) -> str:
     return _NOT_XML.sub("", text)
 
 
+def _corners(box: Box, point: Callable[[float, float], tuple[float, float]]) -> Box:
+    """A box's two corners through `point`, reordered into a box (a turn swaps them)."""
+    ax, ay = point(box[0], box[1])
+    bx, by = point(box[2], box[3])
+    return (min(ax, bx), min(ay, by), max(ax, bx), max(ay, by))
+
+
 def _user_box(box: Box, page: NPage) -> tuple[int, int, int, int]:
-    """A top-left-frame box in PDF user space, rounded outward to whole points."""
-    x0, y1 = page.to_user(box[0], box[1])
-    x1, y0 = page.to_user(box[2], box[3])
+    """A top-left-frame box in ICDAR-2013's frame (`NPage.to_icdar`), rounded outward."""
+    x0, y0, x1, y1 = _corners(box, page.to_icdar)
     return (int(x0 // 1), int(y0 // 1), -int(-x1 // 1), -int(-y1 // 1))
 
 
@@ -105,12 +116,9 @@ def icdar_str_xml(doc: NDocument, pdf_name: str) -> str:
 def soric_box(box: Box, page: NPage) -> tuple[float, float, float, float]:
     """A top-left-frame box in Soric et al.'s page-image pixels, as their ground truth is built.
 
-    Their image is SORIC_HEIGHT pixels tall as the page displays; a box's PDF user coordinates
-    are scaled by that, x as it is and y from the displayed height (measured on eu-001 and on
-    eu-015, whose pages are turned 90 degrees).
+    Their image shows the page as it displays, SORIC_HEIGHT pixels tall: a box is turned into the
+    displayed frame and scaled by that (measured on eu-001 and on eu-015's turned pages).
     """
-    shown = page.height if page.rotation in (0, 180) else page.width
-    scale = SORIC_HEIGHT / shown
-    x0, y1 = page.to_user(box[0], box[1])
-    x1, y0 = page.to_user(box[2], box[3])
-    return (x0 * scale, (shown - y1) * scale, x1 * scale, (shown - y0) * scale)
+    scale = SORIC_HEIGHT / page.shown_size[1]
+    x0, y0, x1, y1 = _corners(box, page.to_shown)
+    return (x0 * scale, y0 * scale, x1 * scale, y1 * scale)

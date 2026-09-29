@@ -1,4 +1,6 @@
 import pytest
+from hypothesis import given
+from hypothesis import strategies as st
 
 from inkgrid_bench.tables import NCell, NDocument, NPage, NTable, cells_from_boxes
 
@@ -74,3 +76,51 @@ def test_NT3_rows_are_cut_before_columns() -> None:
     boxes = [[(0.0, 0.0, 20.0, 20.0), None], [None, (10.0, 10.0, 20.0, 20.0)]]
     cells = cells_from_boxes(boxes, [["big", None], [None, "x"]])
     assert cells[0] == NCell(0, 0, cols=2, text="big")
+
+
+TURNED = NPage(box=(0.0, 0.0, 595.0, 842.0), rotation=90)
+
+
+def test_NT1_a_turned_page_maps_to_the_frame_it_displays_in() -> None:
+    # /Rotate 90 turns the page clockwise: its top-left corner shows at the top right
+    assert TURNED.shown_size == (842.0, 595.0)
+    assert TURNED.to_shown(0.0, 0.0) == (842.0, 0.0)
+    assert TURNED.to_shown(595.0, 842.0) == (0.0, 595.0)
+    # ICDAR-2013 measures a turned page as it displays, y up (practice eu-015's ground truth
+    # reaches x = 745 on a page 595 points wide)
+    assert TURNED.to_icdar(90.0, 486.0) == (356.0, 505.0)
+    assert TURNED.from_icdar(356.0, 505.0) == (90.0, 486.0)
+
+
+def test_NT1_an_unturned_page_keeps_user_space_with_its_offsets() -> None:
+    page = NPage(box=(-100.0, -100.0, 512.0, 692.0), rotation=0)
+    assert page.to_shown(172.0, 92.0) == (172.0, 92.0)
+    assert page.to_icdar(172.0, 92.0) == (72.0, 600.0)
+    assert page.from_icdar(72.0, 600.0) == (172.0, 92.0)
+
+
+def test_NT1_a_turned_page_with_an_offset_box_has_no_icdar_frame() -> None:
+    page = NPage(box=(10.0, 0.0, 605.0, 842.0), rotation=90)
+    with pytest.raises(ValueError, match="offset"):
+        page.to_icdar(0.0, 0.0)
+
+
+@given(
+    st.sampled_from([0, 90, 180, 270]),
+    st.floats(0, 595, allow_nan=False),
+    st.floats(0, 842, allow_nan=False),
+)
+def test_NT1_turning_to_the_displayed_frame_and_back_is_the_identity(
+    rotation: int, x: float, y: float
+) -> None:
+    page = NPage(box=(0.0, 0.0, 595.0, 842.0), rotation=rotation)
+    shown = page.to_shown(x, y)
+    assert 0 <= shown[0] <= page.shown_size[0]
+    assert 0 <= shown[1] <= page.shown_size[1]
+    assert page.from_shown(*shown) == pytest.approx((x, y))
+    assert page.from_icdar(*page.to_icdar(x, y)) == pytest.approx((x, y))
+
+
+def test_NT1_a_page_turns_only_by_quarter_turns() -> None:
+    with pytest.raises(ValueError, match="rotation"):
+        NPage(box=(0.0, 0.0, 595.0, 842.0), rotation=45)

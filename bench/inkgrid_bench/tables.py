@@ -6,6 +6,7 @@ from dataclasses import asdict, dataclass, field
 from typing import Any
 
 Box = tuple[float, float, float, float]
+ROTATIONS = (0, 90, 180, 270)
 EDGE_TOL = 1.0  # points: cell edges closer than this are one grid line
 
 
@@ -82,6 +83,11 @@ class NPage:
     box: Box
     rotation: int
 
+    def __post_init__(self) -> None:
+        if self.rotation not in ROTATIONS:
+            msg = f"a page rotation of {self.rotation}; /Rotate is a multiple of 90"
+            raise ValueError(msg)
+
     @property
     def width(self) -> float:
         """The box's width in points."""
@@ -95,6 +101,67 @@ class NPage:
     def to_user(self, x: float, y: float) -> tuple[float, float]:
         """A point of the top-left frame in PDF user space (origin at the bottom left)."""
         return (x + self.box[0], self.box[3] - y)
+
+    @property
+    def shown_size(self) -> tuple[float, float]:
+        """The page's width and height as it displays, turned by its rotation."""
+        if self.rotation in (90, 270):
+            return (self.height, self.width)
+        return (self.width, self.height)
+
+    def to_shown(self, x: float, y: float) -> tuple[float, float]:
+        """A point of the unrotated top-left frame in the displayed top-left frame.
+
+        /Rotate turns the page clockwise (PDF 32000-1 section 7.7.3.3): at 90 degrees the
+        unrotated top-left corner displays at the top right.
+        """
+        w, h = self.width, self.height
+        match self.rotation:
+            case 0:
+                return (x, y)
+            case 90:
+                return (h - y, x)
+            case 180:
+                return (w - x, h - y)
+            case _:  # 270, by __post_init__
+                return (y, w - x)
+
+    def from_shown(self, sx: float, sy: float) -> tuple[float, float]:
+        """A point of the displayed top-left frame in the unrotated top-left frame."""
+        w, h = self.width, self.height
+        match self.rotation:
+            case 0:
+                return (sx, sy)
+            case 90:
+                return (sy, h - sx)
+            case 180:
+                return (w - sx, h - sy)
+            case _:  # 270, by __post_init__
+                return (w - sy, sx)
+
+    def _icdar_frame(self) -> None:
+        if self.rotation and (self.box[0], self.box[1]) != (0.0, 0.0):
+            msg = f"a turned page with an offset box {self.box} has no ICDAR frame"
+            raise ValueError(msg)
+
+    def to_icdar(self, x: float, y: float) -> tuple[float, float]:
+        """A point in ICDAR-2013's frame: PDF user space, and a turned page as it displays, y up.
+
+        Its ground truth measures a /Rotate 90 page in the turned frame (practice eu-015 reaches
+        x = 745 on a page 595 points wide); no ICDAR page is turned with an offset box.
+        """
+        if not self.rotation:
+            return self.to_user(x, y)
+        self._icdar_frame()
+        sx, sy = self.to_shown(x, y)
+        return (sx, self.shown_size[1] - sy)
+
+    def from_icdar(self, ix: float, iy: float) -> tuple[float, float]:
+        """A point of ICDAR-2013's frame in the unrotated top-left frame."""
+        if not self.rotation:
+            return (ix - self.box[0], self.box[3] - iy)
+        self._icdar_frame()
+        return self.from_shown(ix, self.shown_size[1] - iy)
 
 
 @dataclass(frozen=True, slots=True)

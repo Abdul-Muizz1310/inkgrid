@@ -223,8 +223,9 @@ def document(data: Mapping[str, Any], *, head: str, date: str, resamples: int = 
         (
             f"Measured on {date} at commit `{head}` by `bench/inkgrid_bench/run.py`, under the "
             "pre-registered protocol of `docs/specs/12-benchmark.md`. **inkgrid's numbers are its "
-            "baseline**: its reading before any fix for errors found on these documents "
-            "(DR-0023); later runs are labelled as tuned on them.\n"
+            "baseline**: its reading as of M4, before any fix for the reading errors found on "
+            "these documents (DR-0023); the one change since, from M5a, stops a crash on a Camelot "
+            "table with no cells. Later runs are labelled as tuned on these documents.\n"
         ),
         (
             "Each cell is the point estimate and its 95% interval from 10,000 resamples of "

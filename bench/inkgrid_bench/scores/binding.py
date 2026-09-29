@@ -32,6 +32,11 @@ class AccessPath:
     value: str
     dimensions: tuple[tuple[str, ...], ...]
 
+    def __post_init__(self) -> None:
+        if not self.value or not self.dimensions:
+            msg = f"an access path with no label: {self.value!r}"
+            raise ValueError(msg)
+
 
 @dataclass(frozen=True, slots=True)
 class Binding:
@@ -50,16 +55,33 @@ class GtTable:
     texts: frozenset[str]
 
 
+def _delimiter(text: str) -> str:
+    """The file's field separator, read from its first line: a table id with its padding.
+
+    Most files separate fields with commas; practice eu-020 uses semicolons (`"0";;;;;`).
+    """
+    first = next((line for line in text.splitlines() if line.strip()), "")
+    bare = re.sub(r'"[^"]*"', "", first)
+    return ";" if ";" in bare and "," not in bare else ","
+
+
 def parse_fnc(text: str) -> list[list[AccessPath]]:
-    """The access paths of each table, in order; a lone number starts the next table."""
+    """The access paths of each table, in order; a record holding only a number starts a table.
+
+    A table id may be padded with empty fields on both sides (`,,,,,"0",,,,,`, practice us-007).
+
+    Raises:
+        ValueError: a record that is neither a table id nor a value with at least one label.
+    """
     tables: list[list[AccessPath]] = []
-    for record in csv.reader(io.StringIO(text)):
+    for record in csv.reader(io.StringIO(text), delimiter=_delimiter(text)):
         fields = [f.strip() for f in record]
         while fields and not fields[-1]:
             fields.pop()
-        if not fields:
+        filled = [f for f in fields if f]
+        if not filled:
             continue
-        if len(fields) == 1 and fields[0].isdigit():
+        if len(filled) == 1 and filled[0].isdigit():
             tables.append([])
             continue
         if not tables:

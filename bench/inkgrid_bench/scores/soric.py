@@ -88,3 +88,20 @@ def result_counts(results: Mapping[str, Any], gt: Mapping[str, int]) -> dict[str
             for key in SCORES:
                 counts[key] += entries[key][i]
     return out
+
+
+# What their evaluator logs when it gives a matched table 0 instead of a score (evaluator_opt.py
+# catches the exception and carries on), and the traceback of any other failure.
+_FAILURES = ("Failed to evaluate", "Failed to append", "IndexError", "Logging error", "Traceback")
+
+
+def check_log(log: str) -> None:
+    """Raise if the evaluator's output shows a table it could not score.
+
+    Raises:
+        ValueError: a failure line, quoted.
+    """
+    for line in log.splitlines():
+        if any(marker in line for marker in _FAILURES):
+            msg = f"Soric et al.'s evaluator failed: {line.strip()[:200]}"
+            raise ValueError(msg)

@@ -1123,12 +1123,20 @@ def type3_digits() -> bytes:
     return _build([_CATALOG, _ONE_PAGE, page, _stream(content), font, glyph, glyph, _HELVETICA])
 
 
-def glyph_named(base: bytes, code: int, name: bytes) -> bytes:
+def glyph_named(
+    base: bytes,
+    code: int,
+    name: bytes,
+    *,
+    program: bytes | None = None,
+    encoding: bytes | None = None,
+) -> bytes:
     """One glyph of an embedded Type 1 (CFF) font whose encoding names it `name`, no ToUnicode.
 
-    The font program is MuPDF's own Dingbats; `base` is the font's name (olmOCR 529eeb, 4fafd7).
+    The font program is MuPDF's own Dingbats unless `program` is given; `base` is the font's name
+    (olmOCR 529eeb, 4fafd7). `encoding` replaces the font's `/Encoding` value.
     """
-    cff = pymupdf.Font("zadb").buffer
+    cff = pymupdf.Font("zadb").buffer if program is None else program
     page = (
         b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] "
         b"/Resources << /Font << /D 5 0 R /F1 8 0 R >> >> /Contents 4 0 R >>"
@@ -1136,9 +1144,14 @@ def glyph_named(base: bytes, code: int, name: bytes) -> bytes:
     content = b"BT /D 12 Tf 72 700 Td <%02x> Tj ET BT /F1 12 Tf 72 650 Td (after) Tj ET" % code
     font = (
         b"<< /Type /Font /Subtype /Type1 /BaseFont /" + base + b" /FirstChar %d /LastChar %d "
-        b"/Widths [791] /FontDescriptor 6 0 R /Encoding << /BaseEncoding /MacRomanEncoding "
-        b"/Differences [%d /" % (code, code, code) + name + b"] >> >>"
-    )
+        b"/Widths [791] /FontDescriptor 6 0 R /Encoding "
+        + (
+            encoding
+            if encoding is not None
+            else b"<< /BaseEncoding /MacRomanEncoding /Differences [%d /" % code + name + b"] >>"
+        )
+        + b" >>"
+    ) % (code, code)
     descriptor = (
         b"<< /Type /FontDescriptor /FontName /" + base + b" /Flags 4 "
         b"/FontBBox [0 0 1000 1000] /ItalicAngle 0 /Ascent 1000 /Descent 0 /CapHeight 700 "
@@ -1147,6 +1160,62 @@ def glyph_named(base: bytes, code: int, name: bytes) -> bytes:
     program = _stream(cff, b" /Subtype /Type1C")
     return _build(
         [_CATALOG, _ONE_PAGE, page, _stream(content), font, descriptor, program, _HELVETICA]
+    )
+
+
+def two_glyph_subsets() -> bytes:
+    """Two subsets of `LASY10` on one page, both naming code 50 `/a50`; only the first has a
+    ToUnicode (code 50 to U+25A1). A glyph name read by base name alone would reach the first."""
+    cff = pymupdf.Font("zadb").buffer
+    page = (
+        b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] "
+        b"/Resources << /Font << /D 5 0 R /E 9 0 R /F1 8 0 R >> >> /Contents 4 0 R >>"
+    )
+    content = (
+        b"BT /D 12 Tf 72 700 Td <32> Tj ET BT /E 12 Tf 72 680 Td <32> Tj ET "
+        b"BT /F1 12 Tf 72 650 Td (after) Tj ET"
+    )
+
+    def font(tag: bytes, tounicode: bytes) -> bytes:
+        return (
+            b"<< /Type /Font /Subtype /Type1 /BaseFont /" + tag + b"+LASY10 /FirstChar 50 "
+            b"/LastChar 50 /Widths [791] /FontDescriptor 6 0 R "
+            b"/Encoding << /Differences [50 /a50] >>" + tounicode + b" >>"
+        )
+
+    descriptor = (
+        b"<< /Type /FontDescriptor /FontName /LASY10 /Flags 4 /FontBBox [0 0 1000 1000] "
+        b"/ItalicAngle 0 /Ascent 1000 /Descent 0 /CapHeight 700 /StemV 80 /FontFile3 7 0 R >>"
+    )
+    cmap = (
+        b"/CIDInit /ProcSet findresource begin 12 dict begin begincmap /CMapName /X def "
+        b"1 begincodespacerange <00> <FF> endcodespacerange 1 beginbfchar <32> <25A1> endbfchar "
+        b"endcmap CMapName currentdict /CMap defineresource pop end end"
+    )
+    return _build(
+        [
+            _CATALOG, _ONE_PAGE, page, _stream(content), font(b"AAAAAA", b" /ToUnicode 10 0 R"),
+            descriptor, _stream(cff, b" /Subtype /Type1C"), _HELVETICA, font(b"BBBBBB", b""),
+            _stream(cmap),
+        ]
+    )  # fmt: skip
+
+
+def shadow_outside() -> bytes:
+    """The five-copy WordArt shadow drawn above a CropBox that ends at y = 700, then `Body`."""
+    title = b"(Y a h o o !) Tj "
+    moves = (b"-0.03 0 TD ", b"0.03 0.03 TD ", b"-0.03 0 TD ", b"0.015 -0.015 TD ")
+    body = b"BT /F1 1 Tf 30 0 0 30 101.13 720 Tm " + title + b"".join(m + title for m in moves)
+    doc = pymupdf.open(stream=_raw_content(body + b"ET BT /F1 10 Tf 72 600 Td (Body) Tj ET"))
+    doc.xref_set_key(doc[0].xref, "CropBox", "[0 0 612 700]")
+    return _save(doc)
+
+
+def clip_hidden_then_visible() -> bytes:
+    """`Banner` hidden by a clip path, then drawn again visibly 0.08 em away."""
+    return _raw_content(
+        b"q 0 0 1 1 re W n BT /F1 10 Tf 72 700 Td (Banner) Tj ET Q "
+        b"BT /F1 10 Tf 72.8 700 Td (Banner) Tj ET"
     )
 
 
@@ -1212,6 +1281,7 @@ OPENABLE: dict[str, Callable[[], bytes]] = {
     "cropbox_beyond": cropbox_beyond,
     "cropbox_overhang": lambda: cropbox_beyond("0 -4.3 602.29 800"),
     "marked_value": marked_value,
+    "shadow_outside": shadow_outside,
     "superscript": superscript,
     "font_change": font_change,
     "euro_text": euro_text,

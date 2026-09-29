@@ -82,8 +82,10 @@ as before (8 cells reported, every rule counter 0).
   3. each of W's four box edges lies within `0.1 × W.size` of K's matching edge.
 
   The unit is the word, never the character. A dropped word's characters are counted as
-  `overprinted_chars`. W8 applies to the clipped and the unclipped readings alike, so `clipped_chars`
-  (the unclipped reading's characters minus the clipped reading's) never counts a copy.
+  `overprinted_chars`. W8 applies to the clipped and the unclipped readings alike, and
+  `clipped_chars` counts the two readings' characters before W8 (words plus copies): a copy drawn
+  where the other reading also has it cancels out, and a copy outside the CropBox or under a clip
+  path counts as clipped, as PDFium sees it.
 - **Why 0.1 em:** the largest copy offset measured is 0.042 em, and PDFium's own glyph test uses
   0.07 em; the nearest legitimate same-text neighbour is 0.166 em apart. A whole word can come nearer
   than that to its own copy only by being drawn twice.
@@ -148,6 +150,15 @@ show PDFium two or more copies:
 - Without this rule MuPDF invents a letter from the name's digits (G1); PDFium's own reading of a
   non-Dingbats font is no better, so DECODE there is resolved by U+FFFD on inkgrid's side, which the
   verifier pairs with any character (spec 10 § 3.1).
+- **Two fonts sharing a name.** Text traces and `rawdict` name a font without its subset tag, so a
+  font whose name another font on the page shares is left as MuPDF reads it (its glyphs could be
+  named through the other's program, turning a mapped character into U+FFFD).
+- **An error on the way** (a damaged font program, an encoding past the cross-reference table)
+  leaves the font as MuPDF reads it; the page is never emptied by it.
+- **Not covered:** a font with a built-in encoding and no `/CharSet` is never traced, so a digit name
+  there keeps MuPDF's letter. Where PDFium cannot map the name either, its glyph is unmapped and the
+  verifier pairs it with any character, so that letter passes unreported. No such glyph was found in
+  the 2,544 pages measured.
 
 ---
 
@@ -185,6 +196,8 @@ show PDFium two or more copies:
 | OP6 | a shadow drawn five times within 0.03 em (WordArt's `Tf 1` with a 30 × matrix) | the text once; verification clean (overprint copies accepted) |
 | OP7 | a clipped reading and an unclipped reading of a page with a copy | `clipped_chars` 0 |
 | OP8 | the ledger of a document with copies on two pages | `overprinted_chars` is their sum; a wrong sum fails validation |
+| OP9 | the OP6 shadow drawn above a CropBox that ends below it | `clipped_chars` counts all five copies (30); verification clean |
+| OP10 | `Banner` hidden by a clip path, then drawn visibly 0.08 em away | one `Banner`; `clipped_chars` 6 |
 | VO1 | PDFium shows three copies where the reader kept one and counted two | owned 1 copy's characters, overprint 2 copies' |
 | VO2 | the same page with the reader's count one short | every overprint copy LOST |
 | VO3 | a copy 0.6 pt wider than the owned character | LOST |
@@ -194,6 +207,9 @@ show PDFium two or more copies:
 | GN1 | a `ZapfDingbatsITC` subset encoding code 3 as `/a71`, no ToUnicode | the word `●`; verification clean |
 | GN2 | the same font named `LASY10`, code 50 as `/a50` | U+FFFD; `unmapped_chars` 1; verification clean |
 | GN3 | typed: `a71` in a Dingbats font; `a71` elsewhere; `a71.alt`; `A`; `uni2022` | `●`; None (U+FFFD); `●`; not applicable; not applicable |
+| GN4 | two subsets of one font name on a page, the first with a ToUnicode | each as MuPDF reads it (`\u25a1`, then `2`) |
+| GN5 | a candidate font whose program is damaged | MuPDF's reading; no `unreadable_page` |
+| GN6 | a candidate font whose `/Encoding` points past the cross-reference table | MuPDF's reading; no `unreadable_page` |
 | CB1 | MediaBox 600 × 800, CropBox `[-50 -50 650 850]`, text at x = 100 | 600 × 800; the word at x = 100; verification clean |
 | CB2 | CropBox `[0 -4.3 602.29 800]` over MediaBox 600 × 800 | 600 × 800 |
 | CB3 | a CropBox beyond the MediaBox entirely | `unreadable_page`; no words |

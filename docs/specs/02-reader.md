@@ -159,9 +159,10 @@ hidden_chars)`.
 - **W8. An overprinted word is read once** (spec 13 § 1): a word with an earlier kept word's text,
   font, size, and states, and each box edge within 0.1 × its size of that word's, is dropped and its
   characters counted in `overprinted_chars`. U+FFFD and Type 3 words are never copies.
-- **Glyph names** (spec 13 § 3): in an embedded Type 1 font with no ToUnicode, a glyph named outside
-  the Adobe Glyph List by digits (`a71`) reads by the ZapfDingbats list in a Dingbats font, and as
-  U+FFFD elsewhere, never as MuPDF's letter from the digits.
+- **Glyph names** (spec 13 § 3): in an embedded Type 1 font with no ToUnicode whose encoding or
+  character set names a glyph outside the Adobe Glyph List by digits (`a71`), that glyph reads by the
+  ZapfDingbats list in a Dingbats font and as U+FFFD elsewhere, not as MuPDF's letter from the
+  digits.
 
 **Why the superscript flag and not a size test.** MuPDF flags a character as superscript when its
 origin sits more than 0.1 × size above the origin of the line's first character. So a marker that

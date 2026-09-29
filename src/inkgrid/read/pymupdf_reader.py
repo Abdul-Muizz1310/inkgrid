@@ -35,7 +35,7 @@ from inkgrid.read.raw import (
     RectItem,
 )
 from inkgrid.read.rules import extract_rules
-from inkgrid.read.words import build_words
+from inkgrid.read.words import WordsOut, build_words
 
 # CID fallback, ligatures and images are all off on purpose: see docs/specs/02-reader.md section 3.
 TEXT_FLAGS = pymupdf.TEXT_PRESERVE_WHITESPACE | pymupdf.TEXT_CLIP
@@ -149,17 +149,35 @@ class _GlyphFonts:
         program = self.doc.extract_font(xref)[3]
         return pymupdf.Font(fontbuffer=program) if program else None
 
-    def fixes(self, page: pymupdf.Page, fonts: list[pymupdf.FontEntry]) -> GlyphFixes:
-        """The page's characters whose glyph names read otherwise, by font and origin."""
-        programs: dict[str, pymupdf.Font] = {}
-        for xref, ext, kind, basefont, *_ in fonts:
-            if xref not in self.programs:
+    def _program(self, xref: int, ext: str, kind: str) -> pymupdf.Font | None:
+        if xref not in self.programs:
+            try:
                 self.programs[xref] = self._load(xref, ext, kind)
-            program = self.programs[xref]
-            if program is not None:
-                programs[basefont.split("+", 1)[-1]] = program
+            except MUPDF_ERRORS:  # a broken dictionary or program: MuPDF's reading stands
+                self.programs[xref] = None
+        return self.programs[xref]
+
+    def fixes(self, page: pymupdf.Page, fonts: list[pymupdf.FontEntry]) -> GlyphFixes:
+        """The page's characters whose glyph names read otherwise, by font and origin.
+
+        Text traces and `rawdict` name a font without its subset tag, so a font whose name another
+        font on the page shares is left as MuPDF reads it: its glyphs cannot be told apart.
+        """
+        names = [basefont.split("+", 1)[-1] for _, _, _, basefont, *_ in fonts]
+        programs: dict[str, pymupdf.Font] = {}
+        for (xref, ext, kind, _, *_), name in zip(fonts, names, strict=True):
+            program = self._program(xref, ext, kind)
+            if program is not None and names.count(name) == 1:
+                programs[name] = program
         if not programs:
             return {}
+        try:
+            return self._traced(page, programs)
+        except MUPDF_ERRORS:
+            return {}
+
+    @staticmethod
+    def _traced(page: pymupdf.Page, programs: dict[str, pymupdf.Font]) -> GlyphFixes:
         out: GlyphFixes = {}
         for trace in page.get_texttrace():
             program = programs.get(trace["font"])
@@ -261,6 +279,11 @@ def _chars(words: tuple[Word, ...]) -> int:
     return sum(len(w.text) for w in words)
 
 
+def _drawn(out: WordsOut) -> int:
+    """The characters a reading's words were built from, copies (W8) included."""
+    return _chars(out.words) + out.overprinted_chars
+
+
 @dataclass(frozen=True, slots=True)
 class _Extracted:
     lines: tuple[RawLine, ...] = ()
@@ -328,7 +351,7 @@ def _page_model(
         rotation=_rotation(page.rotation),
         text_layer=expected_text_layer(len(out.words), out.unmapped_chars),
         invisible_chars=out.invisible_chars,
-        clipped_chars=max(0, _chars(seen.words) - _chars(out.words)),
+        clipped_chars=max(0, _drawn(seen) - _drawn(out)),
         unmapped_chars=out.unmapped_chars,
         hidden_chars=out.hidden_chars,
         image_area_ratio=_image_area_ratio(list(got.images), width, height),

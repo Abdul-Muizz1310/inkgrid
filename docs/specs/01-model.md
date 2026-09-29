@@ -100,6 +100,7 @@ illegal state cannot be represented (negative-space programming).
 | `hidden_text` | warning | invisible text that is not an OCR layer: the text layer says something the page does not show |
 | `type3_font` | warning | words drawn in a Type 3 font, whose Unicode mapping MuPDF may have guessed from the raw character code |
 | `clipped_text` | info | characters removed by clip paths or the page boundary |
+| `overprinted_text` | info | characters of words drawn again at the same place, read once (M5c, spec 13 § 1) |
 | `pdf_engine_warning` | info | a message MuPDF emitted while reading; pinned to the page it came from when it came from one |
 | `unreadable_page` | error | a page the page tree declares could not be loaded, or its text could not be extracted |
 | `lattice_failed` | warning | Camelot raised on a page (M2) |

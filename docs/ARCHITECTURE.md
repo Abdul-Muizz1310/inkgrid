@@ -66,6 +66,8 @@ and pinned by a test.
    same superscript and hidden state, and real vertical overlap. Text is hidden when it is neither
    filled nor stroked (render modes 3 and 7) or fully transparent. For render modes 4-6, MuPDF also
    reports a clip copy of the drawn text, and that copy is dropped so each character is read once.
+   A word drawn again at the same place (a banner painted twice, stroke then fill) is read once too,
+   and its copy's characters counted.
 3. Rules come from stroked lines, thin rectangles, and the edges of stroked cell rectangles.
 4. A second, unclipped extraction counts the characters that the clip paths and the CropBox hide.
 5. Measurements become findings:
@@ -74,6 +76,7 @@ and pinned by a test.
    - `partial_text_layer`;
    - `ocr_text_layer` or `hidden_text`;
    - `clipped_text`;
+   - `overprinted_text`;
    - `type3_font`;
    - MuPDF's own warnings, pinned to the page that raised them.
 

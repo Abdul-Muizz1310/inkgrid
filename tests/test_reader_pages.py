@@ -214,6 +214,38 @@ def test_GN2_a_digit_glyph_name_elsewhere_reads_as_no_unicode() -> None:
     assert reading.pages[0].unmapped_chars == 1
 
 
+def test_OP9_copies_outside_the_cropbox_still_count_as_clipped() -> None:
+    reading = read(pdf_factory.shadow_outside())
+    assert [w.text for w in reading.words()] == ["Body"]
+    assert reading.pages[0].clipped_chars == 5 * len("Yahoo!")
+
+
+def test_OP10_a_copy_hidden_by_a_clip_still_counts_as_clipped() -> None:
+    reading = read(pdf_factory.clip_hidden_then_visible())
+    assert [w.text for w in reading.words()] == ["Banner"]
+    assert reading.pages[0].clipped_chars == len("Banner")
+
+
+def test_GN4_a_glyph_name_is_not_read_through_another_subset_of_its_name() -> None:
+    reading = read(pdf_factory.two_glyph_subsets())
+    assert [w.text for w in reading.words()] == ["\u25a1", "2", "after"]
+
+
+def test_GN5_a_damaged_font_program_leaves_mupdfs_reading() -> None:
+    data = pdf_factory.glyph_named(
+        b"ABCDEF+LASY10", 50, b"a50", program=b"\x01\x00\x04\x02bad" * 20
+    )
+    reading = read(data)
+    assert "after" in [w.text for w in reading.words()]
+    assert FindingCode.UNREADABLE_PAGE not in codes(reading)
+
+
+def test_GN6_an_encoding_past_the_xref_leaves_mupdfs_reading() -> None:
+    reading = read(pdf_factory.glyph_named(b"ABCDEF+LASY10", 50, b"a50", encoding=b"99 0 R"))
+    assert "after" in [w.text for w in reading.words()]
+    assert FindingCode.UNREADABLE_PAGE not in codes(reading)
+
+
 def test_X20_type3_font_is_reported() -> None:
     reading = read(pdf_factory.type3_font())
     assert [w.text for w in reading.words()] == ["aaa", "plain"]

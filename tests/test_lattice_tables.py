@@ -7,7 +7,7 @@ from inkgrid.core.text import block_text
 from inkgrid.model.config import Profile
 from inkgrid.model.findings import FindingCode
 from inkgrid.model.geometry import Rect
-from inkgrid.model.page import Word
+from inkgrid.model.page import Rule, Word
 from layout_builder import CHAR_EM, P, place, text_line
 from model_builders import mk_page
 
@@ -286,3 +286,96 @@ def test_LT16_an_empty_cell_spanning_the_body_does_not_make_it_header() -> None:
     stage, _ = run(cells, grids=[[*(Rect(*b) for b in cells.values()), sliver]])
     (table,) = stage.tables
     assert table.header_rows == 1
+
+
+# --- spec 14: overlaps, frame cores, splits at the page's rules --------------------------------
+
+def dims(table: ProtoTable) -> tuple[int, int]:
+    return len(table.shape.row_edges) - 1, len(table.shape.col_edges) - 1
+
+
+LEFT = {
+    "Fee": (0, 0, 60, 20),
+    "Rate": (60, 0, 120, 20),
+    "Equity": (0, 20, 60, 40),
+    "0.30": (60, 20, 120, 40),
+}
+RIGHT = {k + "2": (x0 + 120, y0, x1 + 120, y1) for k, (x0, y0, x1, y1) in LEFT.items()}
+
+
+def test_GO2_two_grids_sharing_a_border_are_both_tables() -> None:
+    both = {**LEFT, **RIGHT}
+    grids = [[Rect(*b) for b in LEFT.values()], [Rect(*b) for b in RIGHT.values()]]
+    stage, _ = run(both, grids=grids)
+    assert len(stage.tables) == 2
+
+
+def test_FR3_a_core_with_words_beside_it_keeps_the_whole_grid() -> None:
+    # a spanning header row over a row-spanning label column and a right column (fee tables)
+    cells = {
+        "Charges": (0, 0, 240, 20),
+        "Label": (0, 20, 60, 60),
+        "Fee": (60, 20, 120, 40),
+        "Cap": (120, 20, 180, 40),
+        "Note": (180, 20, 240, 60),
+        "$1": (60, 40, 120, 60),
+        "$2": (120, 40, 180, 60),
+    }
+    words = place([centred(t, b) for t, b in cells.items()])
+    page = mk_page(words=words)
+    grid = [Rect(*b) for b in cells.values()]
+    stage = lattice_tables(
+        page, [grid], words, PROFILE, frame=0, read=True, cores=[Rect(60, 20, 180, 60)]
+    )
+    (table,) = stage.tables
+    assert dims(table) == (3, 4)
+
+
+def _split_page(rule: Rule, extra: Sequence[P] = ()) -> tuple[TableStage, tuple[Word, ...]]:
+    cells = {
+        "Band": (0, 0, 120, 20),
+        "Rate": (120, 0, 240, 20),
+        "Band 1  0.10": (0, 20, 120, 40),
+        "5": (120, 20, 240, 40),
+    }
+    words = place(
+        [
+            centred("Band", cells["Band"]),
+            centred("Rate", cells["Rate"]),
+            P("Band", 10, 25),
+            P("0.10", 80, 25),
+            centred("5", cells["5"]),
+            *extra,
+        ]
+    )
+    page = mk_page(words=words, rules=(rule,))
+    stage = lattice_tables(
+        page, [[Rect(*b) for b in cells.values()]], words, PROFILE, frame=0, read=True
+    )
+    return stage, words
+
+
+def test_LS1_a_rule_the_grid_missed_splits_the_cell_it_divides() -> None:
+    stage, _ = _split_page(Rule(page=1, axis="v", at=60.0, start=0.0, end=40.0, thickness=2.75))
+    (table,) = stage.tables
+    assert dims(table)[1] == 3
+
+
+def test_LS3_no_split_short_of_the_cell_off_centre_or_with_words_on_one_side() -> None:
+    short = Rule(page=1, axis="v", at=60.0, start=0.0, end=37.0, thickness=1.0)
+    edge = Rule(page=1, axis="v", at=1.2, start=0.0, end=40.0, thickness=1.0)
+    one_side = Rule(page=1, axis="v", at=100.0, start=0.0, end=40.0, thickness=1.0)
+    for rule in (short, edge, one_side):
+        (table,) = _split_page(rule)[0].tables
+        assert dims(table)[1] == 2, rule
+
+
+def test_LS4_a_rejected_grid_is_never_split() -> None:
+    cells = {"Band 1  0.10": (0, 0, 240, 20)}
+    words = place([P("Band", 10, 5), P("0.10", 200, 5)])
+    rule = Rule(page=1, axis="v", at=120.0, start=0.0, end=20.0, thickness=1.56)
+    page = mk_page(words=words, rules=(rule,))
+    stage = lattice_tables(
+        page, [[Rect(*b) for b in cells.values()]], words, PROFILE, frame=0, read=True
+    )
+    assert stage.tables == ()

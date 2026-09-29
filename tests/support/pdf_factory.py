@@ -1227,6 +1227,144 @@ def fills_and_thin_rules() -> bytes:
     )
 
 
+FRAMED_CELLS = {  # a 4 x 3 ruled table, (x0, y0, x1, y1)
+    "Service": (150, 300, 290, 320),
+    "Fee": (290, 300, 390, 320),
+    "Cap": (390, 300, 470, 320),
+    "Orders": (150, 320, 290, 340),
+    "$0.50": (290, 320, 390, 340),
+    "$100": (390, 320, 470, 340),
+    "Quotes": (150, 340, 290, 360),
+    "$0.25": (290, 340, 390, 360),
+    "$50": (390, 340, 470, 360),
+    "Trades": (150, 360, 290, 380),
+    "$0.10": (290, 360, 390, 380),
+    "$20": (390, 360, 470, 380),
+}
+FRAMED_HEADING = "Schedule of Charges"
+FRAMED_INTRO = "The charges below apply to every member of the exchange."
+
+
+def _boxed_cells(page: pymupdf.Page, cells: dict[str, tuple[float, float, float, float]]) -> None:
+    shape = page.new_shape()
+    for x0, y0, x1, y1 in cells.values():
+        shape.draw_rect(pymupdf.Rect(x0, y0, x1, y1))
+    shape.finish(color=BLACK, width=0.5)
+    shape.commit()
+    for text, (x0, _, _, y1) in cells.items():
+        page.insert_text((x0 + 4, y1 - 6), text, fontsize=9)
+
+
+def _framed_page(doc: pymupdf.Document) -> pymupdf.Page:
+    page = _page(doc)
+    page.insert_text((150, 200), FRAMED_HEADING, fontsize=16)
+    page.insert_text((150, 240), FRAMED_INTRO, fontsize=10)
+    return page
+
+
+def framed_table() -> bytes:
+    """A page border 36 pt in, around a heading, a line, a 4 x 3 ruled table with blank margins
+    to the border, a footnote, and a page number: Camelot returns one grid, the border (practice
+    us-022, olmOCR c45171)."""
+    doc = pymupdf.open()
+    page = _framed_page(doc)
+    shape = page.new_shape()
+    shape.draw_rect(pymupdf.Rect(36, 36, 576, 756))
+    shape.finish(color=BLACK, width=0.5)
+    shape.commit()
+    _boxed_cells(page, FRAMED_CELLS)
+    page.insert_text(
+        (150, 420), "* Charges are billed monthly in arrears to each member.", fontsize=8
+    )
+    page.insert_text((300, 740), "7", fontsize=9)
+    return _save(doc)
+
+
+def open_frame_table() -> bytes:
+    """A `]` frame (two page-wide rules and one vertical rule) around a heading and a separate
+    4 x 3 ruled table: Camelot returns the table and a frame grid over it (competition us-036)."""
+    doc = pymupdf.open()
+    page = _framed_page(doc)
+    shape = page.new_shape()
+    shape.draw_line((0, 36), (560, 36))
+    shape.draw_line((0, 756), (560, 756))
+    shape.draw_line((560, 36), (560, 756))
+    shape.finish(color=BLACK, width=0.6)
+    shape.commit()
+    _boxed_cells(page, FRAMED_CELLS)
+    return _save(doc)
+
+
+def watermarked_table() -> bytes:
+    """A 4 x 3 ruled table under a 36 pt `DRAFT COPY` drawn at 45 degrees (olmOCR 1ec1f9)."""
+    doc = pymupdf.open()
+    page = _page(doc)
+    _boxed_cells(page, FRAMED_CELLS)
+    for text, (x, y) in (("DRAFT", (200, 400)), ("COPY", (330, 400))):
+        at = pymupdf.Point(x, y)
+        page.insert_text(
+            at, text, fontsize=36, color=(0.7, 0.8, 1.0), morph=(at, pymupdf.Matrix(45))
+        )
+    return _save(doc)
+
+
+def _centred_text(page: pymupdf.Page, text: str, x0: float, x1: float, y: float) -> None:
+    width = pymupdf.get_text_length(text, fontname="helv", fontsize=9)
+    page.insert_text(((x0 + x1 - width) / 2, y), text, fontsize=9)
+
+
+def grey_column_rule() -> bytes:
+    """A 3-column ruled table whose rule between columns 0 and 1 is a fill-only grey rectangle
+    2.75 pt wide; the third column is shaded, and one of its values sits on a 4.08 pt shaded strip
+    (practice us-008)."""
+    doc = pymupdf.open()
+    page = _page(doc)
+    xs, top, bottom, pitch = (100, 220, 340, 460), 200, 320, 20
+    shape = page.new_shape()
+    shape.draw_rect(pymupdf.Rect(340, top, 460, bottom))
+    shape.finish(fill=(0.95, 0.95, 0.95), color=None)
+    shape.draw_rect(pymupdf.Rect(360, 262.5, 440, 266.58))
+    shape.finish(fill=(0.95, 0.95, 0.95), color=None)
+    shape.draw_rect(pymupdf.Rect(218.625, top, 221.375, bottom))
+    shape.finish(fill=(0.8, 0.8, 0.8), color=None)
+    for y in range(top, bottom + 1, pitch):
+        shape.draw_line((100, y), (460, y))
+    for x in (100, 340, 460):
+        shape.draw_line((x, top), (x, bottom))
+    shape.finish(color=BLACK, width=0.5)
+    shape.commit()
+    rows = [("Band", "Rate", "Cap"), *((f"Band {i}", f"0.{i}0", f"{i}00") for i in range(1, 6))]
+    for r, row in enumerate(rows):
+        for c, text in enumerate(row):
+            _centred_text(page, text, xs[c], xs[c + 1], top + pitch * r + 13)
+    return _save(doc)
+
+
+def stub_column_rule() -> bytes:
+    """A 3-column ruled table whose header `Fees` spans columns 1-2, the rule between them
+    starting 2.7 pt above the header's bottom edge: Camelot drops it (olmOCR 008d1d)."""
+    doc = pymupdf.open()
+    page = _page(doc)
+    top, pitch, n = 200, 20, 6
+    bottom = top + pitch * n
+    shape = page.new_shape()
+    for y in range(top, bottom + 1, pitch):
+        shape.draw_line((100, y), (460, y))
+    for x in (100, 220, 460):
+        shape.draw_line((x, top), (x, bottom))
+    shape.draw_line((340, top + pitch - 2.7), (340, bottom))
+    shape.finish(color=BLACK, width=0.8)
+    shape.commit()
+    _centred_text(page, "Item", 100, 220, top + 13)
+    _centred_text(page, "Fees", 220, 460, top + 13)
+    for i in range(1, n):
+        y = top + pitch * i + 13
+        _centred_text(page, f"Item {i}", 100, 220, y)
+        _centred_text(page, f"0.{i}0", 220, 340, y)
+        _centred_text(page, f"{i}.00", 340, 460, y)
+    return _save(doc)
+
+
 def marked_value() -> bytes:
     """`.54` with a raised mark glued on, beside a line in the next column set 7 pt higher.
 
@@ -1289,6 +1427,11 @@ OPENABLE: dict[str, Callable[[], bytes]] = {
     "cropbox_beyond": cropbox_beyond,
     "cropbox_overhang": lambda: cropbox_beyond("0 -4.3 602.29 800"),
     "marked_value": marked_value,
+    "framed_table": framed_table,
+    "open_frame_table": open_frame_table,
+    "watermarked_table": watermarked_table,
+    "grey_column_rule": grey_column_rule,
+    "stub_column_rule": stub_column_rule,
     "shadow_outside": shadow_outside,
     "superscript": superscript,
     "font_change": font_change,

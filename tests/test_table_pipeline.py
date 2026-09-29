@@ -5,6 +5,7 @@ import camelot
 import pytest
 from pydantic import ValidationError
 
+import inkgrid
 import pdf_factory
 from inkgrid.model.document import Document, Table
 from lattice_builder import read_with_tables
@@ -89,3 +90,58 @@ def test_TP9_a_failed_page_is_not_also_a_disagreement(monkeypatch: pytest.Monkey
     monkeypatch.setattr(camelot, "read_pdf", broken)
     doc = build(pdf_factory.ruled_grid())
     assert [(f.code.value, f.page) for f in doc.findings] == [("lattice_failed", 1)]
+
+
+# --- spec 14: grids kept to their tables ------------------------------------------------
+
+
+def verified(data: bytes, doc: Document) -> None:
+    report = inkgrid.verify(doc, data)
+    assert report.ok, [(d.code.value, d.text, d.detail) for d in report.defects]
+
+
+def test_GO1_a_frame_grid_over_a_table_is_not_a_second_table() -> None:
+    data = pdf_factory.open_frame_table()
+    doc = build(data, engine="combined")
+    (table,) = tables(doc)
+    assert (table.grid.n_rows, table.grid.n_cols) == (4, 3)
+    assert [b.kind for b in doc.blocks if b.kind != "table"] == ["heading", "paragraph"]
+    verified(data, doc)
+
+
+def test_FR1_a_frame_around_a_table_reads_as_its_core() -> None:
+    data = pdf_factory.framed_table()
+    doc = build(data, engine="combined")
+    (table,) = tables(doc)
+    assert (table.grid.n_rows, table.grid.n_cols) == (4, 3)
+    assert doc.blocks[0].text == pdf_factory.FRAMED_HEADING
+    verified(data, doc)
+
+
+def test_LS1_a_grey_fill_between_two_columns_keeps_them_apart() -> None:
+    data = pdf_factory.grey_column_rule()
+    doc = build(data)
+    (table,) = tables(doc)
+    assert table.grid.n_cols == 3
+    assert table.text.split("\n")[0] == "Band Rate Cap"
+    verified(data, doc)
+
+
+def test_LS2_a_rule_camelot_drops_still_divides_its_columns() -> None:
+    data = pdf_factory.stub_column_rule()
+    doc = build(data)
+    (table,) = tables(doc)
+    assert table.grid.n_cols == 3
+    spans = {c.text: c.col_span for c in table.grid.cells if c.text}
+    assert spans["Fees"] == 2
+    verified(data, doc)
+
+
+def test_DG1_a_diagonal_watermark_is_no_cells() -> None:
+    data = pdf_factory.watermarked_table()
+    doc = build(data)
+    (table,) = tables(doc)
+    watermark = {w.id for w in doc.words if w.text in {"DRAFT", "COPY"}}
+    assert watermark
+    assert not watermark & set(table.word_ids)
+    verified(data, doc)

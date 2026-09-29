@@ -17,8 +17,8 @@ from inkgrid.core.view import upright
 from inkgrid.model.config import Lexicon, Profile
 from inkgrid.model.document import Document, Lattice
 from inkgrid.model.findings import Finding, FindingCode
-from inkgrid.model.geometry import Rect, turn_rect
-from inkgrid.model.lattice import LatticeReading
+from inkgrid.model.geometry import turn_rect
+from inkgrid.model.lattice import LatticeReading, RuledGrid
 from inkgrid.model.page import Reading
 
 
@@ -36,9 +36,9 @@ def build_document(
     furniture = find_furniture(views, profile)
     content = [w for w in reading.words() if w.id not in furniture.word_ids]
     body = body_size(content) if content else 0.0
-    by_page: defaultdict[int, list[list[Rect]]] = defaultdict(list)
+    by_page: defaultdict[int, list[RuledGrid]] = defaultdict(list)
     for grid in grids.grids if grids is not None else ():
-        by_page[grid.page].append(list(grid.cells))
+        by_page[grid.page].append(grid)
     # Pages Camelot read without failing: a failed page already carries lattice_failed.
     failed = (
         {f.page for f in grids.findings if f.code is FindingCode.LATTICE_FAILED} if grids else set()
@@ -51,11 +51,21 @@ def build_document(
         words = [w for w in view.words if w.id not in furniture.word_ids]
         frame = page.rotation if view is not page else 0
         turned = [
-            [turn_rect(cell, frame, page.width, page.height) for cell in cells]
-            for cells in by_page[page.number]
+            [turn_rect(cell, frame, page.width, page.height) for cell in grid.cells]
+            for grid in by_page[page.number]
+        ]
+        cores = [
+            None if grid.core is None else turn_rect(grid.core, frame, page.width, page.height)
+            for grid in by_page[page.number]
         ]
         stage = lattice_tables(
-            view, turned, words, profile, frame=frame, read=page.number in lattice_read
+            view,
+            turned,
+            words,
+            profile,
+            frame=frame,
+            read=page.number in lattice_read,
+            cores=cores,
         )
         found += stage.findings
         rest = [w for w in words if w.id not in stage.claimed]

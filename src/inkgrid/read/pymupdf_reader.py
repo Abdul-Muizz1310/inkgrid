@@ -11,7 +11,7 @@ from __future__ import annotations
 import importlib.metadata
 from collections.abc import Iterator
 from contextlib import contextmanager
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Final, Literal
 
 import pymupdf
@@ -21,6 +21,7 @@ from inkgrid.model.canonical import sha256_hex
 from inkgrid.model.findings import Finding, FindingCode
 from inkgrid.model.lattice import PageFrame
 from inkgrid.model.page import PageModel, ReaderInfo, Reading, Source, Word, expected_text_layer
+from inkgrid.read.glyphs import charset_names, differences_names, glyph_reading, stem
 from inkgrid.read.page_findings import PageSignals, engine_warning_findings, page_findings
 from inkgrid.read.raw import (
     CurveItem,
@@ -42,6 +43,10 @@ TEXT_FLAGS = pymupdf.TEXT_PRESERVE_WHITESPACE | pymupdf.TEXT_CLIP
 UNCLIPPED_FLAGS = pymupdf.TEXT_PRESERVE_WHITESPACE
 QUARTER_TURNS: Final[tuple[Literal[0, 90, 180, 270], ...]] = (0, 90, 180, 270)
 TYPE3 = "Type3"
+# Font kinds whose glyphs carry names MuPDF may read from their digits (spec 13 section 3).
+NAMED_GLYPH_KINDS: Final = frozenset({"Type1", "MMType1"})
+NOT_EMBEDDED = "n/a"
+ORIGIN_DIGITS = 2
 # What MuPDF raises for damaged content. Its own error base is not a RuntimeError.
 MUPDF_ERRORS: Final = (RuntimeError, pymupdf.mupdf.FzErrorBase)
 # Loading a page also raises ValueError, for a page tree that declares more pages than it holds.
@@ -102,7 +107,76 @@ def _open(data: bytes, password: str | None) -> pymupdf.Document:
     return doc
 
 
-def _raw_lines(page: pymupdf.Page, *, unclipped: bool = False) -> tuple[RawLine, ...]:
+type GlyphFixes = dict[tuple[str, float, float], str]
+
+
+def _origin_key(font: str, origin: tuple[float, float]) -> tuple[str, float, float]:
+    return (font, round(origin[0], ORIGIN_DIGITS), round(origin[1], ORIGIN_DIGITS))
+
+
+def _in_agl(name: str) -> bool:
+    return pymupdf.mupdf.fz_unicode_from_glyph_name_strict(stem(name)) != 0
+
+
+@dataclass
+class _GlyphFonts:
+    """Per document, each font xref's program when its encoding names such a glyph, else None.
+
+    A glyph MuPDF reads from its name's digits (`a71`) is found through the font program; a font
+    with no such name costs a few dictionary lookups, once per document.
+    """
+
+    doc: pymupdf.Document
+    programs: dict[int, pymupdf.Font | None] = field(default_factory=dict)
+
+    def _text(self, xref: int, key: str) -> str:
+        kind, value = self.doc.xref_get_key(xref, key)
+        if kind == "xref":
+            return self.doc.xref_object(int(value.split()[0]))
+        return value if kind in {"dict", "string", "array"} else ""
+
+    def _load(self, xref: int, ext: str, kind: str) -> pymupdf.Font | None:
+        if kind not in NAMED_GLYPH_KINDS or ext == NOT_EMBEDDED:
+            return None
+        if self.doc.xref_get_key(xref, "ToUnicode")[0] != "null":
+            return None
+        names = differences_names(self._text(xref, "Encoding"))
+        descriptor = self.doc.xref_get_key(xref, "FontDescriptor")
+        if descriptor[0] == "xref":
+            names |= charset_names(self._text(int(descriptor[1].split()[0]), "CharSet"))
+        if not any(glyph_reading(n, font="", in_agl=_in_agl(n)) is not None for n in names):
+            return None
+        program = self.doc.extract_font(xref)[3]
+        return pymupdf.Font(fontbuffer=program) if program else None
+
+    def fixes(self, page: pymupdf.Page, fonts: list[pymupdf.FontEntry]) -> GlyphFixes:
+        """The page's characters whose glyph names read otherwise, by font and origin."""
+        programs: dict[str, pymupdf.Font] = {}
+        for xref, ext, kind, basefont, *_ in fonts:
+            if xref not in self.programs:
+                self.programs[xref] = self._load(xref, ext, kind)
+            program = self.programs[xref]
+            if program is not None:
+                programs[basefont.split("+", 1)[-1]] = program
+        if not programs:
+            return {}
+        out: GlyphFixes = {}
+        for trace in page.get_texttrace():
+            program = programs.get(trace["font"])
+            if program is None:
+                continue
+            for _, glyph, origin, _ in trace["chars"]:
+                name = pymupdf.mupdf.fz_get_glyph_name2(program.this, glyph)
+                reading = glyph_reading(name, font=trace["font"], in_agl=_in_agl(name))
+                if reading is not None:
+                    out[_origin_key(trace["font"], origin)] = reading
+        return out
+
+
+def _raw_lines(
+    page: pymupdf.Page, fixes: GlyphFixes | None = None, *, unclipped: bool = False
+) -> tuple[RawLine, ...]:
+    fixes = fixes or {}
     if unclipped:
         raw = page.get_text("rawdict", flags=UNCLIPPED_FLAGS, clip=pymupdf.INFINITE_RECT())
     else:
@@ -117,7 +191,12 @@ def _raw_lines(page: pymupdf.Page, *, unclipped: bool = False) -> tuple[RawLine,
                     flags=span["flags"],
                     char_flags=span["char_flags"],
                     alpha=span["alpha"],
-                    chars=tuple(RawChar(ch["c"], ch["bbox"]) for ch in span["chars"]),
+                    chars=tuple(
+                        RawChar(
+                            fixes.get(_origin_key(span["font"], ch["origin"]), ch["c"]), ch["bbox"]
+                        )
+                        for ch in span["chars"]
+                    ),
                 )
                 for span in line["spans"]
             )
@@ -192,22 +271,26 @@ class _Extracted:
     error: str | None = None
 
 
-def _extract(page: pymupdf.Page) -> _Extracted:
+def _extract(page: pymupdf.Page, glyph_fonts: _GlyphFonts) -> _Extracted:
     """Everything the page model needs from PyMuPDF; a failure empties the page, never raises."""
     try:
+        fonts = page.get_fonts()
+        fixes = glyph_fonts.fixes(page, fonts)
         return _Extracted(
-            lines=_raw_lines(page),
-            unclipped=_raw_lines(page, unclipped=True),
+            lines=_raw_lines(page, fixes),
+            unclipped=_raw_lines(page, fixes, unclipped=True),
             paths=_raw_paths(page),
             images=tuple(page.get_image_info()),
-            fonts=tuple(page.get_fonts()),
+            fonts=tuple(fonts),
         )
     except MUPDF_ERRORS as exc:
         return _Extracted(error=f"{type(exc).__name__}: {exc}")
 
 
-def _page_model(page: pymupdf.Page, number: int, first_id: int) -> tuple[PageModel, PageSignals]:
-    got = _extract(page)
+def _page_model(
+    page: pymupdf.Page, number: int, first_id: int, glyph_fonts: _GlyphFonts
+) -> tuple[PageModel, PageSignals]:
+    got = _extract(page, glyph_fonts)
     type3 = _type3_names(list(got.fonts))
     out = build_words(got.lines, number, first_id, type3_fonts=type3)
     seen = build_words(got.unclipped, number, first_id, type3_fonts=type3)
@@ -261,12 +344,13 @@ def read_pdf(data: bytes, *, file_name: str | None, password: str | None) -> Rea
             opening = warnings.take()
             declared = doc.page_count
             next_id = 0
+            glyph_fonts = _GlyphFonts(doc)
             for index in range(declared):
                 try:
                     page = doc.load_page(index)
                 except LOAD_ERRORS:
                     break
-                model, signals = _page_model(page, index + 1, next_id)
+                model, signals = _page_model(page, index + 1, next_id, glyph_fonts)
                 signals = PageSignals(
                     has_image=signals.has_image,
                     has_curves=signals.has_curves,

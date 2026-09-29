@@ -182,6 +182,18 @@ def test_T31_type3_digit_glyphs_read_as_glyphs_without_unicode() -> None:
     assert reading.pages[0].invisible_chars == 0
 
 
+def test_GN1_a_dingbats_glyph_name_reads_by_the_dingbats_list() -> None:
+    reading = read(pdf_factory.glyph_named(b"ABCDEF+ZapfDingbatsITC", 3, b"a71"))
+    assert [w.text for w in reading.words()] == ["\u25cf", "after"]
+    assert reading.pages[0].unmapped_chars == 0
+
+
+def test_GN2_a_digit_glyph_name_elsewhere_reads_as_no_unicode() -> None:
+    reading = read(pdf_factory.glyph_named(b"ABCDEF+LASY10", 50, b"a50"))
+    assert [w.text for w in reading.words()] == ["\ufffd", "after"]
+    assert reading.pages[0].unmapped_chars == 1
+
+
 def test_X20_type3_font_is_reported() -> None:
     reading = read(pdf_factory.type3_font())
     assert [w.text for w in reading.words()] == ["aaa", "plain"]

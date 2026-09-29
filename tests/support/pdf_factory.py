@@ -1111,6 +1111,33 @@ def type3_digits() -> bytes:
     return _build([_CATALOG, _ONE_PAGE, page, _stream(content), font, glyph, glyph, _HELVETICA])
 
 
+def glyph_named(base: bytes, code: int, name: bytes) -> bytes:
+    """One glyph of an embedded Type 1 (CFF) font whose encoding names it `name`, no ToUnicode.
+
+    The font program is MuPDF's own Dingbats; `base` is the font's name (olmOCR 529eeb, 4fafd7).
+    """
+    cff = pymupdf.Font("zadb").buffer
+    page = (
+        b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] "
+        b"/Resources << /Font << /D 5 0 R /F1 8 0 R >> >> /Contents 4 0 R >>"
+    )
+    content = b"BT /D 12 Tf 72 700 Td <%02x> Tj ET BT /F1 12 Tf 72 650 Td (after) Tj ET" % code
+    font = (
+        b"<< /Type /Font /Subtype /Type1 /BaseFont /" + base + b" /FirstChar %d /LastChar %d "
+        b"/Widths [791] /FontDescriptor 6 0 R /Encoding << /BaseEncoding /MacRomanEncoding "
+        b"/Differences [%d /" % (code, code, code) + name + b"] >> >>"
+    )
+    descriptor = (
+        b"<< /Type /FontDescriptor /FontName /" + base + b" /Flags 4 "
+        b"/FontBBox [0 0 1000 1000] /ItalicAngle 0 /Ascent 1000 /Descent 0 /CapHeight 700 "
+        b"/StemV 80 /FontFile3 7 0 R >>"
+    )
+    program = _stream(cff, b" /Subtype /Type1C")
+    return _build(
+        [_CATALOG, _ONE_PAGE, page, _stream(content), font, descriptor, program, _HELVETICA]
+    )
+
+
 def render_mode(mode: int) -> bytes:
     """The word `mode<N>` drawn in text render mode N (0-7)."""
     return _raw_content(b"BT /F1 10 Tf %d Tr 72 700 Td (mode%d) Tj ET" % (mode, mode))
@@ -1142,6 +1169,8 @@ OPENABLE: dict[str, Callable[[], bytes]] = {
     "stroked_then_filled": stroked_then_filled,
     "wordart_shadow": wordart_shadow,
     "type3_digits": type3_digits,
+    "glyph_dingbats": lambda: glyph_named(b"ABCDEF+ZapfDingbatsITC", 3, b"a71"),
+    "glyph_digit_name": lambda: glyph_named(b"ABCDEF+LASY10", 50, b"a50"),
     "superscript": superscript,
     "font_change": font_change,
     "euro_text": euro_text,

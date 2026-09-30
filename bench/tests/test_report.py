@@ -1,4 +1,6 @@
+import json
 import math
+from pathlib import Path
 
 from inkgrid_bench import report
 from inkgrid_bench.scores.metrics import pooled
@@ -62,3 +64,28 @@ def test_the_reproduction_table_says_how_many_numbers_are_within_a_hundredth() -
     assert text.rstrip().endswith(
         "Within 0.01 of their released results: 7 of 8 (largest gap 0.0200)."
     )
+
+
+def test_TR1_a_tuned_report_says_so_in_its_title_and_first_paragraph() -> None:
+    title, first = report.heading("tuned", head="abc1234", date="2026-09-30")[:2]
+    assert "tuned on these documents" in title
+    assert "tuned on these documents" in first
+    assert "`abc1234`" in first
+    title, first = report.heading("baseline", head="abc1234", date="2026-09-30")[:2]
+    assert "baseline" in title
+    assert "tuned" not in title
+
+
+BASELINE_RUN = Path(__file__).parents[1] / "results" / "2026-09-29-b33b3cb"
+
+
+def test_TR1_the_whole_report_renders_under_its_label() -> None:
+    data = {
+        "counts": json.loads((BASELINE_RUN / "counts.json").read_text(encoding="utf-8")),
+        **json.loads((BASELINE_RUN / "checks.json").read_text(encoding="utf-8")),
+    }
+    text = report.document(data, head="abc1234", date="2026-09-30", label="tuned", resamples=20)
+    assert text.startswith("# inkgrid benchmark: tuned on these documents")
+    for title, groups in report.DATASETS.values():
+        assert f"## {title} (" in text
+        assert all(f"### {name}\n" in text for name, _ in groups)

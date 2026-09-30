@@ -103,3 +103,41 @@ def test_a_good_reading_keeps_its_tables_and_seconds(tmp_path: Path) -> None:
     assert doc.seconds == 0.25
     assert doc.tables[0].cells[0].text == "a"
     assert len(doc.pdf_sha256) == 64
+
+
+def test_TR1_a_tuned_run_writes_its_results_beside_the_baseline(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    written: list[str] = []
+
+    def document(_data: object, *, head: str, date: str, label: str) -> str:
+        written.append(label)
+        return f"# {label} {head} {date}\n"
+
+    data = {"counts": {}, "reproduction": {}, "crashes": {}, "defects": {}, "olmocr_errors": {}}
+    monkeypatch.setattr(run, "BENCH", tmp_path)
+    monkeypatch.setattr(run, "gather", lambda _run, _cfg: data)
+    monkeypatch.setattr(run, "environments", lambda _cfg: {})
+    monkeypatch.setattr(run.report, "document", document)
+    run.write_results(tmp_path / "run", "abc1234", {}, label="tuned")
+    (target,) = (tmp_path / "results").glob("*-abc1234-tuned")
+    assert written == ["tuned"]
+    assert (target / "report.md").read_text(encoding="utf-8").startswith("# tuned abc1234")
+    latest = (tmp_path / "results" / "latest.md").read_text(encoding="utf-8")
+    assert f"bench/results/{target.name}/report.md" in latest
+
+
+def test_TR1_the_label_reaches_the_report_stage_and_a_bad_one_is_refused(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    labels: list[str] = []
+    monkeypatch.setattr(run, "commit", lambda: "abc1234")
+    monkeypatch.setattr(run, "config", dict)
+    monkeypatch.setattr(
+        run, "write_results", lambda _run, _head, _cfg, *, label: labels.append(label)
+    )
+    assert run.main(["report", "--label", "tuned"]) == 0
+    assert run.main(["report"]) == 0
+    assert labels == ["tuned", "baseline"]
+    assert run.main(["report", "--label", "final"]) == 2
+    assert "label" in capsys.readouterr().err

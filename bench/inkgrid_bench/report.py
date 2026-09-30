@@ -7,7 +7,7 @@ its interval excludes 0 (spec 12 section 5); nothing is pooled across datasets.
 import math
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Literal, assert_never
 
 from inkgrid_bench.scores.metrics import Counts, Metric, dice, harmonic, mean_of, pooled
 from inkgrid_bench.stats import RESAMPLES, SEED, Interval, bootstrap, paired
@@ -215,18 +215,55 @@ def reproduction_table(reproduction: Mapping[str, Mapping[str, Mapping[str, Coun
     return "\n".join(lines) + "\n"
 
 
-def document(data: Mapping[str, Any], *, head: str, date: str, resamples: int = RESAMPLES) -> str:
+type RunLabel = Literal["baseline", "tuned"]
+LABELS: dict[str, RunLabel] = {"baseline": "baseline", "tuned": "tuned"}
+
+
+def heading(label: RunLabel, *, head: str, date: str) -> list[str]:
+    """The report's title and first paragraph, which say whether inkgrid was tuned on these sets."""
+    measured = (
+        f"Measured on {date} at commit `{head}` by `bench/inkgrid_bench/run.py`, under the "
+        "pre-registered protocol of `docs/specs/12-benchmark.md`."
+    )
+    match label:
+        case "baseline":
+            return [
+                "# inkgrid benchmark: the M5b baseline\n",
+                (
+                    f"{measured} **inkgrid's numbers are its baseline**: its reading as of M4, "
+                    "before any fix for the reading errors found on these documents (DR-0023); the "
+                    "one change since, from M5a, stops a crash on a Camelot table with no cells. "
+                    "Later runs are labelled as tuned on these documents.\n"
+                ),
+            ]
+        case "tuned":
+            return [
+                "# inkgrid benchmark: tuned on these documents (M5c)\n",
+                (
+                    f"{measured} **inkgrid's numbers are tuned on these documents**: its "
+                    "reading after the fixes M5c designed while looking at these datasets' "
+                    "failures (specs 13 and 14, DR-0023), so they overstate how it reads "
+                    "documents no fix has seen. The baseline run is the untuned reading; M5d's "
+                    "held-out fee set is the test no fix has seen. The other tools' numbers are "
+                    "measured again, unchanged.\n"
+                ),
+            ]
+        case _:
+            assert_never(label)
+
+
+def document(
+    data: Mapping[str, Any],
+    *,
+    head: str,
+    date: str,
+    label: RunLabel = "baseline",
+    resamples: int = RESAMPLES,
+) -> str:
     """The whole report: every dataset's tables, the checks, crashes, and inkgrid's defects."""
     counts = data["counts"]
     parts = [
-        "# inkgrid benchmark: the M5b baseline\n",
-        (
-            f"Measured on {date} at commit `{head}` by `bench/inkgrid_bench/run.py`, under the "
-            "pre-registered protocol of `docs/specs/12-benchmark.md`. **inkgrid's numbers are its "
-            "baseline**: its reading as of M4, before any fix for the reading errors found on "
-            "these documents (DR-0023); the one change since, from M5a, stops a crash on a Camelot "
-            "table with no cells. Later runs are labelled as tuned on these documents.\n"
-        ),
+        *heading(label, head=head, date=date),
         (
             "Each cell is the point estimate and its 95% interval from 10,000 resamples of "
             "documents (seed 20260928). A difference marked `*` has an interval that excludes 0; "
@@ -238,10 +275,10 @@ def document(data: Mapping[str, Any], *, head: str, date: str, resamples: int = 
         four = {t: counts[dataset][t] for t in TOOLS}
         n = len(next(iter(four.values())))
         parts.append(f"## {title} ({n} documents)\n")
-        for label, specs in groups:
+        for name, specs in groups:
             scored = score(four, specs, resamples=resamples)
             parts += [
-                f"### {label}\n",
+                f"### {name}\n",
                 markdown_table(scored, specs),
                 markdown_differences(scored, specs),
             ]

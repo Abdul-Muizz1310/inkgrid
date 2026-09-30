@@ -1,6 +1,7 @@
 """The M5b run: every tool on every dataset, one document at a time; the scorers; the results.
 
-`uv run python -m inkgrid_bench.run [prepare|read|verify|score|report|all]`, from the repository.
+`uv run python -m inkgrid_bench.run [prepare|read|verify|score|report|all] [--label tuned]`, from
+the repository; a tuned run's results go to `bench/results/<date>-<commit>-tuned/` (spec 14 s. 9).
 Everything fetched or produced lives under `~/.cache/inkgrid-bench/`, keyed by the commit measured;
 a stage skips what an earlier run of it already wrote. `report` writes `bench/results/`.
 """
@@ -644,27 +645,30 @@ def score_all(run: Path, _head: str, cfg: dict[str, Any]) -> None:
     score_binding(run, cfg)
 
 
-def _stages() -> dict[str, Callable[[Path, str, dict[str, Any]], None]]:
+def _stages(label: report.RunLabel) -> dict[str, Callable[[Path, str, dict[str, Any]], None]]:
     return {
         "prepare": lambda _run, _head, cfg: prepare(cfg),
         "read": read_all,
         "verify": lambda run, _head, _cfg: verify_all(run),
         "score": score_all,
-        "report": write_results,
+        "report": lambda run, head, cfg: write_results(run, head, cfg, label=label),
     }
 
 
-def write_results(run: Path, head: str, cfg: dict[str, Any]) -> None:
-    """The results directory and `latest.md` (spec 12 section 7)."""
+def write_results(
+    run: Path, head: str, cfg: dict[str, Any], *, label: report.RunLabel = "baseline"
+) -> None:
+    """The results directory and `latest.md` (spec 12 section 7; a tuned run, spec 14 s. 9)."""
     data = gather(run, cfg)
     date = datetime.now(UTC).date().isoformat()
-    target = BENCH / "results" / f"{date}-{head}"
+    suffix = "" if label == "baseline" else f"-{label}"
+    target = BENCH / "results" / f"{date}-{head}{suffix}"
     target.mkdir(parents=True, exist_ok=True)
     _save(target / "counts.json", data["counts"])
     _save(target / "environment.json", environments(cfg))
     extra = {k: v for k, v in data.items() if k != "counts"}
     _save(target / "checks.json", extra)
-    text = report.document(data, head=head, date=date)
+    text = report.document(data, head=head, date=date, label=label)
     (target / "report.md").write_text(text, encoding="utf-8")
     (BENCH / "results" / "latest.md").write_text(
         f"<!-- the newest report: bench/results/{target.name}/report.md -->\n" + text,
@@ -674,9 +678,18 @@ def write_results(run: Path, head: str, cfg: dict[str, Any]) -> None:
 
 
 def main(argv: Sequence[str] = sys.argv[1:]) -> int:
-    """Run the stages named, or all of them."""
-    stages = _stages()
-    wanted = list(argv) or ["all"]
+    """Run the stages named, or all of them; `--label tuned` labels the run's report."""
+    wanted = list(argv)
+    label: report.RunLabel | None = "baseline"
+    if "--label" in wanted:
+        at = wanted.index("--label")
+        label = report.LABELS.get(wanted[at + 1]) if at + 1 < len(wanted) else None
+        del wanted[at : at + 2]
+    if label is None:
+        sys.stderr.write(f"--label takes one of: {', '.join(report.LABELS)}\n")
+        return 2
+    stages = _stages(label)
+    wanted = wanted or ["all"]
     if wanted == ["all"]:
         wanted = list(stages)
     unknown = [s for s in wanted if s not in stages]

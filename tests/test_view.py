@@ -46,3 +46,14 @@ def test_DG2_a_diagonal_word_stays_diagonal_on_a_turned_page() -> None:
     turned = page.words[-1]
     assert (turned.diagonal, turned.horizontal) == (True, False)
     type(turned).model_validate_json(turned.model_dump_json())  # a valid word
+
+
+def test_CH5_a_turned_page_turns_its_fills_with_its_words() -> None:
+    words = tuple(
+        mk_word(id=i, bbox=Rect(10, 20 + 20 * i, 30, 30 + 20 * i), horizontal=False)
+        for i in range(3)
+    )
+    bars = (Rect(100, 200, 125, 300), Rect(10, 20, 30, 30))
+    page = upright(mk_page(rotation=90, words=words, fills=bars))
+    assert page.fills == (Rect(762, 10, 772, 30), Rect(492, 100, 592, 125))
+    assert page.rules == ()

@@ -1467,34 +1467,56 @@ def mirrored_footer_pages() -> bytes:
     return _save(doc)
 
 
-def bar_chart() -> bytes:
+def bar_chart(*, turned: bool = False) -> bytes:
     """A boxed bar chart: 5 bars on one baseline at 1.88 pt per unit, their values above (decimal
-    commas), category labels below between ticks, axis labels without ticks (olmOCR 2ad3ea)."""
+    commas), category labels below between ticks, axis labels without ticks (olmOCR 2ad3ea).
+
+    `turned` draws it upright on screen on a `/Rotate 90` page (practice eu-018)."""
     doc = pymupdf.open()
     page = _page(doc)
+    height = page.rect.height
+
+    def rect(x0: float, y0: float, x1: float, y1: float) -> pymupdf.Rect:
+        # Screen (X, Y) shows the unrotated point (Y, height - X), as `ruled_landscape` draws.
+        return (
+            pymupdf.Rect(y0, height - x1, y1, height - x0)
+            if turned
+            else pymupdf.Rect(x0, y0, x1, y1)
+        )
+
+    def point(x: float, y: float) -> tuple[float, float]:
+        return (y, height - x) if turned else (x, y)
+
+    def text(x: float, y: float, label: str, size: float) -> None:
+        page.insert_text(point(x, y), label, fontsize=size, rotate=90 if turned else 0)
+
     base, k, x = 500.0, 1.88, 160.0
     values = [1.4, 7.8, 20.0, 44.4, 20.9]
     shape = page.new_shape()
-    shape.draw_rect(pymupdf.Rect(100, 300, 520, 540))
+    shape.draw_rect(rect(100, 300, 520, 540))
     shape.finish(color=(0.6, 0.6, 0.6), width=0.75)
     for i, v in enumerate(values):
-        shape.draw_rect(pymupdf.Rect(x + 64 * i, base - k * v, x + 64 * i + 25, base))
+        shape.draw_rect(rect(x + 64 * i, base - k * v, x + 64 * i + 25, base))
     shape.finish(color=None, fill=(0.75, 0, 0))
-    shape.draw_line((140, base), (140 + 64 * 5, base))
+    shape.draw_line(point(140, base), point(140 + 64 * 5, base))
     for i in range(6):
-        shape.draw_line((140 + 64 * i, base), (140 + 64 * i, base + 3.3))
+        shape.draw_line(point(140 + 64 * i, base), point(140 + 64 * i, base + 3.3))
     shape.finish(color=(0.6, 0.6, 0.6), width=0.75)
     shape.commit()
     for i, v in enumerate(values):
-        label = f"{v:.1f}".replace(".", ",")
-        page.insert_text((x + 64 * i + 4, base - k * v - 6), label, fontsize=8)
-        page.insert_text(
-            (x + 64 * i, base + 16), ["Poor", "Fair", "Good", "Great", "Superb"][i], fontsize=8
-        )
+        text(x + 64 * i + 4, base - k * v - 6, f"{v:.1f}".replace(".", ","), 8)
+        text(x + 64 * i, base + 16, ["Poor", "Fair", "Good", "Great", "Superb"][i], 8)
     for v in range(0, 60, 10):
-        page.insert_text((115, base - k * v + 3), str(v), fontsize=8)
-    page.insert_text((200, 320), "How would you rate your sleep?", fontsize=10)
+        text(115, base - k * v + 3, str(v), 8)
+    text(200, 320, "How would you rate your sleep?", 10)
+    if turned:
+        page.set_rotation(90)
     return _save(doc)
+
+
+def bar_chart_landscape() -> bytes:
+    """`bar_chart` upright on screen on a `/Rotate 90` page."""
+    return bar_chart(turned=True)
 
 
 def marked_value() -> bytes:
@@ -1566,6 +1588,7 @@ OPENABLE: dict[str, Callable[[], bytes]] = {
     "stub_column_rule": stub_column_rule,
     "ruled_corridor": ruled_corridor,
     "bar_chart": bar_chart,
+    "bar_chart_landscape": bar_chart_landscape,
     "spanning_header_pages": spanning_header_pages,
     "stub_banner_pages": stub_banner_pages,
     "mirrored_footer_pages": mirrored_footer_pages,

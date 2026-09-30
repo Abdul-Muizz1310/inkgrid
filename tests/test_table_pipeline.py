@@ -147,8 +147,9 @@ def test_DG1_a_diagonal_watermark_is_no_cells() -> None:
     verified(data, doc)
 
 
-def test_CH1_and_CH4_a_bar_chart_is_no_table_in_either_gridder() -> None:
-    data = pdf_factory.bar_chart()
+@pytest.mark.parametrize("name", ["bar_chart", "bar_chart_landscape"])
+def test_CH1_CH4_CH5_a_bar_chart_is_no_table_in_either_gridder(name: str) -> None:
+    data = pdf_factory.OPENABLE[name]()
     for engine in ("combined", "vector"):
         doc = build(data, engine=engine)
         assert tables(doc) == []

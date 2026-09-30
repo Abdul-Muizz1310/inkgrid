@@ -19,7 +19,8 @@ def _turned(word: Word, page: PageModel) -> Word:
 def upright(page: PageModel) -> PageModel:
     """The page turned to its screen frame when most of its text is upright only there.
 
-    The upright page carries no rules and no fills; M2 maps rules when it first reads them.
+    The upright page's fills turn with its words, so a chart reads in the words' frame (spec 14
+    section 6). It carries no rules; M2 maps rules when it first reads them.
     """
     chars = sum(len(w.text) for w in page.words)
     across = sum(len(w.text) for w in page.words if not w.horizontal)
@@ -39,4 +40,10 @@ def upright(page: PageModel) -> PageModel:
         image_area_ratio=page.image_area_ratio,
         words=tuple(_turned(w, page) for w in page.words),
         rules=(),
+        fills=tuple(
+            sorted(
+                (turn_rect(f, page.rotation, page.width, page.height) for f in page.fills),
+                key=lambda r: (r.y0, r.x0, r.y1, r.x1),
+            )
+        ),
     )

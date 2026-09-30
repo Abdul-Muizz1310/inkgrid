@@ -114,10 +114,10 @@ Shipped so far (M0 to M4):
   table title straddling Camelot's header-row edge (practice us-008). The other 24 are places where
   the two engines read the text layer differently and the verifier has no benign class for yet: a
   symbol font's glyphs, dashes and tildes on one old page, a word PDFium does not show, a run of
-  digits it reads as one value. The baseline above counts all 316. The fixes since it (overprinted
-  text, Type 3 and Dingbats glyphs, thin rules drawn as fills, grids over frames and charts, table
-  text taken as furniture) were designed while looking at those documents, so the run after them is
-  labelled as tuned on them.
+  digits it reads as one value. The baseline run above counts all 316. The fixes since it
+  (overprinted text, Type 3 and Dingbats glyphs, thin rules drawn as fills, grids over frames and
+  charts, table text taken as furniture) were designed while looking at those documents, so the run
+  after them is labelled as tuned on them.
 - **Left-to-right scripts only.** Right-to-left and bidirectional text is not reordered in v0.1.
 - **Unruled tables have no row spans.** A label centred beside several rows splits across them
   (`Charge per` / `executed order`), and a label whose value is centred beside it needs the rows to be
@@ -198,41 +198,51 @@ encrypted PDF takes `password=`. On the command line, the password is read from 
 
 ## Benchmarks / Evals
 
-**The baseline, against other text-layer readers** (pdfplumber 0.11.10, PyMuPDF 1.28.2's
-`find_tables()`, and Camelot 2.0.0's lattice, each with its defaults). These are inkgrid's numbers
-*before* any fix for the reading errors its verifier found on these same documents; the one change
-since M4 stops a crash on a Camelot table with no cells. Runs after those fixes will be labelled as
-tuned on these documents. Each number is a point estimate with its 95% interval from 10,000
-resamples of documents. The protocol was fixed before anything was scored:
-[`docs/specs/12-benchmark.md`](docs/specs/12-benchmark.md). The full report, with every metric and
-every paired difference, is [`bench/results/latest.md`](bench/results/latest.md).
+**Two runs against other text-layer readers** (pdfplumber 0.11.10, PyMuPDF 1.28.2's
+`find_tables()`, and Camelot 2.0.0's lattice, each with its defaults). The **baseline** is inkgrid's
+reading before any fix for the reading errors its verifier found on these same documents; the one
+change since M4 stops a crash on a Camelot table with no cells. The **tuned** run is its reading after
+the M5c fixes, which were designed while looking at those errors, so it overstates how inkgrid reads
+documents no fix has seen (DR-0023). The peers are measured again in each run, and their numbers are
+identical. Each number is a point estimate with its 95% interval from 10,000 resamples of documents.
+The protocol was fixed before anything was scored:
+[`docs/specs/12-benchmark.md`](docs/specs/12-benchmark.md). The full reports, with every metric and
+every paired difference, are [`bench/results/latest.md`](bench/results/latest.md) (tuned) and
+[`bench/results/2026-09-29-b33b3cb/report.md`](bench/results/2026-09-29-b33b3cb/report.md) (baseline).
 
-| Dataset (documents) | Metric | inkgrid | Camelot | PyMuPDF | pdfplumber |
-|---|---|---|---|---|---|
-| ICDAR-2013 competition (67) | Structure F, the competition's scorer | **0.777** [0.700, 0.850] | 0.637 [0.531, 0.735] | 0.611 [0.512, 0.702] | 0.591 [0.493, 0.683] |
-| ICDAR-2013 competition (67) | F1-TEDS, Soric et al.'s protocol | 0.612 [0.455, 0.767] | 0.624 [0.494, 0.735] | 0.519 [0.384, 0.639] | 0.416 [0.287, 0.545] |
-| ICDAR-2013 practice (58) | Structure F, the competition's scorer | **0.664** [0.569, 0.756] | 0.499 [0.381, 0.611] | 0.457 [0.346, 0.568] | 0.420 [0.314, 0.527] |
-| ICDAR-2013 practice (58) | Values filed under their labels | **0.309** [0.188, 0.469] | 0.251 [0.142, 0.393] | 0.239 [0.135, 0.382] | 0.172 [0.093, 0.280] |
-| olmOCR-bench tables (188) | Table tests passed | **0.481** [0.410, 0.552] | 0.273 [0.213, 0.338] | 0.321 [0.256, 0.390] | 0.294 [0.231, 0.361] |
+| Dataset (documents) | Metric | inkgrid, tuned | inkgrid, baseline | Camelot | PyMuPDF | pdfplumber |
+|---|---|---|---|---|---|---|
+| ICDAR-2013 competition (67) | Structure F, the competition's scorer | **0.788** [0.711, 0.861] | **0.777** [0.700, 0.850] | 0.637 [0.531, 0.735] | 0.611 [0.512, 0.702] | 0.591 [0.493, 0.683] |
+| ICDAR-2013 competition (67) | F1-TEDS, Soric et al.'s protocol | 0.628 [0.466, 0.788] | 0.612 [0.455, 0.767] | 0.624 [0.494, 0.735] | 0.519 [0.384, 0.639] | 0.416 [0.287, 0.545] |
+| ICDAR-2013 practice (58) | Structure F, the competition's scorer | **0.688** [0.596, 0.776] | **0.664** [0.569, 0.756] | 0.499 [0.381, 0.611] | 0.457 [0.346, 0.568] | 0.420 [0.314, 0.527] |
+| ICDAR-2013 practice (58) | Values filed under their labels | **0.323** [0.199, 0.488] | **0.309** [0.188, 0.469] | 0.251 [0.142, 0.393] | 0.239 [0.135, 0.382] | 0.172 [0.093, 0.280] |
+| olmOCR-bench tables (188) | Table tests passed | **0.486** [0.415, 0.558] | **0.481** [0.410, 0.552] | 0.273 [0.213, 0.338] | 0.321 [0.256, 0.390] | 0.294 [0.231, 0.361] |
 
-A bold number is ahead of all three peers, with every paired difference's interval excluding 0.
+A bold number is ahead of all three peers in its run, with every paired difference's interval
+excluding 0.
 
-- **Where inkgrid is ahead:** table structure by the ICDAR competition's own scorer, on both sets,
-  mostly through recall; the olmOCR-bench table tests, on all 188 PDFs and on the 173 with a text
-  layer; and values filed under their row and column labels (the practice set's 5,603 checkable
-  access paths). That last metric tops out at 0.868 even when the ground truth itself is read as a
-  tool, partly because some labels sit outside the value's row and column.
+- **Where inkgrid is ahead, in both runs:** table structure by the ICDAR competition's own scorer, on
+  both sets, mostly through recall; the olmOCR-bench table tests, on all 188 PDFs and on the 173 with
+  a text layer; and values filed under their row and column labels (the practice set's 5,603
+  checkable access paths). That last metric tops out at 0.868 even when the ground truth itself is
+  read as a tool, partly because some labels sit outside the value's row and column.
 - **Where it is not:** under Soric et al.'s protocol no difference from Camelot or PyMuPDF is
-  distinguishable from 0, and inkgrid is ahead of pdfplumber on the three structure scores but not on
-  table boxes. Its pooled structure precision on the competition set is below Camelot's (0.794
-  against 0.934), and so is its region precision on the practice set (0.873 against 0.940).
-- **It is the slowest:** 0.34 to 0.55 seconds per page, against 0.29 to 0.38 for Camelot and 0.08 to
-  0.14 for PyMuPDF and pdfplumber (timings moved about 10% between two runs of the same code).
-  inkgrid runs Camelot's lattice for ruled grids, so its comparison with Camelot measures what
-  inkgrid adds on top of it.
-- **No tool crashed** on any of the 313 documents. Soric et al.'s own released predictions, re-scored
-  here with their evaluator, reproduce their results within 0.01 on 15 of 16 numbers (PyMuPDF's
-  F1-TEDS misses by 0.00002).
+  distinguishable from 0 in either run, and inkgrid is ahead of pdfplumber on the three structure
+  scores but not on table boxes. At the baseline, its pooled structure precision on the competition
+  set was below Camelot's (0.794 against 0.934), and so was its region precision on the practice set
+  (0.873 against 0.940); in the tuned run neither difference is distinguishable from 0 (0.802, and
+  0.895).
+- **Tuned against baseline:** every tuned number in the table is higher, but the two runs are not
+  paired here and each row's intervals overlap, so this benchmark does not show that the fixes
+  raised these scores. What they did remove, by design, is what the verifier finds on these
+  documents: 323 defects on 34 of the 313 at the baseline, 32 on 7 in the tuned run.
+- **It is the slowest:** 0.35 to 0.53 seconds per page in the tuned run (0.34 to 0.55 at the
+  baseline), against 0.28 to 0.36 for Camelot and 0.07 to 0.12 for PyMuPDF and pdfplumber (timings
+  move about 10% between two runs of the same code). inkgrid runs Camelot's lattice for ruled grids,
+  so its comparison with Camelot measures what inkgrid adds on top of it.
+- **No tool crashed** on any of the 313 documents in either run. Soric et al.'s own released
+  predictions, re-scored here with their evaluator, reproduce their results within 0.01 on 15 of 16
+  numbers (PyMuPDF's F1-TEDS misses by 0.00002).
 
 Not measured yet: OCR, vision, and hybrid parsers (Docling, marker, unstructured, Tesseract),
 FinTabNet, and a held-out set of fee schedules that no fix has seen. Headline claims wait for that

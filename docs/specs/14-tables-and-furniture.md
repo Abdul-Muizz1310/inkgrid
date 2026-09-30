@@ -262,7 +262,7 @@ Every existing case keeps passing.
       § 0 predicted, and none is new.
 - [x] The 42 fee schedules read as before, with their 8 cells: their text dumps are byte-identical.
 - [x] Every `OPENABLE` fixture verifies with no defect; `docs/schema/` is regenerated.
-- [ ] The benchmark's tuned run is committed beside the baseline; README shows both, labelled, and
+- [x] The benchmark's tuned run is committed beside the baseline; README shows both, labelled, and
       states only what the intervals support.
 
 **Measured** (2026-09-30, the M5c gate at `71437bc` against M5c-1's final reading, one document at a
@@ -287,3 +287,13 @@ us-022's running header and page numbers inside a page border are furniture agai
 baseline (Task 6 had made them content; the verifier cannot see furniture), and olmOCR c8cdd4's
 table reads whole, its title and column headers included, where a core had cut it into a heading, a
 paragraph, and three tables. The fee schedules' dumps stay byte-identical.
+
+**The tuned run** (`bench/results/2026-09-30-7e607d5-tuned/`, 2026-09-30, 67 minutes, one document
+at a time): every inkgrid number in README's table is higher than at the baseline (competition
+structure F 0.777 to 0.788, practice 0.664 to 0.688, binding 0.309 to 0.323, olmOCR table tests 0.481
+to 0.486, F1-TEDS 0.612 to 0.628), but the runs are not paired and each pair of intervals overlaps,
+so the benchmark does not show the fixes raised them. inkgrid stays ahead of all three peers where it
+was, and the baseline's two precision shortfalls against Camelot (pooled structure precision on the
+competition set, region precision on the practice set) are no longer distinguishable from 0. The
+peers' numbers are identical in both runs. The verifier's defects on inkgrid's readings of the 313
+documents fall from 323 on 34 documents to 32 on 7.

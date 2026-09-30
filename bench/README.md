@@ -17,6 +17,10 @@ Run it from the repository root, on a clean tree (results name the commit they m
 PYTHONPATH=bench uv run python -m inkgrid_bench.run all   # or: prepare, read, verify, score, report
 ```
 
+A run after inkgrid's fixes for errors found on these datasets is labelled `--label tuned`
+(DR-0023): its results go to `bench/results/<date>-<commit>-tuned/`, and its report says it is
+tuned on these documents in its title and first paragraph. The baseline's results stay beside it.
+
 Everything it fetches and writes lives in `~/.cache/inkgrid-bench/`; each stage skips the documents
 an earlier run of it finished. The datasets and tools take about 0.6 GB there; uv builds each tool's
 and scorer's environment on first use (PyTorch's CPU build among them). It runs one document at a

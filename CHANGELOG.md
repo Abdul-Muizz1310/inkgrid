@@ -53,7 +53,8 @@ All notable changes to this project are documented here. The format follows
   Camelot, each in its own pinned environment. It scores them with the competition's jar, Soric et
   al.'s evaluator, olmOCR-bench's scorer, and a binding metric over the practice set's access paths,
   and reports clustered-bootstrap intervals and paired differences. inkgrid's baseline is in
-  `bench/results/`.
+  `bench/results/`, and beside it the run after M5c's fixes, labelled as tuned on these documents
+  (`run.py --label tuned`).
 - `Document.to_markdown()`, the HTML inspector, and the `inkgrid read` command with `--markdown`,
   `--inspector`, and `--strict`.
 - A layer-table test on the import graph, and CI across Linux, Windows, and macOS.

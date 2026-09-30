@@ -224,7 +224,9 @@ inkgrid, the verifier's defects by class (spec 11 § 5).
 
 - [x] Every case above has a test named `test_<CaseId>_<slug>`, and it failed before its code.
 - [x] The run completes on the three datasets for the four tools; results with intervals are committed
-      under `bench/results/<date>-<commit>/`, with `bench/results/latest.md`.
+      under `bench/results/<date>-<commit>/`, with `bench/results/latest.md`. A run labelled
+      `--label tuned` goes to `<date>-<commit>-tuned/` (spec 14 § 9; the first is
+      `2026-09-30-7e607d5-tuned/`, after M5c).
 - [ ] Soric et al.'s released predictions reproduce within 0.01 of their published F1s here. *Not
       met:* 15 of 16 do; PyMuPDF's F1-TEDS misses by 0.00002 (§ 0).
 - [x] README states only what the intervals support, with the baseline labelled as such.

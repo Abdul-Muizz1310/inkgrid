@@ -127,9 +127,11 @@ nothing. Grids that share only a border overlap by at most 0.5 pt (`shape.SNAP`)
 `corridor_tables` takes the page's content words. Then:
 - a row taken upward or downward (§ 3 items 5 and 6 there) is not taken when another word's centre lies
   within that row's vertical extent and the table's width;
-- the table's outer top and bottom edges follow the interior-edge rule (§ 5 item 4 there) against the
-  nearest word outside the table within its width: the midpoint of the gap, clamped between that
-  word's centre and the row's nearest word centre;
+- when a word outside the table within its width has its centre inside the table's top or bottom
+  band (between the outer edge and the outer row's nearest word centre), that edge follows the
+  interior-edge rule (§ 5 item 4 there) against the nearest such word: the midpoint of the gap,
+  clamped between that word's centre and the row's nearest word centre. An edge only ever moves in,
+  and a table with no such word keeps its edges exactly;
 - an extent that still holds a foreign word's centre is refused through the existing path
   (`table_left_as_text`).
 
@@ -137,22 +139,32 @@ nothing. Grids that share only a border overlap by at most 0.5 pt (`shape.SNAP`)
 
 - **Filled shapes.** `PageModel.fills: tuple[Rect, ...]`: the page's visible filled `re` and
   axis-aligned `qu` rectangles thicker than 3.5 pt on both sides (the rules' threshold, § 1), turned
-  with the page like its rules.
+  with the page's words when layout reads it upright (`04` § 2). The upright view carries no rules,
+  so E2 does not reach a turned page; E1 does (practice eu-018's bars are on a `/Rotate 90` page).
 - A table candidate from either gridder is refused, its words left for prose, with one info finding
   **`chart_left_as_text`** per chart, when its extent holds either piece of evidence:
   - **E1, proportional bars:** at least 3 fills meeting the extent that share one baseline edge
-    (within 0.5 pt) and one thickness (within 0.5 pt), are pairwise disjoint across the baseline, and
-    have at least 3 distinct lengths (more than 1 pt apart); each pairs with exactly one numeric word
-    (value > 0) whose centre lies inside the bar or beyond its far end within 1.5 × the word's size,
-    and inside the bar's span across the baseline; the words hold at least 3 distinct values; and one
-    factor k fits every pair: `|length − k·value| ≤ max(1 pt, 3% of length)`.
-  - **E2, a ticked numeric axis:** at least 3 numeric words on one line (centres within 3 pt) or one
-    column, whose values are an arithmetic progression (step constant within 0.1%) evenly spaced (gaps
-    within max(1.5 pt, 5%)), each with a page rule perpendicular to the axis within 1.5 pt of its
-    centre coordinate, the rule's near end within 2 × the word's size of the word, the rule not
-    running through it, and no perpendicular rule between them.
+    (within 0.5 pt) and one thickness (within 0.5 pt) and are pairwise disjoint across the baseline.
+    A bar pairs with a numeric word (value > 0) when that word is the only one whose centre lies
+    inside the bar's span across the baseline and, along it, inside the bar or beyond its far end by
+    at most 1.5 × the word's size plus half the word's extent along the bar (its near edge within
+    1.5 × its size); a bar with no such word, or two, is left out. At least 3 bars pair; their words
+    hold at least 3 distinct values and their lengths at least 3 distinct ones (more than 1 pt
+    apart); and one factor k fits every pair: `|length − k·value| ≤ max(1 pt, 3% of length)`.
+  - **E2, a ticked numeric axis:** at least 3 numeric words on one line or one column (each centre
+    within 3 pt of the next across the line, so right-aligned labels of different widths are one
+    column), all of whose values are an arithmetic progression (step constant within 0.1%) evenly
+    spaced (gaps within max(1.5 pt, 5%)), each with a page rule perpendicular to the axis within
+    1.5 pt of its centre coordinate, the rule's near end within 2 × the word's size of the word, the
+    rule not running through it, and no perpendicular rule between them.
+- A numeric word prints a number: an optional sign (`-`, `+`, `−`), currency (`$`, `€`, `£`),
+  digits with thousands commas or none, a decimal part after `.` or `,`, and `%`, in parentheses or
+  not. `1,400` is 1400 and `1,4` is 1.4; `1,400,5` is no number.
 - Both gridders are guarded: once the lattice refuses a chart, the corridor stage would otherwise read
-  one from its labels.
+  one from its labels. The lattice stage returns the extents it refused; a grid over a refused chart
+  is skipped like one over an accepted table (§ 4.1), and the corridor stage drops a found table
+  whose extent holds a chart whole (its rows go to prose), reporting it only when it overlaps no chart
+  already reported.
 
 ## 7 · Diagonal words are no cell's (`read/words.py`, `core/tables/`)
 
@@ -162,7 +174,8 @@ nothing. Grids that share only a border overlap by at most 0.5 pt (`shape.SNAP`)
 
 ## 8 · Furniture and tables (`core/furniture.py`, `core/pipeline.py`, amends `04` § 3)
 
-The furniture stage takes the page's Camelot grids (turned into the page's frame):
+The furniture stage takes the page's Camelot grids as read, before any trimming or refusal by the
+table stage, turned into the page's frame; a grid counts when its cells tile it (`06` § 4):
 
 - **S1. A line inside a ruled table is table content.** A line is never a furniture candidate, and
   never marked, when every word centre of it lies inside the cells of one grid on the page that has at
@@ -173,7 +186,8 @@ The furniture stage takes the page's Camelot grids (turned into the page's frame
   band) is a candidate too. A column-shaped line (3 or more fragments), a stacked line, or an S1 line
   breaks the run; an ordinary heading or caption does not.
 - Rejected: requiring everything between a line and the edge to be furniture already. It loses a
-  real running footer whose line above mirrors its word order between pages (practice eu-030).
+  real running footer line whose line below it, nearer the edge, mirrors its word order between pages
+  (practice eu-030: `ECB` above `S 1 Monthly Bulletin March 2006`).
 
 ## 9 · The tuned run (`bench/`, amends `12-benchmark.md` § 7)
 
@@ -208,11 +222,12 @@ README shows the baseline and the tuned run side by side, each labelled.
 | CH2 | typed: axis labels 0, 10, 20, 30 with ticks at their centres | chart evidence |
 | CH3 | typed: shaded rows sharing the table's edge, lengths not proportional to values; equal-length fills; tiers `1…4` beside sub-row rules in the next column; year columns | no chart evidence |
 | CH4 | the CH1 chart after the lattice refuses it | the corridor stage refuses it too |
+| CH5 | the CH1 chart upright on screen on a `/Rotate 90` page | no table; `chart_left_as_text`; the view's fills turned with its words |
 | DG1 | a ruled table with `DRAFT` and `COPY` at 45° across it | no cell holds them; one prose block; verification clean |
 | DG2 | typed: a word at 90°; at 10°; at 51.5° | not diagonal; not diagonal; diagonal |
 | FT1 | three pages, a table whose spanning header sits in the top band on pages 2 and 3, and a real footer | the header stays in the table; the footer is furniture |
 | FT2 | three pages, a stub banner between a table's header and its rows, and a real running header and page number | the banner stays in the table; header and page number are furniture |
-| FT3 | two pages whose footer sits below a line that mirrors its word order between pages | the footer is furniture |
+| FT3 | two pages whose footer line `ECB` sits above a line, nearer the edge, that mirrors its word order between pages | `ECB` is furniture |
 | FT4 | `labelled_page` (spec 04 TP6) | its label stays furniture |
 | TR1 | `run.py --label tuned` on a stub run | results under `<date>-<commit>-tuned/`; the report's title says tuned |
 
@@ -220,10 +235,27 @@ Every existing case keeps passing.
 
 ## 11 · Acceptance
 
-- [ ] Every case above has a test named `test_<CaseId>_<slug>`, and it failed before its code.
-- [ ] On the named documents, one at a time: the defects of these classes are gone, none is new.
-- [ ] The 42 fee schedules read as before, bar changes each explained in § 0's terms, with their 8
-      cells.
-- [ ] Every `OPENABLE` fixture verifies with no defect; `docs/schema/` is regenerated.
+- [x] Every case above has a test named `test_<CaseId>_<slug>`, and it failed before its code (GO2,
+      LS3, LS4, CR2's short tick, and FT3 guard what must not change and passed before it; FT4 is
+      TP6, run with the grids passed; the clause tests added after their code were each checked by
+      removing the clause and watching the test fail).
+- [x] On the named documents, one at a time: the defects of these classes are gone, but for the one
+      § 0 predicted, and none is new.
+- [x] The 42 fee schedules read as before, with their 8 cells: their text dumps are byte-identical.
+- [x] Every `OPENABLE` fixture verifies with no defect; `docs/schema/` is regenerated.
 - [ ] The benchmark's tuned run is committed beside the baseline; README shows both, labelled, and
       states only what the intervals support.
+
+**Measured** (2026-09-30, the M5c gate at `71437bc` against M5c-1's final reading, one document at a
+time): the 31 named documents' defects fall from 217 to 25 (316 at the baseline). Of § 0's 193,
+192 are gone: the drawn rules (practice us-008 22, us-012 4, olmOCR 008d1d 5), the extents (practice
+us-021 47, us-022 16, olmOCR 1529b2 22, c45171 9, b8d3ad 2, 2d0e05 1, competition us-036 17), the
+charts (competition eu-012 3, us-028 3, eu-027 2, us-001 1, olmOCR 2ad3ea 4, 83b820 3, practice
+eu-018 1), the watermark (olmOCR 1ec1f9 3), and furniture (competition eu-001 7, us-017 12, us-007 2,
+practice us-006 6). The one left is us-008's title word straddling Camelot's header-row edge. The
+other 24 were there before and are outside these classes: 17 glyphs of a symbol font on us-008's
+second page, 5 dashes and tildes on 008d1d, a word on us-001 that PDFium does not show, and a run of
+digits on 1ec1f9 read as one value. No document gains a defect.
+
+eu-018's bars are on a `/Rotate 90` page. The gate first measured them still read as a table,
+because the upright view dropped its fills; it now turns them with its words (§ 6, CH5).

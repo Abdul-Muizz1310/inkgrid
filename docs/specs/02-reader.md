@@ -144,6 +144,8 @@ hidden_chars)`.
     The M0 spec said "mode 3 or 7" from the flags alone. Mode 7 and alpha-0 text were then read as
     visible; the final M0 review found it.
   - `horizontal` is the line direction `(1, 0)` within 1e-3.
+  - `diagonal` is a direction 15° to 75° from the horizontal, modulo 90°, from `atan2(|dy|, |dx|)`,
+    and never set on a horizontal word (spec 14 § 7).
 - **W5.** Counts:
   - `invisible_chars` counts invisible characters, which never appear in a word;
   - `unmapped_chars` counts U+FFFD characters, which stay in the word;
@@ -220,12 +222,16 @@ cases in M3 (design L7).
 - **R2. Rectangles.** A `re` item is a rectangle. So is a `qu` item whose corners form an axis-aligned
   rectangle within 0.5 pt; a closed four-segment path comes back from PyMuPDF as `qu`. Let `t` be the
   shorter side and `L` the longer:
-  - if `t ≤ 2.5` and `L ≥ 2.0`: one rule along the long axis at the centre line, with
-    `thickness = t` (plus the stroke width when stroke-visible);
+  - if `t ≤ 3.5` and `L ≥ 2.0`: one rule along the long axis at the centre line, with
+    `thickness = t` (plus the stroke width when stroke-visible). The bound was 2.5 until spec 14
+    § 1 measured column rules drawn as 2.75 pt fills;
   - else, if stroke-visible and both sides are at least 2.0: four edge rules (top, bottom, left, right)
     with the stroke width as thickness;
   - else no rule. A thick fill-only rectangle is a background, and a small one is a dot.
 - **R3.** Curves and other quads are not rules.
+- **Fills.** `extract_fills(paths)` returns the fill-visible `re` items and axis-aligned `qu` items
+  with both sides over 3.5 pt, quantized, de-duplicated, and sorted by `(y0, x0, y1, x1)`: the page's
+  `fills`, which the chart evidence reads (spec 14 § 6).
 - **R4.** Rules equal in `(axis, at, start, end)` after quantization collapse to one, keeping the
   greatest thickness. PyMuPDF returns a stroked line with its closing segment, so it arrives twice.
   Output is sorted by `(axis, at, start, end)`.

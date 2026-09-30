@@ -170,7 +170,9 @@ on screen) holds nothing but vertical words.
   `(H − y, x)`, 180 → `(W − x, H − y)`, 270 → `(y, W − x)` (PyMuPDF's `rotation_matrix`, measured).
   Width and height swap for 90 and 270, the rotation becomes 0, and each word's `horizontal` flag
   flips, because the reader flags only the direction `(1, 0)`.
-- The upright page carries no rules. M2 maps rules when it first reads them.
+- The upright page carries no rules; M2 maps rules when it first reads them, so the rule-based
+  fixes of spec 14 do not reach a turned page. Its fills turn with its words, sorted as the reader
+  sorts them, so the chart evidence reads bars in the words' frame (spec 14 § 6, CH5).
 - Furniture, layout, and prose run on upright pages. Assembly takes every word's box from the
   reading, so the `Document` keeps unrotated coordinates.
 
@@ -184,7 +186,8 @@ on screen) holds nothing but vertical words.
 
 ## 3 · Furniture (`core/furniture.py`, pure, document-wide)
 
-`find_furniture(pages, profile) -> FoundFurniture`. The result holds `lines`, each with its page,
+`find_furniture(pages, profile, *, grids=None) -> FoundFurniture`, where `grids` maps a page number to
+the page's Camelot grids in that page's frame (spec 14 § 8). The result holds `lines`, each with its page,
 `Line`, `role`, and key, plus the set of `word_ids`. The rules are design stage 1, made exact:
 
 1. **Lines** are `group_lines` over each page's horizontal words.
@@ -203,13 +206,16 @@ on screen) holds nothing but vertical words.
    - a line whose key recurs in the same band of the same page at the same position (an `x0`,
      `x1`, or centre within `furniture_x_tol`) is not a candidate there. The rows of a tier table
      differ only in their digits and stack in one column; a running header prints once, and a page
-     number beside a stray note label sits apart from it.
+     number beside a stray note label sits apart from it;
+   - a line inside a ruled grid that could be a table is never a candidate (spec 14 § 8, S1);
+   - a line is a candidate only when every line between it and its band's page edge is one too
+     (spec 14 § 8, S2): a column-shaped, stacked, or table line breaks the run.
 4. **Frequency.** A key is furniture when it occurs as a candidate on at least
    `max(2, ceil(furniture_share × pages))` distinct pages, where `pages` counts every page of the
    document.
 5. **Marking.**
    - An alphabetic key (one with a letter) is marked **wherever it occurs** on a page, in the band or
-     not. The prototype's sparse last pages hold footers mid-page.
+     not, except inside a ruled table (S1). The prototype's sparse last pages hold footers mid-page.
    - A numeric-only key (`#`, `# of #`, `- # -`) is marked only as a candidate, and only when its
      line sits in a column the key keeps: its `x0`, its `x1`, or its centre is within
      `furniture_x_tol` of the same measure on candidate occurrences of the key on at least the
@@ -237,6 +243,7 @@ Decisions are per line, never per block (L9). Non-horizontal words are never fur
 | FU11 | 3 pages, each with a running header and 5 tier rows `Tier N volume rate` in the bottom band | the header is furniture; no tier row is |
 | FU12 | a 3-column header row `Tier  Volume  Rate` at the top of every page | not furniture |
 | FU13 | 12 pages numbered flush left on even pages and flush right on odd pages | all twelve marked `page_number` |
+| FT1–FT4 | spec 14 § 10: a spanning header in a table, a stub banner under a column header, a footer above a mirrored line, a label alone in a box | the table lines stay content; the furniture stays furniture |
 | FU9 | `line_key` on `Page 3 of 12`; `- 4 -`; `iv Annual civil fees`; `2026 Fee schedule 7`; `xiv`; `- ii -` | `Page # of`; `- # -`; `Annual civil fees`; `Fee schedule`; `#`; `- # -` |
 
 ---

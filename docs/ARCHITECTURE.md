@@ -93,7 +93,9 @@ PyMuPDF is not thread-safe, so parallelize across processes.
 
 1. **Furniture** (document-wide). Lines are keyed with digits masked and edge page numbers
    stripped. A key that recurs in the top or bottom band on enough pages marks its lines as header,
-   footer, or page-number furniture, one line at a time.
+   footer, or page-number furniture, one line at a time. A line inside a ruled grid that could be a
+   table is content, and furniture runs from the page's edge: a table row breaks the run
+   ([`specs/14-tables-and-furniture.md`](specs/14-tables-and-furniture.md) § 8).
 2. **Layout** (per page). Lines cluster by vertical overlap and split into fragments at wide gaps.
    A gutter that persists over at least three lines, with prose on both sides, makes columns, read
    left to right. Any other column-shaped run keeps row order, as a table candidate for M2b.
@@ -102,12 +104,16 @@ PyMuPDF is not thread-safe, so parallelize across processes.
    page coordinates, and the core rebuilds rows, columns, and spans in the frame it reads the page
    in. A word belongs to the cell whose half-open rectangle holds its centre, so the claim is a
    partition. A grid is a table only with two rows, two columns, and two cells holding words.
+   Grids are taken smallest first, so a frame or panel over a table is none; a frame's core stands
+   for it; an accepted grid splits at the page's own drawn rules; and a grid holding a chart (bars in
+   proportion to their labels, or a ticked numeric axis, `core/tables/chart.py`) is no table (spec 14).
    After layout, **unruled tables** claim theirs ([`specs/07-unruled-tables.md`](specs/07-unruled-tables.md)):
    each run of stacked regions is split by type size, lines fold into rows anchored on their value
-   lines (a drawn rule always ends a row), columns come from the value rows' pieces, every row votes
+   lines (a drawn rule always ends a row, and a piece), columns come from the value rows' pieces, every row votes
    on the boundaries, and cells are cut at the boundaries, never holding two values. A table ends
    before the rows that would fuse two values; rows that read as a table but that no grid holds
-   stay text, with `table_left_as_text`. The lines no table takes go back to prose.
+   stay text, with `table_left_as_text`. A table's extent holds no other block's word, and a chart's
+   labels stay text, with `chart_left_as_text`. The lines no table takes go back to prose.
 3. **Prose** (per page). A paragraph gap, a size or weight change, or a bullet or enumerator starts
    a block. The paragraph gap is 1.75 x the line gap of the text's size: the lower quartile of the
    document's line-to-line gaps at that size, clamped at 0 because MuPDF's line boxes overlap at

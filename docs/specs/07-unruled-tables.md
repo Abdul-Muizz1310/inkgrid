@@ -43,7 +43,8 @@ tables Camelot does not read).
 
 ## 1 · Value pieces (`core/tables/corridor.py`)
 
-A *piece* is a fragment (`04` § 2): words of one line closer than `fragment_gap_em` × size.
+A *piece* is a fragment (`04` § 2): words of one line closer than `fragment_gap_em` × size, ended
+early by a drawn vertical rule between two words that covers both their centres (spec 14 § 3).
 `is_value_piece(words) -> bool` decides whether a piece is a value cell that can make a row a value row.
 Superscript words are left out first (note marks). The piece is a value piece when its remaining text,
 as a whole, `is_strong_value` (`06` § 1: a value with a currency, unit, magnitude, decimal part, or
@@ -155,6 +156,10 @@ gutter). A candidate without a table passes through unchanged. Its lines
 are split into *size runs* wherever a line's size differs from the previous line's by more than
 `size_change_ratio` × the smaller of the two, and each size run is folded into rows (§ 2) on its own, so
 the pitch of the headings around a table never sets the pitch its rows are measured by.
+
+`corridor_tables` also takes the page's rules, content words, fills, and the extents the lattice
+stage refused as charts. A table's extent holds no other region's word (spec 14 § 5), and a found
+table whose extent holds a chart is dropped whole with `chart_left_as_text` (spec 14 § 6).
 
 In each size run:
 
@@ -286,6 +291,7 @@ In each size run:
 | NT2 | a table of contents (`1.2 Ad valorem fee` … `7`) | no table |
 | NT3 | one value row with nothing aligned above or below | no table |
 | NT4 | a single column of values | no table |
+| CH1, CH4 | a bar chart's labels (spec 14 § 10) | no table; `chart_left_as_text` |
 
 ---
 

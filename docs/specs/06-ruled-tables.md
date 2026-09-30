@@ -104,7 +104,8 @@ decides structure. The grammar, matched against the whole text after trimming:
   correctly. It shows every word where the original does.
 - **`RuledGrid`**: `page` and `cells`, a tuple of `Rect` in **unrotated page coordinates**, one per cell,
   where a merged cell is one rectangle. It carries no bands and no indices: the core derives those in its
-  own frame (§ 4). Validated: at least one cell, every rectangle of positive size.
+  own frame (§ 4). Validated: at least one cell, every rectangle of positive size. `core: Rect | None`
+  is a frame's core, when the flag map has one (spec 14 § 4.2), and lies inside the grid.
 - **`LatticeReading`**: `engine`, the `camelot` version, the `pages` read, the `grids`, and `findings`.
 
 ### Reading
@@ -176,7 +177,7 @@ Otherwise it is `None`. Edges within 0.5 pt are one edge.
 
 ## 5 · The table stage (`core/tables/lattice.py`, pure, per page)
 
-`lattice_tables(page, grids, words, profile, *, frame, read) -> TableStage` takes one page (upright, as the layout
+`lattice_tables(page, grids, words, profile, *, frame, read, cores=()) -> TableStage` takes one page (upright, as the layout
 reads it), the page's ruled grids turned into that frame (`turn_rect`), and the page's content words (not
 furniture). It returns the proto tables, the ids of the words they claim, and findings.
 
@@ -217,6 +218,11 @@ furniture). It returns the proto tables, the ids of the words they claim, and fi
    (A page whose grids were all rejected is not a disagreement: Camelot saw the rules. A page Camelot
    failed on already carries `lattice_failed`.) The rule-grid fallback of design § 5.2
    arrives with M2b; until then the page's words stay for prose.
+8. **Extent, charts, and splits (spec 14, M5c-2).** A frame's core stands for its grid (§ 4.2 there);
+   grids are taken smallest first, and one overlapping an accepted table or a refused chart is none
+   (§ 4.1); a grid holding a chart is refused with `chart_left_as_text` (§ 6); an accepted grid
+   splits at the page's own rules (§ 2); no diagonal word is claimed (§ 7). `TableStage` also
+   returns the extents it refused as charts.
 
 | # | case | expected |
 |---|---|---|

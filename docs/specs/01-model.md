@@ -108,6 +108,7 @@ illegal state cannot be represented (negative-space programming).
 | `word_crosses_rule` | warning | a word's box crosses a drawn cell boundary (M2) |
 | `header_not_found` | info | a table prints no header rows (M2) |
 | `table_left_as_text` | warning | rows that read as an unruled table are left as text: no grid holds them without fusing two values or two rows (M2) |
+| `chart_left_as_text` | info | a table candidate whose extent holds a chart (bars in proportion to their labels, or a numeric axis ticked at every label) is left as text (M5c, spec 14 § 6) |
 | `call_unresolved` | warning | a footnote call with no note found (M3) |
 | `no_furniture_long_document` | info | more than 8 pages and no furniture: confirm, do not assume (M1) |
 
@@ -148,8 +149,9 @@ This is what the reader produces (`02-reader.md`) and what `inkgrid words` print
 ### Behavior
 
 - `Word`: `id` (≥ 0), `page` (≥ 1), `bbox` (`Rect`), `text`, `size` (≥ 0), `font`, and the flags
-  `bold`, `italic`, `superscript`, `hidden` (in the text layer but not drawn), and `horizontal` (set on
-  a left-to-right horizontal line).
+  `bold`, `italic`, `superscript`, `hidden` (in the text layer but not drawn), `horizontal` (set on
+  a left-to-right horizontal line), and `diagonal` (default false: set on a line 15° to 75° from the
+  horizontal, modulo 90°; a diagonal word is never also horizontal; spec 14 § 7).
   - `text` is non-empty and contains no whitespace (`str.isspace`) and no character in Unicode
     categories Cc, Cf, Co, Cn, or Cs (a lone surrogate cannot be serialized as UTF-8). U+FFFD is
     legal: it is how an unmapped glyph appears.
@@ -160,7 +162,8 @@ This is what the reader produces (`02-reader.md`) and what `inkgrid words` print
   180, or 270), `text_layer` (`full`, `partial`, or `none`), the counts `invisible_chars`,
   `clipped_chars`, `unmapped_chars`, and `hidden_chars` (each ≥ 0), `image_area_ratio` (0 to 1), and
   `overprinted_chars` (≥ 0, default 0; spec 13 § 1).
-- `PageModel(PageInfo)` adds `words` and `rules`. Validators:
+- `PageModel(PageInfo)` adds `words`, `rules`, and `fills` (the visible filled rectangles thicker
+  than a rule on both sides, default empty; spec 14 § 6). Validators:
   - every word's and every rule's `page` equals `number`;
   - `text_layer == "none"` exactly when there are no words;
   - `text_layer == "partial"` exactly when there are words and `unmapped_chars > 0`.

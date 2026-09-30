@@ -51,21 +51,27 @@ Shipped so far (M0 to M4):
   columns need a gutter that persists over several lines and prose on both sides. Tables and
   hanging-indent lists keep row order.
 - **Running headers, footers, and page numbers** found by recurrence across pages and set apart as
-  furniture, line by line.
+  furniture, line by line. A line inside a ruled table is never furniture, and furniture runs from
+  the page's edge, so a table's spanning header or stub banner in the page band stays in its table.
 - **Typed blocks:** headings with their section numbers and levels, paragraphs, list items, and
   footnotes, with every line-end hyphen join recorded so it can be undone.
 - **Ruled tables as cell grids.** Camelot's lattice parser reads the pages whose rules run both ways,
   through its cell edge flags, never its DataFrame. A merged cell is one cell with a span, so a value
   is never copied into the positions it covers. Leading value-free rows become header rows, and
   full-width rows become banner rows. A box around a paragraph, a furniture label, or a frame ruled
-  around columns of running text is not a table.
+  around columns of running text is not a table. Nor is a grid over a table already read (a page
+  panel, an open frame), and a page border around a table reads as the table alone. The page's own
+  drawn rules, thin grey fills included, split a cell they divide.
   Tables export as GFM Markdown, HTML with `colspan`/`rowspan`, and dense rows that flag every
   repeated value.
 - **Unruled tables from whitespace.** Tables set without column rules (SIX, LSE, Euronext) come from
   the whitespace between the value rows' cells, which stays put however a column is aligned. Every row
-  votes on where each boundary sits, wrapped lines join their row, a drawn row rule ends a row, and two
-  values never share a cell: rows that could only be read by fusing two values stay text, with a
-  `table_left_as_text` warning.
+  votes on where each boundary sits, wrapped lines join their row, a drawn rule ends a row or a cell,
+  and two values never share a cell: rows that could only be read by fusing two values stay text,
+  with a `table_left_as_text` warning.
+- **Charts are not tables.** Bars whose lengths are in one proportion to the numbers they carry, or a
+  numeric axis with a tick at every label, keep a chart's labels as text (`chart_left_as_text`),
+  in either table reader. A diagonal watermark is no cell's.
 - **Glossaries and note lists.** Inside a definitions section, an entry that opens with a term becomes
   a definition block with its `term` and `body`: a quoted term (`“ABBO” means …`), a bold one
   (`Available for Distribution:`), or one set in a column of its own (SIX's glossary). Outside such a
@@ -103,12 +109,15 @@ Shipped so far (M0 to M4):
 - **Text is judged hidden from the text layer alone.** Text covered by an opaque shape or image,
   white text on a white page, and text too small to read all read as visible. The verifier reads the
   text layer too, so it does not catch them either.
-- **Errors the verifier finds on public corpora.** On ICDAR-2013 and olmOCR-bench, inkgrid lets
-  some ruled grids reach over page frames and charts, misses some thin drawn rules, and takes
-  repeated table titles for running headers. They are listed with their documents and stay in the
-  benchmark's baseline above. The text-layer errors found there (overprinted text read twice,
-  Type 3 digit glyphs dropped, Dingbats names read as letters) are fixed since the baseline, and any
-  run after these fixes is labelled as tuned on those documents.
+- **Errors the verifier finds on public corpora.** On the 31 ICDAR-2013 and olmOCR-bench documents
+  where the verifier found inkgrid's own errors, 25 defects remain of the baseline's 316. One is a
+  table title straddling Camelot's header-row edge (practice us-008). The other 24 are places where
+  the two engines read the text layer differently and the verifier has no benign class for yet: a
+  symbol font's glyphs, dashes and tildes on one old page, a word PDFium does not show, a run of
+  digits it reads as one value. The baseline above counts all 316. The fixes since it (overprinted
+  text, Type 3 and Dingbats glyphs, thin rules drawn as fills, grids over frames and charts, table
+  text taken as furniture) were designed while looking at those documents, so the run after them is
+  labelled as tuned on them.
 - **Left-to-right scripts only.** Right-to-left and bidirectional text is not reordered in v0.1.
 - **Unruled tables have no row spans.** A label centred beside several rows splits across them
   (`Charge per` / `executed order`), and a label whose value is centred beside it needs the rows to be

@@ -70,3 +70,17 @@ All notable changes to this project are documented here. The format follows
     elsewhere, not as a letter made from its digits;
   - a CropBox reaching past the MediaBox is clipped to it;
   - a raised mark glued to a value stays on the value's line.
+- Tables and furniture on public corpora (M5c-2, tuned on ICDAR-2013 and olmOCR-bench):
+  - a filled rectangle up to 3.5 pt thick is a rule, so column rules drawn as grey fills separate
+    their columns; the page's thicker fills are read as `PageModel.fills`;
+  - an accepted ruled grid splits its cells at the page's own drawn rules where the verifier would
+    see a rule dividing a cell, and a drawn vertical rule ends an unruled table's piece;
+  - a grid over a table already read (a page panel, a page-scale grid, an open frame) is no table,
+    and a page-border frame reads as its core (`RuledGrid.core`), leaving the headings and prose
+    around the table as prose;
+  - an unruled table's extent holds no other block's word;
+  - a chart (bars in proportion to their labels, or a numeric axis ticked at every label) is no
+    table in either gridder, and its labels stay text with a `chart_left_as_text` finding;
+  - a diagonal word (`Word.diagonal`, a watermark) is claimed by no cell;
+  - a line inside a ruled table is never furniture, and furniture runs from the page's edge, so a
+    table's spanning header or stub banner in the page band stays in its table.

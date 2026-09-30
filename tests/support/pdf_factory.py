@@ -1394,6 +1394,79 @@ def ruled_corridor() -> bytes:
     return _save(doc)
 
 
+def _centred(
+    page: pymupdf.Page, text: str, x0: float, x1: float, y: float, *, font: str = "helv"
+) -> None:
+    width = pymupdf.get_text_length(text, fontname=font, fontsize=9)
+    page.insert_text(((x0 + x1 - width) / 2, y), text, fontsize=9, fontname=font)
+
+
+def spanning_header_pages() -> bytes:
+    """3 pages (eu-001), each a varying heading, then a ruled table whose first row spans columns
+    1-3 with the same `Threshold for releases`, in the page's top band; a running footer."""
+    doc = pymupdf.open()
+    for heading in ("Pesticides", "Solvents", "Metals"):
+        page = _page(doc)
+        page.insert_text((72, 60), heading, fontsize=11, fontname="hebo")
+        xs, top, pitch = (72, 272, 352, 432, 512), 80, 16
+        shape = page.new_shape()
+        for r in range(22):
+            shape.draw_line((72, top + pitch * r), (512, top + pitch * r))
+        for x in xs:
+            shape.draw_line((x, top + (pitch if x in {352, 432} else 0)), (x, top + pitch * 21))
+        shape.finish(color=BLACK, width=0.5)
+        shape.commit()
+        _centred(page, "Threshold for releases", 272, 512, top + 12, font="hebo")
+        for c, text in enumerate(("to air", "to water", "to land")):
+            _centred(page, text, xs[c + 1], xs[c + 2], top + pitch + 12)
+        for r in range(2, 21):
+            y = top + pitch * r + 12
+            page.insert_text((76, y), f"{heading} compound {r}", fontsize=9)
+            for c in range(3):
+                _centred(page, str(r * (c + 1)), xs[c + 1], xs[c + 2], y)
+        page.insert_text((72, 740), "Acme Fee Guide", fontsize=9)
+    return _save(doc)
+
+
+def stub_banner_pages() -> bytes:
+    """3 pages (us-017), each a running header, a varying title, a 4-fragment column header, the
+    stub banner `Actual`, then value rows (unruled), and a page number."""
+    doc = pymupdf.open()
+    for n in range(3):
+        page = _page(doc)
+        page.insert_text((72, 40), "Acme Statistics", fontsize=9)
+        title = f"Table {n + 1}. Enrolment by {('level', 'control', 'region')[n]}"
+        page.insert_text((72, 58), title, fontsize=9, fontname="hebo")
+        xs = (72, 200, 300, 400)
+        for x, text in zip(xs, ("Year", "Total", "Public", "Private"), strict=True):
+            page.insert_text((x, 76), text, fontsize=9)
+        page.insert_text((72, 90), "Actual", fontsize=9, fontname="hebo")
+        for i in range(40):
+            y = 102 + 11 * i
+            page.insert_text((72, y), str(1990 + i), fontsize=9)
+            for k, x in enumerate(xs[1:]):
+                page.insert_text((x, y), f"{(n + 1) * (i + 1) * (k + 3)},{100 + i}", fontsize=9)
+        page.insert_text((72, 700), f"Page {n + 1}", fontsize=9)
+    return _save(doc)
+
+
+def mirrored_footer_pages() -> bytes:
+    """2 pages (eu-030): a two-line running footer whose inner line `ECB` repeats and whose outer
+    line's word order mirrors on the even page, so its key differs page to page."""
+    doc = pymupdf.open()
+    for n in (1, 2):
+        page = _page(doc)
+        for i in range(3):
+            text = f"Body text line {i} of page {'abc'[n - 1] * (i + 1)}"
+            page.insert_text((72, 100 + 14 * i), text, fontsize=10)
+        page.insert_text((72, 740), "ECB", fontsize=8)
+        outer = (
+            f"S {n} Monthly Bulletin March 2006" if n % 2 else f"Monthly Bulletin March 2006 S {n}"
+        )
+        page.insert_text((72, 752), outer, fontsize=8)
+    return _save(doc)
+
+
 def bar_chart() -> bytes:
     """A boxed bar chart: 5 bars on one baseline at 1.88 pt per unit, their values above (decimal
     commas), category labels below between ticks, axis labels without ticks (olmOCR 2ad3ea)."""
@@ -1493,6 +1566,9 @@ OPENABLE: dict[str, Callable[[], bytes]] = {
     "stub_column_rule": stub_column_rule,
     "ruled_corridor": ruled_corridor,
     "bar_chart": bar_chart,
+    "spanning_header_pages": spanning_header_pages,
+    "stub_banner_pages": stub_banner_pages,
+    "mirrored_footer_pages": mirrored_footer_pages,
     "shadow_outside": shadow_outside,
     "superscript": superscript,
     "font_change": font_change,

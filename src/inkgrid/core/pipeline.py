@@ -33,12 +33,24 @@ def build_document(
     """Turn a reading, and the lattice grids read from its ruled pages, into a proved `Document`."""
     # Layout reads each page in the frame its reader sees; assembly keeps the reading's boxes.
     views = tuple(upright(page) for page in reading.pages)
-    furniture = find_furniture(views, profile)
-    content = [w for w in reading.words() if w.id not in furniture.word_ids]
-    body = body_size(content) if content else 0.0
     by_page: defaultdict[int, list[RuledGrid]] = defaultdict(list)
     for grid in grids.grids if grids is not None else ():
         by_page[grid.page].append(grid)
+    # Each page's grids in the frame its view has: furniture, then the lattice stage, read them.
+    frames = {
+        page.number: page.rotation if view is not page else 0
+        for page, view in zip(reading.pages, views, strict=True)
+    }
+    turned = {
+        page.number: [
+            [turn_rect(cell, frames[page.number], page.width, page.height) for cell in grid.cells]
+            for grid in by_page[page.number]
+        ]
+        for page in reading.pages
+    }
+    furniture = find_furniture(views, profile, grids=turned)
+    content = [w for w in reading.words() if w.id not in furniture.word_ids]
+    body = body_size(content) if content else 0.0
     # Pages Camelot read without failing: a failed page already carries lattice_failed.
     failed = (
         {f.page for f in grids.findings if f.code is FindingCode.LATTICE_FAILED} if grids else set()
@@ -49,18 +61,14 @@ def build_document(
     tables: list[tuple[ProtoTable, ...]] = []
     for page, view in zip(reading.pages, views, strict=True):
         words = [w for w in view.words if w.id not in furniture.word_ids]
-        frame = page.rotation if view is not page else 0
-        turned = [
-            [turn_rect(cell, frame, page.width, page.height) for cell in grid.cells]
-            for grid in by_page[page.number]
-        ]
+        frame = frames[page.number]
         cores = [
             None if grid.core is None else turn_rect(grid.core, frame, page.width, page.height)
             for grid in by_page[page.number]
         ]
         stage = lattice_tables(
             view,
-            turned,
+            turned[page.number],
             words,
             profile,
             frame=frame,

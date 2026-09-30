@@ -155,3 +155,13 @@ def test_CH1_and_CH4_a_bar_chart_is_no_table_in_either_gridder() -> None:
         charts = [f for f in doc.findings if f.code.value == "chart_left_as_text"]
         assert len(charts) == 1, engine
         verified(data, doc)
+
+
+def test_FT1_a_spanning_header_in_the_top_band_stays_in_its_ruled_table() -> None:
+    data = pdf_factory.spanning_header_pages()
+    doc = build(data)
+    assert [b.text for b in doc.blocks if b.kind == "furniture"] == ["Acme Fee Guide"] * 3
+    found = tables(doc)
+    assert len(found) == 3
+    assert all(t.text.startswith("Threshold for releases") for t in found)
+    verified(data, doc)

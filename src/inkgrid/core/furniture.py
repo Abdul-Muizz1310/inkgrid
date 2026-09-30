@@ -1,21 +1,29 @@
 """Running headers, footers, and page numbers (docs/specs/04-text-pipeline.md section 3).
 
 Decisions are per line, never per block (L9): a line is furniture only when its whole key recurs.
+A line inside a ruled table is table content, and furniture runs from the page's edge
+(docs/specs/14-tables-and-furniture.md section 8).
 """
 
+import bisect
 import math
 import re
 import statistics
 from collections import defaultdict
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from typing import Literal
+from typing import Literal, Self
 
 from inkgrid.core.lines import Line, fragments, group_lines
+from inkgrid.core.tables.lattice import MIN_COLS, MIN_FILLED, MIN_ROWS
+from inkgrid.core.tables.shape import GridShape, grid_shape
 from inkgrid.model.config import Profile
-from inkgrid.model.page import PageModel
+from inkgrid.model.geometry import Rect
+from inkgrid.model.page import PageModel, Word
 
 Role = Literal["header", "footer", "page_number"]
+type PageGrids = Mapping[int, Sequence[Sequence[Rect]]]
+"""Each page's ruled grids by page number: every grid's cells, in the page's own frame."""
 DIGITS = re.compile(r"\d+")
 THREE_LETTERS = re.compile(r"[^\W\d_]{3}")
 ROMAN = re.compile(r"m{0,3}(cm|cd|d?c{0,3})(xc|xl|l?x{0,3})(ix|iv|v?i{0,3})", re.IGNORECASE)
@@ -47,6 +55,55 @@ class _Keyed:
     line: Line
     key: str
     candidate: bool
+    tabled: bool
+
+
+type _Slots = dict[tuple[int, int], int]
+
+
+def _cell(shape: GridShape, slots: _Slots, word: Word) -> int | None:
+    """The cell whose half-open rectangle holds the word's centre, as the lattice stage reads it."""
+    x, y = word.bbox.center
+    row = bisect.bisect_right(shape.row_edges, y) - 1
+    col = bisect.bisect_right(shape.col_edges, x) - 1
+    return slots.get((row, col))
+
+
+@dataclass(frozen=True, slots=True)
+class _Table:
+    """A ruled grid the lattice stage could accept, and the ids of the words each cell holds."""
+
+    shape: GridShape
+    slots: _Slots
+    held: tuple[frozenset[int], ...]
+
+    @classmethod
+    def of(cls, cells: Sequence[Rect], words: Sequence[Word]) -> Self | None:
+        shape = grid_shape(cells)
+        if shape is None:
+            return None
+        if len(shape.row_edges) - 1 < MIN_ROWS or len(shape.col_edges) - 1 < MIN_COLS:
+            return None
+        slots = {
+            (r, c): i
+            for i, cell in enumerate(shape.cells)
+            for r in range(cell.row, cell.row + cell.row_span)
+            for c in range(cell.col, cell.col + cell.col_span)
+        }
+        held: list[set[int]] = [set() for _ in shape.cells]
+        for word in words:
+            index = _cell(shape, slots, word)
+            if index is not None:
+                held[index].add(word.id)
+        return cls(shape, slots, tuple(frozenset(ids) for ids in held))
+
+    def holds(self, line: Line) -> bool:
+        """S1: every word of the line lies in a cell, and at least 2 other cells hold a word."""
+        homes = {_cell(self.shape, self.slots, w) for w in line.words}
+        if None in homes:
+            return False
+        others = sum(1 for i, ids in enumerate(self.held) if ids and i not in homes)
+        return others >= MIN_FILLED
 
 
 def _is_roman(text: str) -> bool:
@@ -87,7 +144,7 @@ def _band(line: Line, top: float, bottom: float, band: float) -> Literal["top", 
     return None
 
 
-def _keyed(page: PageModel, profile: Profile) -> list[_Keyed]:
+def _keyed(page: PageModel, profile: Profile, tables: Sequence[_Table]) -> list[_Keyed]:
     lines = group_lines([w for w in page.words if w.horizontal], profile)
     if not lines:
         return []
@@ -104,16 +161,28 @@ def _keyed(page: PageModel, profile: Profile) -> list[_Keyed]:
         )
 
     tol = profile.furniture_x_tol
-    return [
-        _Keyed(
-            page,
-            line,
-            key,
-            where is not None
-            and len(fragments(line, profile)) < MAX_FRAGMENTS
-            and not stacked(line, key, where),
+    tabled = [any(t.holds(line) for t in tables) for line, _, _ in placed]
+    base = [
+        where is not None
+        and not table
+        and len(fragments(line, profile)) < MAX_FRAGMENTS
+        and not stacked(line, key, where)
+        for (line, key, where), table in zip(placed, tabled, strict=True)
+    ]
+
+    def from_edge(line: Line, where: str | None) -> bool:
+        """S2: every line between this one and its band's page edge is a candidate too."""
+        if where == "top":
+            return all(
+                ok for (o, _, _), ok in zip(placed, base, strict=True) if _centre(o) < line.top
+            )
+        return all(
+            ok for (o, _, _), ok in zip(placed, base, strict=True) if _centre(o) > line.bottom
         )
-        for line, key, where in placed
+
+    return [
+        _Keyed(page, line, key, ok and from_edge(line, where), table)
+        for (line, key, where), ok, table in zip(placed, base, tabled, strict=True)
     ]
 
 
@@ -142,9 +211,19 @@ def _role(key: str, line: Line, page: PageModel) -> Role:
     return "header" if _centre(line) < page.height / 2 else "footer"
 
 
-def find_furniture(pages: Sequence[PageModel], profile: Profile) -> FoundFurniture:
-    """Mark the lines whose key recurs at the page edges on enough pages."""
-    keyed = [k for page in pages for k in _keyed(page, profile)]
+def find_furniture(
+    pages: Sequence[PageModel], profile: Profile, *, grids: PageGrids | None = None
+) -> FoundFurniture:
+    """Mark the lines whose key recurs at the page edges on enough pages.
+
+    `grids` are the pages' ruled grids in each page's frame: a line inside one that could be a
+    table is never furniture (S1).
+    """
+    keyed: list[_Keyed] = []
+    for page in pages:
+        cells = (grids or {}).get(page.number, ())
+        tables = [t for grid in cells if (t := _Table.of(grid, page.words)) is not None]
+        keyed += _keyed(page, profile, tables)
     seen: defaultdict[str, set[int]] = defaultdict(set)
     candidates: defaultdict[str, list[_Keyed]] = defaultdict(list)
     for k in keyed:
@@ -155,7 +234,7 @@ def find_furniture(pages: Sequence[PageModel], profile: Profile) -> FoundFurnitu
     keys = {key for key, on in seen.items() if len(on) >= need}
     lines = []
     for k in keyed:
-        if k.key not in keys:
+        if k.key not in keys or k.tabled:
             continue
         if not _has_letter(k.key) and not (
             k.candidate and _in_column(k, candidates[k.key], need, profile.furniture_x_tol)

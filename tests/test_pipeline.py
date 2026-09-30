@@ -89,3 +89,20 @@ def test_MK1_a_marked_value_keeps_its_mark_on_its_row() -> None:
     ids = list(home.word_ids)
     assert ids.index(by_text["*"]) == ids.index(by_text[".54"]) + 1
     assert {b.kind for b in doc.blocks} == {"paragraph"}
+
+
+def furniture(doc: Document) -> list[tuple[int, str]]:
+    return [(b.regions[0].page, b.text) for b in doc.blocks if b.kind == "furniture"]
+
+
+def test_FT2_a_stub_banner_below_a_column_header_is_not_furniture() -> None:
+    doc = build(pdf_factory.stub_banner_pages())
+    assert furniture(doc) == [
+        (n, text) for n in (1, 2, 3) for text in ("Acme Statistics", f"Page {n}")
+    ]
+    assert sum(1 for b in doc.blocks if "Actual" in b.text) == 3
+
+
+def test_FT3_a_footer_above_a_mirrored_line_is_furniture() -> None:
+    doc = build(pdf_factory.mirrored_footer_pages())
+    assert furniture(doc) == [(1, "ECB"), (2, "ECB")]

@@ -1,10 +1,12 @@
 from collections.abc import Sequence
+from itertools import pairwise
 
 import pytest
 
 from inkgrid.core.furniture import FoundFurniture, find_furniture, line_key
 from inkgrid.core.lines import Line
 from inkgrid.model.config import Profile
+from inkgrid.model.geometry import Rect
 from inkgrid.model.page import PageModel
 from layout_builder import P, place, text_line
 from model_builders import mk_page
@@ -162,3 +164,127 @@ def test_FU13_mirrored_page_numbers_are_found() -> None:
         specs.append([*body(n), P(number, x, 750)])
     found = find_furniture(pages_of(specs), PROFILE)
     assert marked(found) == [(n, "page_number", str(n)) for n in range(1, 13)]
+
+
+def spanning_table(n: int) -> tuple[list[P], list[Rect]]:
+    """A ruled table at the page's top whose first row's header spans columns 1-3 (eu-001)."""
+    xs, top, pitch = (72.0, 272.0, 352.0, 432.0, 512.0), 56.0, 16.0
+    cells = [Rect(xs[0], top, xs[1], top + 2 * pitch), Rect(xs[1], top, xs[4], top + pitch)]
+    cells += [Rect(xs[c], top + pitch, xs[c + 1], top + 2 * pitch) for c in range(1, 4)]
+    words = [*text_line(["Threshold", "for", "releases"], x=330, y=top + 3)]
+    words += [P(t, xs[c + 1] + 10, top + pitch + 3) for c, t in enumerate(("air", "water", "land"))]
+    for r in range(2, 8):
+        y = top + pitch * r
+        cells += [Rect(xs[c], y, xs[c + 1], y + pitch) for c in range(4)]
+        words += text_line([f"Compound{'abc'[n - 1] * r}"], x=76, y=y + 3)
+        words += [P(str(r * (c + 1)), xs[c + 1] + 10, y + 3) for c in range(3)]
+    return words, cells
+
+
+def test_FT1_a_spanning_header_in_the_top_band_stays_in_its_table() -> None:
+    specs: list[list[P]] = [[*body(1), *header("Acme Fee Guide", y=740)]]
+    grids: dict[int, list[list[Rect]]] = {}
+    for n in (2, 3):
+        words, cells = spanning_table(n)
+        specs.append([*words, *header("Acme Fee Guide", y=740)])
+        grids[n] = [cells]
+    pages = pages_of(specs)
+    assert "Threshold for releases" in {f.key for f in find_furniture(pages, PROFILE).lines}
+    found = find_furniture(pages, PROFILE, grids=grids)
+    assert {f.key for f in found.lines} == {"Acme Fee Guide"}
+    assert [f.page for f in found.lines] == [1, 2, 3]
+
+
+def test_FT2_a_stub_banner_below_a_column_header_stays_in_the_table() -> None:
+    specs = []
+    for n in range(1, 4):
+        ps = [*header("Acme Statistics", y=40)]
+        ps += header(f"Table {n}. Enrolment by {('level', 'control', 'region')[n - 1]}", y=58)
+        ps += [
+            P(t, x, 76)
+            for x, t in zip(
+                (72, 200, 300, 400), ("Year", "Total", "Public", "Private"), strict=True
+            )
+        ]
+        ps += [P("Actual", 72, 90, bold=True)]
+        for i in range(40):
+            ps += [P(str(1990 + i), 72, 102 + 11 * i)]
+            ps += [
+                P(f"{n * (i + 1) * (k + 3)},{100 + i}", x, 102 + 11 * i)
+                for k, x in enumerate((200, 300, 400))
+            ]
+        ps += header(f"Page {n}", y=700)
+        specs.append(ps)
+    found = find_furniture(pages_of(specs), PROFILE)
+    assert {f.key for f in found.lines} == {"Acme Statistics", "Page"}
+    assert len(found.lines) == 6
+
+
+def test_FT3_a_footer_above_a_line_that_mirrors_between_pages_is_furniture() -> None:
+    specs = []
+    for n in (1, 2):
+        outer = (
+            f"S {n} Monthly Bulletin March 2006" if n % 2 else f"Monthly Bulletin March 2006 S {n}"
+        )
+        specs.append([*body(n, y=100), *header("ECB", y=740), *header(outer, y=752)])
+    found = find_furniture(pages_of(specs), PROFILE)
+    assert marked(found) == [(1, "footer", "ECB"), (2, "footer", "ECB")]
+
+
+def test_FT4_a_label_alone_in_a_box_stays_furniture() -> None:
+    xs, ys = (0.0, 7.0, 134.0, 595.0), (750.0, 755.0, 772.0, 781.0)
+    box = [Rect(x0, y0, x1, y1) for x0, x1 in pairwise(xs) for y0, y1 in pairwise(ys)]
+    label = "Sensitivity: C1 Public"
+    specs = [[*body(n, y=100), *text_line(label.split(), x=12, y=758, size=7)] for n in (1, 2, 3)]
+    found = find_furniture(pages_of(specs), PROFILE, grids={n: [box] for n in (1, 2, 3)})
+    assert marked(found) == [(n, "footer", label) for n in (1, 2, 3)]
+
+
+def test_FT1_a_table_line_counts_no_page_for_its_key() -> None:
+    specs: list[list[P]] = [
+        [*header("Threshold for releases"), *body(1), *header("Acme Fee Guide", y=740)]
+    ]
+    grids: dict[int, list[list[Rect]]] = {}
+    for n in (2, 3):
+        words, cells = spanning_table(n)
+        specs.append([*words, *header("Acme Fee Guide", y=740)])
+        grids[n] = [cells]
+    found = find_furniture(pages_of(specs), PROFILE, grids=grids)
+    assert {f.key for f in found.lines} == {"Acme Fee Guide"}  # page 1's heading is on one page
+
+
+def test_FT1_a_table_cell_that_repeats_a_running_header_stays_in_its_table() -> None:
+    xs, ys = (72.0, 272.0, 472.0), (300.0, 316.0, 332.0, 348.0)
+    cells = [Rect(x0, y0, x1, y1) for x0, x1 in pairwise(xs) for y0, y1 in pairwise(ys)]
+    table = [P("Source", 80, 303), P("Rate", 280, 303), P("Other", 80, 335), P("Cap", 280, 335)]
+    table += text_line(["Acme", "Fee", "Guide"], x=80, y=319)  # alone on its row
+    specs = [[*header("Acme Fee Guide"), *body(n)] for n in (1, 2, 3)]
+    specs[1] += table
+    pages = pages_of(specs)
+    assert len(find_furniture(pages, PROFILE).lines) == 4  # its key is furniture on every page
+    found = find_furniture(pages, PROFILE, grids={2: [cells]})
+    assert marked(found) == [(n, "header", "Acme Fee Guide") for n in (1, 2, 3)]
+
+
+def test_FT2_a_stub_above_a_column_shaped_row_at_the_foot_is_not_furniture() -> None:
+    specs = []
+    for n in range(1, 4):
+        row = [
+            P(t, x, 740) for x, t in zip((72, 200, 300), ("Total", f"{n}9", f"{n}8"), strict=True)
+        ]
+        specs.append([*body(n), *header("Subtotal", y=726), *row, *header(f"Page {n}", y=760)])
+    found = find_furniture(pages_of(specs), PROFILE)
+    assert {f.key for f in found.lines} == {"Page"}
+
+
+def test_FT4_a_grid_the_lattice_stage_could_not_accept_holds_no_table_line() -> None:
+    # One row of three tall cells: the footer in the first, two words below it in the others.
+    row = [Rect(72, 740, 272, 780), Rect(272, 740, 372, 780), Rect(372, 740, 472, 780)]
+    untiled = [*row[:2], Rect(300, 740, 472, 780)]  # the last cell overlaps the second
+    specs = [
+        [*body(n), *header("Acme Fee Guide", y=745), P("Tel", 280, 766), P("Fax", 380, 766)]
+        for n in (1, 2, 3)
+    ]
+    for cells in (row, untiled):
+        found = find_furniture(pages_of(specs), PROFILE, grids={n: [cells] for n in (1, 2, 3)})
+        assert [f.key for f in found.lines].count("Acme Fee Guide") == 3

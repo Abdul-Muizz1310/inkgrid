@@ -3,13 +3,14 @@
 A word belongs to the cell whose half-open rectangle holds its centre, so assignment is a partition
 by construction. A grid is a table only when it has two rows, two columns, and two cells with words:
 a box around a paragraph or a furniture label is not a table. A frame around a table reads as its
-core, a grid over an accepted table is none, an accepted grid splits at the page's own rules, and no
-diagonal word is a cell's (spec 14 sections 2, 4, 7).
+core, a grid over an accepted table is none, an accepted grid splits at the page's own rules, a
+chart is no table, and no diagonal word is a cell's (spec 14 sections 2, 4, 6, 7).
 """
 
 from collections.abc import Sequence
 from dataclasses import dataclass
 
+from inkgrid.core.tables.chart import chart_evidence, chart_left_as_text
 from inkgrid.core.tables.proto import (
     ProtoCell,
     ProtoTable,
@@ -46,11 +47,12 @@ class _Line:
 
 @dataclass(frozen=True, slots=True)
 class TableStage:
-    """What the table stage made of one page: tables, the words they claim, and findings."""
+    """What the table stage made of one page: its tables, their words, findings, and charts."""
 
     tables: tuple[ProtoTable, ...]
     claimed: frozenset[int]
     findings: tuple[Finding, ...]
+    charts: tuple[Rect, ...] = ()
 
 
 def _ruled_layout(cells: Sequence[ProtoCell], n_cols: int, profile: Profile) -> bool:
@@ -195,6 +197,24 @@ def _cells(shape: GridShape, words: Sequence[Word], profile: Profile) -> list[Pr
     ]
 
 
+def _resplit(
+    shape: GridShape,
+    cells: list[ProtoCell],
+    rects: Sequence[Rect],
+    lines: Sequence[_Line],
+    profile: Profile,
+) -> tuple[GridShape, list[ProtoCell]]:
+    """The accepted grid split at the page's rules, when the split still tiles it."""
+    held = [w for c in cells for w in c.words]
+    split = _split_at_rules(rects, lines, held)
+    if len(split) == len(rects):
+        return shape, cells
+    reshaped = grid_shape(split)
+    if reshaped is None:
+        return shape, cells
+    return reshaped, _cells(reshaped, held, profile)
+
+
 def lattice_tables(
     page: PageModel,
     grids: Sequence[Sequence[Rect]],
@@ -213,6 +233,7 @@ def lattice_tables(
     """
     found: dict[int, ProtoTable] = {}
     accepted: list[Rect] = []
+    charts: list[Rect] = []
     claimed: set[int] = set()
     findings: list[Finding] = []
     if read and not grids:
@@ -230,8 +251,8 @@ def lattice_tables(
     )
     for i in order:
         rects = cut[i]
-        if any(_overlaps(_bbox(rects), box) for box in accepted):
-            continue  # a frame or panel grid over a table already read (spec 14 section 4.1)
+        if any(_overlaps(_bbox(rects), box) for box in (*accepted, *charts)):
+            continue  # a frame or panel grid over a table or chart already read (section 4.1)
         shape = grid_shape(rects)
         if shape is None:
             detail = "a lattice grid whose cells do not tile it was dropped"
@@ -244,15 +265,13 @@ def lattice_tables(
             continue
         if _ruled_layout(cells, n_cols, profile):
             continue
-        held = [w for c in cells for w in c.words]
-        split = _split_at_rules(rects, lines, held)
-        if len(split) != len(rects):
-            reshaped = grid_shape(split)
-            if reshaped is not None:
-                shape = reshaped
-                cells = _cells(shape, held, profile)
-                n_rows, n_cols = len(shape.row_edges) - 1, len(shape.col_edges) - 1
-        header, banners, text_only = table_roles(cells, n_rows)
+        evidence = chart_evidence(_bbox(rects), words, page.rules, page.fills)
+        if evidence is not None:
+            findings.append(chart_left_as_text(evidence, page.number))
+            charts.append(_bbox(rects))
+            continue
+        shape, cells = _resplit(shape, cells, rects, lines, profile)
+        header, banners, text_only = table_roles(cells, len(shape.row_edges) - 1)
         table = ProtoTable(
             page.number, shape, tuple(cells), header, banners, frame, "lattice", text_only
         )
@@ -264,4 +283,4 @@ def lattice_tables(
         accepted.append(_bbox(rects))
         claimed |= {w.id for w in table.words}
     tables = tuple(found[i] for i in sorted(found))
-    return TableStage(tables, frozenset(claimed), tuple(findings))
+    return TableStage(tables, frozenset(claimed), tuple(findings), tuple(charts))

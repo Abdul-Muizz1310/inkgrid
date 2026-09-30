@@ -14,6 +14,7 @@ from itertools import pairwise
 from inkgrid.core.layout import Region
 from inkgrid.core.lexicon import is_strong_value, is_value
 from inkgrid.core.lines import Line, fragments, group_lines
+from inkgrid.core.tables.chart import chart_evidence, chart_left_as_text
 from inkgrid.core.tables.proto import (
     ProtoCell,
     ProtoTable,
@@ -900,16 +901,20 @@ def corridor_tables(
     frame: Rotation,
     rules: Sequence[Rule] = (),
     others: Sequence[Word] = (),
+    fills: Sequence[Rect] = (),
+    charts: Sequence[Rect] = (),
 ) -> CorridorStage:
     """Unruled tables in each run of stacked regions; the other lines go back to prose.
 
     `rules` are the page's drawn rules, in the regions' frame: horizontal ones end rows, vertical
     ones end pieces. `others` are the page's content words, which no table may hold unless they
-    are its own (spec 14 section 5).
+    are its own (spec 14 section 5). A table whose extent holds a chart among `fills` and `rules`
+    is refused; `charts` are the extents the lattice stage refused, already reported (section 6).
     """
     tables: list[ProtoTable] = []
     out: list[Region] = []
     findings: list[Finding] = []
+    reported = list(charts)
     i = 0
     while i < len(regions):
         # A candidate is a run of regions that stack; side-by-side columns never do (section 3).
@@ -923,6 +928,12 @@ def corridor_tables(
             run = fold_rows(lines, profile, rules=rules)
             found, left = _run_tables(run, profile, page=page, frame=frame, others=others)
             for lo, hi, table in found:
+                evidence = chart_evidence(table.bbox, others or table.words, rules, fills)
+                if evidence is not None:
+                    if not any(table.bbox.intersects(box) for box in reported):
+                        findings.append(chart_left_as_text(evidence, page))
+                    reported.append(table.bbox)
+                    continue
                 tables.append(table)
                 claimed |= {id(line) for row in run[lo : hi + 1] for line in row.lines}
             findings.extend(_left_as_text([run[k] for k in stretch], page) for stretch in left)

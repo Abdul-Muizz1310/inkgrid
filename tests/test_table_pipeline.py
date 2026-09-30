@@ -145,3 +145,13 @@ def test_DG1_a_diagonal_watermark_is_no_cells() -> None:
     assert watermark
     assert not watermark & set(table.word_ids)
     verified(data, doc)
+
+
+def test_CH1_and_CH4_a_bar_chart_is_no_table_in_either_gridder() -> None:
+    data = pdf_factory.bar_chart()
+    for engine in ("combined", "vector"):
+        doc = build(data, engine=engine)
+        assert tables(doc) == []
+        charts = [f for f in doc.findings if f.code.value == "chart_left_as_text"]
+        assert len(charts) == 1, engine
+        verified(data, doc)

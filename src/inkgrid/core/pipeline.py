@@ -77,6 +77,8 @@ def build_document(
             frame=frame,
             rules=view.rules,
             others=words,
+            fills=view.fills,
+            charts=stage.charts,
         )
         found += unruled.findings
         tables.append((*stage.tables, *unruled.tables))

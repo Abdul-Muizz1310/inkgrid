@@ -1394,6 +1394,36 @@ def ruled_corridor() -> bytes:
     return _save(doc)
 
 
+def bar_chart() -> bytes:
+    """A boxed bar chart: 5 bars on one baseline at 1.88 pt per unit, their values above (decimal
+    commas), category labels below between ticks, axis labels without ticks (olmOCR 2ad3ea)."""
+    doc = pymupdf.open()
+    page = _page(doc)
+    base, k, x = 500.0, 1.88, 160.0
+    values = [1.4, 7.8, 20.0, 44.4, 20.9]
+    shape = page.new_shape()
+    shape.draw_rect(pymupdf.Rect(100, 300, 520, 540))
+    shape.finish(color=(0.6, 0.6, 0.6), width=0.75)
+    for i, v in enumerate(values):
+        shape.draw_rect(pymupdf.Rect(x + 64 * i, base - k * v, x + 64 * i + 25, base))
+    shape.finish(color=None, fill=(0.75, 0, 0))
+    shape.draw_line((140, base), (140 + 64 * 5, base))
+    for i in range(6):
+        shape.draw_line((140 + 64 * i, base), (140 + 64 * i, base + 3.3))
+    shape.finish(color=(0.6, 0.6, 0.6), width=0.75)
+    shape.commit()
+    for i, v in enumerate(values):
+        label = f"{v:.1f}".replace(".", ",")
+        page.insert_text((x + 64 * i + 4, base - k * v - 6), label, fontsize=8)
+        page.insert_text(
+            (x + 64 * i, base + 16), ["Poor", "Fair", "Good", "Great", "Superb"][i], fontsize=8
+        )
+    for v in range(0, 60, 10):
+        page.insert_text((115, base - k * v + 3), str(v), fontsize=8)
+    page.insert_text((200, 320), "How would you rate your sleep?", fontsize=10)
+    return _save(doc)
+
+
 def marked_value() -> bytes:
     """`.54` with a raised mark glued on, beside a line in the next column set 7 pt higher.
 
@@ -1462,6 +1492,7 @@ OPENABLE: dict[str, Callable[[], bytes]] = {
     "grey_column_rule": grey_column_rule,
     "stub_column_rule": stub_column_rule,
     "ruled_corridor": ruled_corridor,
+    "bar_chart": bar_chart,
     "shadow_outside": shadow_outside,
     "superscript": superscript,
     "font_change": font_change,

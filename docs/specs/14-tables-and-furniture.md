@@ -87,8 +87,10 @@ within 0.25 pt, gaps of at most 0.5 pt):
 - splitting repeats until nothing splits; header and banner rows are then read again.
 
 Every threshold is stricter than the verifier's VRULE and HRULE tests (1.0 and 2.0 pt, merged at 0.5
-and 1.0 pt), so a split happens only where the verifier would have reported a drawn rule dividing a
-cell. Halves are half-open, so every claimed word keeps exactly one cell.
+and 1.0 pt), so at a rule both read, a split happens only where the verifier would have reported a
+drawn rule dividing a cell. A fill 3.0 to 3.5 pt thick is a rule to the reader and shading to the
+verifier (§ 1), so a split at one has no independent check. Halves are half-open, so every claimed
+word keeps exactly one cell.
 
 ## 3 · A drawn rule ends a corridor piece (`core/tables/corridor.py`, amends `07` § 1)
 
@@ -117,10 +119,11 @@ nothing. Grids that share only a border overlap by at most 0.5 pt (`shape.SNAP`)
   The largest core is taken (each column pair `(c0, c1)` is tried; `r0` and `r1` are the first and last
   rows with a drawn interior vertical line in that span). `RuledGrid.core: Rect | None`, in unrotated
   page coordinates, lies inside the grid.
-- The table stage uses only the core's cells when no content word's centre lies in the side bands
-  (`x` in `[grid.x0, core.x0)` or `[core.x1, grid.x1)`, `y` in `[core.y0, core.y1)`): a frame's side
-  margins are blank, a real table's side columns are not (three fee tables with a spanning header row
-  and a row-spanning label column hold 48, 9, and 1 words there).
+- The table stage uses only the core's cells when no content word's centre lies in a cell beside the
+  core: a grid cell left or right of the core that shares its rows, over the cell's whole extent
+  (within 0.5 pt). A frame's side margins are blank; a real table's side columns are not (three fee
+  tables with a spanning header row and a row-spanning label column hold 48, 9, and 1 words there),
+  even when their text is top-aligned in a cell that also spans the header row (FR4).
 
 ## 5 · A corridor table's extent holds no foreign word (`core/tables/corridor.py`, amends `07` § 3)
 
@@ -145,18 +148,21 @@ nothing. Grids that share only a border overlap by at most 0.5 pt (`shape.SNAP`)
   **`chart_left_as_text`** per chart, when its extent holds either piece of evidence:
   - **E1, proportional bars:** at least 3 fills meeting the extent that share one baseline edge
     (within 0.5 pt) and one thickness (within 0.5 pt) and are pairwise disjoint across the baseline.
-    A bar pairs with a numeric word (value > 0) when that word is the only one whose centre lies
+    Every bar of the group pairs with a numeric word (value > 0): the only word whose centre lies
     inside the bar's span across the baseline and, along it, inside the bar or beyond its far end by
     at most 1.5 × the word's size plus half the word's extent along the bar (its near edge within
-    1.5 × its size); a bar with no such word, or two, is left out. At least 3 bars pair; their words
-    hold at least 3 distinct values and their lengths at least 3 distinct ones (more than 1 pt
-    apart); and one factor k fits every pair: `|length − k·value| ≤ max(1 pt, 3% of length)`.
+    1.5 × its size). A group with a bar that pairs with no word, or with two, is no evidence: a
+    table's in-cell data bars pair only where a value sits near its bar's end (CH6). The words hold
+    at least 3 distinct values and the bars at least 3 distinct lengths (more than 1 pt apart), and
+    one factor k fits every pair: `|length − k·value| ≤ max(1 pt, 3% of length)`.
   - **E2, a ticked numeric axis:** at least 3 numeric words on one line or one column (each centre
     within 3 pt of the next across the line, so right-aligned labels of different widths are one
     column), all of whose values are an arithmetic progression (step constant within 0.1%) evenly
     spaced (gaps within max(1.5 pt, 5%)), each with a page rule perpendicular to the axis within
     1.5 pt of its centre coordinate, the rule's near end within 2 × the word's size of the word, the
-    rule not running through it, and no perpendicular rule between them.
+    rule not running through it, no perpendicular rule between them, and no text divided by the
+    rule: a rule with words of the extent along it on both sides, within 2 × the label's size, is a
+    row rule (a sub-row rule beside a tier number, CH7).
 - A numeric word prints a number: an optional sign (`-`, `+`, `−`), currency (`$`, `€`, `£`),
   digits with thousands commas or none, a decimal part after `.` or `,`, and `%`, in parentheses or
   not. `1,400` is 1400 and `1,4` is 1.4; `1,400,5` is no number.
@@ -170,21 +176,27 @@ nothing. Grids that share only a border overlap by at most 0.5 pt (`shape.SNAP`)
 
 - `Word.diagonal: bool = False`, set when the line's direction is 15°–75° from the horizontal, modulo
   90° (the verifier's overlay band, spec 11 § 3.2); a diagonal word is not horizontal (validated).
-- Neither gridder claims a diagonal word. Layout already makes such words a block of their own.
+- Neither gridder claims a diagonal word, and a diagonal word is no foreign word to a corridor
+  table's extent (§ 5; DG3). Layout already makes such words a block of their own.
 
 ## 8 · Furniture and tables (`core/furniture.py`, `core/pipeline.py`, amends `04` § 3)
 
-The furniture stage takes the page's Camelot grids as read, before any trimming or refusal by the
-table stage, turned into the page's frame; a grid counts when its cells tile it (`06` § 4):
+The furniture stage takes the page's ruled tables as the lattice stage accepts them over all of the
+page's words, before furniture exists: a frame's core, not the frame (§ 4.2); no ruled page layout;
+no grid over a table (§ 4.1); no chart (§ 6). Camelot's raw grids would make a page border's running
+header and page numbers content (FT5).
 
 - **S1. A line inside a ruled table is table content.** A line is never a furniture candidate, and
   never marked, when every word centre of it lies inside the cells of one grid on the page that has at
   least 2 rows and 2 columns, and at least 2 of its other cells hold a word centre (the lattice
-  stage's own acceptance values).
+  stage's own acceptance values). A table whose texts, digits masked, recur on as many pages as a
+  furniture key needs is a running header or footer drawn as a box, and S1 skips it (FT6).
 - **S2. Furniture runs from the page's edge.** A line is a candidate only when every line between it
   and its band's page edge (by centre: above its top in the top band, below its bottom in the bottom
   band) is a candidate too. A column-shaped line (3 or more fragments), a stacked line, or an S1 line
-  breaks the run; an ordinary heading or caption does not.
+  breaks the run; an ordinary heading or caption does not. A band's outermost line breaks no run
+  when it is the band's only column-shaped line, and neither stacked nor a table's: a footer set in
+  three parts (left, centre, right) is no table row (FT7).
 - Rejected: requiring everything between a line and the edge to be furniture already. It loses a
   real running footer line whose line below it, nearer the edge, mirrors its word order between pages
   (practice eu-030: `ECB` above `S 1 Monthly Bulletin March 2006`).
@@ -215,6 +227,7 @@ README shows the baseline and the tuned run side by side, each labelled.
 | FR1 | a page-border rectangle 36 pt in, around a heading, a paragraph, a 4 × 3 ruled table with blank side margins, a footnote, and a page number | one 4 × 3 table; the rest prose |
 | FR2 | typed: the frame-core search on us-022's and c45171's flag maps; on a caption-in-box map | cores found; no core |
 | FR3 | typed: a spanning header row with a row-spanning label column whose side band holds words | the whole grid kept |
+| FR4 | FR3's table whose label and note columns span the header row too, their text top-aligned (R12) | the whole 6 × 4 grid kept |
 | CX1 | typed: a word above a corridor table whose centre sits 0.1 pt below the first row's top | the edge clamped; the word not in the table |
 | CX2 | typed: another region's word on a value-free upward row | the row not taken |
 | CX3 | typed: a foreign word between value rows | the extent refused; `table_left_as_text` |
@@ -223,12 +236,18 @@ README shows the baseline and the tuned run side by side, each labelled.
 | CH3 | typed: shaded rows sharing the table's edge, lengths not proportional to values; equal-length fills; tiers `1…4` beside sub-row rules in the next column; year columns | no chart evidence |
 | CH4 | the CH1 chart after the lattice refuses it | the corridor stage refuses it too |
 | CH5 | the CH1 chart upright on screen on a `/Rotate 90` page | no table; `chart_left_as_text`; the view's fills turned with its words |
+| CH6 | a ruled 7 × 3 table with in-cell data bars, 4 of 6 paired with their values (R4); typed: 4 bars, one without its number | one 7 × 3 table, no `chart_left_as_text`; no chart evidence |
+| CH7 | tier numbers level with the rule between each tier's two sub-rows, which starts at the next column (R5); typed: the same rules with and without the sub-rows' text | one table, no `chart_left_as_text`; ticks without the text, none with it |
 | DG1 | a ruled table with `DRAFT` and `COPY` at 45° across it | no cell holds them; one prose block; verification clean |
+| DG3 | an unruled 9 × 3 table under a 45° `DRAFT` (the final review's R3) | one 9 × 3 table; verification clean |
 | DG2 | typed: a word at 90°; at 10°; at 51.5° | not diagonal; not diagonal; diagonal |
 | FT1 | three pages, a table whose spanning header sits in the top band on pages 2 and 3, and a real footer | the header stays in the table; the footer is furniture |
 | FT2 | three pages, a stub banner between a table's header and its rows, and a real running header and page number | the banner stays in the table; header and page number are furniture |
 | FT3 | two pages whose footer line `ECB` sits above a line, nearer the edge, that mirrors its word order between pages | `ECB` is furniture |
 | FT4 | `labelled_page` (spec 04 TP6) | its label stays furniture |
+| FT5 | 3 pages, a page border around a running header, a table, and a page number; a bordered two-column newsletter (R1) | the header and page numbers are furniture |
+| FT6 | 3 pages, each with a ruled 2 × 2 running-header box (R11); typed: the same box on 3 pages | the box's lines are furniture, no table |
+| FT7 | 3 pages, a copyright line above a footer in three parts nearest the edge (R2) | the copyright line is furniture on each page |
 | TR1 | `run.py --label tuned` on a stub run | results under `<date>-<commit>-tuned/`; the report's title says tuned |
 
 Every existing case keeps passing.
@@ -259,3 +278,12 @@ digits on 1ec1f9 read as one value. No document gains a defect.
 
 eu-018's bars are on a `/Rotate 90` page. The gate first measured them still read as a table,
 because the upright view dropped its fills; it now turns them with its words (§ 6, CH5).
+
+**After the final review** (the gate at `46959b8`): the review's seven reproductions (a page
+border's furniture, data bars, sub-row rules, top-aligned side cells, a watermark over an unruled
+table, a running box, a three-part footer) are fixed as DG3, CH6, CH7, FR4, and FT5 to FT7. The
+named documents keep their 25 defects, none new; three read better and no worse: practice us-021 and
+us-022's running header and page numbers inside a page border are furniture again, as at the
+baseline (Task 6 had made them content; the verifier cannot see furniture), and olmOCR c8cdd4's
+table reads whole, its title and column headers included, where a core had cut it into a heading, a
+paragraph, and three tables. The fee schedules' dumps stay byte-identical.

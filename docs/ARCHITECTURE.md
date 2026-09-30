@@ -93,8 +93,9 @@ PyMuPDF is not thread-safe, so parallelize across processes.
 
 1. **Furniture** (document-wide). Lines are keyed with digits masked and edge page numbers
    stripped. A key that recurs in the top or bottom band on enough pages marks its lines as header,
-   footer, or page-number furniture, one line at a time. A line inside a ruled grid that could be a
-   table is content, and furniture runs from the page's edge: a table row breaks the run
+   footer, or page-number furniture, one line at a time. A line inside a table the lattice stage
+   reads is content (unless the table is a box repeated on every page), and furniture runs from the
+   page's edge: a table row breaks the run
    ([`specs/14-tables-and-furniture.md`](specs/14-tables-and-furniture.md) § 8).
 2. **Layout** (per page). Lines cluster by vertical overlap and split into fragments at wide gaps.
    A gutter that persists over at least three lines, with prose on both sides, makes columns, read

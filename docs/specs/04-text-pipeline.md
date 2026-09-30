@@ -187,7 +187,8 @@ on screen) holds nothing but vertical words.
 ## 3 · Furniture (`core/furniture.py`, pure, document-wide)
 
 `find_furniture(pages, profile, *, grids=None) -> FoundFurniture`, where `grids` maps a page number to
-the page's Camelot grids in that page's frame (spec 14 § 8). The result holds `lines`, each with its page,
+the cells of the ruled tables the lattice stage accepts on that page over all its words, in the
+page's frame (spec 14 § 8). The result holds `lines`, each with its page,
 `Line`, `role`, and key, plus the set of `word_ids`. The rules are design stage 1, made exact:
 
 1. **Lines** are `group_lines` over each page's horizontal words.
@@ -207,9 +208,11 @@ the page's Camelot grids in that page's frame (spec 14 § 8). The result holds `
      `x1`, or centre within `furniture_x_tol`) is not a candidate there. The rows of a tier table
      differ only in their digits and stack in one column; a running header prints once, and a page
      number beside a stray note label sits apart from it;
-   - a line inside a ruled grid that could be a table is never a candidate (spec 14 § 8, S1);
+   - a line inside one of those tables is never a candidate, unless the table, digits masked,
+     recurs on enough pages to be a running box (spec 14 § 8, S1);
    - a line is a candidate only when every line between it and its band's page edge is one too
-     (spec 14 § 8, S2): a column-shaped, stacked, or table line breaks the run.
+     (spec 14 § 8, S2): a column-shaped, stacked, or table line breaks the run, but a band's
+     outermost line does not when it is the band's only column-shaped line.
 4. **Frequency.** A key is furniture when it occurs as a candidate on at least
    `max(2, ceil(furniture_share × pages))` distinct pages, where `pages` counts every page of the
    document.
@@ -243,7 +246,7 @@ Decisions are per line, never per block (L9). Non-horizontal words are never fur
 | FU11 | 3 pages, each with a running header and 5 tier rows `Tier N volume rate` in the bottom band | the header is furniture; no tier row is |
 | FU12 | a 3-column header row `Tier  Volume  Rate` at the top of every page | not furniture |
 | FU13 | 12 pages numbered flush left on even pages and flush right on odd pages | all twelve marked `page_number` |
-| FT1–FT4 | spec 14 § 10: a spanning header in a table, a stub banner under a column header, a footer above a mirrored line, a label alone in a box | the table lines stay content; the furniture stays furniture |
+| FT1–FT7 | spec 14 § 10: a spanning header in a table, a stub banner under a column header, a footer above a mirrored line, a label alone in a box, a page border, a running box, a three-part footer | the table lines stay content; the furniture stays furniture |
 | FU9 | `line_key` on `Page 3 of 12`; `- 4 -`; `iv Annual civil fees`; `2026 Fee schedule 7`; `xiv`; `- ii -` | `Page # of`; `- # -`; `Annual civil fees`; `Fee schedule`; `#`; `- # -` |
 
 ---

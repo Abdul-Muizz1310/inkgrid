@@ -114,12 +114,18 @@ def _value(bar: Rect, side: _Side, words: Sequence[Word]) -> float | None:
 
 
 def _proportional(bars: Sequence[Rect], side: _Side, words: Sequence[Word]) -> bool:
+    """Every bar pairs with its own number, and one factor fits them all.
+
+    A bar with no number, or two, fails the group: a table's in-cell data bars pair only where a
+    value sits near its bar's end (the final review's R4).
+    """
     pairs: list[tuple[float, float]] = []
     for bar in bars:
         value = _value(bar, side, words)
-        if value is not None:
-            base, far, _, _ = _bar(bar, side)
-            pairs.append((abs(far - base), value))
+        if value is None:
+            return False
+        base, far, _, _ = _bar(bar, side)
+        pairs.append((abs(far - base), value))
     if len(pairs) < MIN_MARKS or len({v for _, v in pairs}) < MIN_MARKS:
         return False
     lengths = sorted(length for length, _ in pairs)
@@ -140,8 +146,26 @@ def _bars(extent: Rect, words: Sequence[Word], fills: Sequence[Rect]) -> bool:
     )
 
 
-def _ticked(word: Word, rules: Sequence[Rule], *, along_x: bool) -> bool:
-    """A rule perpendicular to the labels' line ends near the word, with no rule between."""
+def _divides(rule: Rule, label: Word, words: Sequence[Word], *, along_x: bool) -> bool:
+    """Words lie along the rule on both of its sides: it divides rows (or columns), no tick."""
+    reach = TICK_REACH * label.size
+    sides: set[bool] = set()
+    for word in words:
+        if word.id == label.id:
+            continue
+        cx, cy = word.bbox.center
+        along, across = (cy, cx) if along_x else (cx, cy)
+        if rule.start <= along <= rule.end and 0 < abs(across - rule.at) <= reach:
+            sides.add(across > rule.at)
+    return len(sides) == 2  # noqa: PLR2004 - both sides
+
+
+def _ticked(word: Word, rules: Sequence[Rule], words: Sequence[Word], *, along_x: bool) -> bool:
+    """A tick: a rule perpendicular to the labels' line, ending near the word.
+
+    No rule lies between them, and the rule divides no text along it: a sub-row rule beside a
+    tier number is a row rule (the final review's R5).
+    """
     b = word.bbox
     tick, wall = ("v", "h") if along_x else ("h", "v")
     at = b.center[0] if along_x else b.center[1]
@@ -155,7 +179,7 @@ def _ticked(word: Word, rules: Sequence[Rule], *, along_x: bool) -> bool:
             lo, hi = rule.end, near
         else:
             continue  # the rule runs through the word: a strike, not a tick
-        if hi - lo > TICK_REACH * word.size:
+        if hi - lo > TICK_REACH * word.size or _divides(rule, word, words, along_x=along_x):
             continue
         if not any(
             q.axis == wall and lo - WALL_TOL <= q.at <= hi + WALL_TOL and q.start <= at <= q.end
@@ -174,13 +198,12 @@ def _progression(values: Sequence[float], gaps: Sequence[float]) -> bool:
 
 def _axis(extent: Rect, words: Sequence[Word], rules: Sequence[Rule]) -> bool:
     """E2: at least 3 evenly spaced labels in arithmetic progression, each with its tick."""
-    held = [
-        (w, v)
+    inside = [
+        w
         for w in words
-        if extent.x0 <= w.bbox.center[0] <= extent.x1
-        and extent.y0 <= w.bbox.center[1] <= extent.y1
-        and (v := number(w.text)) is not None
+        if extent.x0 <= w.bbox.center[0] <= extent.x1 and extent.y0 <= w.bbox.center[1] <= extent.y1
     ]
+    held = [(w, v) for w in inside if (v := number(w.text)) is not None]
     for along_x in (True, False):
         line, pos = (1, 0) if along_x else (0, 1)
         groups: list[list[tuple[Word, float]]] = []
@@ -195,7 +218,7 @@ def _axis(extent: Rect, words: Sequence[Word], rules: Sequence[Rule]) -> bool:
             group.sort(key=lambda t: t[0].bbox.center[pos])
             gaps = [b[0].bbox.center[pos] - a[0].bbox.center[pos] for a, b in pairwise(group)]
             if _progression([v for _, v in group], gaps) and all(
-                _ticked(w, rules, along_x=along_x) for w, _ in group
+                _ticked(w, rules, inside, along_x=along_x) for w, _ in group
             ):
                 return True
     return False

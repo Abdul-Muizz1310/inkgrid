@@ -244,8 +244,8 @@ def heading(label: RunLabel, *, head: str, date: str) -> list[str]:
                     "reading after the fixes M5c designed while looking at these datasets' "
                     "failures (specs 13 and 14, DR-0023), so they overstate how it reads "
                     "documents no fix has seen. The baseline run is the untuned reading; M5d's "
-                    "held-out fee set is the test no fix has seen. The other tools' numbers are "
-                    "measured again, unchanged.\n"
+                    "held-out fee set is the test no fix has seen. The other tools are measured "
+                    "again, at their pinned versions.\n"
                 ),
             ]
         case _:

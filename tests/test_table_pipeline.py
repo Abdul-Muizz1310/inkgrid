@@ -166,3 +166,79 @@ def test_FT1_a_spanning_header_in_the_top_band_stays_in_its_ruled_table() -> Non
     assert len(found) == 3
     assert all(t.text.startswith("Threshold for releases") for t in found)
     verified(data, doc)
+
+
+def furniture(doc: Document) -> list[tuple[int, str]]:
+    return [(b.regions[0].page, b.text) for b in doc.blocks if b.kind == "furniture"]
+
+
+def charts(doc: Document) -> list[str]:
+    return [f.detail for f in doc.findings if f.code.value == "chart_left_as_text"]
+
+
+def test_DG3_a_diagonal_watermark_over_an_unruled_table_splits_nothing() -> None:
+    data = pdf_factory.unruled_watermarked_table()
+    doc = build(data, engine="combined")
+    (table,) = tables(doc)
+    assert (table.grid.n_rows, table.grid.n_cols) == (9, 3)
+    verified(data, doc)
+
+
+def test_CH6_a_ruled_table_with_data_bars_is_a_table() -> None:
+    data = pdf_factory.data_bar_table()
+    doc = build(data, engine="combined")
+    (table,) = tables(doc)
+    assert (table.grid.n_rows, table.grid.n_cols) == (7, 3)
+    assert charts(doc) == []
+    verified(data, doc)
+
+
+def test_CH7_tier_numbers_level_with_sub_row_rules_are_no_axis() -> None:
+    data = pdf_factory.tier_sub_rules()
+    doc = build(data, engine="combined")
+    assert len(tables(doc)) == 1
+    assert charts(doc) == []
+    verified(data, doc)
+
+
+def test_FR4_side_cells_with_top_aligned_text_keep_the_whole_grid() -> None:
+    data = pdf_factory.top_aligned_side_cells()
+    doc = build(data, engine="combined")
+    (table,) = tables(doc)
+    assert (table.grid.n_rows, table.grid.n_cols) == (6, 4)
+    verified(data, doc)
+
+
+@pytest.mark.parametrize(
+    ("name", "header"),
+    [
+        ("framed_pages", "Acme Exchange Fee Guide 2026"),
+        ("bordered_newsletter", "Acme Exchange Member Newsletter"),
+    ],
+)
+def test_FT5_furniture_inside_a_page_border_stays_furniture(name: str, header: str) -> None:
+    data = pdf_factory.OPENABLE[name]()
+    doc = build(data, engine="combined")
+    assert furniture(doc) == [(n, text) for n in (1, 2, 3) for text in (header, str(n))]
+    verified(data, doc)
+
+
+def test_FT6_a_running_header_box_is_furniture_not_a_table() -> None:
+    data = pdf_factory.running_box_pages()
+    doc = build(data, engine="combined")
+    assert tables(doc) == []
+    marked = furniture(doc)
+    for n in (1, 2, 3):
+        assert (n, "Schedule of Fees and Charges Revision 3") in marked
+        assert (n, str(n)) in marked
+    verified(data, doc)
+
+
+def test_FT7_a_three_part_footer_leaves_the_line_above_it_furniture() -> None:
+    data = pdf_factory.three_part_footer_pages()
+    doc = build(data, engine="combined")
+    copyright_line = "Copyright 2026 Acme Exchange. All rights reserved."
+    assert [(n, copyright_line) for n in (1, 2, 3)] == [
+        f for f in furniture(doc) if "Copyright" in f[1]
+    ]
+    verified(data, doc)

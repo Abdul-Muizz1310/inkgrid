@@ -1,6 +1,7 @@
 """The pipeline, in order: furniture, tables, layout, prose blocks, assembly (docs/specs/04, 06)."""
 
 from collections import defaultdict
+from collections.abc import Sequence
 
 from inkgrid.core.assemble import assemble
 from inkgrid.core.furniture import find_furniture
@@ -11,7 +12,7 @@ from inkgrid.core.lines import body_size
 from inkgrid.core.notes import call_labels, notes
 from inkgrid.core.prose import ProtoBlock, line_gaps, page_blocks
 from inkgrid.core.tables.corridor import corridor_tables
-from inkgrid.core.tables.lattice import lattice_tables
+from inkgrid.core.tables.lattice import TableStage, lattice_tables
 from inkgrid.core.tables.proto import ProtoTable, missing_header
 from inkgrid.core.view import upright
 from inkgrid.model.config import Lexicon, Profile
@@ -19,7 +20,7 @@ from inkgrid.model.document import Document, Lattice
 from inkgrid.model.findings import Finding, FindingCode
 from inkgrid.model.geometry import turn_rect
 from inkgrid.model.lattice import LatticeReading, RuledGrid
-from inkgrid.model.page import Reading
+from inkgrid.model.page import PageModel, Reading, Word
 
 
 def build_document(
@@ -48,33 +49,48 @@ def build_document(
         ]
         for page in reading.pages
     }
-    furniture = find_furniture(views, profile, grids=turned)
-    content = [w for w in reading.words() if w.id not in furniture.word_ids]
-    body = body_size(content) if content else 0.0
+    cores = {
+        page.number: [
+            None
+            if grid.core is None
+            else turn_rect(grid.core, frames[page.number], page.width, page.height)
+            for grid in by_page[page.number]
+        ]
+        for page in reading.pages
+    }
     # Pages Camelot read without failing: a failed page already carries lattice_failed.
     failed = (
         {f.page for f in grids.findings if f.code is FindingCode.LATTICE_FAILED} if grids else set()
     )
     lattice_read = set(grids.pages) - failed if grids is not None else set()
+
+    def ruled(view: PageModel, words: Sequence[Word]) -> TableStage:
+        return lattice_tables(
+            view,
+            turned[view.number],
+            words,
+            profile,
+            frame=frames[view.number],
+            read=view.number in lattice_read,
+            cores=cores[view.number],
+        )
+
+    # Furniture keeps out of the tables the lattice stage reads over all of a page's words: a
+    # frame's core, not the frame; no ruled page layout; no grid over a table (spec 14 section 8).
+    accepted = {
+        view.number: [[c.cell.rect for c in t.cells] for t in ruled(view, view.words).tables]
+        for view in views
+    }
+    furniture = find_furniture(views, profile, grids=accepted)
+    content = [w for w in reading.words() if w.id not in furniture.word_ids]
+    body = body_size(content) if content else 0.0
     found: list[Finding] = list(grids.findings) if grids is not None else []
     regions: list[tuple[Region, ...]] = []
     tables: list[tuple[ProtoTable, ...]] = []
     for page, view in zip(reading.pages, views, strict=True):
         words = [w for w in view.words if w.id not in furniture.word_ids]
         frame = frames[page.number]
-        cores = [
-            None if grid.core is None else turn_rect(grid.core, frame, page.width, page.height)
-            for grid in by_page[page.number]
-        ]
-        stage = lattice_tables(
-            view,
-            turned[page.number],
-            words,
-            profile,
-            frame=frame,
-            read=page.number in lattice_read,
-            cores=cores,
-        )
+        stage = ruled(view, words)
         found += stage.findings
         rest = [w for w in words if w.id not in stage.claimed]
         # Unruled tables come from runs of stacked regions; the other lines go back to prose.
@@ -84,7 +100,8 @@ def build_document(
             page=page.number,
             frame=frame,
             rules=view.rules,
-            others=words,
+            # A diagonal word (a watermark) is its own block, never a word a table keeps clear of.
+            others=[w for w in words if not w.diagonal],
             fills=view.fills,
             charts=stage.charts,
         )

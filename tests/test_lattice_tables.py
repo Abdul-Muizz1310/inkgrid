@@ -332,6 +332,33 @@ def test_FR3_a_core_with_words_beside_it_keeps_the_whole_grid() -> None:
     assert dims(table) == (3, 4)
 
 
+def test_FR4_side_cells_whose_text_sits_above_the_core_keep_the_whole_grid() -> None:
+    # FR3's table, its label and note columns spanning the header row too, their text top-aligned
+    cells = {
+        "Label": (0, 0, 60, 60),
+        "Charges": (60, 0, 180, 20),
+        "Note": (180, 0, 240, 60),
+        "Fee": (60, 20, 120, 40),
+        "Cap": (120, 20, 180, 40),
+        "$1": (60, 40, 120, 60),
+        "$2": (120, 40, 180, 60),
+    }
+    top = {"Label": (0, 0, 60, 20), "Note": (180, 0, 240, 20)}
+    words = place([centred(t, top.get(t, b)) for t, b in cells.items()])
+    grid = [Rect(*b) for b in cells.values()]
+    stage = lattice_tables(
+        mk_page(words=words),
+        [grid],
+        words,
+        PROFILE,
+        frame=0,
+        read=True,
+        cores=[Rect(60, 20, 180, 60)],
+    )
+    (table,) = stage.tables
+    assert dims(table) == (3, 4)
+
+
 def _split_page(rule: Rule, extra: Sequence[P] = ()) -> tuple[TableStage, tuple[Word, ...]]:
     cells = {
         "Band": (0, 0, 120, 20),

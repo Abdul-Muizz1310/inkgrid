@@ -71,11 +71,15 @@ def _cell(shape: GridShape, slots: _Slots, word: Word) -> int | None:
 
 @dataclass(frozen=True, slots=True)
 class _Table:
-    """A ruled grid the lattice stage could accept, and the ids of the words each cell holds."""
+    """A ruled table on a page, and the ids of the words each of its cells holds.
+
+    Its key is the texts it holds, digits masked: a running box repeats it page after page.
+    """
 
     shape: GridShape
     slots: _Slots
     held: tuple[frozenset[int], ...]
+    key: tuple[str, ...]
 
     @classmethod
     def of(cls, cells: Sequence[Rect], words: Sequence[Word]) -> Self | None:
@@ -91,11 +95,13 @@ class _Table:
             for c in range(cell.col, cell.col + cell.col_span)
         }
         held: list[set[int]] = [set() for _ in shape.cells]
+        texts: list[str] = []
         for word in words:
             index = _cell(shape, slots, word)
             if index is not None:
                 held[index].add(word.id)
-        return cls(shape, slots, tuple(frozenset(ids) for ids in held))
+                texts.append(DIGITS.sub("#", word.text))
+        return cls(shape, slots, tuple(frozenset(ids) for ids in held), tuple(sorted(texts)))
 
     def holds(self, line: Line) -> bool:
         """S1: every word of the line lies in a cell, and at least 2 other cells hold a word."""
@@ -144,6 +150,29 @@ def _band(line: Line, top: float, bottom: float, band: float) -> Literal["top", 
     return None
 
 
+type _Placed = tuple[Line, str, Literal["top", "bottom"] | None]
+
+
+def _outer_parts(
+    placed: Sequence[_Placed], shaped: Sequence[bool], blocked: Sequence[bool]
+) -> set[int]:
+    """The lines that break no run though they are no candidate (S2).
+
+    A band's outermost line breaks none when it is the band's only column-shaped line and no
+    table's or stacked one: a footer set in three parts (left, centre, right) is no table row.
+    """
+    out: set[int] = set()
+    for band in ("top", "bottom"):
+        inside = [i for i, (_, _, where) in enumerate(placed) if where == band]
+        if not inside:
+            continue
+        pick = min if band == "top" else max
+        edge = pick(inside, key=lambda i: _centre(placed[i][0]))
+        if shaped[edge] and not blocked[edge] and sum(shaped[i] for i in inside) == 1:
+            out.add(edge)
+    return out
+
+
 def _keyed(page: PageModel, profile: Profile, tables: Sequence[_Table]) -> list[_Keyed]:
     lines = group_lines([w for w in page.words if w.horizontal], profile)
     if not lines:
@@ -162,22 +191,29 @@ def _keyed(page: PageModel, profile: Profile, tables: Sequence[_Table]) -> list[
 
     tol = profile.furniture_x_tol
     tabled = [any(t.holds(line) for t in tables) for line, _, _ in placed]
-    base = [
-        where is not None
-        and not table
-        and len(fragments(line, profile)) < MAX_FRAGMENTS
-        and not stacked(line, key, where)
+    shaped = [
+        where is not None and len(fragments(line, profile)) >= MAX_FRAGMENTS
+        for line, _, where in placed
+    ]
+    blocked = [
+        table or (where is not None and stacked(line, key, where))
         for (line, key, where), table in zip(placed, tabled, strict=True)
     ]
+    base = [
+        where is not None and not wide and not block
+        for (_, _, where), wide, block in zip(placed, shaped, blocked, strict=True)
+    ]
+    outer = _outer_parts(placed, shaped, blocked)
+    passes = [ok or i in outer for i, ok in enumerate(base)]
 
     def from_edge(line: Line, where: str | None) -> bool:
-        """S2: every line between this one and its band's page edge is a candidate too."""
+        """S2: every line between this one and its band's page edge lets the run through."""
         if where == "top":
             return all(
-                ok for (o, _, _), ok in zip(placed, base, strict=True) if _centre(o) < line.top
+                ok for (o, _, _), ok in zip(placed, passes, strict=True) if _centre(o) < line.top
             )
         return all(
-            ok for (o, _, _), ok in zip(placed, base, strict=True) if _centre(o) > line.bottom
+            ok for (o, _, _), ok in zip(placed, passes, strict=True) if _centre(o) > line.bottom
         )
 
     return [
@@ -216,21 +252,33 @@ def find_furniture(
 ) -> FoundFurniture:
     """Mark the lines whose key recurs at the page edges on enough pages.
 
-    `grids` are the pages' ruled grids in each page's frame: a line inside one that could be a
-    table is never furniture (S1).
+    `grids` are the pages' ruled tables in each page's frame, as the lattice stage reads them: a
+    line inside one is never furniture (S1), unless the same box, its digits masked, recurs on
+    as many pages as furniture needs, which makes it a running header or footer drawn as a box.
     """
+    need = max(2, math.ceil(profile.furniture_share * len(pages)))
+    tables = {
+        page.number: [
+            t
+            for grid in (grids or {}).get(page.number, ())
+            if (t := _Table.of(grid, page.words)) is not None
+        ]
+        for page in pages
+    }
+    boxed: defaultdict[tuple[str, ...], set[int]] = defaultdict(set)
+    for number, found in tables.items():
+        for t in found:
+            boxed[t.key].add(number)
     keyed: list[_Keyed] = []
     for page in pages:
-        cells = (grids or {}).get(page.number, ())
-        tables = [t for grid in cells if (t := _Table.of(grid, page.words)) is not None]
-        keyed += _keyed(page, profile, tables)
+        own = [t for t in tables[page.number] if len(boxed[t.key]) < need]
+        keyed += _keyed(page, profile, own)
     seen: defaultdict[str, set[int]] = defaultdict(set)
     candidates: defaultdict[str, list[_Keyed]] = defaultdict(list)
     for k in keyed:
         if k.candidate:
             seen[k.key].add(k.page.number)
             candidates[k.key].append(k)
-    need = max(2, math.ceil(profile.furniture_share * len(pages)))
     keys = {key for key, on in seen.items() if len(on) >= need}
     lines = []
     for k in keyed:

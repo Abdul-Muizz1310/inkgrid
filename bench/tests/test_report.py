@@ -71,6 +71,8 @@ def test_TR1_a_tuned_report_says_so_in_its_title_and_first_paragraph() -> None:
     assert "tuned on these documents" in title
     assert "tuned on these documents" in first
     assert "`abc1234`" in first
+    assert "pinned versions" in first
+    assert "unchanged" not in first  # measured again, not compared
     title, first = report.heading("baseline", head="abc1234", date="2026-09-30")[:2]
     assert "baseline" in title
     assert "tuned" not in title

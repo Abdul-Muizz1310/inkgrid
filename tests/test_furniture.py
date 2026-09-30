@@ -288,3 +288,37 @@ def test_FT4_a_grid_the_lattice_stage_could_not_accept_holds_no_table_line() -> 
     for cells in (row, untiled):
         found = find_furniture(pages_of(specs), PROFILE, grids={n: [cells] for n in (1, 2, 3)})
         assert [f.key for f in found.lines].count("Acme Fee Guide") == 3
+
+
+def test_FT6_a_ruled_box_repeated_on_every_page_is_running_furniture() -> None:
+    box = [
+        Rect(72, 36, 400, 54),
+        Rect(400, 36, 540, 54),
+        Rect(72, 54, 400, 72),
+        Rect(400, 54, 540, 72),
+    ]
+    specs = []
+    for n in (1, 2, 3):
+        ps = [
+            P("Acme", 76, 40),
+            P("Doc", 404, 40),
+            P("Fees", 76, 58),
+            *text_line(["Revision", str(n)], x=404, y=58),
+        ]
+        specs.append([*ps, *body(n)])
+    found = find_furniture(pages_of(specs), PROFILE, grids={n: [box] for n in (1, 2, 3)})
+    assert {f.key for f in found.lines} == {"Acme Doc", "Fees Revision"}
+    assert len(found.lines) == 6
+
+
+def test_FT7_a_footer_in_three_parts_nearest_the_edge_breaks_no_run() -> None:
+    specs = []
+    for n in (1, 2, 3):
+        parts = [
+            P("Acme", 72, 745),
+            P("Confidential", 280, 745),
+            *text_line(["Page", str(n)], x=500, y=745),
+        ]
+        specs.append([*body(n), *header("Copyright 2026 Acme Exchange.", y=728), *parts])
+    found = find_furniture(pages_of(specs), PROFILE)
+    assert marked(found) == [(n, "footer", "Copyright 2026 Acme Exchange.") for n in (1, 2, 3)]

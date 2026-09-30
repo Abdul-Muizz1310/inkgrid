@@ -128,3 +128,27 @@ def test_CH3_bars_need_three_lengths_more_than_a_point_apart() -> None:
 )
 def test_CH1_a_value_label_reads_as_its_number(text: str, value: float | None) -> None:
     assert number(text) == value
+
+
+def test_CH6_bars_one_of_which_carries_no_number_of_its_own_are_no_chart() -> None:
+    rects, labels = bars([10.0, 20.0, 30.0, 40.0])
+    assert chart_evidence(BOX, place(labels), (), rects) == "bars"
+    assert (
+        chart_evidence(BOX, place(labels[:3]), (), rects) is None
+    )  # the fourth bar pairs with none
+
+
+def test_CH7_a_rule_dividing_text_along_it_is_a_row_rule_not_a_tick() -> None:
+    tiers = place([P(str(t), 110, 320 + 34 * t, size=8) for t in (1, 2, 3, 4)])
+    rules = tuple(
+        Rule(page=1, axis="h", at=w.bbox.center[1], start=w.bbox.x1 + 6, end=400, thickness=0.5)
+        for w in tiers
+    )
+    assert chart_evidence(BOX, tiers, rules, ()) == "axis"  # nothing along them: ticks
+    sub_rows = [
+        P(text, 140, w.bbox.center[1] + dy, size=8)
+        for w in tiers
+        for text, dy in (("Up", -9.0), ("Over", 1.0))
+    ]  # each rule runs between a tier's two sub-rows in the next column
+    words = (*tiers, *place(sub_rows, first_id=len(tiers)))
+    assert chart_evidence(BOX, words, rules, ()) is None

@@ -1519,6 +1519,278 @@ def bar_chart_landscape() -> bytes:
     return bar_chart(turned=True)
 
 
+PROSE_PAGES = (
+    (
+        "The exchange publishes its fees each year in this guide for members.",
+        "Orders sent before the open are charged at the auction rate shown below.",
+        "Quotes that rest for a full second earn the maker rebate for the day.",
+    ),
+    (
+        "Clearing is charged per contract and billed monthly to each member firm.",
+        "Settlement failures are charged at the penalty rate after two days.",
+        "Members may appeal a charge within thirty days of the invoice date.",
+    ),
+    (
+        "Market data is licensed per user, with discounts for non-display use.",
+        "Connectivity is billed per port and per cross-connect in the data centre.",
+        "The schedule takes effect on the first business day of the next month.",
+    ),
+)
+"""Three pages' body lines that differ in their words, as real text does."""
+
+
+def unruled_watermarked_table() -> bytes:
+    """An unruled 9 x 3 table under a 45 degree `DRAFT` watermark (the final review's R3)."""
+    doc = pymupdf.open()
+    page = _page(doc)
+    page.insert_text((72, 80), "Schedule of Charges", fontsize=14, fontname="hebo")
+    page.insert_text(
+        (72, 110), "The charges below apply to every member of the exchange.", fontsize=10
+    )
+    fees = (
+        ("Orders", 0.50, 100),
+        ("Quotes", 0.25, 50),
+        ("Trades", 0.10, 20),
+        ("Cancels", 0.05, 10),
+        ("Amends", 0.02, 5),
+        ("Reports", 1.00, 200),
+        ("Ports", 25.00, 500),
+        ("Sessions", 12.50, 250),
+    )
+    rows = [("Service", "Fee", "Cap"), *((s, f"${a:.2f}", f"${b}") for s, a, b in fees)]
+    for i, row in enumerate(rows):
+        for x, text in zip((72, 250, 360), row, strict=True):
+            page.insert_text(
+                (x, 150 + 16 * i), text, fontsize=9, fontname="hebo" if i == 0 else "helv"
+            )
+    page.insert_text(
+        (72, 320), "Charges are billed monthly in arrears to each member firm.", fontsize=10
+    )
+    at = pymupdf.Point(180, 260)
+    page.insert_text(
+        at, "DRAFT", fontsize=40, color=(0.7, 0.8, 1.0), morph=(at, pymupdf.Matrix(45))
+    )
+    return _save(doc)
+
+
+DATA_BAR_ROWS = (
+    ("North", 4120, 12),
+    ("South", 6480, 15),
+    ("East", 7950, 9),
+    ("West", 9300, 21),
+    ("Central", 5210, 7),
+    ("Overseas", 8040, 11),
+)
+
+
+def _right(page: pymupdf.Page, text: str, x1: float, y: float) -> None:
+    width = pymupdf.get_text_length(text, fontname="helv", fontsize=9)
+    page.insert_text((x1 - 4 - width, y), text, fontsize=9)
+
+
+def data_bar_table() -> bytes:
+    """A ruled 7 x 3 table whose Revenue column carries in-cell data bars (a fill from the cell's
+    left edge in proportion to the value, the value right-aligned over it; the review's R4)."""
+    doc = pymupdf.open()
+    page = _page(doc)
+    page.insert_text((100, 170), "Revenue by region, 2026", fontsize=12, fontname="hebo")
+    xs, top, pitch = (100, 250, 370, 450), 200, 20
+    shape = page.new_shape()
+    for i, (_, value, _) in enumerate(DATA_BAR_ROWS, start=1):
+        y0 = top + pitch * i + 3
+        shape.draw_rect(pymupdf.Rect(252, y0, 252 + 116 * value / 9300, y0 + pitch - 6))
+    shape.finish(fill=(0.6, 0.75, 0.95), color=None)
+    for r in range(len(DATA_BAR_ROWS) + 2):
+        shape.draw_line((xs[0], top + pitch * r), (xs[-1], top + pitch * r))
+    for x in xs:
+        shape.draw_line((x, top), (x, top + pitch * (len(DATA_BAR_ROWS) + 1)))
+    shape.finish(color=BLACK, width=0.5)
+    shape.commit()
+    for c, head in enumerate(("Region", "Revenue", "Staff")):
+        page.insert_text((xs[c] + 4, top + 14), head, fontsize=9, fontname="hebo")
+    for i, (name, value, staff) in enumerate(DATA_BAR_ROWS, start=1):
+        y = top + pitch * i + 14
+        page.insert_text((xs[0] + 4, y), name, fontsize=9)
+        _right(page, f"{value:,}", xs[2], y)
+        _right(page, str(staff), xs[3], y)
+    return _save(doc)
+
+
+def tier_sub_rules() -> bytes:
+    """A fee table ruled by horizontal rules only: each tier number, centred under `Tier`, sits
+    level with the rule between its two sub-rows, which starts at the next column (the review's
+    R5)."""
+    doc = pymupdf.open()
+    page = _page(doc)
+    page.insert_text((72, 110), "Clearing fee tiers", fontsize=12, fontname="hebo")
+    _centred(page, "Tier", 72, 94, 140, font="hebo")
+    for x, text in ((104, "Monthly volume"), (260, "Rate"), (330, "Cap")):
+        page.insert_text((x, 140), text, fontsize=9, fontname="hebo")
+    shape = page.new_shape()
+    shape.draw_line((72, 146), (400, 146))
+    tops = ("1,000,000", "5,000,000", "20,000,000", "50,000,000")
+    for t, bound in enumerate(tops):
+        ya = 160 + 34 * t
+        yb = ya + 16
+        for x, text in ((104, f"Up to {bound}"), (260, f"0.{t + 1}0"), (330, f"{(t + 1) * 100}")):
+            page.insert_text((x, ya), text, fontsize=9)
+        for x, text in ((104, f"Over {bound}"), (260, f"0.0{t + 5}"), (330, f"{(t + 1) * 50}")):
+            page.insert_text((x, yb), text, fontsize=9)
+        mid = (ya + yb) / 2
+        _centred(page, str(t + 1), 72, 94, mid + 3.2)
+        shape.draw_line((98, mid), (400, mid))  # the rule between the tier's two sub-rows
+        shape.draw_line((72, yb + 6), (400, yb + 6))  # the rule under the tier
+    shape.finish(color=BLACK, width=0.5)
+    shape.commit()
+    page.insert_text((72, 320), "Rates are charged per contract cleared in the month.", fontsize=10)
+    return _save(doc)
+
+
+def top_aligned_side_cells() -> bytes:
+    """A ruled table whose row-spanning label and notes columns run its full height, their text
+    top-aligned level with the spanning header row (FR3's shape; the review's R12)."""
+    doc = pymupdf.open()
+    page = _page(doc)
+    page.insert_text((72, 130), "Clearing fees by product", fontsize=12, fontname="hebo")
+    xs, top, pitch, n = (72, 170, 300, 400, 540), 150, 20, 6
+    bottom = top + pitch * n
+    shape = page.new_shape()
+    shape.draw_rect(pymupdf.Rect(xs[0], top, xs[-1], bottom))
+    for r in range(1, n):  # rows only across the middle columns
+        shape.draw_line((xs[1], top + pitch * r), (xs[3], top + pitch * r))
+    shape.draw_line((xs[1], top), (xs[1], bottom))
+    shape.draw_line((xs[3], top), (xs[3], bottom))
+    shape.draw_line((xs[2], top + pitch), (xs[2], bottom))  # the header row spans columns 1-2
+    shape.finish(color=BLACK, width=0.5)
+    shape.commit()
+    page.insert_text((xs[0] + 4, top + 14), "Equities", fontsize=9, fontname="hebo")
+    page.insert_text((xs[3] + 4, top + 14), "Billed monthly", fontsize=9)
+    page.insert_text(
+        (xs[1] + 4, top + 14), "Clearing fee per contract", fontsize=9, fontname="hebo"
+    )
+    rows = (
+        ("Service", "Fee"),
+        ("Orders", "0.50"),
+        ("Quotes", "0.25"),
+        ("Trades", "0.10"),
+        ("Cancels", "0.05"),
+    )
+    for r, (a, b) in enumerate(rows, start=1):
+        y = top + pitch * r + 14
+        font = "hebo" if r == 1 else "helv"
+        page.insert_text((xs[1] + 4, y), a, fontsize=9, fontname=font)
+        page.insert_text((xs[2] + 4, y), b, fontsize=9, fontname=font)
+    return _save(doc)
+
+
+def framed_pages() -> bytes:
+    """3 pages, each a page border around a running header, a heading, a line, the 4 x 3 ruled
+    table of `framed_table`, a footnote, and a page number (the review's R1)."""
+    doc = pymupdf.open()
+    for n, heading in enumerate(("Equities", "Options", "Futures"), start=1):
+        page = _page(doc)
+        page.insert_text((150, 60), "Acme Exchange Fee Guide 2026", fontsize=9)
+        page.insert_text((150, 200), f"Schedule of {heading} Charges", fontsize=16)
+        page.insert_text(
+            (150, 240), f"The {heading.lower()} charges below apply to every member.", fontsize=10
+        )
+        shape = page.new_shape()
+        shape.draw_rect(pymupdf.Rect(36, 36, 576, 756))
+        shape.finish(color=BLACK, width=0.5)
+        shape.commit()
+        _boxed_cells(page, FRAMED_CELLS)
+        page.insert_text(
+            (150, 420), f"* {heading} charges are billed monthly in arrears.", fontsize=8
+        )
+        page.insert_text((300, 740), str(n), fontsize=9)
+    return _save(doc)
+
+
+NEWSLETTER_WORDS = (
+    "members",
+    "exchange",
+    "market",
+    "trading",
+    "orders",
+    "quotes",
+    "volume",
+    "session",
+    "clearing",
+    "settlement",
+    "venue",
+    "liquidity",
+    "auction",
+    "closing",
+    "opening",
+    "rules",
+    "notice",
+)
+
+
+def bordered_newsletter() -> bytes:
+    """3 pages of a two-column newsletter inside a page border, a rule under the running header
+    and one between the columns; no table (the review's R1b)."""
+    doc = pymupdf.open()
+    words = NEWSLETTER_WORDS
+    for n in range(1, 4):
+        page = _page(doc)
+        page.insert_text((60, 58), "Acme Exchange Member Newsletter", fontsize=9)
+        shape = page.new_shape()
+        shape.draw_rect(pymupdf.Rect(36, 36, 576, 756))
+        shape.draw_line((36, 70), (576, 70))
+        shape.draw_line((306, 70), (306, 756))
+        shape.finish(color=BLACK, width=0.5)
+        shape.commit()
+        for col, x in enumerate((60, 330)):
+            for i in range(40):
+                picked = (words[(i * 7 + j * 3 + n * 5 + col) % len(words)] for j in range(6))
+                issue = ("alpha", "bravo", "charlie")[n - 1]  # body lines differ page to page
+                text = f"Item {n}.{col}.{i} {issue} " + " ".join(picked)
+                page.insert_text((x, 100 + 15 * i), text, fontsize=9)
+        page.insert_text((540, 740), str(n), fontsize=9)
+    return _save(doc)
+
+
+def running_box_pages() -> bytes:
+    """3 pages, each with a ruled 2 x 2 running-header box (company | document number, title |
+    revision), then prose that varies by page, and a page number (the review's R11)."""
+    doc = pymupdf.open()
+    for n, body in enumerate(PROSE_PAGES, start=1):
+        page = _page(doc)
+        shape = page.new_shape()
+        for y in (36, 54, 72):
+            shape.draw_line((72, y), (540, y))
+        for x in (72, 400, 540):
+            shape.draw_line((x, 36), (x, 72))
+        shape.finish(color=BLACK, width=0.5)
+        shape.commit()
+        page.insert_text((76, 49), "Acme Exchange Ltd", fontsize=9, fontname="hebo")
+        page.insert_text((404, 49), "Doc FS-014", fontsize=9)
+        page.insert_text((76, 67), "Schedule of Fees and Charges", fontsize=9)
+        page.insert_text((404, 67), "Revision 3", fontsize=9)
+        for i, line in enumerate(body):
+            page.insert_text((72, 120 + 14 * i), line, fontsize=10)
+        page.insert_text((300, 750), str(n), fontsize=9)
+    return _save(doc)
+
+
+def three_part_footer_pages() -> bytes:
+    """3 pages; a two-line running footer: a copyright line, and nearest the edge a footer in
+    three parts (left, centre, right); prose that varies by page (the review's R2)."""
+    doc = pymupdf.open()
+    for n, body in enumerate(PROSE_PAGES, start=1):
+        page = _page(doc)
+        for i, line in enumerate(body):
+            page.insert_text((72, 100 + 14 * i), line, fontsize=10)
+        page.insert_text(
+            (72, 728), "Copyright 2026 Acme Exchange. All rights reserved.", fontsize=8
+        )
+        page.insert_text((72, 745), "Acme Fee Guide", fontsize=8)
+        page.insert_text((280, 745), "Confidential", fontsize=8)
+        page.insert_text((500, 745), f"Page {n}", fontsize=8)
+    return _save(doc)
+
+
 def marked_value() -> bytes:
     """`.54` with a raised mark glued on, beside a line in the next column set 7 pt higher.
 
@@ -1589,6 +1861,14 @@ OPENABLE: dict[str, Callable[[], bytes]] = {
     "ruled_corridor": ruled_corridor,
     "bar_chart": bar_chart,
     "bar_chart_landscape": bar_chart_landscape,
+    "unruled_watermarked_table": unruled_watermarked_table,
+    "data_bar_table": data_bar_table,
+    "tier_sub_rules": tier_sub_rules,
+    "top_aligned_side_cells": top_aligned_side_cells,
+    "framed_pages": framed_pages,
+    "bordered_newsletter": bordered_newsletter,
+    "running_box_pages": running_box_pages,
+    "three_part_footer_pages": three_part_footer_pages,
     "spanning_header_pages": spanning_header_pages,
     "stub_banner_pages": stub_banner_pages,
     "mirrored_footer_pages": mirrored_footer_pages,

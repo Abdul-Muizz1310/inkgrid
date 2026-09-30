@@ -101,15 +101,23 @@ def _overlaps(a: Rect, b: Rect) -> bool:
 
 
 def _in_core(rects: Sequence[Rect], core: Rect | None, words: Sequence[Word]) -> list[Rect]:
-    """A frame's cells cut to its core, when nothing but blank margin lies beside the core."""
+    """A frame's cells cut to its core, when nothing but blank margin lies beside the core.
+
+    Beside the core are the cells left or right of it that share its rows, each over its whole
+    extent: a real table's side columns hold words, if only above the core (text top-aligned in
+    a cell that also spans a header row); a frame's margins hold none.
+    """
     if core is None:
         return list(rects)
-    box = _bbox(rects)
-    for w in words:
-        x, y = w.bbox.center
-        beside = box.x0 <= x < core.x0 or core.x1 <= x < box.x1
-        if beside and core.y0 <= y < core.y1:
-            return list(rects)  # a real table's side columns hold words; a frame's margins do not
+    beside = [
+        r
+        for r in rects
+        if (r.x1 <= core.x0 + CORE_TOL or r.x0 >= core.x1 - CORE_TOL)
+        and r.y0 < core.y1 - CORE_TOL
+        and r.y1 > core.y0 + CORE_TOL
+    ]
+    if any(r.contains_point(*w.bbox.center) for r in beside for w in words):
+        return list(rects)
     inside = [
         r
         for r in rects

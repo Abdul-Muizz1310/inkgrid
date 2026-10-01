@@ -9,6 +9,7 @@ from inkgrid_bench.heldout import (
     distance,
     glyph_sample,
     load_truth,
+    numeric_pages,
     require_verified,
     scored_pages,
     select,
@@ -28,6 +29,12 @@ def test_SL1_one_document_per_group_by_numeric_pages_then_pages_then_name() -> N
     numeric = {"a": [1, 2], "b": [1, 2], "c": [1], "d": [1], "e": [2, 3, 4]}
     pages = {"a": 5, "b": 9, "c": 30, "d": 1, "e": 4}
     assert [c.id for c in select(cands, numeric, pages)] == ["b", "e"]
+
+
+def test_SL3_numeric_pages_count_the_patterns_matches_in_each_pages_text() -> None:
+    nineteen = " ".join(["Fee", "4,715"] * 19)
+    twenty = nineteen + " Rs.50"  # a match inside a token counts, as in the selection's counter
+    assert numeric_pages([nineteen, twenty, "", "1.2.3 " * 20]) == [2, 4]
 
 
 def test_SL2_scored_pages_are_seeded_sorted_and_at_most_three() -> None:

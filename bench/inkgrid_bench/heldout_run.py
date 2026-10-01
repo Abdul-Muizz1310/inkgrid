@@ -72,8 +72,9 @@ def docs(truths: Sequence[Truth]) -> list[run.Doc]:
     return [run.Doc(t.id, run.CACHE / PDFS / f"{t.id}.pdf") for t in truths]
 
 
-def prepare(_run: Path, _head: str, _cfg: dict[str, Any]) -> None:
-    """Fetch every document a ground truth names, verifying its SHA-256."""
+def prepare(_run: Path, _head: str, cfg: dict[str, Any]) -> None:
+    """Spec 12's tools and scorers, then every document a ground truth names, each hash checked."""
+    run.prepare(cfg)
     with (HELDOUT / "manifest.toml").open("rb") as f:
         candidates = tomllib.load(f)["candidate"]
     for path in sorted(p for p in HELDOUT.glob("*.json") if p.name not in NOT_TRUTHS):

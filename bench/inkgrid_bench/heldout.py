@@ -17,6 +17,8 @@ from inkgrid_bench.tables import Box, NCell, NTable
 
 BOX_TOL = 1.0  # pt a cell's box may reach past its table's
 SCORED = 3  # pages scored per document (spec 16 section 1)
+NUMBER = re.compile(r"\d[\d,.]*")
+NUMERIC = 20  # matches of NUMBER that make a page numeric (spec 16 section 1)
 
 
 @dataclass(frozen=True, slots=True)
@@ -27,6 +29,11 @@ class Candidate:
     group: str
     url: str
     sha256: str
+
+
+def numeric_pages(texts: Sequence[str]) -> list[int]:
+    """The numeric pages (1-based): each page's text, as PyMuPDF's `get_text("text")` gives it."""
+    return [i for i, text in enumerate(texts, start=1) if len(NUMBER.findall(text)) >= NUMERIC]
 
 
 def select(

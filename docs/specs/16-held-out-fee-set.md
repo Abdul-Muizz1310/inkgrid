@@ -29,8 +29,9 @@ whose license is unclear (searched 2026-10-01). The user ruled to use an officia
   LSEG, Euronext, SIX and BME, Deutsche Börse, Wiener Börse, GPW, JSE, Aquis, MEMX, LTSE, 24X, BOX,
   IEX). Euronext Athens is Euronext's, so it is not a candidate. Bursa Malaysia, CME Group, and an old
   JPX link refused the download and are not candidates.
-- **One document per group:** the candidate with the most *numeric pages* (pages whose PyMuPDF text
-  holds at least 20 tokens matching `\d[\d,.]*`), then the most pages, then the first by name.
+- **One document per group:** the candidate with the most *numeric pages* (pages whose PyMuPDF text,
+  `page.get_text("text")`, holds at least 20 matches of the regular expression `\d[\d,.]*`, as
+  `heldout.numeric_pages` counts them), then the most pages, then the first by name.
 - **Scored pages:** `random.Random(f"20261001:{id}").sample(numeric_pages, k=min(3, n))`, sorted.
   Every table on a scored page is in the ground truth; a scored page with no table has none, and a
   table a tool finds there is a false positive.
@@ -83,7 +84,9 @@ document, as a user would; only its tables on scored pages are scored.
   body row on this one is not a table; printed text struck through is still the cell's text.
 - A cell's text is the PDF's words (PyMuPDF `get_text("words")`) whose centres lie in the cell's box,
   in reading order, joined by one space. **inkgrid's reading is never consulted**; the drafter does not
-  run inkgrid, or any benchmarked tool, on a held-out document before § 6's run.
+  run inkgrid, or any benchmarked tool, on a held-out document before § 6's run. The words are the
+  text layer inkgrid and the other text-layer tools also read, so their characters match the truth's
+  wherever their cells do; the report's first paragraph says so.
 - Each draft is drawn over its page (cell boxes and their text) and checked by Claude against the
   rendering before it goes to the user.
 
@@ -108,6 +111,9 @@ document, as a user would; only its tables on scored pages are scored.
   removed (CER counts glyphs, and the text layer glues a raised footnote number to its word, as in
   `Removing10`, which a tool may write `Removing 10`); case and punctuation count. CER is `Σ d / Σ len(g)`, pooled, with the
   clustered bootstrap over documents.
+- **What CER does not see,** stated under its table in the report: text that recurs in a table is not
+  checked for its place (a sampled cell scores no error if its text is any cell of the matched table),
+  and pooling weighs a long cell more. Lower is better, so a negative difference favours inkgrid.
 
 ## 6 · Scoring and the run
 
@@ -131,6 +137,7 @@ document, as a user would; only its tables on scored pages are scored.
 |---|---|---|
 | SL1 | the manifest's candidates with their numeric-page counts | one per group, by § 1's order |
 | SL2 | `scored_pages("x", [3, 5, 9, 12])` twice; with one numeric page | the same 3 sorted pages both times; that page |
+| SL3 | page texts with 19 and 20 matches of `\d[\d,.]*`, one inside a token (`Rs.50`) | only the page with 20 is numeric; a match inside a token counts |
 | GT1 | a ground-truth file whose cells overlap; a cell running from the header rows into the body; a cell box outside its table; a table on an unscored page; `verified` null | each refused, with the reason; scoring refuses an unverified file |
 | GT2 | a table with 2 header rows (a spanning group label), 1 stub column | access paths with column labels outer then leaf, row labels; an empty header cell skipped |
 | GT3 | a value with no label; a table of headers only | no path; no path |
@@ -140,7 +147,8 @@ document, as a user would; only its tables on scored pages are scored.
 | RN1 | the held-out run with `src/` changed since the tuned run; with an unverified ground truth; with no confirmed glyph sample | each refused, naming the reason |
 | RN2 | `run.py --datasets heldout` | the held-out pipeline's stages, not spec 12's; results under `<date>-<commit>-heldout/` |
 | SC1 | a ground truth and a tool's tables, one of them on an unscored page | binding and CER counts from the scored page's table only |
-| RP3 | a report of held-out counts | its title and first paragraph say held out; structure, regions, binding, CER, and speed; no Soric, olmOCR, or reproduction section |
+| EN1 | an encrypted held-out document (`tfex-usd`, RC4) in region mode | the jar opens it: BouncyCastle 1.44, the version PDFBox 1.8.2's pom names, is pinned and on its classpath |
+| RP3 | a report of held-out counts | its title and first paragraph say held out, and where the truth's cell text comes from; structure, regions, binding, CER with what it does not see and which sign favours inkgrid, and speed; no Soric, olmOCR, or reproduction section |
 | DR1 | words and a drafted grid | each word in the cell holding its centre, in reading order |
 | DR2 | a stated grid with a merge running past the grid, or two merges overlapping | refused |
 | DR3 | the ruler, overlay, and crop renderings of a fixture page | images of the page's size at their DPI; a crop of the box's |

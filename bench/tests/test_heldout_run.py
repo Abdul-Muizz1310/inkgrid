@@ -1,11 +1,13 @@
 import json
+import os
 from pathlib import Path
 
 import pytest
 from heldout_data import fee_table, truth_json
 
-from inkgrid_bench import heldout_run, report, run
+from inkgrid_bench import fetch, heldout_run, report, run
 from inkgrid_bench.heldout import GlyphCell, load_truth
+from inkgrid_bench.scores import icdar
 from inkgrid_bench.tables import NCell, NTable
 
 
@@ -88,5 +90,18 @@ def test_RP3_a_held_out_report_says_so_and_shows_cer() -> None:
     assert "no fix has seen" in first
     assert "### Cell character error rate" in text
     assert "## Held-out fee set (2 documents)" in text
+    assert "PyMuPDF" in first  # where the truth's cell text comes from, and who shares it
+    cer = text.split("### Cell character error rate\n", 1)[1].split("### ", 1)[0]
+    assert "recurs" in cer  # what CER does not see
+    assert "a negative difference favours inkgrid" in cer
     assert "Soric" not in text
     assert "olmOCR" not in text
+
+
+def test_EN1_the_region_scorer_opens_an_encrypted_pdf() -> None:
+    # tfex-usd is RC4-encrypted; PDFBox 1.8.2 opens it only with the BouncyCastle it names
+    cmd = icdar.command(
+        Path("java"), Path("t"), "-reg", gt=Path("a-reg.xml"), result=Path("b"), pdf=Path("a.pdf")
+    )
+    assert str(Path("t") / "bcprov-jdk15-1.44.jar") in cmd[3].split(os.pathsep)
+    assert "tools/bcprov-jdk15-1.44.jar" in {s.file for s in fetch.sources().values()}

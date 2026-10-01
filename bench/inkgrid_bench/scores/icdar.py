@@ -17,12 +17,14 @@ MAIN = "at.ac.tuwien.dbai.pdfwrap.MeasureRecognitionPerformance"
 # The jar's comparators predate Java 7's TimSort, which rejects them on some pages (practice
 # eu-014); every run uses the merge sort they were written for.
 LEGACY_SORT = "-Djava.util.Arrays.useLegacyMergeSort=true"
-# Region mode reads the PDF and needs these beside the jar (the jar bundles PDFBox 1.8.2 only).
+# Region mode reads the PDF and needs these beside the jar (the jar bundles PDFBox 1.8.2 only);
+# PDFBox opens an encrypted PDF (held-out tfex-usd) only with the BouncyCastle its pom names, 1.44.
 CLASSPATH = (
     "dataset-tools-20180206.jar",
     "jai-1_1_3/lib/jai_core.jar",
     "fontbox-1.8.2.jar",
     "commons-collections-3.2.2.jar",
+    "bcprov-jdk15-1.44.jar",
 )
 
 # Not anchored to a line start: the jar prints ground-truth warnings to stdout without a newline.

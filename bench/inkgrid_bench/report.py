@@ -210,6 +210,16 @@ DATASETS: dict[str, tuple[str, tuple[tuple[str, tuple[MetricSpec, ...]], ...]]] 
     ),
 }
 """Every dataset a report knows, in its section order; a run reports those it holds."""
+NOTES = {
+    "Cell character error rate": (
+        "Cell CER counts a tool's glyph errors on the sampled cells (spec 16 section 5), each cell "
+        "against the closest cell of the tool's table matched to its table: it counts misread "
+        "characters and cell boundaries that cut or join text, but text that recurs in a table is "
+        "not checked for its place, and pooling over glyphs weighs a long cell more. Lower is "
+        "better, so a negative difference favours inkgrid.\n"
+    ),
+}
+"""What a metric group's numbers do and do not measure, printed under its tables."""
 SORIC_KEYS = (
     ("tp", "F1-bbox"),
     ("top", "F1-GriTS-Top"),
@@ -314,11 +324,14 @@ def heading(
                     "`docs/specs/16-held-out-fee-set.md`. **These documents are held out**: "
                     "exchange fee schedules chosen by a fixed rule after M5c's fixes were frozen, "
                     "read by inkgrid as the tuned run read (`src/inkgrid` as at `7f70dd6`), so its "
-                    "numbers are its reading of documents no fix has seen. Each table's ground "
-                    "truth was drafted from the page's rendering, never from inkgrid's reading, "
-                    "and verified by hand; the cell character error rate is over glyph-verified "
-                    "cells. "
-                    f"{documents} documents give wide intervals.{modes}\n"
+                    "numbers are its reading of documents no fix has seen. Each table's grid was "
+                    "drafted from the page's rendering, never from inkgrid's reading, and each "
+                    "cell's text is the PDF's own words as PyMuPDF reads them: the text layer "
+                    "inkgrid and the other text-layer tools read too, so their characters match "
+                    "the truth's wherever their cells do, and an OCR tool's need not. The user "
+                    "verified every table, and none of the 200 cells whose glyphs were checked "
+                    "needed a "
+                    f"correction. {documents} documents give wide intervals.{modes}\n"
                 ),
             ]
         case _:
@@ -359,6 +372,8 @@ def document(
                 markdown_table(scored, specs),
                 markdown_differences(scored, specs),
             ]
+            if name in NOTES:
+                parts.append(NOTES[name])
             if CHECK in counts[dataset]:
                 check = score(
                     {CHECK: counts[dataset][CHECK]}, specs, baseline=None, resamples=resamples

@@ -922,5 +922,10 @@
   "date": "2026-10-01",
   "grids": "grids/adx-csd.json"
  },
- "verified": null
+ "verified": {
+  "by": "Abdul-Muizz",
+  "date": "2026-10-01",
+  "corrected": 0,
+  "how": "every table, each page's table count, the review notes, and the 200 glyph-sample cells checked in the review page and confirmed correct, with no corrections"
+ }
 }

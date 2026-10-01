@@ -1,0 +1,1202 @@
+[
+ {
+  "doc": "tfex-usd",
+  "table": 0,
+  "cell": 33,
+  "text": "3.00"
+ },
+ {
+  "doc": "adx-csd",
+  "table": 2,
+  "cell": 7,
+  "text": "13 & up"
+ },
+ {
+  "doc": "adx-csd",
+  "table": 1,
+  "cell": 5,
+  "text": "AED 200 for the first 20 pages, AED 20 each additional page. With maximum of AED 5,000"
+ },
+ {
+  "doc": "asx-trade",
+  "table": 0,
+  "cell": 73,
+  "text": "Centre Point"
+ },
+ {
+  "doc": "asx-trade",
+  "table": 0,
+  "cell": 65,
+  "text": "0.50 Basis Points"
+ },
+ {
+  "doc": "psx-trading-fee",
+  "table": 2,
+  "cell": 42,
+  "text": "Fixed 1 basis point (0.0100%)"
+ },
+ {
+  "doc": "asx-trade",
+  "table": 1,
+  "cell": 43,
+  "text": "Equities Sweep CentrePoint Trade Fee - Standard User"
+ },
+ {
+  "doc": "jpx-participant",
+  "table": 1,
+  "cell": 11,
+  "text": "Fee Rate"
+ },
+ {
+  "doc": "jpx-participant",
+  "table": 4,
+  "cell": 14,
+  "text": "JPY 5"
+ },
+ {
+  "doc": "bvb-participants",
+  "table": 2,
+  "cell": 5,
+  "text": "Trading fee for government securities for retail investors, applied per trade"
+ },
+ {
+  "doc": "tfex-usd",
+  "table": 0,
+  "cell": 79,
+  "text": "Brent Crude Oil Futures"
+ },
+ {
+  "doc": "asx-trade",
+  "table": 1,
+  "cell": 25,
+  "text": "Interest Rate Securities Preferenced Centre Point Trade Fee - Standard User"
+ },
+ {
+  "doc": "nzx-clearing",
+  "table": 3,
+  "cell": 3,
+  "text": "Late Elections and Claims fee [CHO830]"
+ },
+ {
+  "doc": "psx-trading-fee",
+  "table": 4,
+  "cell": 18,
+  "text": "On Purchase and Sale Value in lieu of Brokerage Commission"
+ },
+ {
+  "doc": "asx-trade",
+  "table": 0,
+  "cell": 11,
+  "text": "0.075 Basis Points"
+ },
+ {
+  "doc": "bist-data",
+  "table": 8,
+  "cell": 0,
+  "text": "b. MKK Monthly Distribution Fixed Fees"
+ },
+ {
+  "doc": "tsx-trading",
+  "table": 4,
+  "cell": 2,
+  "text": "1 Gb Connectivity (Demarcation)25"
+ },
+ {
+  "doc": "bvb-participants",
+  "table": 2,
+  "cell": 13,
+  "text": "RON 0.95"
+ },
+ {
+  "doc": "adx-csd",
+  "table": 0,
+  "cell": 9,
+  "text": "Founders Transfer"
+ },
+ {
+  "doc": "tsx-trading",
+  "table": 3,
+  "cell": 17,
+  "text": "$0.0027"
+ },
+ {
+  "doc": "asx-trade",
+  "table": 1,
+  "cell": 71,
+  "text": "Monthly"
+ },
+ {
+  "doc": "nzx-clearing",
+  "table": 5,
+  "cell": 16,
+  "text": "$5.53 (per trade)"
+ },
+ {
+  "doc": "asx-trade",
+  "table": 0,
+  "cell": 62,
+  "text": "0.50 Basis Points Per Trade Per Side, plus GST"
+ },
+ {
+  "doc": "nzx-clearing",
+  "table": 7,
+  "cell": 12,
+  "text": "Priority Rate 3 (Decisions required in 2 business days or less) [CHO208]"
+ },
+ {
+  "doc": "tfex-usd",
+  "table": 0,
+  "cell": 47,
+  "text": "0.50"
+ },
+ {
+  "doc": "asx-trade",
+  "table": 0,
+  "cell": 45,
+  "text": "0.31 Basis Points"
+ },
+ {
+  "doc": "bist-data",
+  "table": 2,
+  "cell": 20,
+  "text": "SASE Non-Display Usage, Derived Data"
+ },
+ {
+  "doc": "asx-trade",
+  "table": 1,
+  "cell": 40,
+  "text": "1-Apr-13"
+ },
+ {
+  "doc": "b3-equities",
+  "table": 2,
+  "cell": 11,
+  "text": "0.0100%"
+ },
+ {
+  "doc": "jpx-participant",
+  "table": 3,
+  "cell": 27,
+  "text": "TOPIX Options / JPX-Nikkei 400 Options / TOPIX Banks Index Options"
+ },
+ {
+  "doc": "nzx-clearing",
+  "table": 2,
+  "cell": 1,
+  "text": "Fees"
+ },
+ {
+  "doc": "bvb-participants",
+  "table": 2,
+  "cell": 6,
+  "text": "RON 1"
+ },
+ {
+  "doc": "luxse-listing",
+  "table": 0,
+  "cell": 14,
+  "text": "Subsequent line"
+ },
+ {
+  "doc": "tsx-trading",
+  "table": 1,
+  "cell": 33,
+  "text": "150"
+ },
+ {
+  "doc": "bvb-participants",
+  "table": 0,
+  "cell": 32,
+  "text": "L2 Top10: Market Data Receiver (via Arena GateWay or Arena FIX) L1 market data + L2 top 10 Market By Price"
+ },
+ {
+  "doc": "nzx-clearing",
+  "table": 7,
+  "cell": 14,
+  "text": "24,25"
+ },
+ {
+  "doc": "psx-trading-fee",
+  "table": 2,
+  "cell": 33,
+  "text": "Deliverable Futures Contract Market \u2013 Squared Transaction"
+ },
+ {
+  "doc": "tsx-trading",
+  "table": 1,
+  "cell": 23,
+  "text": "280"
+ },
+ {
+  "doc": "jpx-participant",
+  "table": 2,
+  "cell": 5,
+  "text": "For Exercise"
+ },
+ {
+  "doc": "tsx-trading",
+  "table": 6,
+  "cell": 10,
+  "text": "Direct \u2013 own private content only"
+ },
+ {
+  "doc": "tfex-usd",
+  "table": 0,
+  "cell": 63,
+  "text": "35.00"
+ },
+ {
+  "doc": "tsx-trading",
+  "table": 3,
+  "cell": 5,
+  "text": "Interlisted Equities6"
+ },
+ {
+  "doc": "bist-data",
+  "table": 2,
+  "cell": 22,
+  "text": "Free of Charge"
+ },
+ {
+  "doc": "tsx-trading",
+  "table": 1,
+  "cell": 15,
+  "text": "120"
+ },
+ {
+  "doc": "adx-csd",
+  "table": 2,
+  "cell": 19,
+  "text": "0.5 for each line, minimum of AED 400, Maximum of AED 15,000"
+ },
+ {
+  "doc": "tsx-trading",
+  "table": 6,
+  "cell": 1,
+  "text": "TSX"
+ },
+ {
+  "doc": "bvb-participants",
+  "table": 2,
+  "cell": 1,
+  "text": "Trading fee for government securities (except the government securities for retail investors), applied to the value of the trade"
+ },
+ {
+  "doc": "asx-trade",
+  "table": 1,
+  "cell": 77,
+  "text": "Monthly"
+ },
+ {
+  "doc": "tsx-trading",
+  "table": 3,
+  "cell": 4,
+  "text": "Non-Interlisted Equities"
+ },
+ {
+  "doc": "asx-trade",
+  "table": 1,
+  "cell": 76,
+  "text": "0.31 Basis Points Per Trade Per Side, Capped at $75, plus GST"
+ },
+ {
+  "doc": "asx-trade",
+  "table": 1,
+  "cell": 75,
+  "text": "Structured Products Iceberg Trade Fee"
+ },
+ {
+  "doc": "tsx-trading",
+  "table": 3,
+  "cell": 21,
+  "text": "($0.0013)"
+ },
+ {
+  "doc": "b3-equities",
+  "table": 0,
+  "cell": 26,
+  "text": "BRL 140,000,000.00"
+ },
+ {
+  "doc": "tsx-trading",
+  "table": 6,
+  "cell": 0,
+  "text": "Product"
+ },
+ {
+  "doc": "tsx-trading",
+  "table": 2,
+  "cell": 3,
+  "text": "Points"
+ },
+ {
+  "doc": "psx-trading-fee",
+  "table": 2,
+  "cell": 46,
+  "text": "Minimum 7 basis points (0.0700%)"
+ },
+ {
+  "doc": "tsx-trading",
+  "table": 5,
+  "cell": 2,
+  "text": "General Test Environment (GTE) only"
+ },
+ {
+  "doc": "bist-data",
+  "table": 6,
+  "cell": 15,
+  "text": "Free of Charge"
+ },
+ {
+  "doc": "asx-trade",
+  "table": 0,
+  "cell": 29,
+  "text": "Monthly"
+ },
+ {
+  "doc": "psx-trading-fee",
+  "table": 3,
+  "cell": 19,
+  "text": "3.50"
+ },
+ {
+  "doc": "psx-trading-fee",
+  "table": 3,
+  "cell": 24,
+  "text": "Rs.100,000/ - Settlement Value"
+ },
+ {
+  "doc": "bist-data",
+  "table": 3,
+  "cell": 7,
+  "text": "100"
+ },
+ {
+  "doc": "tsx-trading",
+  "table": 1,
+  "cell": 18,
+  "text": "180"
+ },
+ {
+  "doc": "tsx-trading",
+  "table": 2,
+  "cell": 10,
+  "text": "93%"
+ },
+ {
+  "doc": "bvb-participants",
+  "table": 1,
+  "cell": 4,
+  "text": "3.1"
+ },
+ {
+  "doc": "bist-data",
+  "table": 2,
+  "cell": 23,
+  "text": "Free of Charge"
+ },
+ {
+  "doc": "tsx-trading",
+  "table": 5,
+  "cell": 5,
+  "text": "$2,500 per test"
+ },
+ {
+  "doc": "tfex-usd",
+  "table": 0,
+  "cell": 97,
+  "text": "14.00"
+ },
+ {
+  "doc": "psx-trading-fee",
+  "table": 4,
+  "cell": 0,
+  "text": "Market Name"
+ },
+ {
+  "doc": "psx-trading-fee",
+  "table": 3,
+  "cell": 2,
+  "text": "Basis"
+ },
+ {
+  "doc": "asx-trade",
+  "table": 1,
+  "cell": 55,
+  "text": "Dual Post Centre Point Trade Fee"
+ },
+ {
+  "doc": "psx-trading-fee",
+  "table": 1,
+  "cell": 5,
+  "text": "Schedule for Trading Fee"
+ },
+ {
+  "doc": "adx-csd",
+  "table": 1,
+  "cell": 21,
+  "text": "Quarterly Share Book Weekly Trade Log (Report)"
+ },
+ {
+  "doc": "bvb-participants",
+  "table": 3,
+  "cell": 3,
+  "text": "Observations"
+ },
+ {
+  "doc": "tfex-usd",
+  "table": 0,
+  "cell": 81,
+  "text": "10.50"
+ },
+ {
+  "doc": "adx-csd",
+  "table": 1,
+  "cell": 19,
+  "text": "Monthly Share Book Weekly Trade Log (Report)"
+ },
+ {
+  "doc": "asx-trade",
+  "table": 1,
+  "cell": 8,
+  "text": "0.50 Basis Points Per Trade Per Side, plus GST"
+ },
+ {
+  "doc": "tfex-usd",
+  "table": 0,
+  "cell": 19,
+  "text": "3"
+ },
+ {
+  "doc": "jpx-participant",
+  "table": 4,
+  "cell": 13,
+  "text": "trading contract"
+ },
+ {
+  "doc": "adx-csd",
+  "table": 1,
+  "cell": 2,
+  "text": "Pledge Report"
+ },
+ {
+  "doc": "b3-equities",
+  "table": 0,
+  "cell": 44,
+  "text": "2,176.24"
+ },
+ {
+  "doc": "psx-trading-fee",
+  "table": 3,
+  "cell": 0,
+  "text": "Market Name"
+ },
+ {
+  "doc": "bist-data",
+  "table": 5,
+  "cell": 10,
+  "text": "150"
+ },
+ {
+  "doc": "bist-data",
+  "table": 5,
+  "cell": 5,
+  "text": "60"
+ },
+ {
+  "doc": "asx-trade",
+  "table": 0,
+  "cell": 2,
+  "text": "Charge Basis"
+ },
+ {
+  "doc": "luxse-listing",
+  "table": 0,
+  "cell": 2,
+  "text": "1,500"
+ },
+ {
+  "doc": "adx-csd",
+  "table": 0,
+  "cell": 14,
+  "text": "0.20% of MKT value using previous day closing price with a minimum of AED 25 from one side"
+ },
+ {
+  "doc": "asx-trade",
+  "table": 1,
+  "cell": 83,
+  "text": "Monthly"
+ },
+ {
+  "doc": "asx-trade",
+  "table": 0,
+  "cell": 63,
+  "text": "Monthly"
+ },
+ {
+  "doc": "asx-trade",
+  "table": 0,
+  "cell": 15,
+  "text": "Monthly"
+ },
+ {
+  "doc": "adx-csd",
+  "table": 1,
+  "cell": 3,
+  "text": "AED 5 / shareholder as a soft copy with a minimum of AED 300 and a maximum of AED 5,000 And/ Or AED 200 for the first 20 pages and another AED 20 for each additional page if a hard copy is requested"
+ },
+ {
+  "doc": "jpx-participant",
+  "table": 2,
+  "cell": 7,
+  "text": "Fee Rate"
+ },
+ {
+  "doc": "psx-trading-fee",
+  "table": 1,
+  "cell": 0,
+  "text": "Schedule of Charges"
+ },
+ {
+  "doc": "tsx-trading",
+  "table": 1,
+  "cell": 12,
+  "text": "B10"
+ },
+ {
+  "doc": "b3-equities",
+  "table": 2,
+  "cell": 7,
+  "text": "0.0040%"
+ },
+ {
+  "doc": "jpx-participant",
+  "table": 1,
+  "cell": 18,
+  "text": "JPY 87.5 (*4)"
+ },
+ {
+  "doc": "adx-csd",
+  "table": 2,
+  "cell": 8,
+  "text": "40,000 / Year"
+ },
+ {
+  "doc": "tsx-trading",
+  "table": 3,
+  "cell": 30,
+  "text": "($0.0028)"
+ },
+ {
+  "doc": "asx-trade",
+  "table": 0,
+  "cell": 60,
+  "text": "02900044"
+ },
+ {
+  "doc": "tsx-trading",
+  "table": 6,
+  "cell": 26,
+  "text": "$1,000"
+ },
+ {
+  "doc": "asx-trade",
+  "table": 0,
+  "cell": 34,
+  "text": "02900043"
+ },
+ {
+  "doc": "jpx-participant",
+  "table": 2,
+  "cell": 9,
+  "text": "Fee Rate"
+ },
+ {
+  "doc": "tfex-usd",
+  "table": 0,
+  "cell": 38,
+  "text": "1.50"
+ },
+ {
+  "doc": "tsx-trading",
+  "table": 4,
+  "cell": 5,
+  "text": "$1,725 for first primary connection $1,150 for additional primary connection $1,150 for disaster recovery connection"
+ },
+ {
+  "doc": "asx-trade",
+  "table": 1,
+  "cell": 3,
+  "text": "Charge Frequency"
+ },
+ {
+  "doc": "asx-trade",
+  "table": 1,
+  "cell": 0,
+  "text": "Product"
+ },
+ {
+  "doc": "psx-trading-fee",
+  "table": 3,
+  "cell": 20,
+  "text": "Trade Rectification - transaction"
+ },
+ {
+  "doc": "psx-trading-fee",
+  "table": 2,
+  "cell": 44,
+  "text": "11"
+ },
+ {
+  "doc": "tsx-trading",
+  "table": 0,
+  "cell": 6,
+  "text": "All other orders"
+ },
+ {
+  "doc": "tfex-usd",
+  "table": 0,
+  "cell": 74,
+  "text": "5.00"
+ },
+ {
+  "doc": "nzx-clearing",
+  "table": 6,
+  "cell": 17,
+  "text": "12"
+ },
+ {
+  "doc": "bist-data",
+  "table": 0,
+  "cell": 16,
+  "text": "250 TL / (N/A)"
+ },
+ {
+  "doc": "tfex-usd",
+  "table": 0,
+  "cell": 94,
+  "text": "-"
+ },
+ {
+  "doc": "psx-trading-fee",
+  "table": 2,
+  "cell": 2,
+  "text": "*MINIMUM RATE"
+ },
+ {
+  "doc": "asx-trade",
+  "table": 1,
+  "cell": 19,
+  "text": "Equities Preferenced Centre Point Trade Fee - Standard User"
+ },
+ {
+  "doc": "bvb-participants",
+  "table": 2,
+  "cell": 9,
+  "text": "All structured products, with the exceptions mentioned below: Regular market: Buy: 0.04% Sell: 0.10% Deal market: Buy: 0.05% Sell: 0.12% The structured products having as underlying fixed-income financial instruments or tradable UCITS (ETFs) that invest in fixed-income financial instruments: Buy: 0.01% Sell: 0.03%"
+ },
+ {
+  "doc": "jpx-participant",
+  "table": 0,
+  "cell": 14,
+  "text": "trading contract (*2)"
+ },
+ {
+  "doc": "tfex-usd",
+  "table": 0,
+  "cell": 8,
+  "text": "SET50 Index Futures"
+ },
+ {
+  "doc": "psx-trading-fee",
+  "table": 2,
+  "cell": 15,
+  "text": "On every buy and sell transaction which is not squared during the same Trading Day."
+ },
+ {
+  "doc": "psx-trading-fee",
+  "table": 4,
+  "cell": 25,
+  "text": "Deliverable Futures Contract Market- contract"
+ },
+ {
+  "doc": "tsx-trading",
+  "table": 3,
+  "cell": 9,
+  "text": "Tier A"
+ },
+ {
+  "doc": "adx-csd",
+  "table": 2,
+  "cell": 12,
+  "text": "AED 200 for the first 20 pages, AED 20 each additional page. With maximum of AED 5,000"
+ },
+ {
+  "doc": "tsx-trading",
+  "table": 0,
+  "cell": 1,
+  "text": "Per-Order Fee Cap"
+ },
+ {
+  "doc": "luxse-listing",
+  "table": 0,
+  "cell": 5,
+  "text": "Per year"
+ },
+ {
+  "doc": "nzx-clearing",
+  "table": 3,
+  "cell": 2,
+  "text": "Notes"
+ },
+ {
+  "doc": "bvb-participants",
+  "table": 3,
+  "cell": 6,
+  "text": "According to the Market Makers Pilot Program *: Level 0 \u2013 applicable for all shares: Buy / Sell: 0.01%"
+ },
+ {
+  "doc": "tfex-usd",
+  "table": 0,
+  "cell": 31,
+  "text": "10.00"
+ },
+ {
+  "doc": "asx-trade",
+  "table": 0,
+  "cell": 32,
+  "text": "2.3"
+ },
+ {
+  "doc": "nzx-clearing",
+  "table": 4,
+  "cell": 1,
+  "text": "Fees"
+ },
+ {
+  "doc": "tfex-usd",
+  "table": 0,
+  "cell": 25,
+  "text": "BANK Index Futures"
+ },
+ {
+  "doc": "adx-csd",
+  "table": 2,
+  "cell": 15,
+  "text": "\u2022 Ownership letter \u2022 To whom it may concern letter \u2022 Audit confirmation letter"
+ },
+ {
+  "doc": "psx-trading-fee",
+  "table": 2,
+  "cell": 17,
+  "text": "Fixed Income ETF \u2013 Intra-Day Squared"
+ },
+ {
+  "doc": "asx-trade",
+  "table": 0,
+  "cell": 1,
+  "text": "Service"
+ },
+ {
+  "doc": "adx-csd",
+  "table": 1,
+  "cell": 15,
+  "text": "AED 100,000 ***"
+ },
+ {
+  "doc": "psx-trading-fee",
+  "table": 2,
+  "cell": 27,
+  "text": "Minimum commission on Ready Market purchase or sale only. No minimum commission on Margin Trading System, Margin Financing System market and Morabaha Share Financing transaction."
+ },
+ {
+  "doc": "asx-trade",
+  "table": 2,
+  "cell": 28,
+  "text": "1-Nov-14"
+ },
+ {
+  "doc": "asx-trade",
+  "table": 2,
+  "cell": 3,
+  "text": "Charge Frequency"
+ },
+ {
+  "doc": "tsx-trading",
+  "table": 6,
+  "cell": 7,
+  "text": "$3,000"
+ },
+ {
+  "doc": "nzx-clearing",
+  "table": 7,
+  "cell": 4,
+  "text": "$445"
+ },
+ {
+  "doc": "jpx-participant",
+  "table": 3,
+  "cell": 17,
+  "text": "0.5 bps (*9)"
+ },
+ {
+  "doc": "tsx-trading",
+  "table": 6,
+  "cell": 21,
+  "text": "$4,000"
+ },
+ {
+  "doc": "bvb-participants",
+  "table": 3,
+  "cell": 1,
+  "text": "Name"
+ },
+ {
+  "doc": "psx-trading-fee",
+  "table": 4,
+  "cell": 1,
+  "text": "Rate in %age"
+ },
+ {
+  "doc": "asx-trade",
+  "table": 2,
+  "cell": 19,
+  "text": "Monthly"
+ },
+ {
+  "doc": "tsx-trading",
+  "table": 3,
+  "cell": 2,
+  "text": "<$1.00"
+ },
+ {
+  "doc": "jpx-participant",
+  "table": 2,
+  "cell": 15,
+  "text": "trading contract for obligations assumed by JSCC"
+ },
+ {
+  "doc": "adx-csd",
+  "table": 1,
+  "cell": 14,
+  "text": "Monthly Share Book Daily Trade Log (Report)"
+ },
+ {
+  "doc": "luxse-listing",
+  "table": 1,
+  "cell": 11,
+  "text": "2\u2009nd line"
+ },
+ {
+  "doc": "jpx-participant",
+  "table": 3,
+  "cell": 32,
+  "text": "contract to be paid or received through options exercise or assignment"
+ },
+ {
+  "doc": "jpx-participant",
+  "table": 3,
+  "cell": 33,
+  "text": "JPY 10"
+ },
+ {
+  "doc": "tsx-trading",
+  "table": 0,
+  "cell": 0,
+  "text": "Order Type"
+ },
+ {
+  "doc": "tsx-trading",
+  "table": 5,
+  "cell": 4,
+  "text": "Base amount for weekend tests"
+ },
+ {
+  "doc": "b3-equities",
+  "table": 4,
+  "cell": 3,
+  "text": "0.00499%"
+ },
+ {
+  "doc": "tsx-trading",
+  "table": 1,
+  "cell": 4,
+  "text": "B2"
+ },
+ {
+  "doc": "bist-data",
+  "table": 0,
+  "cell": 2,
+  "text": "GKULKYD \u2013 BIST-KYD Indices"
+ },
+ {
+  "doc": "psx-trading-fee",
+  "table": 4,
+  "cell": 5,
+  "text": "Basis"
+ },
+ {
+  "doc": "psx-trading-fee",
+  "table": 2,
+  "cell": 34,
+  "text": "Minimum 3p or 0.15% whichever is higher"
+ },
+ {
+  "doc": "psx-trading-fee",
+  "table": 2,
+  "cell": 29,
+  "text": "Deliverable Futures Contract Market"
+ },
+ {
+  "doc": "luxse-listing",
+  "table": 0,
+  "cell": 0,
+  "text": "Listing fee"
+ },
+ {
+  "doc": "asx-trade",
+  "table": 1,
+  "cell": 78,
+  "text": "1-Jul-11"
+ },
+ {
+  "doc": "psx-trading-fee",
+  "table": 3,
+  "cell": 5,
+  "text": "Ready Market Trade"
+ },
+ {
+  "doc": "bist-data",
+  "table": 2,
+  "cell": 11,
+  "text": "100"
+ },
+ {
+  "doc": "bist-data",
+  "table": 0,
+  "cell": 12,
+  "text": "1,650 TL / (N/A)"
+ },
+ {
+  "doc": "b3-equities",
+  "table": 0,
+  "cell": 35,
+  "text": "0.00322%"
+ },
+ {
+  "doc": "luxse-listing",
+  "table": 0,
+  "cell": 12,
+  "text": "4\u2009th line"
+ },
+ {
+  "doc": "jpx-participant",
+  "table": 2,
+  "cell": 2,
+  "text": "Clearing Fee (*1)"
+ },
+ {
+  "doc": "bist-data",
+  "table": 5,
+  "cell": 9,
+  "text": "N/A"
+ },
+ {
+  "doc": "tsx-trading",
+  "table": 6,
+  "cell": 12,
+  "text": "$400"
+ },
+ {
+  "doc": "psx-trading-fee",
+  "table": 2,
+  "cell": 20,
+  "text": "5"
+ },
+ {
+  "doc": "tfex-usd",
+  "table": 0,
+  "cell": 93,
+  "text": "3.00"
+ },
+ {
+  "doc": "asx-trade",
+  "table": 1,
+  "cell": 15,
+  "text": "Monthly"
+ },
+ {
+  "doc": "nzx-clearing",
+  "table": 3,
+  "cell": 4,
+  "text": "$300.00"
+ },
+ {
+  "doc": "jpx-participant",
+  "table": 1,
+  "cell": 8,
+  "text": "Basis of Calculation"
+ },
+ {
+  "doc": "asx-trade",
+  "table": 1,
+  "cell": 10,
+  "text": "1-Jul-12"
+ },
+ {
+  "doc": "asx-trade",
+  "table": 1,
+  "cell": 45,
+  "text": "Monthly"
+ },
+ {
+  "doc": "psx-trading-fee",
+  "table": 3,
+  "cell": 11,
+  "text": "3.90"
+ },
+ {
+  "doc": "nzx-clearing",
+  "table": 1,
+  "cell": 2,
+  "text": "Notes"
+ },
+ {
+  "doc": "tfex-usd",
+  "table": 0,
+  "cell": 10,
+  "text": "24.50"
+ },
+ {
+  "doc": "b3-equities",
+  "table": 2,
+  "cell": 2,
+  "text": "Registration fee"
+ },
+ {
+  "doc": "tfex-usd",
+  "table": 0,
+  "cell": 56,
+  "text": "5"
+ },
+ {
+  "doc": "tfex-usd",
+  "table": 0,
+  "cell": 0,
+  "text": "Derivatives contracts"
+ },
+ {
+  "doc": "nzx-clearing",
+  "table": 7,
+  "cell": 5,
+  "text": "24,25"
+ },
+ {
+  "doc": "b3-equities",
+  "table": 4,
+  "cell": 4,
+  "text": "0.01801%"
+ },
+ {
+  "doc": "bist-data",
+  "table": 2,
+  "cell": 19,
+  "text": "50"
+ },
+ {
+  "doc": "psx-trading-fee",
+  "table": 3,
+  "cell": 17,
+  "text": "3.50"
+ },
+ {
+  "doc": "b3-equities",
+  "table": 0,
+  "cell": 12,
+  "text": "0.44"
+ },
+ {
+  "doc": "tfex-usd",
+  "table": 0,
+  "cell": 54,
+  "text": "1.50"
+ },
+ {
+  "doc": "psx-trading-fee",
+  "table": 1,
+  "cell": 1,
+  "text": "Fee Type"
+ },
+ {
+  "doc": "nzx-clearing",
+  "table": 7,
+  "cell": 1,
+  "text": "Total Hourly Charge"
+ },
+ {
+  "doc": "tfex-usd",
+  "table": 0,
+  "cell": 14,
+  "text": "SET50 Index Options"
+ },
+ {
+  "doc": "luxse-listing",
+  "table": 1,
+  "cell": 16,
+  "text": "550"
+ },
+ {
+  "doc": "nzx-clearing",
+  "table": 0,
+  "cell": 16,
+  "text": "$0.28"
+ },
+ {
+  "doc": "jpx-participant",
+  "table": 0,
+  "cell": 10,
+  "text": "Basis of Calculation"
+ },
+ {
+  "doc": "nzx-clearing",
+  "table": 0,
+  "cell": 18,
+  "text": "CSN Portfolio Balance Enquiry per line item returned [SRI370]"
+ },
+ {
+  "doc": "asx-trade",
+  "table": 0,
+  "cell": 75,
+  "text": "Equities Centre Point Trade Fee"
+ },
+ {
+  "doc": "asx-trade",
+  "table": 0,
+  "cell": 69,
+  "text": "Monthly"
+ },
+ {
+  "doc": "nzx-clearing",
+  "table": 4,
+  "cell": 3,
+  "text": "Derivatives Market - Individual Clearing Participant [CHO153 / CHO157]"
+ },
+ {
+  "doc": "b3-equities",
+  "table": 2,
+  "cell": 6,
+  "text": "0.0080%"
+ },
+ {
+  "doc": "psx-trading-fee",
+  "table": 3,
+  "cell": 22,
+  "text": "Corporate Debt Securities Market"
+ },
+ {
+  "doc": "bvb-participants",
+  "table": 1,
+  "cell": 18,
+  "text": "Regular market: Buy: 0.04% Sell: 0.10% Deal market: Buy: 0.05% Sell: 0.12%"
+ }
+]

@@ -179,10 +179,12 @@ def deadline(pages: int) -> float:
 
 def _pump(stream: IO[str] | None, put: Callable[[str], None], end: Callable[[], None]) -> None:
     """Every line of a child's stream, then the end: a full pipe never blocks the child."""
-    if stream is not None:
-        for line in stream:
-            put(line)
-    end()
+    try:
+        if stream is not None:
+            for line in stream:
+                put(line)
+    finally:
+        end()
 
 
 def _await(
@@ -211,7 +213,8 @@ class _Worker:
             env=env,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            text=True,
+            encoding="utf-8",
+            errors="backslashreplace",  # no byte a tool prints can stop the reading (spec 15 s. 3)
             start_new_session=True,
         )
         self.lines: queue.Queue[str | None] = queue.Queue()
@@ -262,12 +265,14 @@ def read_batch(
     deadline: Callable[[int], float] = deadline,
     startup: float = BATCH_STARTUP,
     env: dict[str, str] | None = None,
+    raster: bool = False,
 ) -> Iterator[tuple[Path, NDocument]]:
     """Each PDF's reading by a heavy tool, in order, as each finishes (spec 15 section 3).
 
     One process reads them all, its models loaded once. A document past its deadline, or one its
     process dies on, fails alone; a new process takes the documents after it, so a finished
-    document is never read again.
+    document is never read again. With `raster`, the tool reads an image-only copy of each PDF;
+    the frames and the reading are the original's.
     """
     pending = list(pdfs)
     while pending:
@@ -278,9 +283,14 @@ def read_batch(
         with _scratch() as tmp:
             outs = [tmp / f"{i}.json" for i in range(len(pending))]
             manifest = tmp / "manifest.jsonl"
+            given = (
+                [pages.image_only(p, tmp / f"{i}.pdf") for i, p in enumerate(pending)]
+                if raster
+                else pending
+            )
             entries = [
                 {"pdf": str(p), "out": str(o), "pages": [[*f.box, f.rotation] for f in fr]}
-                for p, o, fr in zip(pending, outs, frames, strict=True)
+                for p, o, fr in zip(given, outs, frames, strict=True)
             ]
             manifest.write_text("".join(json.dumps(e) + "\n" for e in entries), encoding="utf-8")
             worker = _Worker(cmd, manifest, _env() if env is None else env)
@@ -370,22 +380,41 @@ class Tool:
     batch: bool = False
     index: str | None = None
     tesseract: bool = False
+    raster: bool = False  # reads an image-only copy of each PDF (spec 15 section 3)
+    exclude_newer: str | None = None  # every dependency as of this date (spec 15 section 1)
 
 
 def tools(cfg: dict[str, Any]) -> list[Tool]:
     """Spec 12 section 2's tools and the ground truth read as a tool (a check), then spec 15's."""
     pins = cfg["tool"]
-    docling, torch = f"docling=={pins['docling']}", pins["torch-index"]
+    docling, torch, frozen = (
+        f"docling=={pins['docling']}",
+        pins["torch-index"],
+        pins["exclude-newer"],
+    )
     return [
         Tool("inkgrid", "inkgrid_read", None),
         Tool("pdfplumber", "pdfplumber_tables", f"pdfplumber=={pins['pdfplumber']}"),
         Tool("pymupdf", "pymupdf_tables", f"pymupdf=={pins['pymupdf']}"),
         Tool("camelot", "camelot_lattice", f"camelot-py=={pins['camelot-py']}"),
         Tool("ground-truth", "ground_truth", None, ("competition", "practice")),
-        Tool("docling", "docling_tables", docling, batch=True, index=torch),
-        Tool("docling-ocr", "docling_ocr_tables", docling, batch=True, index=torch),
+        Tool("docling", "docling_tables", docling, batch=True, index=torch, exclude_newer=frozen),
         Tool(
-            "marker", "marker_tables", f"marker-pdf=={pins['marker-pdf']}", batch=True, index=torch
+            "docling-ocr",
+            "docling_tables",
+            docling,
+            batch=True,
+            index=torch,
+            raster=True,
+            exclude_newer=frozen,
+        ),
+        Tool(
+            "marker",
+            "marker_tables",
+            f"marker-pdf=={pins['marker-pdf']}",
+            batch=True,
+            index=torch,
+            exclude_newer=frozen,
         ),
         Tool(
             "unstructured",
@@ -394,18 +423,35 @@ def tools(cfg: dict[str, Any]) -> list[Tool]:
             batch=True,
             index=torch,
             tesseract=True,
+            exclude_newer=frozen,
         ),
         Tool("inkgrid-ocr", "inkgrid_ocr", None),
     ]
 
 
 def isolated(
-    packages: Sequence[str], python: str = TOOL_PYTHON, index: str | None = None
+    packages: Sequence[str],
+    python: str = TOOL_PYTHON,
+    index: str | None = None,
+    exclude_newer: str | None = None,
 ) -> list[str]:
-    """`uv run` in a fresh environment holding only `packages`, PyTorch from `index` if given."""
+    """`uv run` in a fresh environment holding only `packages`.
+
+    PyTorch comes from `index` if given, and every dependency as of `exclude_newer` if given.
+    """
     withs = [arg for p in packages for arg in ("--with", p)]
     extra = [] if index is None else ["--index", index, "--index-strategy", "unsafe-best-match"]
+    if exclude_newer is not None:
+        extra += ["--exclude-newer", exclude_newer]
     return ["uv", "run", "--isolated", "--no-project", "--python", python, *extra, *withs]
+
+
+def _environment(tool: Tool) -> list[str]:
+    """The tool's environment, exactly as the run builds it."""
+    if tool.package is None:
+        msg = f"{tool.name} runs in this environment, not an isolated one"
+        raise ValueError(msg)
+    return isolated([tool.package], index=tool.index, exclude_newer=tool.exclude_newer)
 
 
 def command(tool: Tool) -> list[str]:
@@ -413,7 +459,7 @@ def command(tool: Tool) -> list[str]:
     module = ["-m", f"inkgrid_bench.adapters.{tool.module}"]
     if tool.package is None:
         return [*NICE, sys.executable, *module]
-    return [*NICE, *isolated([tool.package], index=tool.index), "python", *module]
+    return [*NICE, *_environment(tool), "python", *module]
 
 
 def tool_env(tool: Tool) -> dict[str, str]:
@@ -526,7 +572,14 @@ def _readings(
             yield doc, read_document(cmd, doc.pdf, tool=tool.name, version=ver)
         return
     by_pdf = {doc.pdf: doc for doc in todo}
-    batch = read_batch(cmd, [d.pdf for d in todo], tool=tool.name, version=ver, env=tool_env(tool))
+    batch = read_batch(
+        cmd,
+        [d.pdf for d in todo],
+        tool=tool.name,
+        version=ver,
+        env=tool_env(tool),
+        raster=tool.raster,
+    )
     for pdf, reading in batch:
         yield by_pdf[pdf], reading
 
@@ -859,8 +912,10 @@ def environments(cfg: dict[str, Any]) -> dict[str, Any]:
     for tool in tools(cfg):
         if tool.package is None:
             continue
-        _, stdout, _ = run_process([*isolated([tool.package]), "python", "-c", dump], timeout=600)
+        _, stdout, _ = run_process([*_environment(tool), "python", "-c", dump], timeout=600)
         out[tool.name] = json.loads(stdout)
+    _, stdout, _ = run_process([str(TESSERACT / "bin" / "tesseract"), "--version"], timeout=60)
+    out["tesseract"] = stdout.strip().splitlines()
     _, stdout, _ = run_process([sys.executable, "-c", dump], timeout=60)
     out["inkgrid"] = json.loads(stdout)
     _, _, java = run_process([str(JAVA), "-version"], timeout=60)

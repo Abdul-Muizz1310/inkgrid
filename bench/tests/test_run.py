@@ -156,6 +156,7 @@ LOG = Path(sys.argv[0]).with_suffix(".log")
 def read(pdf, frames):
     with LOG.open("a") as log:
         log.write(pdf.stem + "\\n")
+    ALWAYS
     if pdf.stem == "b":
         BEHAVIOUR
     return [NTable(page=1, bbox=(0, 0, 1, 1), cells=(NCell(0, 0, text=pdf.stem),))]
@@ -166,10 +167,10 @@ raise SystemExit(batch(read))
 
 
 def batch_run(
-    tmp_path: Path, behaviour: str
+    tmp_path: Path, behaviour: str, always: str = "pass"
 ) -> tuple[list[tuple[str, str | None, tuple[str, ...]]], list[str]]:
     script = tmp_path / "adapter.py"
-    script.write_text(BATCH.replace("BEHAVIOUR", behaviour))
+    script.write_text(BATCH.replace("BEHAVIOUR", behaviour).replace("ALWAYS", always))
     pdfs = []
     for name in ("a", "b", "c"):
         pdf = tmp_path / f"{name}.pdf"
@@ -229,6 +230,12 @@ def test_TL1_the_heavy_competitors_and_the_ablation_are_tools() -> None:
         "docling==2.131.0", "docling==2.131.0", "marker-pdf==2.0.0", "unstructured[pdf]==0.27.10",
     ]  # fmt: skip
     assert all(found[t].batch for t in heavy)
+    assert found["docling-ocr"].module == "docling_tables"
+    assert [t for t in found if found[t].raster] == ["docling-ocr"]
+    for tool in heavy:
+        cmd = run.command(found[tool])
+        assert cmd[cmd.index("--exclude-newer") + 1] == "2026-10-01T00:00:00Z"
+    assert "--exclude-newer" not in run.command(found["camelot"])  # spec 12's tools unchanged
     assert not found["inkgrid-ocr"].batch
     assert found["inkgrid-ocr"].package is None
     cmd = run.command(found["docling"])
@@ -243,7 +250,7 @@ def test_BM4_the_read_stage_batches_a_heavy_tool_and_never_rereads(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     script = tmp_path / "adapter.py"
-    script.write_text(BATCH.replace("BEHAVIOUR", "pass"))
+    script.write_text(BATCH.replace("BEHAVIOUR", "pass").replace("ALWAYS", "pass"))
     docs = []
     for name in ("a", "b"):
         pdf = tmp_path / f"{name}.pdf"
@@ -259,3 +266,60 @@ def test_BM4_the_read_stage_batches_a_heavy_tool_and_never_rereads(
     texts = [NDocument.from_json(p.read_text()).tables[0].cells[0].text for p in saved]
     assert texts == ["a", "b"]
     assert script.with_suffix(".log").read_text().split() == ["a", "b"]  # never read again
+
+
+ALL_GOOD = [("a", None, ("a",)), ("b", None, ("b",)), ("c", None, ("c",))]
+
+
+def test_BM5_a_tools_stray_bytes_and_chatter_never_stall_the_batch(tmp_path: Path) -> None:
+    always = (
+        "if pdf.stem == 'a':\n"
+        "        os.write(2, b'font name \\xe9\\xff\\n')\n"
+        "    sys.stderr.write(('x' * 79 + '\\n') * 500)\n"
+        "    sys.stderr.flush()"
+    )
+    readings, reads = batch_run(tmp_path, "pass", always=always)
+    assert readings == ALL_GOOD
+    assert reads == ["a", "b", "c"]
+
+
+def test_BM6_an_unfinished_line_does_not_hide_a_documents_end(tmp_path: Path) -> None:
+    readings, reads = batch_run(tmp_path, "sys.stdout.write('progress 100%'); sys.stdout.flush()")
+    assert readings == ALL_GOOD
+    assert reads == ["a", "b", "c"]
+
+
+def test_RS1_the_image_only_copy_is_the_page_as_it_displays(tmp_path: Path) -> None:
+    import pymupdf  # noqa: PLC0415 - the check reads the copy
+
+    source = tmp_path / "turned.pdf"
+    source.write_bytes(pdf_factory.ruled_landscape())
+    copy = pages.image_only(source, tmp_path / "copy.pdf")
+    doc = pymupdf.open(copy)
+    assert len(doc) == 1
+    assert (doc[0].rect.width, doc[0].rect.height, doc[0].rotation) == (792.0, 612.0, 0)
+    assert doc[0].get_text().strip() == ""
+    assert len(doc[0].get_images()) == 1
+
+
+def test_EN1_the_environment_record_is_the_environment_that_ran(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    commands: list[list[str]] = []
+
+    def fake(cmd: list[str], *, timeout: float, cwd: Path | None = None) -> tuple[int, str, str]:
+        commands.append(list(cmd))
+        if cmd[0].endswith("tesseract"):
+            return 0, "tesseract 5.5.3\n leptonica-1.87.0\n", ""
+        if cmd[0].endswith("java"):
+            return 0, "", "openjdk 17\n"
+        return 0, '{"x": "1"}', ""
+
+    monkeypatch.setattr(run, "run_process", fake)
+    out = run.environments(run.config())
+    (docling,) = [
+        c for c in commands if "docling==2.131.0" in c and "docling_tables" not in " ".join(c)
+    ][:1]
+    assert docling[docling.index("--index") + 1] == "https://download.pytorch.org/whl/cpu"
+    assert docling[docling.index("--exclude-newer") + 1] == "2026-10-01T00:00:00Z"
+    assert out["tesseract"] == ["tesseract 5.5.3", " leptonica-1.87.0"]

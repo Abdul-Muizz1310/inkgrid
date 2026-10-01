@@ -240,12 +240,33 @@ type RunLabel = Literal["baseline", "tuned"]
 LABELS: dict[str, RunLabel] = {"baseline": "baseline", "tuned": "tuned"}
 
 
-def heading(label: RunLabel, *, head: str, date: str) -> list[str]:
-    """The report's title and first paragraph, which say whether inkgrid was tuned on these sets."""
+def _reading_modes(tools: Sequence[str]) -> str:
+    """What the tools read, and how the heavy tools are timed (spec 15 section 5); or nothing."""
+    ocr = [t for t in tools if t in OCR]
+    if not ocr:
+        return ""
+    parts = [f" {_named(ocr)} read the pages with OCR"]
+    if "docling" in tools:
+        parts.append(
+            "; docling OCRs only a page's regions without text, a page with no text layer included"
+        )
+    if "marker" in tools:
+        parts.append("; marker reads with OCR off, its tables built from the text layer")
+    parts.append(
+        "; every other tool reads the PDF's text layer. `inkgrid-ocr` is inkgrid with Tesseract's "
+        "words for its own. The heavy tools' seconds are a warm process's, its models loaded, and "
+        "a document that timed out has no seconds."
+    )
+    return "".join(parts)
+
+
+def heading(label: RunLabel, *, head: str, date: str, tools: Sequence[str] = ()) -> list[str]:
+    """The report's title and first paragraph: was inkgrid tuned, and what each tool read."""
     measured = (
         f"Measured on {date} at commit `{head}` by `bench/inkgrid_bench/run.py`, under the "
         "pre-registered protocol of `docs/specs/12-benchmark.md`."
     )
+    modes = _reading_modes(tools)
     match label:
         case "baseline":
             return [
@@ -254,7 +275,7 @@ def heading(label: RunLabel, *, head: str, date: str) -> list[str]:
                     f"{measured} **inkgrid's numbers are its baseline**: its reading as of M4, "
                     "before any fix for the reading errors found on these documents (DR-0023); the "
                     "one change since, from M5a, stops a crash on a Camelot table with no cells. "
-                    "Later runs are labelled as tuned on these documents.\n"
+                    f"Later runs are labelled as tuned on these documents.{modes}\n"
                 ),
             ]
         case "tuned":
@@ -266,7 +287,7 @@ def heading(label: RunLabel, *, head: str, date: str) -> list[str]:
                     "failures (specs 13 and 14, DR-0023), so they overstate how it reads "
                     "documents no fix has seen. The baseline run is the untuned reading; M5d's "
                     "held-out fee set is the test no fix has seen. The other tools are measured "
-                    "again, at their pinned versions.\n"
+                    f"again, at their pinned versions.{modes}\n"
                 ),
             ]
         case _:
@@ -283,8 +304,9 @@ def document(
 ) -> str:
     """The whole report: every dataset's tables, the checks, crashes, and inkgrid's defects."""
     counts = data["counts"]
+    held = [t for t in TOOLS if any(t in by_tool for by_tool in counts.values())]
     parts = [
-        *heading(label, head=head, date=date),
+        *heading(label, head=head, date=date, tools=held),
         (
             "Each cell is the point estimate and its 95% interval from 10,000 resamples of "
             "documents (seed 20260928). A difference marked `*` has an interval that excludes 0; "
@@ -292,14 +314,6 @@ def document(
             "check on the pipeline and on each metric's ceiling, not a competitor.\n"
         ),
     ]
-    held = [t for t in TOOLS if any(t in by_tool for by_tool in counts.values())]
-    ocr = [t for t in held if t in OCR]
-    if ocr:
-        parts.append(
-            f"{_named(ocr)} read the pages with OCR; every other tool reads the PDF's text layer. "
-            "`inkgrid-ocr` is inkgrid with Tesseract's words for its own: the text layer's "
-            "effect on inkgrid's own gridders (spec 15 section 4).\n"
-        )
     for dataset, (title, groups) in DATASETS.items():
         scored_tools = {t: counts[dataset][t] for t in held if t in counts[dataset]}
         n = len(next(iter(scored_tools.values())))

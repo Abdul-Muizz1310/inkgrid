@@ -33,9 +33,14 @@ Probes on 2026-10-01, on competition eu-001 (3 pages), practice us-008 (2 pages)
 | Tesseract | 5.5.3 (conda-forge `h7618cdf_0`) | | | | words with boxes (TSV) |
 
 - **Docling's defaults** read the text layer and OCR only bitmap regions (`OcrAutoOptions`, which
-  picks RapidOCR 3.9.2), with TableFormer `accurate` and cell matching. Forced OCR is the same pipeline
-  with `force_full_page_ocr=True`. Starting a process costs 5 s; loading its models costs about as
-  much as a page, once per process.
+  picks RapidOCR 3.9.2), with TableFormer `accurate` and cell matching. Starting a process costs 5 s;
+  loading its models costs about as much as a page, once per process.
+- **Forced OCR does not reach Docling's tables.** With `force_full_page_ocr=True`, TableFormer still
+  takes the PDF's own words for its cells (`get_segmented_page().get_cells_in_bbox`): on practice
+  us-008 none of its 132 tokens came from OCR, and none of 48 cells differs from the default's (the
+  final review, 2026-10-01). Given an image-only copy of the PDF (each page rendered at 300 DPI as it
+  displays, sized as it displays, no text layer), Docling's OCR reads every cell, and its table box
+  stays within 0.4 pt of the text-layer reading's.
 - **marker** found all 7 of eu-001's tables from the text layer, merging the two header rows of each
   into one cell (`THRESHOLD FOR RELEASES to air to water to land kg/year …`).
 - **unstructured** OCRs table cells with Tesseract even on a text-layer PDF: eu-001's cells read
@@ -55,15 +60,17 @@ Probes on 2026-10-01, on competition eu-001 (3 pages), practice us-008 (2 pages)
 | Tool | Version | Configuration |
 |---|---|---|
 | `docling` | 2.131.0 | `DocumentConverter()` with its defaults: every `TableItem` |
-| `docling-ocr` | 2.131.0 | the same, with `OcrAutoOptions(force_full_page_ocr=True)` |
-| `marker` | marker-pdf 2.0.0 | `PdfConverter` with `disable_ocr`, `disable_image_extraction`, JSON output: every `Table` block |
+| `docling-ocr` | 2.131.0 | the same defaults, given an image-only copy of each PDF (§ 3), so OCR reads every cell |
+| `marker` | marker-pdf 2.0.0 | `PdfConverter` with `disable_ocr`, `disable_image_extraction`, JSON output: every `Table` block, which marker builds from the text layer by its own heuristics with OCR off |
 | `unstructured` | 0.27.10, `[pdf]` | `partition_pdf(strategy="hi_res", infer_table_structure=True)`, Tesseract 5.5.3 for OCR: every `Table` element |
 | `inkgrid-ocr` | this commit | inkgrid with each page's words replaced by Tesseract's (§ 4) |
 
 - Each runs in its own isolated environment on Python 3.12 with PyTorch from
   `https://download.pytorch.org/whl/cpu` (`--index-strategy unsafe-best-match`); `inkgrid-ocr` runs in
-  inkgrid's own. Model weights are each tool's own defaults at its pinned version, downloaded on first
-  use into the user's cache; the run records each tool's resolved package versions.
+  inkgrid's own. Every dependency resolves as of 2026-10-01T00:00:00Z (`uv --exclude-newer`), so a
+  process restarted mid-run gets the same environment. Model weights are each tool's own defaults at
+  its pinned version, downloaded on first use into the user's cache; the run records each tool's
+  resolved package versions, from the same index and date, and the Tesseract it ran.
 - Tesseract is `tesseract=5.5.3` from conda-forge, created by micromamba 2.3.2 into
   `~/.cache/inkgrid-bench/tools/tesseract/`, with English (`eng`) as its language for every document,
   its default: the datasets' table text is English but for a handful of olmOCR pages.
@@ -106,11 +113,17 @@ no cell is none.
 
 ## 3 · Running them (`_cli.py`, `run.py`)
 
+- **The image-only copy** (`docling-ocr`): the runner renders each page at 300 DPI as it displays
+  (pypdfium2) into a PDF of one image per page, each page sized as the original displays and unturned.
+  The tool reads the copy; its boxes, in that displayed frame, are turned back by the original's
+  frames, and the reading names the original.
 - **Batch mode.** A heavy tool's adapter reads a manifest of documents (each with its output path and
   its pages' frames) in one process, one at a time:
   its models load once, before the first document's clock starts. After each document it writes that
-  document's output and prints `done N`; a document whose read raises gets the error as its output and
-  the batch goes on.
+  document's output and prints `done N` on a line of its own (after a newline, so a tool's unfinished
+  line cannot hide it); a document whose read raises gets the error as its output and the batch goes
+  on. The runner reads the tool's output and errors as UTF-8, any other byte escaped, so no byte a tool
+  prints can stop it reading.
 - **Deadlines.** A document's deadline is 120 s per page, and never less than spec 12's 300 s; the
   first document of each process also gets 600 s for the process to start and load its models. A
   document past its deadline is killed with its process group, recorded as a timeout, and scored as no
@@ -136,7 +149,10 @@ no cell is none.
 
 - Every dataset's tables gain the five tools a run holds (an earlier run renders as before); inkgrid's
   paired differences cover each.
-- The report's first paragraph names the run's label and says which tools ran with OCR.
+- The report's first paragraph names the run's label and says which tools ran with OCR (`docling-ocr`,
+  `unstructured`, `inkgrid-ocr`; `docling` OCRs only a page's regions without text, a page with no text
+  layer included), that `marker` reads with OCR off, and that the heavy tools' seconds are a warm
+  process's, models loaded, with a timed-out document's seconds left out.
 - The README states only what the intervals support, labelled as tuned for inkgrid (DR-0023).
 
 ---
@@ -159,6 +175,10 @@ no cell is none.
 | BM1 | a batch of three documents: the second raises | three outputs, the second its error |
 | BM2 | a batch whose second document hangs past its deadline; one whose process dies on its second | killed; a timeout for it, or its crash; the third read by a new process; the first never read again |
 | BM3 | deadlines: 1 page, 3 pages, 15 pages | 300 s, 360 s, 1,800 s |
+| BM5 | a batch whose tool writes a non-UTF-8 byte to its errors, and 40 KB of log lines per document | every document read; no false timeout |
+| BM6 | a batch whose tool prints an unfinished line just before a document's end | that document read; none read twice |
+| RS1 | the image-only copy of a `/Rotate 90` fixture | its pages, sized as the original displays, unturned, no text layer |
+| EN1 | the environment record | each heavy tool resolved from PyTorch's CPU index as of the run's date; the Tesseract it ran |
 | BM4 | the read stage with a batched tool, run twice | each document read once, its reading saved; the second run reads nothing |
 | AB1 | Tesseract TSV rows: a word, a blank, a line row, a word with a control character; the same on a `/Rotate 90` page | two words, in points, ids 0 and 1; turned back, not horizontal |
 | AB2 | the ablation on `ruled_grid` with a fake Tesseract (the fixture's own words as TSV) | the same table as inkgrid reads |

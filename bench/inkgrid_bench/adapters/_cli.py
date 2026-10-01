@@ -60,6 +60,6 @@ def batch(read: Callable[[Path, Sequence[NPage]], list[NTable]]) -> int:
             seconds = time.perf_counter() - start
             data = {"tables": [asdict(t) for t in tables], "seconds": seconds}
         _write(Path(entry["out"]), data)
-        sys.stdout.write(f"{DONE}{index}\n")
+        sys.stdout.write(f"\n{DONE}{index}\n")  # its own line, whatever the tool left unfinished
         sys.stdout.flush()
     return 0

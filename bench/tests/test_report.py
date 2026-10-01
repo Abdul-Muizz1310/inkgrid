@@ -106,8 +106,11 @@ def test_RP1_the_heavy_competitors_get_rows_and_paired_differences() -> None:
         assert f"\n| {tool} |" in text
         assert f"\n| inkgrid - {tool} |" in text
     first = text.split("\n\n")[1]
-    assert "docling-ocr, unstructured, and inkgrid-ocr read the pages with OCR" in text
     assert "tuned" in first
+    assert "docling-ocr, unstructured, and inkgrid-ocr read the pages with OCR" in first
+    assert "docling OCRs only" in first
+    assert "marker reads with OCR off" in first
+    assert "warm process" in first
 
 
 def test_RP2_an_earlier_run_renders_its_four_tools() -> None:

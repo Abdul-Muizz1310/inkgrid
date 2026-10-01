@@ -104,3 +104,5 @@ docling = "2.131.0"
 marker-pdf = "2.0.0"
 unstructured = "0.27.10"
 torch-index = "https://download.pytorch.org/whl/cpu"
+# Every heavy tool's dependencies as of this date, so a restarted process resolves the same.
+exclude-newer = "2026-10-01T00:00:00Z"

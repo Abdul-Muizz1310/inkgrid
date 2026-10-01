@@ -16,6 +16,12 @@ url = "https://www.tamirhassan.com/html/files/us-gov-dataset-20130324.zip"
 sha256 = "66a62f80acd59bcefb32df9f751516ae4edae7bfc23a1dd782055ec2015556bd"
 file = "icdar2013/practice/us-gov-dataset-20130324.zip"
 
+# micromamba builds Tesseract from conda-forge without root (docs/specs/15-heavy-competitors.md s. 0).
+[source.micromamba]
+url = "https://github.com/mamba-org/micromamba-releases/releases/download/2.3.2-0/micromamba-linux-64.tar.bz2"
+sha256 = "5512233cdd8564a671626081026dc861537a963baa06706baab08fac6f3bb9d2"
+file = "tools/micromamba-2.3.2-0-linux-64.tar.bz2"
+
 [source.icdar2013-jar]
 url = "https://www.tamirhassan.com/html/files/dataset-tools-20180206.jar"
 sha256 = "0633721ba192f48ce90fae3b4d295997cfda324f1c7fa7e9e4b384c3f8919856"
@@ -83,6 +89,11 @@ with = [
 package = "olmocr[bench]==0.4.27"
 # olmocr 0.4.27's bench imports numpy without declaring it.
 with = ["numpy==2.3.3"]
+
+# Tesseract 5.5.3 for unstructured and the ablation, in a prefix under the cache (spec 15 section 1).
+[tesseract]
+channel = "conda-forge"
+spec = "tesseract=5.5.3=h7618cdf_0"
 
 [tool]
 pdfplumber = "0.11.10"

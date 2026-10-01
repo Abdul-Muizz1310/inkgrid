@@ -8,6 +8,8 @@ from dataclasses import dataclass
 from pathlib import Path
 
 CACHE = Path.home() / ".cache" / "inkgrid-bench"
+MICROMAMBA = CACHE / "tools" / "micromamba" / "bin" / "micromamba"
+TESSERACT = CACHE / "tools" / "tesseract"  # the conda prefix: bin/tesseract, share/tessdata
 SOURCES = Path(__file__).resolve().parents[1] / "sources.toml"
 
 

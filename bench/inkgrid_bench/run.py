@@ -30,6 +30,7 @@ from typing import IO, Any, Literal
 
 from inkgrid_bench import fetch, pages, report
 from inkgrid_bench.adapters._cli import DONE
+from inkgrid_bench.fetch import MICROMAMBA, TESSERACT
 from inkgrid_bench.render import icdar_reg_xml, icdar_str_xml
 from inkgrid_bench.scores import binding, icdar, olmocr, soric
 from inkgrid_bench.tables import NCell, NDocument, NPage, NTable
@@ -58,6 +59,7 @@ EXTRACT = {
     "icdar2013-practice-us": ("icdar2013/practice/us", "us-gov-dataset"),
     "temurin-jre-17": ("tools", "jdk-17.0.20.1+1-jre"),
     "jai-core": ("tools", "jai-1_1_3"),
+    "micromamba": ("tools/micromamba", "bin"),
     "soric-icdar2013": ("soric/x", "icdar"),
     "soric-predictions": ("soric/x", "icdar-2013"),
 }
@@ -453,7 +455,23 @@ def prepare(cfg: dict[str, Any]) -> None:
     if not head.startswith(scorer["commit"]):
         msg = f"Soric et al.'s evaluator is at {head[:8]}, not {scorer['commit']}"
         raise RuntimeError(msg)
+    if not (TESSERACT / "bin" / "tesseract").exists():
+        log(f"create {cfg['tesseract']['spec']} -> {TESSERACT}")
+        subprocess.run(  # noqa: S603
+            tesseract_create(cfg),
+            check=True,
+            env={**os.environ, "MAMBA_ROOT_PREFIX": str(CACHE / "tools" / "mamba")},
+        )
     log("prepare: every source verified")
+
+
+def tesseract_create(cfg: dict[str, Any]) -> list[str]:
+    """The command that builds the pinned Tesseract into the cache, from its one channel."""
+    pin = cfg["tesseract"]
+    return [
+        str(MICROMAMBA), "create", "--yes", "--quiet", "--prefix", str(TESSERACT),
+        "--override-channels", "--channel", pin["channel"], pin["spec"],
+    ]  # fmt: skip
 
 
 # --- read and verify ---------------------------------------------------------------------------

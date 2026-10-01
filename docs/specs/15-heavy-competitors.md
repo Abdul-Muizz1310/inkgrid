@@ -123,8 +123,8 @@ no cell is none.
 - Each page is rendered at 300 DPI (pypdfium2, as the verifier renders) and read by Tesseract (`tsv`,
   page segmentation mode 3, its default).
 - Each Tesseract word (level 5, with a non-blank text) becomes a `Word`: its box scaled from pixels to
-  points, its text stripped of whitespace and control characters (a word left empty is dropped), its
-  size the box's height, horizontal, not bold, not a superscript, font `tesseract`. Ids run from 0 over
+  points and, on a turned page (rendered as it displays), turned back into the unrotated page, its text stripped of whitespace and control characters (a word left empty is dropped), its
+  size the box's height, horizontal on an unturned page, not bold, not a superscript, font `tesseract`. Ids run from 0 over
   the document in page and reading order.
 - The page keeps its own rules, fills, size, and rotation; its text layer is `full` with words, else
   `none`, and its character counts are zero. Camelot reads the ruled pages exactly as for inkgrid, and
@@ -158,8 +158,9 @@ no cell is none.
 | BM1 | a batch of three documents: the second raises | three outputs, the second its error |
 | BM2 | a batch whose second document hangs past its deadline; one whose process dies on its second | killed; a timeout for it, or its crash; the third read by a new process; the first never read again |
 | BM3 | deadlines: 1 page, 3 pages, 15 pages | 300 s, 360 s, 1,800 s |
-| AB1 | Tesseract TSV rows: a word, a blank, a line row, a word with a control character | two words, in points, ids 0 and 1 |
+| AB1 | Tesseract TSV rows: a word, a blank, a line row, a word with a control character; the same on a `/Rotate 90` page | two words, in points, ids 0 and 1; turned back, not horizontal |
 | AB2 | the ablation on `ruled_grid` with a fake Tesseract (the fixture's own words as TSV) | the same table as inkgrid reads |
+| TS1 | the Tesseract pin | `micromamba create` from conda-forge alone, `tesseract=5.5.3=h7618cdf_0`, into the cache's prefix; micromamba itself a hash-pinned source |
 | RP1 | a report with the new tools | their rows, and inkgrid's paired difference with each |
 
 ## 7 · Acceptance

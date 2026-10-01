@@ -3,13 +3,18 @@
 from pathlib import Path
 
 import inkgrid
+from inkgrid.model.document import Document
 from inkgrid_bench.adapters._cli import main
 from inkgrid_bench.tables import NCell, NTable
 
 
 def read(pdf: Path) -> list[NTable]:
     """The document's tables, header rows marked; a carried header cell is empty on its page."""
-    doc = inkgrid.read(pdf)
+    return tables_of(inkgrid.read(pdf))
+
+
+def tables_of(doc: Document) -> list[NTable]:
+    """A document's tables, normalized: the ablation's are normalized exactly as inkgrid's."""
     out = []
     for table in doc.tables():
         grid = table.grid

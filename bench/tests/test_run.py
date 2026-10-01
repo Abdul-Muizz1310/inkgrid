@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 import pdf_factory
-from inkgrid_bench import pages, run
+from inkgrid_bench import fetch, pages, run
 from inkgrid_bench.adapters import _cli, ground_truth, inkgrid_read
 from inkgrid_bench.tables import NPage
 
@@ -204,3 +204,16 @@ def test_BM2_a_hung_or_dead_document_fails_alone_and_the_batch_resumes(
 
 def test_BM3_a_heavy_documents_deadline_grows_with_its_pages() -> None:
     assert [run.deadline(n) for n in (1, 3, 15)] == [300.0, 360.0, 1800.0]
+
+
+def test_TS1_tesseract_is_built_from_its_pin() -> None:
+    cfg = run.config()
+    cmd = run.tesseract_create(cfg)
+    assert cmd[0] == str(run.MICROMAMBA)
+    assert cmd[1:] == [
+        "create", "--yes", "--quiet", "--prefix", str(run.TESSERACT),
+        "--override-channels", "--channel", "conda-forge", "tesseract=5.5.3=h7618cdf_0",
+    ]  # fmt: skip
+    pin = fetch.sources()["micromamba"]
+    assert pin.sha256 == "5512233cdd8564a671626081026dc861537a963baa06706baab08fac6f3bb9d2"
+    assert pin.url.endswith("/2.3.2-0/micromamba-linux-64.tar.bz2")

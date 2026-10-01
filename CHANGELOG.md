@@ -55,6 +55,10 @@ All notable changes to this project are documented here. The format follows
   and reports clustered-bootstrap intervals and paired differences. inkgrid's baseline is in
   `bench/results/`, and beside it the run after M5c's fixes, labelled as tuned on these documents
   (`run.py --label tuned`).
+- The benchmark's OCR and vision competitors (M5d-1): Docling by default and on an image-only copy of
+  each PDF, marker on the text layer, and unstructured `hi_res` with Tesseract, each batched in its
+  own pinned CPU environment; and the ablation `inkgrid-ocr`, inkgrid fed Tesseract's words, which
+  measures what the text layer gives inkgrid's own gridders.
 - `Document.to_markdown()`, the HTML inspector, and the `inkgrid read` command with `--markdown`,
   `--inspector`, and `--strict`.
 - A layer-table test on the import graph, and CI across Linux, Windows, and macOS.

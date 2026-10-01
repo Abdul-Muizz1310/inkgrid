@@ -102,7 +102,10 @@ committed.
 | Camelot | 2.0.0 | `camelot.read_pdf(pages="all", flavor="lattice")` with its defaults |
 
 Each runs in its own isolated, pinned environment (`uv run --isolated --with ...`), one document at a
-time, with a timeout of 300 s per document. A timeout or an exception is recorded as that document's
+time, with a timeout of 300 s per document. *Added 2026-10-01:* spec 15 adds the heavy competitors
+(Docling, by default and on an image-only copy, marker, and unstructured `hi_res` with Tesseract) and
+the text-layer ablation (`inkgrid-ocr`), the heavy ones batched with deadlines of 120 s a page; these
+four tools are unchanged. A timeout or an exception is recorded as that document's
 crash and scores as no tables. Soric et al.'s released predictions for Camelot, PyMuPDF, pdfplumber,
 and Docling (their versions) are also scored, as a reproduction row.
 

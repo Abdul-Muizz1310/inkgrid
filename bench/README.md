@@ -17,6 +17,12 @@ Run it from the repository root, on a clean tree (results name the commit they m
 PYTHONPATH=bench uv run python -m inkgrid_bench.run all   # or: prepare, read, verify, score, report
 ```
 
+The heavy competitors of `docs/specs/15-heavy-competitors.md` (Docling, marker, unstructured) each
+run in one process per tool, their models loaded once, from PyTorch's CPU build and with every
+dependency resolved as of the date `sources.toml` pins; `prepare` builds the pinned Tesseract into the
+cache with micromamba (no root needed). With them, a full run takes about eight to ten hours on a
+16-thread CPU.
+
 A run after inkgrid's fixes for errors found on these datasets is labelled `--label tuned`
 (DR-0023): its results go to `bench/results/<date>-<commit>-tuned/`, and its report says it is
 tuned on these documents in its title and first paragraph. The baseline's results stay beside it.

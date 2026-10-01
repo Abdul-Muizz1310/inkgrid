@@ -111,7 +111,8 @@ no cell is none.
   its models load once, before the first document's clock starts. After each document it writes that
   document's output and prints `done N`; a document whose read raises gets the error as its output and
   the batch goes on.
-- **Deadlines.** A document's deadline is 120 s per page, and never less than spec 12's 300 s. A
+- **Deadlines.** A document's deadline is 120 s per page, and never less than spec 12's 300 s; the
+  first document of each process also gets 600 s for the process to start and load its models. A
   document past its deadline is killed with its process group, recorded as a timeout, and scored as no
   tables; the batch restarts after it. A process that dies records its current document as a crash.
 - Seconds per page, crashes, and timeouts are reported as for spec 12's tools.
@@ -155,7 +156,7 @@ no cell is none.
 | US1 | an unstructured `Table` element in a pixel space twice a 595 × 842 page's size | the box scaled to points |
 | US2 | an unstructured `Table` in a pixel space twice the size of a `/Rotate 90` page as it displays | scaled, then turned back |
 | BM1 | a batch of three documents: the second raises | three outputs, the second its error |
-| BM2 | a batch whose second document hangs past its deadline | killed; a timeout for it; the third read |
+| BM2 | a batch whose second document hangs past its deadline; one whose process dies on its second | killed; a timeout for it, or its crash; the third read by a new process; the first never read again |
 | BM3 | deadlines: 1 page, 3 pages, 15 pages | 300 s, 360 s, 1,800 s |
 | AB1 | Tesseract TSV rows: a word, a blank, a line row, a word with a control character | two words, in points, ids 0 and 1 |
 | AB2 | the ablation on `ruled_grid` with a fake Tesseract (the fixture's own words as TSV) | the same table as inkgrid reads |

@@ -141,3 +141,66 @@ def test_TR1_the_label_reaches_the_report_stage_and_a_bad_one_is_refused(
     assert labels == ["tuned", "baseline"]
     assert run.main(["report", "--label", "final"]) == 2
     assert "label" in capsys.readouterr().err
+
+
+BATCH = """
+import os, sys, time
+from pathlib import Path
+from inkgrid_bench.adapters._cli import batch
+from inkgrid_bench.tables import NCell, NTable
+
+LOG = Path(sys.argv[0]).with_suffix(".log")
+
+
+def read(pdf, frames):
+    with LOG.open("a") as log:
+        log.write(pdf.stem + "\\n")
+    if pdf.stem == "b":
+        BEHAVIOUR
+    return [NTable(page=1, bbox=(0, 0, 1, 1), cells=(NCell(0, 0, text=pdf.stem),))]
+
+
+raise SystemExit(batch(read))
+"""
+
+
+def batch_run(
+    tmp_path: Path, behaviour: str
+) -> tuple[list[tuple[str, str | None, tuple[str, ...]]], list[str]]:
+    script = tmp_path / "adapter.py"
+    script.write_text(BATCH.replace("BEHAVIOUR", behaviour))
+    pdfs = []
+    for name in ("a", "b", "c"):
+        pdf = tmp_path / f"{name}.pdf"
+        pdf.write_bytes(pdf_factory.blank())
+        pdfs.append(pdf)
+    results = run.read_batch(
+        [PY, str(script)], pdfs, tool="t", version="1", deadline=lambda _pages: 3.0, startup=10.0
+    )
+    readings = [
+        (pdf.stem, doc.error, tuple(c.text for t in doc.tables for c in t.cells))
+        for pdf, doc in results
+    ]
+    return readings, script.with_suffix(".log").read_text().split()
+
+
+def test_BM1_a_document_that_raises_is_its_own_error(tmp_path: Path) -> None:
+    readings, reads = batch_run(tmp_path, "raise ValueError('bad page')")
+    assert readings == [("a", None, ("a",)), ("b", "ValueError: bad page", ()), ("c", None, ("c",))]
+    assert reads == ["a", "b", "c"]
+
+
+@pytest.mark.parametrize(
+    ("behaviour", "error"),
+    [("time.sleep(60)", "timeout after 3 s"), ("os._exit(3)", "exit status 3")],
+)
+def test_BM2_a_hung_or_dead_document_fails_alone_and_the_batch_resumes(
+    tmp_path: Path, behaviour: str, error: str
+) -> None:
+    readings, reads = batch_run(tmp_path, behaviour)
+    assert readings == [("a", None, ("a",)), ("b", error, ()), ("c", None, ("c",))]
+    assert reads == ["a", "b", "c"]  # a new process takes c; a is never read again
+
+
+def test_BM3_a_heavy_documents_deadline_grows_with_its_pages() -> None:
+    assert [run.deadline(n) for n in (1, 3, 15)] == [300.0, 360.0, 1800.0]

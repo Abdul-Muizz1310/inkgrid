@@ -6,31 +6,40 @@ Everything fetched or produced lives under `~/.cache/inkgrid-bench/`, keyed by t
 a stage skips what an earlier run of it already wrote. `report` writes `bench/results/`.
 """
 
+import contextlib
+import functools
 import hashlib
 import json
 import os
+import queue
 import shutil
 import signal
 import subprocess
 import sys
 import tarfile
+import threading
+import time
 import tomllib
 import zipfile
-from collections.abc import Callable, Sequence
+from collections import deque
+from collections.abc import Callable, Iterator, Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import IO, Any, Literal
 
 from inkgrid_bench import fetch, pages, report
+from inkgrid_bench.adapters._cli import DONE
 from inkgrid_bench.render import icdar_reg_xml, icdar_str_xml
 from inkgrid_bench.scores import binding, icdar, olmocr, soric
-from inkgrid_bench.tables import NCell, NDocument, NTable
+from inkgrid_bench.tables import NCell, NDocument, NPage, NTable
 
 CACHE = Path.home() / ".cache" / "inkgrid-bench"
 BENCH = Path(__file__).resolve().parents[1]
 REPO = BENCH.parent
 TIMEOUT = 300  # seconds per document per tool (spec 12 section 2)
+BATCH_PER_PAGE = 120.0  # seconds per page of a heavy tool's document (spec 15 section 3)
+BATCH_STARTUP = 600.0  # a heavy tool's process start and model loading, on its first document
 SCORER_TIMEOUT = 3600
 NICE = ("nice", "-n", "10")
 TOOL_PYTHON = "3.12"
@@ -89,14 +98,20 @@ def run_process(
     try:
         out, err = proc.communicate(timeout=timeout)
     except subprocess.TimeoutExpired:
-        if sys.platform == "win32":
-            proc.kill()  # the run itself needs POSIX; this keeps its tests portable
-        else:
-            os.killpg(proc.pid, signal.SIGKILL)  # the tool's children too (`uv run` spawns them)
+        _kill(proc)
         proc.communicate()
         msg = f"timeout after {timeout:g} s"
         raise TimeoutError(msg) from None
     return proc.returncode, out, err
+
+
+def _kill(proc: "subprocess.Popen[str]") -> None:
+    """Kill a process started in its own session, and its children."""
+    if sys.platform == "win32":
+        proc.kill()  # the run itself needs POSIX; this keeps its tests portable
+    else:
+        with contextlib.suppress(ProcessLookupError):  # it may have ended on its own
+            os.killpg(proc.pid, signal.SIGKILL)  # the tool's children too (`uv run` spawns them)
 
 
 def _last_line(text: str) -> str | None:
@@ -128,18 +143,168 @@ def read_document(
             return failed(str(exc))
         if code != 0:
             return failed(_last_line(err) or f"exit status {code}")
-        try:
-            data = json.loads(out.read_text(encoding="utf-8"))
-            tables = tuple(_table(t) for t in data["tables"])
-            seconds = float(data["seconds"])
-        except (OSError, ValueError, KeyError, TypeError) as exc:
-            return failed(f"unreadable output: {exc}")
+        return _reading(out, frames, tool=tool, version=version, sha=sha)
+
+
+def _reading(
+    out: Path, frames: tuple[NPage, ...], *, tool: str, version: str, sha: str
+) -> NDocument:
+    """An adapter's output as a reading; a broken output, or a batch's error, is its error."""
+
+    def failed(error: str) -> NDocument:
+        return NDocument(tool=tool, version=version, pdf_sha256=sha, pages=frames, error=error)
+
+    try:
+        data = json.loads(out.read_text(encoding="utf-8"))
+        if "error" in data:
+            return failed(str(data["error"]))
+        tables = tuple(_table(t) for t in data["tables"])
+        seconds = float(data["seconds"])
+    except (OSError, ValueError, KeyError, TypeError) as exc:
+        return failed(f"unreadable output: {exc}")
     for t in tables:
         if not 1 <= t.page <= len(frames):
             return failed(f"a table on page {t.page} of {len(frames)}")
     return NDocument(
         tool=tool, version=version, pdf_sha256=sha, pages=frames, tables=tables, seconds=seconds
     )
+
+
+def deadline(pages: int) -> float:
+    """A heavy tool's deadline for one document: 120 s a page, never less than 300 s."""
+    return max(float(TIMEOUT), BATCH_PER_PAGE * pages)
+
+
+def _pump(stream: IO[str] | None, put: Callable[[str], None], end: Callable[[], None]) -> None:
+    """Every line of a child's stream, then the end: a full pipe never blocks the child."""
+    if stream is not None:
+        for line in stream:
+            put(line)
+    end()
+
+
+def _await(
+    lines: "queue.Queue[str | None]", marker: str, limit: float
+) -> Literal["done", "ended", "timeout"]:
+    """Wait up to `limit` seconds for the marker line; other lines are the tool's own output."""
+    stop = time.monotonic() + limit
+    while (left := stop - time.monotonic()) > 0:
+        try:
+            line = lines.get(timeout=left)
+        except queue.Empty:
+            break
+        if line is None:
+            return "ended"
+        if line.rstrip("\r\n") == marker:
+            return "done"
+    return "timeout"
+
+
+class _Worker:
+    """A heavy tool's batch process, its output drained on threads so it never blocks."""
+
+    def __init__(self, cmd: Sequence[str], manifest: Path) -> None:
+        self.proc = subprocess.Popen(  # noqa: S603 - commands built here from pinned values
+            [*cmd, "--batch", str(manifest)],
+            env=_env(),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            start_new_session=True,
+        )
+        self.lines: queue.Queue[str | None] = queue.Queue()
+        self.errors: deque[str] = deque(maxlen=50)
+        self.pumps = [
+            threading.Thread(
+                target=_pump,
+                args=(self.proc.stdout, self.lines.put, functools.partial(self.lines.put, None)),
+                daemon=True,
+            ),
+            threading.Thread(
+                target=_pump, args=(self.proc.stderr, self.errors.append, lambda: None), daemon=True
+            ),
+        ]
+        for pump in self.pumps:
+            pump.start()
+
+    def failure(self, outcome: Literal["ended", "timeout"], limit: float) -> str:
+        """Why the current document failed: its deadline passed, or its process ended."""
+        if outcome == "timeout":
+            _kill(self.proc)
+            return f"timeout after {limit:g} s"
+        code = self.proc.wait()
+        self.pumps[1].join(timeout=5)
+        return _last_line("".join(self.errors)) or f"exit status {code}"
+
+    def close(self, *, finished: bool) -> None:
+        """The process ended (a finished batch is let exit), its threads joined, its pipes shut."""
+        if finished and self.proc.poll() is None:
+            with contextlib.suppress(subprocess.TimeoutExpired):
+                self.proc.wait(timeout=60)
+        if self.proc.poll() is None:
+            _kill(self.proc)
+        self.proc.wait()
+        for pump in self.pumps:
+            pump.join(timeout=5)
+        for stream in (self.proc.stdout, self.proc.stderr):
+            if stream is not None:
+                stream.close()
+
+
+def read_batch(
+    cmd: Sequence[str],
+    pdfs: Sequence[Path],
+    *,
+    tool: str,
+    version: str,
+    deadline: Callable[[int], float] = deadline,
+    startup: float = BATCH_STARTUP,
+) -> Iterator[tuple[Path, NDocument]]:
+    """Each PDF's reading by a heavy tool, in order, as each finishes (spec 15 section 3).
+
+    One process reads them all, its models loaded once. A document past its deadline, or one its
+    process dies on, fails alone; a new process takes the documents after it, so a finished
+    document is never read again.
+    """
+    pending = list(pdfs)
+    while pending:
+        frames = [pages.frames(p) for p in pending]
+        shas = [hashlib.sha256(p.read_bytes()).hexdigest() for p in pending]
+        failure: str | None = None
+        done = 0
+        with _scratch() as tmp:
+            outs = [tmp / f"{i}.json" for i in range(len(pending))]
+            manifest = tmp / "manifest.jsonl"
+            entries = [
+                {"pdf": str(p), "out": str(o), "pages": [[*f.box, f.rotation] for f in fr]}
+                for p, o, fr in zip(pending, outs, frames, strict=True)
+            ]
+            manifest.write_text("".join(json.dumps(e) + "\n" for e in entries), encoding="utf-8")
+            worker = _Worker(cmd, manifest)
+            try:
+                while done < len(pending):
+                    limit = deadline(len(frames[done])) + (startup if done == 0 else 0.0)
+                    outcome = _await(worker.lines, f"{DONE}{done}", limit)
+                    if outcome != "done":
+                        failure = worker.failure(outcome, limit)
+                        break
+                    sha = shas[done]
+                    yield (
+                        pending[done],
+                        _reading(outs[done], frames[done], tool=tool, version=version, sha=sha),
+                    )
+                    done += 1
+            finally:
+                worker.close(finished=failure is None and done == len(pending))
+        if failure is None:
+            return
+        yield (
+            pending[done],
+            NDocument(
+                tool=tool, version=version, pdf_sha256=shas[done], pages=frames[done], error=failure
+            ),
+        )
+        pending = pending[done + 1 :]
 
 
 class _scratch:  # noqa: N801 - used as a context manager, like tempfile's

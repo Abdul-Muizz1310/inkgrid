@@ -96,6 +96,12 @@ no cell is none.
 - **Docling:** each cell's `start_row_offset_idx`, `start_col_offset_idx`, `row_span`, `col_span`,
   `text`, and `column_header`; the table's box from its first provenance, whose origin is the page's
   bottom-left, turned to the top-left by the page's height. A table on two pages is its first page's.
+  Docling may anchor a cell inside another's span (practice `us-025`: a header spanning 17 columns
+  over three cells it anchors inside it), which no normalized table may hold, so the table, and with
+  it the whole document's reading, would be refused. As with HTML's overlaps (§ 2.1), the spans give
+  way: every anchor is kept, the later of two cells at one anchor is dropped, and each span, in anchor
+  order, runs along its row up to the first position an anchor or an earlier span holds, then down
+  while all its columns are free. A table whose cells tile it is unchanged.
 - **marker:** each `Table` block's `html` through § 2.1, its `bbox` (top-left origin, points), and its
   page from the block's id (`/page/N/Table/M`, 0-based).
 - **unstructured:** each `Table` element's `text_as_html` through § 2.1; its box is the extent of its
@@ -168,6 +174,8 @@ no cell is none.
 | DC1 | a Docling table dict: a bottom-left box on a 792 pt page, a spanning column header | the top-left box; anchors, spans, the header flag |
 | DC2 | the same table on a `/Rotate 90` page, displayed 792 × 612 | the box turned back to the unrotated page |
 | DC3 | a cell without `row_span`; a box whose origin is neither corner | the document's error |
+| DC4 | a Docling header spanning four columns over a cell anchored inside it; two cells at one anchor; a row span reaching an anchor below | the header stops before the anchored cell; the first of the two kept; the row span stops above the anchor |
+| DC5 | any Docling table whose cells tile it (property) | its cells unchanged |
 | MK1 | a marker JSON page with two `Table` blocks and other blocks | two tables on the id's page, boxes as given |
 | MK2 | a marker `Table` on a `/Rotate 90` page | the box turned back |
 | US1 | an unstructured `Table` element in a pixel space twice a 595 × 842 page's size | the box scaled to points |

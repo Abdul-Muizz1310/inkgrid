@@ -6,6 +6,7 @@ by field, so a field that is missing or out of range (`ValueError`) or of the wr
 displays, so each box is turned back into the unrotated page (spec 12 s. 3.1).
 """
 
+import dataclasses
 import re
 from collections.abc import Iterator, Mapping, Sequence
 
@@ -79,6 +80,30 @@ def _turned_back(frame: NPage, x0: float, y0: float, x1: float, y1: float) -> Bo
     return (min(ax, bx), min(ay, by), max(ax, bx), max(ay, by))
 
 
+def untangled(cells: Sequence[NCell]) -> list[NCell]:
+    """Cells with no position held twice: every anchor kept, spans giving way (spec 15 s. 2.2).
+
+    Docling may anchor a cell inside another's span. Anchors are taken first, in anchor order, the
+    later of two at one anchor dropped; then each span, in that order, runs along its row up to the
+    first position an anchor or an earlier span holds, and down while all its columns are free.
+    """
+    first: dict[tuple[int, int], NCell] = {}
+    for cell in sorted(cells, key=lambda c: (c.row, c.col)):
+        first.setdefault((cell.row, cell.col), cell)
+    held = set(first)
+    out = []
+    for (row, col), cell in first.items():
+        cols = 1
+        while cols < cell.cols and (row, col + cols) not in held:
+            cols += 1
+        rows = 1
+        while rows < cell.rows and all((row + rows, col + k) not in held for k in range(cols)):
+            rows += 1
+        held |= {(row + r, col + k) for r in range(rows) for k in range(cols)}
+        out.append(dataclasses.replace(cell, rows=rows, cols=cols))
+    return out
+
+
 def docling_tables(doc: Mapping[str, object], frames: Sequence[NPage]) -> list[NTable]:
     """Docling's `export_to_dict()`: each table's cells, on its first provenance's page."""
     pages = _field(doc, "pages")
@@ -111,7 +136,7 @@ def docling_tables(doc: Mapping[str, object], frames: Sequence[NPage]) -> list[N
         ]
         if cells:
             bbox = _turned_back(_frame(frames, page), left, top, right, bottom)
-            out.append(NTable.filled(page=page, bbox=bbox, cells=cells))
+            out.append(NTable.filled(page=page, bbox=bbox, cells=untangled(cells)))
     return out
 
 

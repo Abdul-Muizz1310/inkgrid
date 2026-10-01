@@ -1,6 +1,8 @@
 from typing import Any
 
 import pytest
+from hypothesis import given
+from hypothesis import strategies as st
 
 from inkgrid_bench.heavy import docling_tables, marker_tables, unstructured_tables
 from inkgrid_bench.tables import NCell, NPage, NTable
@@ -60,6 +62,65 @@ def test_DC3_a_malformed_docling_export_is_the_documents_error() -> None:
     centred = {**box, "coord_origin": "CENTER"}
     with pytest.raises(ValueError, match="CENTER"):
         docling_tables(docling_doc((612.0, 792.0), centred), UPRIGHT)
+
+
+def tangled_doc(cells: list[dict[str, Any]]) -> dict[str, Any]:
+    doc = docling_doc(
+        (612.0, 792.0), {"l": 0.0, "t": 0.0, "r": 9.0, "b": 9.0, "coord_origin": "TOPLEFT"}
+    )
+    doc["tables"][0]["data"]["table_cells"] = cells
+    return doc
+
+
+def test_DC4_a_docling_span_stops_before_a_cell_anchored_inside_it() -> None:
+    # practice us-025: Docling's header spans 17 columns over three cells it anchors inside it
+    cells = [
+        docling_cell(0, 0, 4, "1979 1980", header=True),
+        docling_cell(0, 2, 1, "Millions"),
+        docling_cell(1, 0, 1, "A"),
+        docling_cell(1, 1, 1, "1"),
+        docling_cell(1, 1, 1, "again"),  # a second cell at one anchor
+        docling_cell(1, 2, 1, "x"),
+        {**docling_cell(1, 3, 1, "y"), "row_span": 3},
+        docling_cell(3, 3, 1, "z"),
+    ]
+    (table,) = docling_tables(tangled_doc(cells), UPRIGHT)
+    kept = [
+        NCell(0, 0, 1, 2, "1979 1980", header=True),
+        NCell(0, 2, 1, 1, "Millions"),
+        NCell(1, 0, 1, 1, "A"),
+        NCell(1, 1, 1, 1, "1"),
+        NCell(1, 2, 1, 1, "x"),
+        NCell(1, 3, 2, 1, "y"),
+        NCell(3, 3, 1, 1, "z"),
+    ]
+    assert table == NTable.filled(page=1, bbox=(0.0, 0.0, 9.0, 9.0), cells=kept)
+
+
+@st.composite
+def tilings(draw: st.DrawFn) -> list[NCell]:
+    """A table's cells, merges included, tiling a grid."""
+    rows, cols = draw(st.integers(1, 5)), draw(st.integers(1, 5))
+    held: set[tuple[int, int]] = set()
+    cells = []
+    for r in range(rows):
+        for c in range(cols):
+            if (r, c) in held:
+                continue
+            run = next((k for k in range(c, cols) if (r, k) in held), cols) - c
+            width = draw(st.integers(1, run))
+            free = [all((i, k) not in held for k in range(c, c + width)) for i in range(r, rows)]
+            depth = draw(st.integers(1, free.index(False) if False in free else len(free)))
+            held |= {(i, k) for i in range(r, r + depth) for k in range(c, c + width)}
+            cells.append(NCell(r, c, depth, width, draw(st.sampled_from(["", "1", "Fee"]))))
+    return cells
+
+
+@given(tilings())
+def test_DC5_untangling_leaves_a_tiling_unchanged(cells: list[NCell]) -> None:
+    exported = [{**docling_cell(c.row, c.col, c.cols, c.text), "row_span": c.rows} for c in cells]
+    (table,) = docling_tables(tangled_doc(exported), UPRIGHT)
+    assert table == NTable.filled(page=1, bbox=(0.0, 0.0, 9.0, 9.0), cells=cells)
 
 
 def marker_page(index: int, tables: list[tuple[str, list[float]]]) -> dict[str, Any]:

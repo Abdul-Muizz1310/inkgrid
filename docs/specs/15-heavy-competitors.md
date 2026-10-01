@@ -92,12 +92,22 @@ no cell is none.
 - **marker:** each `Table` block's `html` through § 2.1, its `bbox` (top-left origin, points), and its
   page from the block's id (`/page/N/Table/M`, 0-based).
 - **unstructured:** each `Table` element's `text_as_html` through § 2.1; its box is the extent of its
-  coordinate points scaled from their pixel space to the page's size.
+  coordinate points scaled from their pixel space to the page's size. An element without
+  `text_as_html` (its structure not inferred) has no cells.
 - A table with no cell after normalization is dropped, as spec 12's adapters do.
+- **Turned pages.** All three report a `/Rotate` page as it displays (measured on olmOCR
+  `58feed…_pg42`, `/Rotate 90`: each gave a 792 × 612 page and the table where inkgrid's box displays).
+  Each box's corners are turned back by the page's frame (`NPage.from_shown`), so every table is placed
+  in the unrotated page as spec 12 § 3.1 says. The runner computes the frames, as it already does for
+  every reading, and hands them to the adapter, so no tool's environment needs pypdfium2.
+- The input each conversion takes is the tool's own export (Docling's `export_to_dict()`, marker's
+  JSON output, unstructured's `Element.to_dict()`), parsed field by field: a missing or mistyped field
+  is the document's error, never a guess.
 
 ## 3 · Running them (`_cli.py`, `run.py`)
 
-- **Batch mode.** A heavy tool's adapter reads a manifest of documents in one process, one at a time:
+- **Batch mode.** A heavy tool's adapter reads a manifest of documents (each with its output path and
+  its pages' frames) in one process, one at a time:
   its models load once, before the first document's clock starts. After each document it writes that
   document's output and prints `done N`; a document whose read raises gets the error as its output and
   the batch goes on.
@@ -138,8 +148,12 @@ no cell is none.
 | HT3 | a cell spanning past the last row; a `colspan` running into a `rowspan` from above; an empty table; no `<table>` | clipped; stopped before it; none; none |
 | HT4 | property: any table of `<td>` and `<th>` with spans from 0 to 4 | its cells never cover a position twice |
 | DC1 | a Docling table dict: a bottom-left box on a 792 pt page, a spanning column header | the top-left box; anchors, spans, the header flag |
+| DC2 | the same table on a `/Rotate 90` page, displayed 792 × 612 | the box turned back to the unrotated page |
+| DC3 | a cell without `row_span`; a box whose origin is neither corner | the document's error |
 | MK1 | a marker JSON page with two `Table` blocks and other blocks | two tables on the id's page, boxes as given |
-| US1 | an unstructured `Table` element in a 2893 × 4094 pixel space on a 595 × 842 page | the box scaled to points |
+| MK2 | a marker `Table` on a `/Rotate 90` page | the box turned back |
+| US1 | an unstructured `Table` element in a pixel space twice a 595 × 842 page's size | the box scaled to points |
+| US2 | an unstructured `Table` in a pixel space twice the size of a `/Rotate 90` page as it displays | scaled, then turned back |
 | BM1 | a batch of three documents: the second raises | three outputs, the second its error |
 | BM2 | a batch whose second document hangs past its deadline | killed; a timeout for it; the third read |
 | BM3 | deadlines: 1 page, 3 pages, 15 pages | 300 s, 360 s, 1,800 s |

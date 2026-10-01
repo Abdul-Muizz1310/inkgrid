@@ -6,11 +6,13 @@ malformed file is refused with its reason, and no number is computed from an unv
 
 import json
 import random
+import re
+import unicodedata
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any
 
-from inkgrid_bench.scores.binding import AccessPath
+from inkgrid_bench.scores.binding import AccessPath, match
 from inkgrid_bench.tables import Box, NCell, NTable
 
 BOX_TOL = 1.0  # pt a cell's box may reach past its table's
@@ -212,3 +214,58 @@ def glyph_sample(truths: Sequence[Truth], *, k: int, seed: str) -> list[tuple[st
     ]
     rng = random.Random(f"{seed}:cer")  # noqa: S311 - a seeded sample, not a secret
     return rng.sample(pool, k=min(k, len(pool)))
+
+
+@dataclass(frozen=True, slots=True)
+class GlyphCell:
+    """A glyph-verified cell: where it is in the ground truth, and its confirmed text."""
+
+    doc: str
+    table: int
+    cell: int
+    text: str
+
+
+def _glyphs(text: str) -> str:
+    """Text as CER compares it: NFKC, every whitespace character removed (spec 16 section 5)."""
+    return re.sub(r"\s+", "", unicodedata.normalize("NFKC", text))
+
+
+def distance(a: str, b: str) -> int:
+    """Levenshtein distance between two texts' glyphs."""
+    a, b = _glyphs(a), _glyphs(b)
+    if len(a) < len(b):
+        a, b = b, a
+    previous = list(range(len(b) + 1))
+    for i, ca in enumerate(a, start=1):
+        current = [i]
+        for j, cb in enumerate(b, start=1):
+            current.append(min(previous[j] + 1, current[j - 1] + 1, previous[j - 1] + (ca != cb)))
+        previous = current
+    return previous[-1]
+
+
+def cer_counts(
+    cells: Sequence[GlyphCell],
+    truths: Mapping[str, Truth],
+    tools: Mapping[str, Sequence[NTable]],
+) -> dict[str, dict[str, int]]:
+    """Per document, the sampled glyphs and the tool's errors on them (spec 16 section 5).
+
+    A cell's errors are the least distance to any cell of the tool's table matched to the cell's
+    ground-truth table, or of any table on the page when none matches, capped at the cell's length;
+    with no table on the page, every glyph is an error.
+    """
+    out: dict[str, dict[str, int]] = {}
+    for g in cells:
+        table = truths[g.doc].tables[g.table]
+        mine = tools.get(g.doc, ())
+        found = match(mine, table.page, table.bbox)
+        pool = [found] if found is not None else [t for t in mine if t.page == table.page]
+        n = len(_glyphs(g.text))
+        texts = [c.text for t in pool for c in t.cells]
+        errors = min((distance(g.text, t) for t in texts), default=n)
+        counts = out.setdefault(g.doc, {"chars": 0, "errors": 0})
+        counts["chars"] += n
+        counts["errors"] += min(errors, n)
+    return out

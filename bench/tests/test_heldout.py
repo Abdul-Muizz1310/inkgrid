@@ -5,7 +5,10 @@ import pytest
 
 from inkgrid_bench.heldout import (
     Candidate,
+    GlyphCell,
     access_paths,
+    cer_counts,
+    distance,
     glyph_sample,
     load_truth,
     require_verified,
@@ -13,7 +16,7 @@ from inkgrid_bench.heldout import (
     select,
 )
 from inkgrid_bench.scores.binding import AccessPath
-from inkgrid_bench.tables import NCell
+from inkgrid_bench.tables import NCell, NTable
 
 
 def candidate(doc_id: str, group: str) -> Candidate:
@@ -129,3 +132,33 @@ def test_GS1_the_glyph_sample_is_seeded_and_takes_every_cell_when_fewer() -> Non
     some = glyph_sample(truths, k=5, seed="20261001")
     assert some == glyph_sample(truths, k=5, seed="20261001")
     assert len(set(some)) == 5
+
+
+def tool_table(page: int, bbox: tuple[float, float, float, float], texts: list[str]) -> NTable:
+    return NTable(
+        page=page, bbox=bbox, cells=tuple(NCell(0, i, text=t) for i, t in enumerate(texts))
+    )
+
+
+def test_CE1_a_cells_error_is_its_distance_to_the_closest_cell_with_spaces_removed() -> None:
+    assert distance("0.10%", "0.1O%") == 1
+    assert distance("Removing10", "Removing 10") == 0  # whitespace is no glyph
+    assert distance("abc", "") == 3
+    truth = load_truth(truth_json([fee_table()]))
+    cell = GlyphCell(doc="x", table=0, cell=6, text="0.10%")  # (2, 2), whose draft reads 0.31
+    found = tool_table(2, (0, 0, 300, 80), ["0.1O%", "0.10 %", "fee"])
+    other = tool_table(2, (400, 400, 500, 500), ["0.10%"])  # elsewhere on the page: not matched
+    counts = cer_counts([cell], {"x": truth}, {"x": [found, other]})
+    assert counts == {"x": {"chars": 5, "errors": 0}}
+    worse = tool_table(2, (0, 0, 300, 80), ["0.1O%", "fee"])
+    assert cer_counts([cell], {"x": truth}, {"x": [worse]}) == {"x": {"chars": 5, "errors": 1}}
+
+
+def test_CE2_no_table_costs_every_glyph_and_a_long_cell_is_capped() -> None:
+    truth = load_truth(truth_json([fee_table()]))
+    cell = GlyphCell(doc="x", table=0, cell=5, text="4,715")
+    assert cer_counts([cell], {"x": truth}, {"x": []}) == {"x": {"chars": 5, "errors": 5}}
+    long = tool_table(2, (0, 0, 300, 80), ["a much longer cell that shares nothing with it"])
+    assert cer_counts([cell], {"x": truth}, {"x": [long]}) == {"x": {"chars": 5, "errors": 5}}
+    away = tool_table(2, (400, 400, 500, 500), ["4,716"])  # no overlap: the page's tables count
+    assert cer_counts([cell], {"x": truth}, {"x": [away]}) == {"x": {"chars": 5, "errors": 1}}

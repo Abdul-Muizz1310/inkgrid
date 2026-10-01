@@ -134,7 +134,8 @@ no cell is none.
 
 ## 5 · Reporting
 
-- Every dataset's tables gain the five tools; inkgrid's paired differences cover each.
+- Every dataset's tables gain the five tools a run holds (an earlier run renders as before); inkgrid's
+  paired differences cover each.
 - The report's first paragraph names the run's label and says which tools ran with OCR.
 - The README states only what the intervals support, labelled as tuned for inkgrid (DR-0023).
 
@@ -158,10 +159,13 @@ no cell is none.
 | BM1 | a batch of three documents: the second raises | three outputs, the second its error |
 | BM2 | a batch whose second document hangs past its deadline; one whose process dies on its second | killed; a timeout for it, or its crash; the third read by a new process; the first never read again |
 | BM3 | deadlines: 1 page, 3 pages, 15 pages | 300 s, 360 s, 1,800 s |
+| BM4 | the read stage with a batched tool, run twice | each document read once, its reading saved; the second run reads nothing |
 | AB1 | Tesseract TSV rows: a word, a blank, a line row, a word with a control character; the same on a `/Rotate 90` page | two words, in points, ids 0 and 1; turned back, not horizontal |
 | AB2 | the ablation on `ruled_grid` with a fake Tesseract (the fixture's own words as TSV) | the same table as inkgrid reads |
 | TS1 | the Tesseract pin | `micromamba create` from conda-forge alone, `tesseract=5.5.3=h7618cdf_0`, into the cache's prefix; micromamba itself a hash-pinned source |
 | RP1 | a report with the new tools | their rows, and inkgrid's paired difference with each |
+| TL1 | the tools | the five, pinned; the three heavy ones batched, from PyTorch's CPU index; unstructured with the pinned Tesseract on its `PATH` |
+| RP2 | a report of an earlier run, without the new tools | its four tools, as before |
 
 ## 7 · Acceptance
 

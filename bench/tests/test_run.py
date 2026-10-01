@@ -1,4 +1,5 @@
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -7,7 +8,7 @@ import pytest
 import pdf_factory
 from inkgrid_bench import fetch, pages, run
 from inkgrid_bench.adapters import _cli, ground_truth, inkgrid_read
-from inkgrid_bench.tables import NPage
+from inkgrid_bench.tables import NDocument, NPage
 
 DATA = Path(__file__).parent / "data"
 PY = sys.executable
@@ -217,3 +218,44 @@ def test_TS1_tesseract_is_built_from_its_pin() -> None:
     pin = fetch.sources()["micromamba"]
     assert pin.sha256 == "5512233cdd8564a671626081026dc861537a963baa06706baab08fac6f3bb9d2"
     assert pin.url.endswith("/2.3.2-0/micromamba-linux-64.tar.bz2")
+
+
+def test_TL1_the_heavy_competitors_and_the_ablation_are_tools() -> None:
+    cfg = run.config()
+    found = {t.name: t for t in run.tools(cfg)}
+    heavy = ("docling", "docling-ocr", "marker", "unstructured")
+    assert set(heavy) | {"inkgrid-ocr"} <= set(found)
+    assert [found[t].package for t in heavy] == [
+        "docling==2.131.0", "docling==2.131.0", "marker-pdf==2.0.0", "unstructured[pdf]==0.27.10",
+    ]  # fmt: skip
+    assert all(found[t].batch for t in heavy)
+    assert not found["inkgrid-ocr"].batch
+    assert found["inkgrid-ocr"].package is None
+    cmd = run.command(found["docling"])
+    assert cmd[cmd.index("--index") + 1] == "https://download.pytorch.org/whl/cpu"
+    env = run.tool_env(found["unstructured"])
+    assert env["PATH"].split(os.pathsep)[0] == str(run.TESSERACT / "bin")
+    assert env["TESSDATA_PREFIX"] == str(run.TESSERACT / "share" / "tessdata")
+    assert "TESSDATA_PREFIX" not in run.tool_env(found["docling"])
+
+
+def test_BM4_the_read_stage_batches_a_heavy_tool_and_never_rereads(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    script = tmp_path / "adapter.py"
+    script.write_text(BATCH.replace("BEHAVIOUR", "pass"))
+    docs = []
+    for name in ("a", "b"):
+        pdf = tmp_path / f"{name}.pdf"
+        pdf.write_bytes(pdf_factory.blank())
+        docs.append(run.Doc(name, pdf))
+    tool = run.Tool("fake", "fake", "fake==1", datasets=("competition",), batch=True)
+    monkeypatch.setattr(run, "datasets", lambda: {"competition": docs})
+    monkeypatch.setattr(run, "tools", lambda _cfg: [tool])
+    monkeypatch.setattr(run, "command", lambda _tool: [PY, str(script)])
+    for _ in range(2):
+        run.read_all(tmp_path / "run", "abc1234", {})
+    saved = [run.reading_path(tmp_path / "run", "fake", "competition", d) for d in docs]
+    texts = [NDocument.from_json(p.read_text()).tables[0].cells[0].text for p in saved]
+    assert texts == ["a", "b"]
+    assert script.with_suffix(".log").read_text().split() == ["a", "b"]  # never read again

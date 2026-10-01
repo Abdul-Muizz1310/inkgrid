@@ -205,10 +205,10 @@ def _await(
 class _Worker:
     """A heavy tool's batch process, its output drained on threads so it never blocks."""
 
-    def __init__(self, cmd: Sequence[str], manifest: Path) -> None:
+    def __init__(self, cmd: Sequence[str], manifest: Path, env: dict[str, str]) -> None:
         self.proc = subprocess.Popen(  # noqa: S603 - commands built here from pinned values
             [*cmd, "--batch", str(manifest)],
-            env=_env(),
+            env=env,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
@@ -261,6 +261,7 @@ def read_batch(
     version: str,
     deadline: Callable[[int], float] = deadline,
     startup: float = BATCH_STARTUP,
+    env: dict[str, str] | None = None,
 ) -> Iterator[tuple[Path, NDocument]]:
     """Each PDF's reading by a heavy tool, in order, as each finishes (spec 15 section 3).
 
@@ -282,7 +283,7 @@ def read_batch(
                 for p, o, fr in zip(pending, outs, frames, strict=True)
             ]
             manifest.write_text("".join(json.dumps(e) + "\n" for e in entries), encoding="utf-8")
-            worker = _Worker(cmd, manifest)
+            worker = _Worker(cmd, manifest, _env() if env is None else env)
             try:
                 while done < len(pending):
                     limit = deadline(len(frames[done])) + (startup if done == 0 else 0.0)
@@ -356,38 +357,72 @@ def datasets() -> dict[str, list[Doc]]:
 
 @dataclass(frozen=True, slots=True)
 class Tool:
-    """A tool: its adapter module, its pinned package (None: this environment), its datasets."""
+    """A tool: its adapter module, its pinned package (None: this environment), its datasets.
+
+    A heavy tool (spec 15) runs its documents in one batch process, installs PyTorch from `index`,
+    and may need the pinned Tesseract on its `PATH`.
+    """
 
     name: str
     module: str
     package: str | None
     datasets: tuple[str, ...] = ("competition", "practice", "olmocr")
+    batch: bool = False
+    index: str | None = None
+    tesseract: bool = False
 
 
 def tools(cfg: dict[str, Any]) -> list[Tool]:
-    """The four tools of spec 12 section 2, and the ground truth read as a tool (a check)."""
+    """Spec 12 section 2's tools and the ground truth read as a tool (a check), then spec 15's."""
     pins = cfg["tool"]
+    docling, torch = f"docling=={pins['docling']}", pins["torch-index"]
     return [
         Tool("inkgrid", "inkgrid_read", None),
         Tool("pdfplumber", "pdfplumber_tables", f"pdfplumber=={pins['pdfplumber']}"),
         Tool("pymupdf", "pymupdf_tables", f"pymupdf=={pins['pymupdf']}"),
         Tool("camelot", "camelot_lattice", f"camelot-py=={pins['camelot-py']}"),
         Tool("ground-truth", "ground_truth", None, ("competition", "practice")),
+        Tool("docling", "docling_tables", docling, batch=True, index=torch),
+        Tool("docling-ocr", "docling_ocr_tables", docling, batch=True, index=torch),
+        Tool(
+            "marker", "marker_tables", f"marker-pdf=={pins['marker-pdf']}", batch=True, index=torch
+        ),
+        Tool(
+            "unstructured",
+            "unstructured_tables",
+            f"unstructured[pdf]=={pins['unstructured']}",
+            batch=True,
+            index=torch,
+            tesseract=True,
+        ),
+        Tool("inkgrid-ocr", "inkgrid_ocr", None),
     ]
 
 
-def isolated(packages: Sequence[str], python: str = TOOL_PYTHON) -> list[str]:
-    """`uv run` in a fresh environment holding only `packages`."""
+def isolated(
+    packages: Sequence[str], python: str = TOOL_PYTHON, index: str | None = None
+) -> list[str]:
+    """`uv run` in a fresh environment holding only `packages`, PyTorch from `index` if given."""
     withs = [arg for p in packages for arg in ("--with", p)]
-    return ["uv", "run", "--isolated", "--no-project", "--python", python, *withs]
+    extra = [] if index is None else ["--index", index, "--index-strategy", "unsafe-best-match"]
+    return ["uv", "run", "--isolated", "--no-project", "--python", python, *extra, *withs]
 
 
 def command(tool: Tool) -> list[str]:
-    """The adapter's command line, before its two arguments."""
+    """The adapter's command line, before its arguments."""
     module = ["-m", f"inkgrid_bench.adapters.{tool.module}"]
     if tool.package is None:
         return [*NICE, sys.executable, *module]
-    return [*NICE, *isolated([tool.package]), "python", *module]
+    return [*NICE, *isolated([tool.package], index=tool.index), "python", *module]
+
+
+def tool_env(tool: Tool) -> dict[str, str]:
+    """The environment a tool's process runs in: the pinned Tesseract first on its `PATH`."""
+    env = _env()
+    if tool.tesseract:
+        env["PATH"] = os.pathsep.join([str(TESSERACT / "bin"), env.get("PATH", "")])
+        env["TESSDATA_PREFIX"] = str(TESSERACT / "share" / "tessdata")
+    return env
 
 
 def commit() -> str:
@@ -407,8 +442,8 @@ def commit() -> str:
 
 def version(tool: Tool, head: str) -> str:
     """What the reading is a reading by."""
-    if tool.name == "inkgrid":
-        import inkgrid  # noqa: PLC0415 - only this tool needs inkgrid in this process
+    if tool.name in {"inkgrid", "inkgrid-ocr"}:
+        import inkgrid  # noqa: PLC0415 - only these tools need inkgrid in this process
 
         return f"{inkgrid.__version__}+{head}"
     if tool.package is None:
@@ -482,17 +517,31 @@ def reading_path(run: Path, tool: str, dataset: str, doc: Doc) -> Path:
     return run / "readings" / tool / dataset / f"{safe(doc.id)}.json"
 
 
+def _readings(
+    tool: Tool, cmd: Sequence[str], ver: str, todo: Sequence[Doc]
+) -> Iterator[tuple[Doc, NDocument]]:
+    """The tool's readings of the documents: a heavy tool's from one batch process (spec 15)."""
+    if not tool.batch:
+        for doc in todo:
+            yield doc, read_document(cmd, doc.pdf, tool=tool.name, version=ver)
+        return
+    by_pdf = {doc.pdf: doc for doc in todo}
+    batch = read_batch(cmd, [d.pdf for d in todo], tool=tool.name, version=ver, env=tool_env(tool))
+    for pdf, reading in batch:
+        yield by_pdf[pdf], reading
+
+
 def read_all(run: Path, head: str, cfg: dict[str, Any]) -> None:
-    """Every tool on every document of its datasets, one at a time."""
+    """Every tool on every document of its datasets, one at a time; finished ones are kept."""
     docs = datasets()
     for tool in tools(cfg):
         cmd, ver = command(tool), version(tool, head)
         for dataset in tool.datasets:
-            for doc in docs[dataset]:
+            todo = [
+                d for d in docs[dataset] if not reading_path(run, tool.name, dataset, d).exists()
+            ]
+            for doc, reading in _readings(tool, cmd, ver, todo):
                 out = reading_path(run, tool.name, dataset, doc)
-                if out.exists():
-                    continue
-                reading = read_document(cmd, doc.pdf, tool=tool.name, version=ver)
                 out.parent.mkdir(parents=True, exist_ok=True)
                 out.write_text(reading.to_json(), encoding="utf-8")
                 note = (

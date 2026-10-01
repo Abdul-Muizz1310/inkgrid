@@ -99,3 +99,8 @@ spec = "tesseract=5.5.3=h7618cdf_0"
 pdfplumber = "0.11.10"
 pymupdf = "1.28.2"
 camelot-py = "2.0.0"
+# The heavy competitors (docs/specs/15-heavy-competitors.md section 1), with PyTorch's CPU build.
+docling = "2.131.0"
+marker-pdf = "2.0.0"
+unstructured = "0.27.10"
+torch-index = "https://download.pytorch.org/whl/cpu"

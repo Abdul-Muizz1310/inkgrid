@@ -91,3 +91,31 @@ def test_TR1_the_whole_report_renders_under_its_label() -> None:
     for title, groups in report.DATASETS.values():
         assert f"## {title} (" in text
         assert all(f"### {name}\n" in text for name, _ in groups)
+
+
+def test_RP1_the_heavy_competitors_get_rows_and_paired_differences() -> None:
+    data = {
+        "counts": json.loads((BASELINE_RUN / "counts.json").read_text(encoding="utf-8")),
+        **json.loads((BASELINE_RUN / "checks.json").read_text(encoding="utf-8")),
+    }
+    for dataset in data["counts"].values():
+        for tool in ("docling", "docling-ocr", "marker", "unstructured", "inkgrid-ocr"):
+            dataset[tool] = dataset["camelot"]  # any counts: the rows, not the numbers, are tested
+    text = report.document(data, head="abc1234", date="2026-10-01", label="tuned", resamples=20)
+    for tool in ("docling", "docling-ocr", "marker", "unstructured", "inkgrid-ocr"):
+        assert f"\n| {tool} |" in text
+        assert f"\n| inkgrid - {tool} |" in text
+    first = text.split("\n\n")[1]
+    assert "docling-ocr, unstructured, and inkgrid-ocr read the pages with OCR" in text
+    assert "tuned" in first
+
+
+def test_RP2_an_earlier_run_renders_its_four_tools() -> None:
+    data = {
+        "counts": json.loads((BASELINE_RUN / "counts.json").read_text(encoding="utf-8")),
+        **json.loads((BASELINE_RUN / "checks.json").read_text(encoding="utf-8")),
+    }
+    text = report.document(data, head="abc1234", date="2026-10-01", resamples=20)
+    assert "\n| camelot |" in text
+    assert "docling" not in text.split("## Soric et al.")[0]
+    assert "with OCR" not in text

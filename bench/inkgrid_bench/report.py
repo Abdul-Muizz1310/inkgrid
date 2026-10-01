@@ -150,7 +150,28 @@ def markdown_differences(scored: Scored, specs: Sequence[MetricSpec]) -> str:
     return "\n".join(lines) + "\n"
 
 
-TOOLS = ("inkgrid", "pdfplumber", "pymupdf", "camelot")
+TOOLS = (
+    "inkgrid",
+    "pdfplumber",
+    "pymupdf",
+    "camelot",
+    "docling",
+    "docling-ocr",
+    "marker",
+    "unstructured",
+    "inkgrid-ocr",
+)
+"""Every tool a report knows, in its row order; a run reports those it holds (spec 15 s. 5)."""
+OCR = ("docling-ocr", "unstructured", "inkgrid-ocr")  # the tools that read the pages with OCR
+
+
+def _named(names: Sequence[str]) -> str:
+    """`a`, `a and b`, `a, b, and c`."""
+    if len(names) <= 2:  # noqa: PLR2004 - one or two names take no comma
+        return " and ".join(names)
+    return ", ".join(names[:-1]) + ", and " + names[-1]
+
+
 CHECK = "ground-truth"
 DATASETS: dict[str, tuple[str, tuple[tuple[str, tuple[MetricSpec, ...]], ...]]] = {
     "competition": (
@@ -271,12 +292,20 @@ def document(
             "check on the pipeline and on each metric's ceiling, not a competitor.\n"
         ),
     ]
+    held = [t for t in TOOLS if any(t in by_tool for by_tool in counts.values())]
+    ocr = [t for t in held if t in OCR]
+    if ocr:
+        parts.append(
+            f"{_named(ocr)} read the pages with OCR; every other tool reads the PDF's text layer. "
+            "`inkgrid-ocr` is inkgrid with Tesseract's words for its own: the text layer's "
+            "effect on inkgrid's own gridders (spec 15 section 4).\n"
+        )
     for dataset, (title, groups) in DATASETS.items():
-        four = {t: counts[dataset][t] for t in TOOLS}
-        n = len(next(iter(four.values())))
+        scored_tools = {t: counts[dataset][t] for t in held if t in counts[dataset]}
+        n = len(next(iter(scored_tools.values())))
         parts.append(f"## {title} ({n} documents)\n")
         for name, specs in groups:
-            scored = score(four, specs, resamples=resamples)
+            scored = score(scored_tools, specs, resamples=resamples)
             parts += [
                 f"### {name}\n",
                 markdown_table(scored, specs),

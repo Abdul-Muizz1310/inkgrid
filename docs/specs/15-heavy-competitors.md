@@ -80,7 +80,9 @@ top-left corner, and cells with anchors, spans, text, and the header flag.
 order; each `<td>` or `<th>` at the first free column of its row, spanning `rowspan` × `colspan`
 (missing, non-numeric, or below 1 means 1); its text is its descendants' text with tags removed,
 entities decoded, and whitespace runs collapsed to one space; a `<th>` is a header cell. A cell
-reaching past the rows the table has is clipped to them. A table with no cell is none.
+reaching past the rows the table has is clipped to them, and a span that would cover a position an
+earlier cell holds stops before it (HTML lets them overlap; a normalized table may not). A table with
+no cell is none.
 
 ### 2.2 Per tool
 
@@ -133,7 +135,8 @@ reaching past the rows the table has is clipped to them. A table with no cell is
 |---|---|---|
 | HT1 | `<table><thead><tr><th colspan=2>Fees</th></tr></thead><tbody><tr><td rowspan=2>A</td><td>1</td></tr><tr><td>2</td></tr></tbody></table>` | `Fees` (0,0) 1×2 header; `A` (1,0) 2×1; `1` (1,1); `2` (2,1) |
 | HT2 | entities, nested `<b>`, `<br>`, runs of spaces; `rowspan="x"`, `colspan="0"` | `a & b`, one space; spans 1 |
-| HT3 | a cell spanning past the last row; an empty table; no `<table>` | clipped; none; none |
+| HT3 | a cell spanning past the last row; a `colspan` running into a `rowspan` from above; an empty table; no `<table>` | clipped; stopped before it; none; none |
+| HT4 | property: any table of `<td>` and `<th>` with spans from 0 to 4 | its cells never cover a position twice |
 | DC1 | a Docling table dict: a bottom-left box on a 792 pt page, a spanning column header | the top-left box; anchors, spans, the header flag |
 | MK1 | a marker JSON page with two `Table` blocks and other blocks | two tables on the id's page, boxes as given |
 | US1 | an unstructured `Table` element in a 2893 × 4094 pixel space on a 595 × 842 page | the box scaled to points |

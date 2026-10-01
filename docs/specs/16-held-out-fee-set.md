@@ -55,11 +55,12 @@ document, as a user would; only its tables on scored pages are scored.
 ## 2 · The ground truth (`bench/heldout/<id>.json`)
 
 - A document's file holds its `id`, its scored `pages`, and its `tables`. A table has a `page`, a
-  `bbox` (PDF points, origin at the page box's top left, unrotated, as spec 12 § 3.1), `stub_cols`
-  (how many leading columns are row labels), and `cells`: each an anchor (`row`, `col`), a span
-  (`rows`, `cols`), its `text`, `header` (a column-header cell), and its `box` (points, as `bbox`).
-  The cells tile the table (spec 12's `NTable`); a header cell lies in the table's leading header
-  rows; every box lies inside the table's.
+  `bbox` (PDF points, origin at the page box's top left, unrotated, as spec 12 § 3.1; no scored page
+  is turned or offset), `header_rows` (how many leading rows are column labels), `stub_cols` (how many
+  leading columns are row labels), and `cells`: each an anchor (`row`, `col`), a span (`rows`,
+  `cols`), its `text`, and its `box` (points, as `bbox`). The cells tile the table (spec 12's
+  `NTable`); no cell runs from the header rows into the body; every box lies inside the table's,
+  within 1 pt; a scored page's tables are listed only for scored pages.
 - `drafted` names who drafted it and when; `verified` is `null` until the user has checked every
   table, then names the user, the date, and how many tables were corrected. **No held-out number is
   computed from a file whose `verified` is `null`.**
@@ -121,7 +122,7 @@ document, as a user would; only its tables on scored pages are scored.
 |---|---|---|
 | SL1 | the manifest's candidates with their numeric-page counts | one per group, by § 1's order |
 | SL2 | `scored_pages("x", [3, 5, 9, 12])` twice; with one numeric page | the same 3 sorted pages both times; that page |
-| GT1 | a ground-truth file whose cells overlap; a header cell below a body row; a cell box outside its table; `verified` null | each refused, with the reason; scoring refuses an unverified file |
+| GT1 | a ground-truth file whose cells overlap; a cell running from the header rows into the body; a cell box outside its table; a table on an unscored page; `verified` null | each refused, with the reason; scoring refuses an unverified file |
 | GT2 | a table with 2 header rows (a spanning group label), 1 stub column | access paths with column labels outer then leaf, row labels; an empty header cell skipped |
 | GT3 | a value with no label; a table of headers only | no path; no path |
 | GS1 | 3 documents' cells, sample of 200 | every non-empty cell when fewer; the same sample twice |

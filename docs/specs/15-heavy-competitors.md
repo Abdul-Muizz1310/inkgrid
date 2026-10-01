@@ -185,6 +185,7 @@ no cell is none.
 | BM3 | deadlines: 1 page, 3 pages, 15 pages | 300 s, 360 s, 1,800 s |
 | BM5 | a batch whose tool writes a non-UTF-8 byte to its errors, and 40 KB of log lines per document | every document read; no false timeout |
 | BM6 | a batch whose tool prints an unfinished line just before a document's end | that document read; none read twice |
+| BM7 | a timed-out tool whose process group refuses the kill (macOS, while the group exits: `kill(2)`'s EPERM) | the process itself is killed; the batch closes without raising |
 | RS1 | the image-only copy of a `/Rotate 90` fixture | its pages, sized as the original displays, unturned, no text layer |
 | EN1 | the environment record | each heavy tool resolved from PyTorch's CPU index as of the run's date; the Tesseract it ran |
 | BM4 | the read stage with a batched tool, run twice | each document read once, its reading saved; the second run reads nothing |

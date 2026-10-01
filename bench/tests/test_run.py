@@ -1,5 +1,7 @@
 import json
 import os
+import signal
+import subprocess
 import sys
 from pathlib import Path
 
@@ -323,3 +325,18 @@ def test_EN1_the_environment_record_is_the_environment_that_ran(
     assert docling[docling.index("--index") + 1] == "https://download.pytorch.org/whl/cpu"
     assert docling[docling.index("--exclude-newer") + 1] == "2026-10-01T00:00:00Z"
     assert out["tesseract"] == ["tesseract 5.5.3", " leptonica-1.87.0"]
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="process groups are POSIX")
+def test_BM7_a_refused_group_kill_kills_the_process_itself(monkeypatch: pytest.MonkeyPatch) -> None:
+    # macOS refuses a group signal while the group is exiting (kill(2), EPERM): seen on CI's runner
+    proc = subprocess.Popen(
+        [sys.executable, "-c", "import time; time.sleep(60)"], start_new_session=True
+    )
+
+    def refused(_pgid: int, _sig: int) -> None:
+        raise PermissionError(1, "Operation not permitted")
+
+    monkeypatch.setattr(os, "killpg", refused)
+    run._kill(proc)  # noqa: SLF001 - the shared kill
+    assert proc.wait(timeout=10) == -signal.SIGKILL

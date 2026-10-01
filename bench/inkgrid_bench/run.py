@@ -111,9 +111,16 @@ def _kill(proc: "subprocess.Popen[str]") -> None:
     """Kill a process started in its own session, and its children."""
     if sys.platform == "win32":
         proc.kill()  # the run itself needs POSIX; this keeps its tests portable
-    else:
-        with contextlib.suppress(ProcessLookupError):  # it may have ended on its own
-            os.killpg(proc.pid, signal.SIGKILL)  # the tool's children too (`uv run` spawns them)
+        return
+    try:
+        os.killpg(proc.pid, signal.SIGKILL)  # the tool's children too (`uv run` spawns them)
+    except ProcessLookupError:
+        pass  # it ended on its own
+    except PermissionError:
+        # macOS refuses a group signal while the group is exiting (kill(2)'s EPERM); the process
+        # itself can still be signalled, or it has ended
+        with contextlib.suppress(ProcessLookupError):
+            proc.kill()
 
 
 def last_line(text: str) -> str | None:

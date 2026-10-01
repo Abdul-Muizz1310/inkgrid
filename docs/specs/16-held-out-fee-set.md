@@ -131,6 +131,8 @@ document, as a user would; only its tables on scored pages are scored.
 | RN1 | `--datasets heldout` with `src/` changed since the tuned run | refused, naming the commit |
 | RN2 | `--datasets heldout` | only held-out readings; results under `<date>-<commit>-heldout/`; the report's title says held out |
 | DR1 | words and a drafted grid | each word in the cell holding its centre, in reading order |
+| DR2 | a stated grid with a merge running past the grid, or two merges overlapping | refused |
+| DR3 | the ruler, overlay, and crop renderings of a fixture page | images of the page's size at their DPI; a crop of the box's |
 
 ## 8 · Acceptance
 

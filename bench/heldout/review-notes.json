@@ -1,0 +1,22 @@
+{
+  "adx-csd:4:0": "Full-width grey rows (Off-Market Transfers) are one merged cell.",
+  "asx-trade:7:0": "Each section bar is drafted as its number cell plus a title merged across the other five columns.",
+  "bist-data:4": "Unruled tables under grey section bars. The bars (A., B., a.) are headings, not table rows.",
+  "bist-data:4:0": "Continues from page 3, so it has no header row. The GTUYE line is a group label spanning both columns.",
+  "bist-data:4:1": "A one-row table: is this a table to you?",
+  "bist-data:5": "Not drafted: the Takasbank bar at the foot, a header whose rows are on page 6.",
+  "bist-data:5:1": "Web Site and TV Channel are drafted as two tables, each with its own header row.",
+  "bist-data:8": "No table on this page (numbered notes).",
+  "bvb-participants:2:0": "Continues from page 1, so it has no header row.",
+  "bvb-participants:4:0": "Continues from page 3, so it has no header row.",
+  "jpx-participant:2:0": "The Basis of Calculation cells span the rows their phrase runs across (trading / contract (*2)), though a dashed rule crosses them.",
+  "jpx-participant:6": "No table on this page (footnotes).",
+  "luxse-listing:2": "Table of contents: drafted as no table.",
+  "luxse-listing:4": "Notes beside a navigation sidebar: drafted as no table.",
+  "luxse-listing:13": "The navigation sidebar on the right is not a table.",
+  "psx-trading-fee:3": "The outer Proposed Amendments | Rationale frame is treated as page layout: only the fee table inside it is drafted. Struck-through text stays in its cell, since it is printed.",
+  "psx-trading-fee:4": "As on page 3: the outer frame is page layout; the two schedules inside it are the tables. Rotated cells span the rows they cover.",
+  "tsx-trading:1": "The 'label: value' lines are drafted as a list, not a table. Only the small Order Type table is drafted.",
+  "tsx-trading:3:3": "Its rows sit inside one ruled box with no rules between, so they follow the text lines. Displayed Order Volume is a group label spanning the row.",
+  "tsx-trading:5:2": "Rows follow the text lines inside one ruled box; the three group labels span their rows."
+}

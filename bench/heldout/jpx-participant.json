@@ -1,0 +1,1745 @@
+{
+ "id": "jpx-participant",
+ "pages": [
+  2,
+  5,
+  6
+ ],
+ "tables": [
+  {
+   "page": 2,
+   "bbox": [
+    83.3,
+    71.9,
+    777.9,
+    191.4
+   ],
+   "header_rows": 3,
+   "stub_cols": 2,
+   "cells": [
+    {
+     "row": 0,
+     "col": 0,
+     "rows": 3,
+     "cols": 2,
+     "text": "",
+     "box": [
+      83.3,
+      71.9,
+      296.0,
+      131.7
+     ]
+    },
+    {
+     "row": 0,
+     "col": 2,
+     "rows": 2,
+     "cols": 2,
+     "text": "Trading Fee",
+     "box": [
+      296.0,
+      71.9,
+      451.8,
+      102.0
+     ]
+    },
+    {
+     "row": 0,
+     "col": 4,
+     "rows": 1,
+     "cols": 4,
+     "text": "Clearing Fee (*1)",
+     "box": [
+      451.8,
+      71.9,
+      777.9,
+      86.9
+     ]
+    },
+    {
+     "row": 1,
+     "col": 4,
+     "rows": 1,
+     "cols": 1,
+     "text": "",
+     "box": [
+      451.8,
+      86.9,
+      537.0,
+      102.0
+     ]
+    },
+    {
+     "row": 1,
+     "col": 5,
+     "rows": 1,
+     "cols": 1,
+     "text": "",
+     "box": [
+      537.0,
+      86.9,
+      614.8,
+      102.0
+     ]
+    },
+    {
+     "row": 1,
+     "col": 6,
+     "rows": 1,
+     "cols": 2,
+     "text": "For Final Settlement",
+     "box": [
+      614.8,
+      86.9,
+      777.9,
+      102.0
+     ]
+    },
+    {
+     "row": 2,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "Basis of Calculation",
+     "box": [
+      296.0,
+      102.0,
+      374.0,
+      131.7
+     ]
+    },
+    {
+     "row": 2,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "Fee Rate",
+     "box": [
+      374.0,
+      102.0,
+      451.8,
+      131.7
+     ]
+    },
+    {
+     "row": 2,
+     "col": 4,
+     "rows": 1,
+     "cols": 1,
+     "text": "Basis of Calculation",
+     "box": [
+      451.8,
+      102.0,
+      537.0,
+      131.7
+     ]
+    },
+    {
+     "row": 2,
+     "col": 5,
+     "rows": 1,
+     "cols": 1,
+     "text": "Fee Rate",
+     "box": [
+      537.0,
+      102.0,
+      614.8,
+      131.7
+     ]
+    },
+    {
+     "row": 2,
+     "col": 6,
+     "rows": 1,
+     "cols": 1,
+     "text": "Basis of Calculation",
+     "box": [
+      614.8,
+      102.0,
+      700.0,
+      131.7
+     ]
+    },
+    {
+     "row": 2,
+     "col": 7,
+     "rows": 1,
+     "cols": 1,
+     "text": "Fee Rate",
+     "box": [
+      700.0,
+      102.0,
+      777.9,
+      131.7
+     ]
+    },
+    {
+     "row": 3,
+     "col": 0,
+     "rows": 2,
+     "cols": 1,
+     "text": "Physically Delivered",
+     "box": [
+      83.3,
+      131.7,
+      191.4,
+      161.9
+     ]
+    },
+    {
+     "row": 3,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "5-year / 10-year",
+     "box": [
+      191.4,
+      131.7,
+      296.0,
+      146.8
+     ]
+    },
+    {
+     "row": 3,
+     "col": 2,
+     "rows": 2,
+     "cols": 1,
+     "text": "trading contract (*2)",
+     "box": [
+      296.0,
+      131.7,
+      374.0,
+      161.9
+     ]
+    },
+    {
+     "row": 3,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "JPY 95",
+     "box": [
+      374.0,
+      131.7,
+      451.8,
+      146.8
+     ]
+    },
+    {
+     "row": 3,
+     "col": 4,
+     "rows": 3,
+     "cols": 1,
+     "text": "trading contract for obligations assumed by JSCC (*3)",
+     "box": [
+      451.8,
+      131.7,
+      537.0,
+      191.4
+     ]
+    },
+    {
+     "row": 3,
+     "col": 5,
+     "rows": 1,
+     "cols": 1,
+     "text": "JPY 49",
+     "box": [
+      537.0,
+      131.7,
+      614.8,
+      146.8
+     ]
+    },
+    {
+     "row": 3,
+     "col": 6,
+     "rows": 2,
+     "cols": 1,
+     "text": "contract for physical delivery",
+     "box": [
+      614.8,
+      131.7,
+      700.0,
+      161.9
+     ]
+    },
+    {
+     "row": 3,
+     "col": 7,
+     "rows": 1,
+     "cols": 1,
+     "text": "JPY 132",
+     "box": [
+      700.0,
+      131.7,
+      777.9,
+      146.8
+     ]
+    },
+    {
+     "row": 4,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "20-year",
+     "box": [
+      191.4,
+      146.8,
+      296.0,
+      161.9
+     ]
+    },
+    {
+     "row": 4,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "JPY 10",
+     "box": [
+      374.0,
+      146.8,
+      451.8,
+      161.9
+     ]
+    },
+    {
+     "row": 4,
+     "col": 5,
+     "rows": 1,
+     "cols": 1,
+     "text": "JPY 5",
+     "box": [
+      537.0,
+      146.8,
+      614.8,
+      161.9
+     ]
+    },
+    {
+     "row": 4,
+     "col": 7,
+     "rows": 1,
+     "cols": 1,
+     "text": "JPY 15",
+     "box": [
+      700.0,
+      146.8,
+      777.9,
+      161.9
+     ]
+    },
+    {
+     "row": 5,
+     "col": 0,
+     "rows": 1,
+     "cols": 2,
+     "text": "Cash-Settled",
+     "box": [
+      83.3,
+      161.9,
+      296.0,
+      191.4
+     ]
+    },
+    {
+     "row": 5,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "trading contract",
+     "box": [
+      296.0,
+      161.9,
+      374.0,
+      191.4
+     ]
+    },
+    {
+     "row": 5,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "JPY 20",
+     "box": [
+      374.0,
+      161.9,
+      451.8,
+      191.4
+     ]
+    },
+    {
+     "row": 5,
+     "col": 5,
+     "rows": 1,
+     "cols": 1,
+     "text": "JPY 5",
+     "box": [
+      537.0,
+      161.9,
+      614.8,
+      191.4
+     ]
+    },
+    {
+     "row": 5,
+     "col": 6,
+     "rows": 1,
+     "cols": 1,
+     "text": "contract for final settlement",
+     "box": [
+      614.8,
+      161.9,
+      700.0,
+      191.4
+     ]
+    },
+    {
+     "row": 5,
+     "col": 7,
+     "rows": 1,
+     "cols": 1,
+     "text": "JPY 15",
+     "box": [
+      700.0,
+      161.9,
+      777.9,
+      191.4
+     ]
+    }
+   ]
+  },
+  {
+   "page": 2,
+   "bbox": [
+    83.3,
+    221.1,
+    777.9,
+    339.6
+   ],
+   "header_rows": 3,
+   "stub_cols": 2,
+   "cells": [
+    {
+     "row": 0,
+     "col": 0,
+     "rows": 3,
+     "cols": 2,
+     "text": "",
+     "box": [
+      83.3,
+      221.1,
+      296.0,
+      280.7
+     ]
+    },
+    {
+     "row": 0,
+     "col": 2,
+     "rows": 2,
+     "cols": 2,
+     "text": "Trading Fee",
+     "box": [
+      296.0,
+      221.1,
+      451.8,
+      251.2
+     ]
+    },
+    {
+     "row": 0,
+     "col": 4,
+     "rows": 1,
+     "cols": 4,
+     "text": "Clearing Fee (*1)",
+     "box": [
+      451.8,
+      221.1,
+      777.9,
+      236.1
+     ]
+    },
+    {
+     "row": 1,
+     "col": 4,
+     "rows": 1,
+     "cols": 1,
+     "text": "",
+     "box": [
+      451.8,
+      236.1,
+      537.0,
+      251.2
+     ]
+    },
+    {
+     "row": 1,
+     "col": 5,
+     "rows": 1,
+     "cols": 1,
+     "text": "",
+     "box": [
+      537.0,
+      236.1,
+      614.8,
+      251.2
+     ]
+    },
+    {
+     "row": 1,
+     "col": 6,
+     "rows": 1,
+     "cols": 2,
+     "text": "For Final Settlement",
+     "box": [
+      614.8,
+      236.1,
+      777.9,
+      251.2
+     ]
+    },
+    {
+     "row": 2,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "Basis of Calculation",
+     "box": [
+      296.0,
+      251.2,
+      374.0,
+      280.7
+     ]
+    },
+    {
+     "row": 2,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "Fee Rate",
+     "box": [
+      374.0,
+      251.2,
+      451.8,
+      280.7
+     ]
+    },
+    {
+     "row": 2,
+     "col": 4,
+     "rows": 1,
+     "cols": 1,
+     "text": "Basis of Calculation",
+     "box": [
+      451.8,
+      251.2,
+      537.0,
+      280.7
+     ]
+    },
+    {
+     "row": 2,
+     "col": 5,
+     "rows": 1,
+     "cols": 1,
+     "text": "Fee Rate",
+     "box": [
+      537.0,
+      251.2,
+      614.8,
+      280.7
+     ]
+    },
+    {
+     "row": 2,
+     "col": 6,
+     "rows": 1,
+     "cols": 1,
+     "text": "Basis of Calculation",
+     "box": [
+      614.8,
+      251.2,
+      700.0,
+      280.7
+     ]
+    },
+    {
+     "row": 2,
+     "col": 7,
+     "rows": 1,
+     "cols": 1,
+     "text": "Fee Rate",
+     "box": [
+      700.0,
+      251.2,
+      777.9,
+      280.7
+     ]
+    },
+    {
+     "row": 3,
+     "col": 0,
+     "rows": 1,
+     "cols": 2,
+     "text": "3-Month TONA",
+     "box": [
+      83.3,
+      280.7,
+      296.0,
+      339.6
+     ]
+    },
+    {
+     "row": 3,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "trading contract",
+     "box": [
+      296.0,
+      280.7,
+      374.0,
+      339.6
+     ]
+    },
+    {
+     "row": 3,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "JPY 70 (*4)",
+     "box": [
+      374.0,
+      280.7,
+      451.8,
+      339.6
+     ]
+    },
+    {
+     "row": 3,
+     "col": 4,
+     "rows": 1,
+     "cols": 1,
+     "text": "trading contract for obligations assumed by JSCC",
+     "box": [
+      451.8,
+      280.7,
+      537.0,
+      339.6
+     ]
+    },
+    {
+     "row": 3,
+     "col": 5,
+     "rows": 1,
+     "cols": 1,
+     "text": "JPY17.5 (*4)",
+     "box": [
+      537.0,
+      280.7,
+      614.8,
+      339.6
+     ]
+    },
+    {
+     "row": 3,
+     "col": 6,
+     "rows": 1,
+     "cols": 1,
+     "text": "contract for final settlement",
+     "box": [
+      614.8,
+      280.7,
+      700.0,
+      339.6
+     ]
+    },
+    {
+     "row": 3,
+     "col": 7,
+     "rows": 1,
+     "cols": 1,
+     "text": "JPY 87.5 (*4)",
+     "box": [
+      700.0,
+      280.7,
+      777.9,
+      339.6
+     ]
+    }
+   ]
+  },
+  {
+   "page": 5,
+   "bbox": [
+    83.3,
+    57.4,
+    776.7,
+    146.7
+   ],
+   "header_rows": 3,
+   "stub_cols": 1,
+   "cells": [
+    {
+     "row": 0,
+     "col": 0,
+     "rows": 3,
+     "cols": 1,
+     "text": "",
+     "box": [
+      83.3,
+      57.4,
+      168.0,
+      117.0
+     ]
+    },
+    {
+     "row": 0,
+     "col": 1,
+     "rows": 2,
+     "cols": 2,
+     "text": "Trading Fee",
+     "box": [
+      168.0,
+      57.4,
+      314.0,
+      87.5
+     ]
+    },
+    {
+     "row": 0,
+     "col": 3,
+     "rows": 1,
+     "cols": 4,
+     "text": "Clearing Fee (*1)",
+     "box": [
+      314.0,
+      57.4,
+      776.7,
+      72.4
+     ]
+    },
+    {
+     "row": 1,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "",
+     "box": [
+      314.0,
+      72.4,
+      461.0,
+      87.5
+     ]
+    },
+    {
+     "row": 1,
+     "col": 4,
+     "rows": 1,
+     "cols": 1,
+     "text": "",
+     "box": [
+      461.0,
+      72.4,
+      524.6,
+      87.5
+     ]
+    },
+    {
+     "row": 1,
+     "col": 5,
+     "rows": 1,
+     "cols": 2,
+     "text": "For Exercise",
+     "box": [
+      524.6,
+      72.4,
+      776.7,
+      87.5
+     ]
+    },
+    {
+     "row": 2,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "Basis of Calculation",
+     "box": [
+      168.0,
+      87.5,
+      245.0,
+      117.0
+     ]
+    },
+    {
+     "row": 2,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "Fee Rate",
+     "box": [
+      245.0,
+      87.5,
+      314.0,
+      117.0
+     ]
+    },
+    {
+     "row": 2,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "Basis of Calculation",
+     "box": [
+      314.0,
+      87.5,
+      461.0,
+      117.0
+     ]
+    },
+    {
+     "row": 2,
+     "col": 4,
+     "rows": 1,
+     "cols": 1,
+     "text": "Fee Rate",
+     "box": [
+      461.0,
+      87.5,
+      524.6,
+      117.0
+     ]
+    },
+    {
+     "row": 2,
+     "col": 5,
+     "rows": 1,
+     "cols": 1,
+     "text": "Basis of Calculation",
+     "box": [
+      524.6,
+      87.5,
+      709.0,
+      117.0
+     ]
+    },
+    {
+     "row": 2,
+     "col": 6,
+     "rows": 1,
+     "cols": 1,
+     "text": "Fee Rate",
+     "box": [
+      709.0,
+      87.5,
+      776.7,
+      117.0
+     ]
+    },
+    {
+     "row": 3,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Options on JGB Futures",
+     "box": [
+      83.3,
+      117.0,
+      168.0,
+      146.7
+     ]
+    },
+    {
+     "row": 3,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "trading contract",
+     "box": [
+      168.0,
+      117.0,
+      245.0,
+      146.7
+     ]
+    },
+    {
+     "row": 3,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "JPY 40",
+     "box": [
+      245.0,
+      117.0,
+      314.0,
+      146.7
+     ]
+    },
+    {
+     "row": 3,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "trading contract for obligations assumed by JSCC",
+     "box": [
+      314.0,
+      117.0,
+      461.0,
+      146.7
+     ]
+    },
+    {
+     "row": 3,
+     "col": 4,
+     "rows": 1,
+     "cols": 1,
+     "text": "JPY 10",
+     "box": [
+      461.0,
+      117.0,
+      524.6,
+      146.7
+     ]
+    },
+    {
+     "row": 3,
+     "col": 5,
+     "rows": 1,
+     "cols": 1,
+     "text": "contract to be paid or received through options exercise or assignment",
+     "box": [
+      524.6,
+      117.0,
+      709.0,
+      146.7
+     ]
+    },
+    {
+     "row": 3,
+     "col": 6,
+     "rows": 1,
+     "cols": 1,
+     "text": "JPY 10",
+     "box": [
+      709.0,
+      117.0,
+      776.7,
+      146.7
+     ]
+    }
+   ]
+  },
+  {
+   "page": 5,
+   "bbox": [
+    83.3,
+    176.3,
+    777.9,
+    366.8
+   ],
+   "header_rows": 3,
+   "stub_cols": 2,
+   "cells": [
+    {
+     "row": 0,
+     "col": 0,
+     "rows": 3,
+     "cols": 2,
+     "text": "",
+     "box": [
+      83.3,
+      176.3,
+      246.3,
+      236.0
+     ]
+    },
+    {
+     "row": 0,
+     "col": 2,
+     "rows": 2,
+     "cols": 2,
+     "text": "Trading Fee",
+     "box": [
+      246.3,
+      176.3,
+      388.0,
+      206.3
+     ]
+    },
+    {
+     "row": 0,
+     "col": 4,
+     "rows": 1,
+     "cols": 4,
+     "text": "Clearing Fee (*1)",
+     "box": [
+      388.0,
+      176.3,
+      777.9,
+      191.3
+     ]
+    },
+    {
+     "row": 1,
+     "col": 4,
+     "rows": 1,
+     "cols": 1,
+     "text": "",
+     "box": [
+      388.0,
+      191.3,
+      501.0,
+      206.3
+     ]
+    },
+    {
+     "row": 1,
+     "col": 5,
+     "rows": 1,
+     "cols": 1,
+     "text": "",
+     "box": [
+      501.0,
+      191.3,
+      565.3,
+      206.3
+     ]
+    },
+    {
+     "row": 1,
+     "col": 6,
+     "rows": 1,
+     "cols": 2,
+     "text": "For Exercise",
+     "box": [
+      565.3,
+      191.3,
+      777.9,
+      206.3
+     ]
+    },
+    {
+     "row": 2,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "Basis of Calculation",
+     "box": [
+      246.3,
+      206.3,
+      317.0,
+      236.0
+     ]
+    },
+    {
+     "row": 2,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "Fee Rate",
+     "box": [
+      317.0,
+      206.3,
+      388.0,
+      236.0
+     ]
+    },
+    {
+     "row": 2,
+     "col": 4,
+     "rows": 1,
+     "cols": 1,
+     "text": "Basis of Calculation",
+     "box": [
+      388.0,
+      206.3,
+      501.0,
+      236.0
+     ]
+    },
+    {
+     "row": 2,
+     "col": 5,
+     "rows": 1,
+     "cols": 1,
+     "text": "Fee Rate",
+     "box": [
+      501.0,
+      206.3,
+      565.3,
+      236.0
+     ]
+    },
+    {
+     "row": 2,
+     "col": 6,
+     "rows": 1,
+     "cols": 1,
+     "text": "Basis of Calculation",
+     "box": [
+      565.3,
+      206.3,
+      700.0,
+      236.0
+     ]
+    },
+    {
+     "row": 2,
+     "col": 7,
+     "rows": 1,
+     "cols": 1,
+     "text": "Fee Rate",
+     "box": [
+      700.0,
+      206.3,
+      777.9,
+      236.0
+     ]
+    },
+    {
+     "row": 3,
+     "col": 0,
+     "rows": 2,
+     "cols": 1,
+     "text": "Nikkei 225 Options",
+     "box": [
+      83.3,
+      236.0,
+      161.2,
+      301.5
+     ]
+    },
+    {
+     "row": 3,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "Large Options/ Flexible Options",
+     "box": [
+      161.2,
+      236.0,
+      246.3,
+      280.1
+     ]
+    },
+    {
+     "row": 3,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "trading value",
+     "box": [
+      246.3,
+      236.0,
+      317.0,
+      280.1
+     ]
+    },
+    {
+     "row": 3,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "5.0 bps (*5)(*8)",
+     "box": [
+      317.0,
+      236.0,
+      388.0,
+      280.1
+     ]
+    },
+    {
+     "row": 3,
+     "col": 4,
+     "rows": 1,
+     "cols": 1,
+     "text": "trading value for obligations assumed by JSCC",
+     "box": [
+      388.0,
+      236.0,
+      501.0,
+      280.1
+     ]
+    },
+    {
+     "row": 3,
+     "col": 5,
+     "rows": 1,
+     "cols": 1,
+     "text": "0.5 bps (*9)",
+     "box": [
+      501.0,
+      236.0,
+      565.3,
+      280.1
+     ]
+    },
+    {
+     "row": 3,
+     "col": 6,
+     "rows": 1,
+     "cols": 1,
+     "text": "the amount to be paid or received through options exercise or assignment",
+     "box": [
+      565.3,
+      236.0,
+      700.0,
+      280.1
+     ]
+    },
+    {
+     "row": 3,
+     "col": 7,
+     "rows": 1,
+     "cols": 1,
+     "text": "5.5 bps (*9)",
+     "box": [
+      700.0,
+      236.0,
+      777.9,
+      280.1
+     ]
+    },
+    {
+     "row": 4,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "Mini Options",
+     "box": [
+      161.2,
+      280.1,
+      246.3,
+      301.5
+     ]
+    },
+    {
+     "row": 4,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "",
+     "box": [
+      246.3,
+      280.1,
+      317.0,
+      301.5
+     ]
+    },
+    {
+     "row": 4,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "JPY 4",
+     "box": [
+      317.0,
+      280.1,
+      388.0,
+      301.5
+     ]
+    },
+    {
+     "row": 4,
+     "col": 4,
+     "rows": 1,
+     "cols": 1,
+     "text": "",
+     "box": [
+      388.0,
+      280.1,
+      501.0,
+      301.5
+     ]
+    },
+    {
+     "row": 4,
+     "col": 5,
+     "rows": 1,
+     "cols": 1,
+     "text": "JPY 1",
+     "box": [
+      501.0,
+      280.1,
+      565.3,
+      301.5
+     ]
+    },
+    {
+     "row": 4,
+     "col": 6,
+     "rows": 1,
+     "cols": 1,
+     "text": "",
+     "box": [
+      565.3,
+      280.1,
+      700.0,
+      301.5
+     ]
+    },
+    {
+     "row": 4,
+     "col": 7,
+     "rows": 1,
+     "cols": 1,
+     "text": "JPY 13",
+     "box": [
+      700.0,
+      280.1,
+      777.9,
+      301.5
+     ]
+    },
+    {
+     "row": 5,
+     "col": 0,
+     "rows": 1,
+     "cols": 2,
+     "text": "TOPIX Options / JPX-Nikkei 400 Options / TOPIX Banks Index Options",
+     "box": [
+      83.3,
+      301.5,
+      246.3,
+      345.6
+     ]
+    },
+    {
+     "row": 5,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "trading contract",
+     "box": [
+      246.3,
+      301.5,
+      317.0,
+      345.6
+     ]
+    },
+    {
+     "row": 5,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "JPY 40",
+     "box": [
+      317.0,
+      301.5,
+      388.0,
+      345.6
+     ]
+    },
+    {
+     "row": 5,
+     "col": 4,
+     "rows": 1,
+     "cols": 1,
+     "text": "trading contract for obligations assumed by JSCC",
+     "box": [
+      388.0,
+      301.5,
+      501.0,
+      345.6
+     ]
+    },
+    {
+     "row": 5,
+     "col": 5,
+     "rows": 1,
+     "cols": 1,
+     "text": "JPY 10",
+     "box": [
+      501.0,
+      301.5,
+      565.3,
+      345.6
+     ]
+    },
+    {
+     "row": 5,
+     "col": 6,
+     "rows": 1,
+     "cols": 1,
+     "text": "contract to be paid or received through options exercise or assignment",
+     "box": [
+      565.3,
+      301.5,
+      700.0,
+      345.6
+     ]
+    },
+    {
+     "row": 5,
+     "col": 7,
+     "rows": 1,
+     "cols": 1,
+     "text": "JPY 10",
+     "box": [
+      700.0,
+      301.5,
+      777.9,
+      345.6
+     ]
+    },
+    {
+     "row": 6,
+     "col": 0,
+     "rows": 1,
+     "cols": 2,
+     "text": "TSE REIT Index Options",
+     "box": [
+      83.3,
+      345.6,
+      246.3,
+      366.8
+     ]
+    },
+    {
+     "row": 6,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "",
+     "box": [
+      246.3,
+      345.6,
+      317.0,
+      366.8
+     ]
+    },
+    {
+     "row": 6,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "JPY 7",
+     "box": [
+      317.0,
+      345.6,
+      388.0,
+      366.8
+     ]
+    },
+    {
+     "row": 6,
+     "col": 4,
+     "rows": 1,
+     "cols": 1,
+     "text": "",
+     "box": [
+      388.0,
+      345.6,
+      501.0,
+      366.8
+     ]
+    },
+    {
+     "row": 6,
+     "col": 5,
+     "rows": 1,
+     "cols": 1,
+     "text": "JPY 2",
+     "box": [
+      501.0,
+      345.6,
+      565.3,
+      366.8
+     ]
+    },
+    {
+     "row": 6,
+     "col": 6,
+     "rows": 1,
+     "cols": 1,
+     "text": "",
+     "box": [
+      565.3,
+      345.6,
+      700.0,
+      366.8
+     ]
+    },
+    {
+     "row": 6,
+     "col": 7,
+     "rows": 1,
+     "cols": 1,
+     "text": "JPY 2",
+     "box": [
+      700.0,
+      345.6,
+      777.9,
+      366.8
+     ]
+    }
+   ]
+  },
+  {
+   "page": 5,
+   "bbox": [
+    83.3,
+    396.4,
+    777.9,
+    500.3
+   ],
+   "header_rows": 3,
+   "stub_cols": 1,
+   "cells": [
+    {
+     "row": 0,
+     "col": 0,
+     "rows": 3,
+     "cols": 1,
+     "text": "",
+     "box": [
+      83.3,
+      396.4,
+      172.8,
+      456.1
+     ]
+    },
+    {
+     "row": 0,
+     "col": 1,
+     "rows": 2,
+     "cols": 2,
+     "text": "Trading Fee",
+     "box": [
+      172.8,
+      396.4,
+      323.6,
+      426.6
+     ]
+    },
+    {
+     "row": 0,
+     "col": 3,
+     "rows": 1,
+     "cols": 4,
+     "text": "Clearing Fee (*1)",
+     "box": [
+      323.6,
+      396.4,
+      777.9,
+      411.4
+     ]
+    },
+    {
+     "row": 1,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "",
+     "box": [
+      323.6,
+      411.4,
+      456.5,
+      426.6
+     ]
+    },
+    {
+     "row": 1,
+     "col": 4,
+     "rows": 1,
+     "cols": 1,
+     "text": "",
+     "box": [
+      456.5,
+      411.4,
+      521.3,
+      426.6
+     ]
+    },
+    {
+     "row": 1,
+     "col": 5,
+     "rows": 1,
+     "cols": 2,
+     "text": "For Exercise",
+     "box": [
+      521.3,
+      411.4,
+      777.9,
+      426.6
+     ]
+    },
+    {
+     "row": 2,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "Basis of Calculation",
+     "box": [
+      172.8,
+      426.6,
+      253.5,
+      456.1
+     ]
+    },
+    {
+     "row": 2,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "Fee Rate",
+     "box": [
+      253.5,
+      426.6,
+      323.6,
+      456.1
+     ]
+    },
+    {
+     "row": 2,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "Basis of Calculation",
+     "box": [
+      323.6,
+      426.6,
+      456.5,
+      456.1
+     ]
+    },
+    {
+     "row": 2,
+     "col": 4,
+     "rows": 1,
+     "cols": 1,
+     "text": "Fee Rate",
+     "box": [
+      456.5,
+      426.6,
+      521.3,
+      456.1
+     ]
+    },
+    {
+     "row": 2,
+     "col": 5,
+     "rows": 1,
+     "cols": 1,
+     "text": "Basis of Calculation",
+     "box": [
+      521.3,
+      426.6,
+      709.0,
+      456.1
+     ]
+    },
+    {
+     "row": 2,
+     "col": 6,
+     "rows": 1,
+     "cols": 1,
+     "text": "Fee Rate",
+     "box": [
+      709.0,
+      426.6,
+      777.9,
+      456.1
+     ]
+    },
+    {
+     "row": 3,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Options on Gold Futures",
+     "box": [
+      83.3,
+      456.1,
+      172.8,
+      500.3
+     ]
+    },
+    {
+     "row": 3,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "trading contract",
+     "box": [
+      172.8,
+      456.1,
+      253.5,
+      500.3
+     ]
+    },
+    {
+     "row": 3,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "JPY 5",
+     "box": [
+      253.5,
+      456.1,
+      323.6,
+      500.3
+     ]
+    },
+    {
+     "row": 3,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "trading contract for obligations assumed by JSCC",
+     "box": [
+      323.6,
+      456.1,
+      456.5,
+      500.3
+     ]
+    },
+    {
+     "row": 3,
+     "col": 4,
+     "rows": 1,
+     "cols": 1,
+     "text": "JPY 2",
+     "box": [
+      456.5,
+      456.1,
+      521.3,
+      500.3
+     ]
+    },
+    {
+     "row": 3,
+     "col": 5,
+     "rows": 1,
+     "cols": 1,
+     "text": "contract to be paid or received through options exercise or assignment",
+     "box": [
+      521.3,
+      456.1,
+      709.0,
+      500.3
+     ]
+    },
+    {
+     "row": 3,
+     "col": 6,
+     "rows": 1,
+     "cols": 1,
+     "text": "JPY 22",
+     "box": [
+      709.0,
+      456.1,
+      777.9,
+      500.3
+     ]
+    }
+   ]
+  }
+ ],
+ "drafted": {
+  "by": "claude",
+  "date": "2026-10-01",
+  "grids": "grids/jpx-participant.json"
+ },
+ "verified": null
+}

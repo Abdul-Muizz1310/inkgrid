@@ -1,10 +1,11 @@
 from pathlib import Path
 
 import pytest
-from inkgrid_bench.draft import PageWord, cell_text, crop, draft_table, overlay, ruler
 from PIL import Image
 
 import pdf_factory
+from inkgrid_bench.draft import PageWord, build_truth, cell_text, crop, draft_table, overlay, ruler
+from inkgrid_bench.heldout import load_truth
 
 
 def word(box: tuple[float, float, float, float], text: str, line: int, n: int) -> PageWord:
@@ -69,3 +70,21 @@ def test_DR3_the_renderings_are_the_page_at_their_dpi(tmp_path: Path) -> None:
         crop(pdf, 1, (100, 100, 150, 120), tmp_path / "c.png", dpi=144, pad=0)
     ) as image:
         assert image.size == (100, 40)
+
+
+def test_DR4_a_grid_file_builds_a_loadable_unverified_truth() -> None:
+    grids = {
+        "id": "x",
+        "pages": [3, 4],
+        "tables": [
+            {"page": 3, "rows": [0, 25, 50], "cols": [0, 100, 200], "merges": [],
+             "header_rows": 1, "stub_cols": 1, "text": {"1,1": "55 (corrected)"}},
+        ],
+    }  # fmt: skip
+    built = build_truth(grids, {3: WORDS, 4: []}, drafted="2026-10-01")
+    truth = load_truth(built)
+    assert truth.verified is None
+    assert truth.pages == (3, 4)
+    (table,) = truth.tables
+    assert [c.text for c in table.cells] == ["Annual fee", "4,715", "Port rental", "55 (corrected)"]
+    assert build_truth(grids, {3: WORDS, 4: []}, drafted="2026-10-01") == built

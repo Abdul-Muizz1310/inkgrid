@@ -6,8 +6,10 @@ centres lie in its box. inkgrid's reading is never consulted. The renderings are
 ruler, the reviewer's overlay, and the glyph sample's crops.
 """
 
-from collections.abc import Sequence
+import json
+from collections.abc import Mapping, Sequence
 from pathlib import Path
+from typing import Any
 
 import pypdfium2 as pdfium
 from PIL import Image, ImageDraw
@@ -62,6 +64,54 @@ def draft_table(
     table = TruthTable(page, bbox, header_rows, stub_cols, tuple(cells))
     table.table()  # the cells tile the grid, or this raises
     return table
+
+
+def build_truth(
+    grids: Mapping[str, Any], words: Mapping[int, Sequence[PageWord]], *, drafted: str
+) -> str:
+    """A document's ground truth as JSON, drafted from its stated grids and its pages' words.
+
+    A grid's `text` maps `"row,col"` to a correction of that cell's drafted text (spec 16 section
+    4). The result is unverified: the user's review sets `verified`.
+    """
+    tables = []
+    for g in grids["tables"]:
+        t = draft_table(
+            words[g["page"]],
+            page=g["page"],
+            rows=g["rows"],
+            cols=g["cols"],
+            merges=[(m[0], m[1], m[2], m[3]) for m in g["merges"]],
+            header_rows=g["header_rows"],
+            stub_cols=g["stub_cols"],
+        )
+        fixes: Mapping[str, str] = g.get("text", {})
+        cells = [
+            {
+                "row": c.row,
+                "col": c.col,
+                "rows": c.rows,
+                "cols": c.cols,
+                "text": fixes.get(f"{c.row},{c.col}", c.text),
+                "box": [round(v, 2) for v in c.box],
+            }
+            for c in t.cells
+        ]
+        tables.append({
+            "page": t.page,
+            "bbox": [round(v, 2) for v in t.bbox],
+            "header_rows": t.header_rows,
+            "stub_cols": t.stub_cols,
+            "cells": cells,
+        })  # fmt: skip
+    data = {
+        "id": grids["id"],
+        "pages": list(grids["pages"]),
+        "tables": tables,
+        "drafted": {"by": "claude", "date": drafted, "grids": f"grids/{grids['id']}.json"},
+        "verified": None,
+    }
+    return json.dumps(data, ensure_ascii=True, indent=1) + "\n"
 
 
 def _render(pdf: Path, page: int, dpi: int) -> Image.Image:

@@ -1,0 +1,1602 @@
+{
+ "id": "nzx-clearing",
+ "pages": [
+  6,
+  7,
+  12
+ ],
+ "tables": [
+  {
+   "page": 6,
+   "bbox": [
+    69.0,
+    108.0,
+    522.0,
+    292.6
+   ],
+   "header_rows": 1,
+   "stub_cols": 1,
+   "cells": [
+    {
+     "row": 0,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Registry Messaging",
+     "box": [
+      69.0,
+      108.0,
+      332.0,
+      129.7
+     ]
+    },
+    {
+     "row": 0,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "Fees",
+     "box": [
+      332.0,
+      108.0,
+      476.0,
+      129.7
+     ]
+    },
+    {
+     "row": 0,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "Notes",
+     "box": [
+      476.0,
+      108.0,
+      522.0,
+      129.7
+     ]
+    },
+    {
+     "row": 1,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "NZD Uplift [CHO420]",
+     "box": [
+      69.0,
+      129.7,
+      332.0,
+      150.7
+     ]
+    },
+    {
+     "row": 1,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "$4.22",
+     "box": [
+      332.0,
+      129.7,
+      476.0,
+      150.7
+     ]
+    },
+    {
+     "row": 1,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "",
+     "box": [
+      476.0,
+      129.7,
+      522.0,
+      150.7
+     ]
+    },
+    {
+     "row": 2,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Registry Transfers - Listed Product [SRI200 / SRI210 / SRI220 / SRI240 / SRI250]",
+     "box": [
+      69.0,
+      150.7,
+      332.0,
+      181.8
+     ]
+    },
+    {
+     "row": 2,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "$1.01",
+     "box": [
+      332.0,
+      150.7,
+      476.0,
+      181.8
+     ]
+    },
+    {
+     "row": 2,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "14",
+     "box": [
+      476.0,
+      150.7,
+      522.0,
+      181.8
+     ]
+    },
+    {
+     "row": 3,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Registry Transfers - Unlisted Product [CHO444 \u2013 CHO448]",
+     "box": [
+      69.0,
+      181.8,
+      332.0,
+      201.7
+     ]
+    },
+    {
+     "row": 3,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "$3.37",
+     "box": [
+      332.0,
+      181.8,
+      476.0,
+      201.7
+     ]
+    },
+    {
+     "row": 3,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "",
+     "box": [
+      476.0,
+      181.8,
+      522.0,
+      201.7
+     ]
+    },
+    {
+     "row": 4,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Registry Transaction Enquiry [SRI320 / SRI340]",
+     "box": [
+      69.0,
+      201.7,
+      332.0,
+      221.6
+     ]
+    },
+    {
+     "row": 4,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "$0.28",
+     "box": [
+      332.0,
+      201.7,
+      476.0,
+      221.6
+     ]
+    },
+    {
+     "row": 4,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "",
+     "box": [
+      476.0,
+      201.7,
+      522.0,
+      221.6
+     ]
+    },
+    {
+     "row": 5,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Registry Balance Enquiry [SRI300 / SRI310]",
+     "box": [
+      69.0,
+      221.6,
+      332.0,
+      241.6
+     ]
+    },
+    {
+     "row": 5,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "$0.28",
+     "box": [
+      332.0,
+      221.6,
+      476.0,
+      241.6
+     ]
+    },
+    {
+     "row": 5,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "15",
+     "box": [
+      476.0,
+      221.6,
+      522.0,
+      241.6
+     ]
+    },
+    {
+     "row": 6,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "CSN Portfolio Balance Enquiry per line item returned [SRI370]",
+     "box": [
+      69.0,
+      241.6,
+      332.0,
+      261.5
+     ]
+    },
+    {
+     "row": 6,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "$0.14",
+     "box": [
+      332.0,
+      241.6,
+      476.0,
+      261.5
+     ]
+    },
+    {
+     "row": 6,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "",
+     "box": [
+      476.0,
+      241.6,
+      522.0,
+      261.5
+     ]
+    },
+    {
+     "row": 7,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Reservation Creation & Reservation Cancelation \u2013 Listed & Unlisted Product [SRI410/SRI420]",
+     "box": [
+      69.0,
+      261.5,
+      332.0,
+      292.6
+     ]
+    },
+    {
+     "row": 7,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "$0.28",
+     "box": [
+      332.0,
+      261.5,
+      476.0,
+      292.6
+     ]
+    },
+    {
+     "row": 7,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "",
+     "box": [
+      476.0,
+      261.5,
+      522.0,
+      292.6
+     ]
+    }
+   ]
+  },
+  {
+   "page": 6,
+   "bbox": [
+    69.0,
+    328.0,
+    522.0,
+    406.3
+   ],
+   "header_rows": 1,
+   "stub_cols": 1,
+   "cells": [
+    {
+     "row": 0,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Interface Messages",
+     "box": [
+      69.0,
+      328.0,
+      332.0,
+      349.7
+     ]
+    },
+    {
+     "row": 0,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "Fees",
+     "box": [
+      332.0,
+      328.0,
+      476.0,
+      349.7
+     ]
+    },
+    {
+     "row": 0,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "Notes",
+     "box": [
+      476.0,
+      328.0,
+      522.0,
+      349.7
+     ]
+    },
+    {
+     "row": 1,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Fee per message transmitted via SWIFT network [CHO320]",
+     "box": [
+      69.0,
+      349.7,
+      332.0,
+      386.3
+     ]
+    },
+    {
+     "row": 1,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "$0.49",
+     "box": [
+      332.0,
+      349.7,
+      476.0,
+      386.3
+     ]
+    },
+    {
+     "row": 1,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "",
+     "box": [
+      476.0,
+      349.7,
+      522.0,
+      386.3
+     ]
+    },
+    {
+     "row": 2,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Recovery of other SWIFT related fees [CHO329]",
+     "box": [
+      69.0,
+      386.3,
+      332.0,
+      406.3
+     ]
+    },
+    {
+     "row": 2,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "As per SWIFT",
+     "box": [
+      332.0,
+      386.3,
+      476.0,
+      406.3
+     ]
+    },
+    {
+     "row": 2,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "",
+     "box": [
+      476.0,
+      386.3,
+      522.0,
+      406.3
+     ]
+    }
+   ]
+  },
+  {
+   "page": 6,
+   "bbox": [
+    69.0,
+    441.6,
+    522.0,
+    531.1
+   ],
+   "header_rows": 1,
+   "stub_cols": 1,
+   "cells": [
+    {
+     "row": 0,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Stock Lending & Borrowing",
+     "box": [
+      69.0,
+      441.6,
+      332.0,
+      463.4
+     ]
+    },
+    {
+     "row": 0,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "Fees",
+     "box": [
+      332.0,
+      441.6,
+      476.0,
+      463.4
+     ]
+    },
+    {
+     "row": 0,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "Notes",
+     "box": [
+      476.0,
+      441.6,
+      522.0,
+      463.4
+     ]
+    },
+    {
+     "row": 1,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Borrowing (minimum one day) [CHO432]",
+     "box": [
+      69.0,
+      463.4,
+      332.0,
+      499.9
+     ]
+    },
+    {
+     "row": 1,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "OCR plus, with a floor of 2%, plus 52 bps (per annum)",
+     "box": [
+      332.0,
+      463.4,
+      476.0,
+      499.9
+     ]
+    },
+    {
+     "row": 1,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "16",
+     "box": [
+      476.0,
+      463.4,
+      522.0,
+      499.9
+     ]
+    },
+    {
+     "row": 2,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Lending Fee Income [CHO431]",
+     "box": [
+      69.0,
+      499.9,
+      332.0,
+      531.1
+     ]
+    },
+    {
+     "row": 2,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "OCR, with a floor of 2%, minus 51 bps (per annum)",
+     "box": [
+      332.0,
+      499.9,
+      476.0,
+      531.1
+     ]
+    },
+    {
+     "row": 2,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "16",
+     "box": [
+      476.0,
+      499.9,
+      522.0,
+      531.1
+     ]
+    }
+   ]
+  },
+  {
+   "page": 6,
+   "bbox": [
+    69.0,
+    585.6,
+    522.0,
+    648.4
+   ],
+   "header_rows": 1,
+   "stub_cols": 1,
+   "cells": [
+    {
+     "row": 0,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Other Services",
+     "box": [
+      69.0,
+      585.6,
+      332.0,
+      607.4
+     ]
+    },
+    {
+     "row": 0,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "Fees",
+     "box": [
+      332.0,
+      585.6,
+      476.0,
+      607.4
+     ]
+    },
+    {
+     "row": 0,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "Notes",
+     "box": [
+      476.0,
+      585.6,
+      522.0,
+      607.4
+     ]
+    },
+    {
+     "row": 1,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Late Elections and Claims fee [CHO830]",
+     "box": [
+      69.0,
+      607.4,
+      332.0,
+      628.3
+     ]
+    },
+    {
+     "row": 1,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "$300.00",
+     "box": [
+      332.0,
+      607.4,
+      476.0,
+      628.3
+     ]
+    },
+    {
+     "row": 1,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "",
+     "box": [
+      476.0,
+      607.4,
+      522.0,
+      628.3
+     ]
+    },
+    {
+     "row": 2,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "BaNCS User [CHO161]",
+     "box": [
+      69.0,
+      628.3,
+      332.0,
+      648.4
+     ]
+    },
+    {
+     "row": 2,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "$27.20 per month per user",
+     "box": [
+      332.0,
+      628.3,
+      476.0,
+      648.4
+     ]
+    },
+    {
+     "row": 2,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "",
+     "box": [
+      476.0,
+      628.3,
+      522.0,
+      648.4
+     ]
+    }
+   ]
+  },
+  {
+   "page": 7,
+   "bbox": [
+    69.0,
+    268.6,
+    522.0,
+    358.3
+   ],
+   "header_rows": 1,
+   "stub_cols": 1,
+   "cells": [
+    {
+     "row": 0,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Derivative Market Annual Membership Fees",
+     "box": [
+      69.0,
+      268.6,
+      332.0,
+      290.6
+     ]
+    },
+    {
+     "row": 0,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "Fees",
+     "box": [
+      332.0,
+      268.6,
+      476.0,
+      290.6
+     ]
+    },
+    {
+     "row": 0,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "Notes",
+     "box": [
+      476.0,
+      268.6,
+      522.0,
+      290.6
+     ]
+    },
+    {
+     "row": 1,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Derivatives Market - Individual Clearing Participant [CHO153 / CHO157]",
+     "box": [
+      69.0,
+      290.6,
+      332.0,
+      327.2
+     ]
+    },
+    {
+     "row": 1,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "$32,510",
+     "box": [
+      332.0,
+      290.6,
+      476.0,
+      327.2
+     ]
+    },
+    {
+     "row": 1,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "1",
+     "box": [
+      476.0,
+      290.6,
+      522.0,
+      327.2
+     ]
+    },
+    {
+     "row": 2,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Derivatives Market - General Clearing Participant [CHO154 / CHO158]",
+     "box": [
+      69.0,
+      327.2,
+      332.0,
+      358.3
+     ]
+    },
+    {
+     "row": 2,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "$40,880",
+     "box": [
+      332.0,
+      327.2,
+      476.0,
+      358.3
+     ]
+    },
+    {
+     "row": 2,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "2",
+     "box": [
+      476.0,
+      327.2,
+      522.0,
+      358.3
+     ]
+    }
+   ]
+  },
+  {
+   "page": 7,
+   "bbox": [
+    69.0,
+    437.4,
+    522.0,
+    559.9
+   ],
+   "header_rows": 1,
+   "stub_cols": 1,
+   "cells": [
+    {
+     "row": 0,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "NZD Traded Derivatives \u2013 Equity Derivatives",
+     "box": [
+      69.0,
+      437.4,
+      332.0,
+      459.2
+     ]
+    },
+    {
+     "row": 0,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "Fees",
+     "box": [
+      332.0,
+      437.4,
+      476.0,
+      459.2
+     ]
+    },
+    {
+     "row": 0,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "Notes",
+     "box": [
+      476.0,
+      437.4,
+      522.0,
+      459.2
+     ]
+    },
+    {
+     "row": 1,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Index Futures [CHO506]",
+     "box": [
+      69.0,
+      459.2,
+      332.0,
+      480.1
+     ]
+    },
+    {
+     "row": 1,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "$0.25 (per lot per side)",
+     "box": [
+      332.0,
+      459.2,
+      476.0,
+      480.1
+     ]
+    },
+    {
+     "row": 1,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "",
+     "box": [
+      476.0,
+      459.2,
+      522.0,
+      480.1
+     ]
+    },
+    {
+     "row": 2,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Equity Options [CHO505]",
+     "box": [
+      69.0,
+      480.1,
+      332.0,
+      500.0
+     ]
+    },
+    {
+     "row": 2,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "$0.56 (per lot per side)",
+     "box": [
+      332.0,
+      480.1,
+      476.0,
+      500.0
+     ]
+    },
+    {
+     "row": 2,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "",
+     "box": [
+      476.0,
+      480.1,
+      522.0,
+      500.0
+     ]
+    },
+    {
+     "row": 3,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Give-up [CHO507]",
+     "box": [
+      69.0,
+      500.0,
+      332.0,
+      520.0
+     ]
+    },
+    {
+     "row": 3,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "$0.06 (per trade)",
+     "box": [
+      332.0,
+      500.0,
+      476.0,
+      520.0
+     ]
+    },
+    {
+     "row": 3,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "17",
+     "box": [
+      476.0,
+      500.0,
+      522.0,
+      520.0
+     ]
+    },
+    {
+     "row": 4,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Position Adjustment - Match-out / Close-out trade [CHO508]",
+     "box": [
+      69.0,
+      520.0,
+      332.0,
+      539.9
+     ]
+    },
+    {
+     "row": 4,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "$0.13 (per trade)",
+     "box": [
+      332.0,
+      520.0,
+      476.0,
+      539.9
+     ]
+    },
+    {
+     "row": 4,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "",
+     "box": [
+      476.0,
+      520.0,
+      522.0,
+      539.9
+     ]
+    },
+    {
+     "row": 5,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Match-out/closeout - Manual entry by Clearing House [CHO509]",
+     "box": [
+      69.0,
+      539.9,
+      332.0,
+      559.9
+     ]
+    },
+    {
+     "row": 5,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "$5.53 (per trade)",
+     "box": [
+      332.0,
+      539.9,
+      476.0,
+      559.9
+     ]
+    },
+    {
+     "row": 5,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "",
+     "box": [
+      476.0,
+      539.9,
+      522.0,
+      559.9
+     ]
+    }
+   ]
+  },
+  {
+   "page": 7,
+   "bbox": [
+    69.0,
+    595.2,
+    522.0,
+    759.1
+   ],
+   "header_rows": 1,
+   "stub_cols": 1,
+   "cells": [
+    {
+     "row": 0,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Margin & Collateral",
+     "box": [
+      69.0,
+      595.2,
+      332.0,
+      617.0
+     ]
+    },
+    {
+     "row": 0,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "Fees",
+     "box": [
+      332.0,
+      595.2,
+      476.0,
+      617.0
+     ]
+    },
+    {
+     "row": 0,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "Notes",
+     "box": [
+      476.0,
+      595.2,
+      522.0,
+      617.0
+     ]
+    },
+    {
+     "row": 1,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Collateral Management Fee [CHO470]",
+     "box": [
+      69.0,
+      617.0,
+      332.0,
+      648.4
+     ]
+    },
+    {
+     "row": 1,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "100 bps per annum charged daily",
+     "box": [
+      332.0,
+      617.0,
+      476.0,
+      648.4
+     ]
+    },
+    {
+     "row": 1,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "8",
+     "box": [
+      476.0,
+      617.0,
+      522.0,
+      648.4
+     ]
+    },
+    {
+     "row": 2,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Collateral Management Credit [CHO435]",
+     "box": [
+      69.0,
+      648.4,
+      332.0,
+      668.3
+     ]
+    },
+    {
+     "row": 2,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "equal to the interest received",
+     "box": [
+      332.0,
+      648.4,
+      476.0,
+      668.3
+     ]
+    },
+    {
+     "row": 2,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "9",
+     "box": [
+      476.0,
+      648.4,
+      522.0,
+      668.3
+     ]
+    },
+    {
+     "row": 3,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Negative interest rate recovery fee [CHO473]",
+     "box": [
+      69.0,
+      668.3,
+      332.0,
+      688.2
+     ]
+    },
+    {
+     "row": 3,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "equal to the interest charged",
+     "box": [
+      332.0,
+      668.3,
+      476.0,
+      688.2
+     ]
+    },
+    {
+     "row": 3,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "10",
+     "box": [
+      476.0,
+      668.3,
+      522.0,
+      688.2
+     ]
+    },
+    {
+     "row": 4,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Margin Call Fee [CHO430]",
+     "box": [
+      69.0,
+      688.2,
+      332.0,
+      708.1
+     ]
+    },
+    {
+     "row": 4,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "$37.26 per call",
+     "box": [
+      332.0,
+      688.2,
+      476.0,
+      708.1
+     ]
+    },
+    {
+     "row": 4,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "11",
+     "box": [
+      476.0,
+      688.2,
+      522.0,
+      708.1
+     ]
+    },
+    {
+     "row": 5,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Collateral Release Fee [CHO440]",
+     "box": [
+      69.0,
+      708.1,
+      332.0,
+      728.0
+     ]
+    },
+    {
+     "row": 5,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "$13.60 per release",
+     "box": [
+      332.0,
+      708.1,
+      476.0,
+      728.0
+     ]
+    },
+    {
+     "row": 5,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "12",
+     "box": [
+      476.0,
+      708.1,
+      522.0,
+      728.0
+     ]
+    },
+    {
+     "row": 6,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Failure to meet a margin call within specified timeframe [CHO450]",
+     "box": [
+      69.0,
+      728.0,
+      332.0,
+      759.1
+     ]
+    },
+    {
+     "row": 6,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "$2,737",
+     "box": [
+      332.0,
+      728.0,
+      476.0,
+      759.1
+     ]
+    },
+    {
+     "row": 6,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "",
+     "box": [
+      476.0,
+      728.0,
+      522.0,
+      759.1
+     ]
+    }
+   ]
+  },
+  {
+   "page": 12,
+   "bbox": [
+    69.0,
+    176.0,
+    522.0,
+    312.2
+   ],
+   "header_rows": 1,
+   "stub_cols": 1,
+   "cells": [
+    {
+     "row": 0,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Time Frame",
+     "box": [
+      69.0,
+      176.0,
+      332.0,
+      197.9
+     ]
+    },
+    {
+     "row": 0,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "Total Hourly Charge",
+     "box": [
+      332.0,
+      176.0,
+      476.0,
+      197.9
+     ]
+    },
+    {
+     "row": 0,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "Notes",
+     "box": [
+      476.0,
+      176.0,
+      522.0,
+      197.9
+     ]
+    },
+    {
+     "row": 1,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Standard Rate (10 or more business days) [CHO207]",
+     "box": [
+      69.0,
+      197.9,
+      332.0,
+      219.0
+     ]
+    },
+    {
+     "row": 1,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "$445",
+     "box": [
+      332.0,
+      197.9,
+      476.0,
+      219.0
+     ]
+    },
+    {
+     "row": 1,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "24,25",
+     "box": [
+      476.0,
+      197.9,
+      522.0,
+      219.0
+     ]
+    },
+    {
+     "row": 2,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Priority Rate 1 (Decisions required in 6 to 9 business days) [CHO208]",
+     "box": [
+      69.0,
+      219.0,
+      332.0,
+      250.1
+     ]
+    },
+    {
+     "row": 2,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "$595",
+     "box": [
+      332.0,
+      219.0,
+      476.0,
+      250.1
+     ]
+    },
+    {
+     "row": 2,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "24,25",
+     "box": [
+      476.0,
+      219.0,
+      522.0,
+      250.1
+     ]
+    },
+    {
+     "row": 3,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Priority Rate 2 (Decisions required in 3 to 5 business days) [CHO208]",
+     "box": [
+      69.0,
+      250.1,
+      332.0,
+      281.2
+     ]
+    },
+    {
+     "row": 3,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "$750",
+     "box": [
+      332.0,
+      250.1,
+      476.0,
+      281.2
+     ]
+    },
+    {
+     "row": 3,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "24,25",
+     "box": [
+      476.0,
+      250.1,
+      522.0,
+      281.2
+     ]
+    },
+    {
+     "row": 4,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Priority Rate 3 (Decisions required in 2 business days or less) [CHO208]",
+     "box": [
+      69.0,
+      281.2,
+      332.0,
+      312.2
+     ]
+    },
+    {
+     "row": 4,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "$960",
+     "box": [
+      332.0,
+      281.2,
+      476.0,
+      312.2
+     ]
+    },
+    {
+     "row": 4,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "24,25",
+     "box": [
+      476.0,
+      281.2,
+      522.0,
+      312.2
+     ]
+    }
+   ]
+  }
+ ],
+ "drafted": {
+  "by": "claude",
+  "date": "2026-10-01",
+  "grids": "grids/nzx-clearing.json"
+ },
+ "verified": null
+}

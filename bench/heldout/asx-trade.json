@@ -1,0 +1,2681 @@
+{
+ "id": "asx-trade",
+ "pages": [
+  7,
+  8,
+  11
+ ],
+ "tables": [
+  {
+   "page": 7,
+   "bbox": [
+    43.0,
+    90.1,
+    801.0,
+    527.2
+   ],
+   "header_rows": 1,
+   "stub_cols": 2,
+   "cells": [
+    {
+     "row": 0,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Product",
+     "box": [
+      43.0,
+      90.1,
+      106.0,
+      119.8
+     ]
+    },
+    {
+     "row": 0,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "Service",
+     "box": [
+      106.0,
+      90.1,
+      319.0,
+      119.8
+     ]
+    },
+    {
+     "row": 0,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "Charge Basis",
+     "box": [
+      319.0,
+      90.1,
+      574.0,
+      119.8
+     ]
+    },
+    {
+     "row": 0,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "Charge Frequency",
+     "box": [
+      574.0,
+      90.1,
+      666.0,
+      119.8
+     ]
+    },
+    {
+     "row": 0,
+     "col": 4,
+     "rows": 1,
+     "cols": 1,
+     "text": "Effective Date",
+     "box": [
+      666.0,
+      90.1,
+      723.0,
+      119.8
+     ]
+    },
+    {
+     "row": 0,
+     "col": 5,
+     "rows": 1,
+     "cols": 1,
+     "text": "Charge (GST Exclusive*)",
+     "box": [
+      723.0,
+      90.1,
+      801.0,
+      119.8
+     ]
+    },
+    {
+     "row": 1,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "02900242",
+     "box": [
+      43.0,
+      119.8,
+      106.0,
+      161.2
+     ]
+    },
+    {
+     "row": 1,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "ASX Trade Reporting Facility Off-mkt (Uncapped) Structured Products Fee (capped at $75 per trade, per side)",
+     "box": [
+      106.0,
+      119.8,
+      319.0,
+      161.2
+     ]
+    },
+    {
+     "row": 1,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "0.075 Basis Points Per Trade Per Side, Capped at $75, plus GST",
+     "box": [
+      319.0,
+      119.8,
+      574.0,
+      161.2
+     ]
+    },
+    {
+     "row": 1,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "Monthly",
+     "box": [
+      574.0,
+      119.8,
+      666.0,
+      161.2
+     ]
+    },
+    {
+     "row": 1,
+     "col": 4,
+     "rows": 1,
+     "cols": 1,
+     "text": "1-Jul-11",
+     "box": [
+      666.0,
+      119.8,
+      723.0,
+      161.2
+     ]
+    },
+    {
+     "row": 1,
+     "col": 5,
+     "rows": 1,
+     "cols": 1,
+     "text": "0.075 Basis Points",
+     "box": [
+      723.0,
+      119.8,
+      801.0,
+      161.2
+     ]
+    },
+    {
+     "row": 2,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "02900142",
+     "box": [
+      43.0,
+      161.2,
+      106.0,
+      191.5
+     ]
+    },
+    {
+     "row": 2,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "ASX Trade Reporting Facility Off-mkt (Uncapped) Warrants Fee (capped at $75 per trade, per side)",
+     "box": [
+      106.0,
+      161.2,
+      319.0,
+      191.5
+     ]
+    },
+    {
+     "row": 2,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "0.075 Basis Points Per Trade Per Side, Capped at $75, plus GST",
+     "box": [
+      319.0,
+      161.2,
+      574.0,
+      191.5
+     ]
+    },
+    {
+     "row": 2,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "Monthly",
+     "box": [
+      574.0,
+      161.2,
+      666.0,
+      191.5
+     ]
+    },
+    {
+     "row": 2,
+     "col": 4,
+     "rows": 1,
+     "cols": 1,
+     "text": "1-Jul-11",
+     "box": [
+      666.0,
+      161.2,
+      723.0,
+      191.5
+     ]
+    },
+    {
+     "row": 2,
+     "col": 5,
+     "rows": 1,
+     "cols": 1,
+     "text": "0.075 Basis Points",
+     "box": [
+      723.0,
+      161.2,
+      801.0,
+      191.5
+     ]
+    },
+    {
+     "row": 3,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "2.2.3",
+     "box": [
+      43.0,
+      191.5,
+      106.0,
+      210.2
+     ]
+    },
+    {
+     "row": 3,
+     "col": 1,
+     "rows": 1,
+     "cols": 5,
+     "text": "Unintentional Crossing Prevention",
+     "box": [
+      106.0,
+      191.5,
+      801.0,
+      210.2
+     ]
+    },
+    {
+     "row": 4,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "02900366",
+     "box": [
+      43.0,
+      210.2,
+      106.0,
+      240.5
+     ]
+    },
+    {
+     "row": 4,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "Unintentional Crossing Prevention Booking Report",
+     "box": [
+      106.0,
+      210.2,
+      319.0,
+      240.5
+     ]
+    },
+    {
+     "row": 4,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "0.10 Basis Points per Trade Per Side, Capped at $75, plus GST",
+     "box": [
+      319.0,
+      210.2,
+      574.0,
+      240.5
+     ]
+    },
+    {
+     "row": 4,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "Monthly",
+     "box": [
+      574.0,
+      210.2,
+      666.0,
+      240.5
+     ]
+    },
+    {
+     "row": 4,
+     "col": 4,
+     "rows": 1,
+     "cols": 1,
+     "text": "1-Apr-13",
+     "box": [
+      666.0,
+      210.2,
+      723.0,
+      240.5
+     ]
+    },
+    {
+     "row": 4,
+     "col": 5,
+     "rows": 1,
+     "cols": 1,
+     "text": "0.10 Basis Points",
+     "box": [
+      723.0,
+      210.2,
+      801.0,
+      240.5
+     ]
+    },
+    {
+     "row": 5,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "02900543",
+     "box": [
+      43.0,
+      240.5,
+      106.0,
+      271.0
+     ]
+    },
+    {
+     "row": 5,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "Post Close Trade Fee - UCP",
+     "box": [
+      106.0,
+      240.5,
+      319.0,
+      271.0
+     ]
+    },
+    {
+     "row": 5,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "0.10 Basis Points per Trade Per Side, Capped at $75, plus GST",
+     "box": [
+      319.0,
+      240.5,
+      574.0,
+      271.0
+     ]
+    },
+    {
+     "row": 5,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "Monthly",
+     "box": [
+      574.0,
+      240.5,
+      666.0,
+      271.0
+     ]
+    },
+    {
+     "row": 5,
+     "col": 4,
+     "rows": 1,
+     "cols": 1,
+     "text": "23-Jun-25",
+     "box": [
+      666.0,
+      240.5,
+      723.0,
+      271.0
+     ]
+    },
+    {
+     "row": 5,
+     "col": 5,
+     "rows": 1,
+     "cols": 1,
+     "text": "0.10 Basis Points",
+     "box": [
+      723.0,
+      240.5,
+      801.0,
+      271.0
+     ]
+    },
+    {
+     "row": 6,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "2.3",
+     "box": [
+      43.0,
+      271.0,
+      106.0,
+      290.2
+     ]
+    },
+    {
+     "row": 6,
+     "col": 1,
+     "rows": 1,
+     "cols": 5,
+     "text": "Auctions",
+     "box": [
+      106.0,
+      271.0,
+      801.0,
+      290.2
+     ]
+    },
+    {
+     "row": 7,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "02900043",
+     "box": [
+      43.0,
+      290.2,
+      106.0,
+      320.5
+     ]
+    },
+    {
+     "row": 7,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "Equities Auction Trade Fee (capped at $75 per trade, per side)",
+     "box": [
+      106.0,
+      290.2,
+      319.0,
+      320.5
+     ]
+    },
+    {
+     "row": 7,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "0.28 Basis Points Per Trade Per Side, Capped at $75, plus GST",
+     "box": [
+      319.0,
+      290.2,
+      574.0,
+      320.5
+     ]
+    },
+    {
+     "row": 7,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "Monthly",
+     "box": [
+      574.0,
+      290.2,
+      666.0,
+      320.5
+     ]
+    },
+    {
+     "row": 7,
+     "col": 4,
+     "rows": 1,
+     "cols": 1,
+     "text": "1-Jul-11",
+     "box": [
+      666.0,
+      290.2,
+      723.0,
+      320.5
+     ]
+    },
+    {
+     "row": 7,
+     "col": 5,
+     "rows": 1,
+     "cols": 1,
+     "text": "0.28 Basis Points",
+     "box": [
+      723.0,
+      290.2,
+      801.0,
+      320.5
+     ]
+    },
+    {
+     "row": 8,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "02900143",
+     "box": [
+      43.0,
+      320.5,
+      106.0,
+      350.8
+     ]
+    },
+    {
+     "row": 8,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "Warrants Auction Trade Fee (capped at $75 per trade, per side)",
+     "box": [
+      106.0,
+      320.5,
+      319.0,
+      350.8
+     ]
+    },
+    {
+     "row": 8,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "0.31 Basis Points Per Trade Per Side, capped at $75, plus GST",
+     "box": [
+      319.0,
+      320.5,
+      574.0,
+      350.8
+     ]
+    },
+    {
+     "row": 8,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "Monthly",
+     "box": [
+      574.0,
+      320.5,
+      666.0,
+      350.8
+     ]
+    },
+    {
+     "row": 8,
+     "col": 4,
+     "rows": 1,
+     "cols": 1,
+     "text": "1-Jul-11",
+     "box": [
+      666.0,
+      320.5,
+      723.0,
+      350.8
+     ]
+    },
+    {
+     "row": 8,
+     "col": 5,
+     "rows": 1,
+     "cols": 1,
+     "text": "0.31 Basis Points",
+     "box": [
+      723.0,
+      320.5,
+      801.0,
+      350.8
+     ]
+    },
+    {
+     "row": 9,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "02900243",
+     "box": [
+      43.0,
+      350.8,
+      106.0,
+      381.1
+     ]
+    },
+    {
+     "row": 9,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "Structured Products Auction Trade Fee (capped at $75 per trade, per side)",
+     "box": [
+      106.0,
+      350.8,
+      319.0,
+      381.1
+     ]
+    },
+    {
+     "row": 9,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "0.31 Basis Points Per Trade Per Side, capped at $75, plus GST",
+     "box": [
+      319.0,
+      350.8,
+      574.0,
+      381.1
+     ]
+    },
+    {
+     "row": 9,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "Monthly",
+     "box": [
+      574.0,
+      350.8,
+      666.0,
+      381.1
+     ]
+    },
+    {
+     "row": 9,
+     "col": 4,
+     "rows": 1,
+     "cols": 1,
+     "text": "1-Jul-11",
+     "box": [
+      666.0,
+      350.8,
+      723.0,
+      381.1
+     ]
+    },
+    {
+     "row": 9,
+     "col": 5,
+     "rows": 1,
+     "cols": 1,
+     "text": "0.31 Basis Points",
+     "box": [
+      723.0,
+      350.8,
+      801.0,
+      381.1
+     ]
+    },
+    {
+     "row": 10,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "02900343",
+     "box": [
+      43.0,
+      381.1,
+      106.0,
+      411.6
+     ]
+    },
+    {
+     "row": 10,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "Interest Rate Securities Auction Trade Fee (capped at $75 per trade, per side)",
+     "box": [
+      106.0,
+      381.1,
+      319.0,
+      411.6
+     ]
+    },
+    {
+     "row": 10,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "0.31 Basis Points Per Trade Per Side, capped at $75, plus GST",
+     "box": [
+      319.0,
+      381.1,
+      574.0,
+      411.6
+     ]
+    },
+    {
+     "row": 10,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "Monthly",
+     "box": [
+      574.0,
+      381.1,
+      666.0,
+      411.6
+     ]
+    },
+    {
+     "row": 10,
+     "col": 4,
+     "rows": 1,
+     "cols": 1,
+     "text": "1-Jul-11",
+     "box": [
+      666.0,
+      381.1,
+      723.0,
+      411.6
+     ]
+    },
+    {
+     "row": 10,
+     "col": 5,
+     "rows": 1,
+     "cols": 1,
+     "text": "0.31 Basis Points",
+     "box": [
+      723.0,
+      381.1,
+      801.0,
+      411.6
+     ]
+    },
+    {
+     "row": 11,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "2.4",
+     "box": [
+      43.0,
+      411.6,
+      106.0,
+      430.6
+     ]
+    },
+    {
+     "row": 11,
+     "col": 1,
+     "rows": 1,
+     "cols": 5,
+     "text": "Undisclosed",
+     "box": [
+      106.0,
+      411.6,
+      801.0,
+      430.6
+     ]
+    },
+    {
+     "row": 12,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "02900044",
+     "box": [
+      43.0,
+      430.6,
+      106.0,
+      449.9
+     ]
+    },
+    {
+     "row": 12,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "Equities Undisclosed Trade Fee",
+     "box": [
+      106.0,
+      430.6,
+      319.0,
+      449.9
+     ]
+    },
+    {
+     "row": 12,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "0.50 Basis Points Per Trade Per Side, plus GST",
+     "box": [
+      319.0,
+      430.6,
+      574.0,
+      449.9
+     ]
+    },
+    {
+     "row": 12,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "Monthly",
+     "box": [
+      574.0,
+      430.6,
+      666.0,
+      449.9
+     ]
+    },
+    {
+     "row": 12,
+     "col": 4,
+     "rows": 1,
+     "cols": 1,
+     "text": "1-Jul-11",
+     "box": [
+      666.0,
+      430.6,
+      723.0,
+      449.9
+     ]
+    },
+    {
+     "row": 12,
+     "col": 5,
+     "rows": 1,
+     "cols": 1,
+     "text": "0.50 Basis Points",
+     "box": [
+      723.0,
+      430.6,
+      801.0,
+      449.9
+     ]
+    },
+    {
+     "row": 13,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "02900344",
+     "box": [
+      43.0,
+      449.9,
+      106.0,
+      469.5
+     ]
+    },
+    {
+     "row": 13,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "Interest Rate Securities Undisclosed Trade Fee",
+     "box": [
+      106.0,
+      449.9,
+      319.0,
+      469.5
+     ]
+    },
+    {
+     "row": 13,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "0.50 Basis Points Per Trade Per Side, plus GST",
+     "box": [
+      319.0,
+      449.9,
+      574.0,
+      469.5
+     ]
+    },
+    {
+     "row": 13,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "Monthly",
+     "box": [
+      574.0,
+      449.9,
+      666.0,
+      469.5
+     ]
+    },
+    {
+     "row": 13,
+     "col": 4,
+     "rows": 1,
+     "cols": 1,
+     "text": "1-Jul-11",
+     "box": [
+      666.0,
+      449.9,
+      723.0,
+      469.5
+     ]
+    },
+    {
+     "row": 13,
+     "col": 5,
+     "rows": 1,
+     "cols": 1,
+     "text": "0.50 Basis Points",
+     "box": [
+      723.0,
+      449.9,
+      801.0,
+      469.5
+     ]
+    },
+    {
+     "row": 14,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "2.5",
+     "box": [
+      43.0,
+      469.5,
+      106.0,
+      488.5
+     ]
+    },
+    {
+     "row": 14,
+     "col": 1,
+     "rows": 1,
+     "cols": 5,
+     "text": "Centre Point",
+     "box": [
+      106.0,
+      469.5,
+      801.0,
+      488.5
+     ]
+    },
+    {
+     "row": 15,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "02900046",
+     "box": [
+      43.0,
+      488.5,
+      106.0,
+      507.8
+     ]
+    },
+    {
+     "row": 15,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "Equities Centre Point Trade Fee",
+     "box": [
+      106.0,
+      488.5,
+      319.0,
+      507.8
+     ]
+    },
+    {
+     "row": 15,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "0.50 Basis Points Per Trade Per Side, plus GST",
+     "box": [
+      319.0,
+      488.5,
+      574.0,
+      507.8
+     ]
+    },
+    {
+     "row": 15,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "Monthly",
+     "box": [
+      574.0,
+      488.5,
+      666.0,
+      507.8
+     ]
+    },
+    {
+     "row": 15,
+     "col": 4,
+     "rows": 1,
+     "cols": 1,
+     "text": "1-Jul-11",
+     "box": [
+      666.0,
+      488.5,
+      723.0,
+      507.8
+     ]
+    },
+    {
+     "row": 15,
+     "col": 5,
+     "rows": 1,
+     "cols": 1,
+     "text": "0.50 Basis Points",
+     "box": [
+      723.0,
+      488.5,
+      801.0,
+      507.8
+     ]
+    },
+    {
+     "row": 16,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "02900345",
+     "box": [
+      43.0,
+      507.8,
+      106.0,
+      527.2
+     ]
+    },
+    {
+     "row": 16,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "Interest Rate Securities Centre Point Trade Fee",
+     "box": [
+      106.0,
+      507.8,
+      319.0,
+      527.2
+     ]
+    },
+    {
+     "row": 16,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "0.50 Basis Points Per Trade Per Side, plus GST",
+     "box": [
+      319.0,
+      507.8,
+      574.0,
+      527.2
+     ]
+    },
+    {
+     "row": 16,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "Monthly",
+     "box": [
+      574.0,
+      507.8,
+      666.0,
+      527.2
+     ]
+    },
+    {
+     "row": 16,
+     "col": 4,
+     "rows": 1,
+     "cols": 1,
+     "text": "1-Jul-11",
+     "box": [
+      666.0,
+      507.8,
+      723.0,
+      527.2
+     ]
+    },
+    {
+     "row": 16,
+     "col": 5,
+     "rows": 1,
+     "cols": 1,
+     "text": "0.50 Basis Points",
+     "box": [
+      723.0,
+      507.8,
+      801.0,
+      527.2
+     ]
+    }
+   ]
+  },
+  {
+   "page": 8,
+   "bbox": [
+    43.0,
+    90.1,
+    801.0,
+    522.3
+   ],
+   "header_rows": 1,
+   "stub_cols": 2,
+   "cells": [
+    {
+     "row": 0,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Product",
+     "box": [
+      43.0,
+      90.1,
+      106.0,
+      119.8
+     ]
+    },
+    {
+     "row": 0,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "Service",
+     "box": [
+      106.0,
+      90.1,
+      319.0,
+      119.8
+     ]
+    },
+    {
+     "row": 0,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "Charge Basis",
+     "box": [
+      319.0,
+      90.1,
+      574.0,
+      119.8
+     ]
+    },
+    {
+     "row": 0,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "Charge Frequency",
+     "box": [
+      574.0,
+      90.1,
+      666.0,
+      119.8
+     ]
+    },
+    {
+     "row": 0,
+     "col": 4,
+     "rows": 1,
+     "cols": 1,
+     "text": "Effective Date",
+     "box": [
+      666.0,
+      90.1,
+      723.0,
+      119.8
+     ]
+    },
+    {
+     "row": 0,
+     "col": 5,
+     "rows": 1,
+     "cols": 1,
+     "text": "Charge (GST Exclusive*)",
+     "box": [
+      723.0,
+      90.1,
+      801.0,
+      119.8
+     ]
+    },
+    {
+     "row": 1,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "02900352",
+     "box": [
+      43.0,
+      119.8,
+      106.0,
+      150.4
+     ]
+    },
+    {
+     "row": 1,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "Equities Centre Point Block Trade Fee Minimum Acceptable Quantity",
+     "box": [
+      106.0,
+      119.8,
+      319.0,
+      150.4
+     ]
+    },
+    {
+     "row": 1,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "0.50 Basis Points Per Trade Per Side, plus GST",
+     "box": [
+      319.0,
+      119.8,
+      574.0,
+      150.4
+     ]
+    },
+    {
+     "row": 1,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "Monthly",
+     "box": [
+      574.0,
+      119.8,
+      666.0,
+      150.4
+     ]
+    },
+    {
+     "row": 1,
+     "col": 4,
+     "rows": 1,
+     "cols": 1,
+     "text": "1-Jul-12",
+     "box": [
+      666.0,
+      119.8,
+      723.0,
+      150.4
+     ]
+    },
+    {
+     "row": 1,
+     "col": 5,
+     "rows": 1,
+     "cols": 1,
+     "text": "0.50 Basis Points",
+     "box": [
+      723.0,
+      119.8,
+      801.0,
+      150.4
+     ]
+    },
+    {
+     "row": 2,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "02900355",
+     "box": [
+      43.0,
+      150.4,
+      106.0,
+      180.7
+     ]
+    },
+    {
+     "row": 2,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "Interest Rate Securities Centre Point Block Trade Fee Minimum Acceptable Quantity",
+     "box": [
+      106.0,
+      150.4,
+      319.0,
+      180.7
+     ]
+    },
+    {
+     "row": 2,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "0.50 Basis Points Per Trade Per Side, plus GST",
+     "box": [
+      319.0,
+      150.4,
+      574.0,
+      180.7
+     ]
+    },
+    {
+     "row": 2,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "Monthly",
+     "box": [
+      574.0,
+      150.4,
+      666.0,
+      180.7
+     ]
+    },
+    {
+     "row": 2,
+     "col": 4,
+     "rows": 1,
+     "cols": 1,
+     "text": "1-Jul-12",
+     "box": [
+      666.0,
+      150.4,
+      723.0,
+      180.7
+     ]
+    },
+    {
+     "row": 2,
+     "col": 5,
+     "rows": 1,
+     "cols": 1,
+     "text": "0.50 Basis Points",
+     "box": [
+      723.0,
+      150.4,
+      801.0,
+      180.7
+     ]
+    },
+    {
+     "row": 3,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "02900364",
+     "box": [
+      43.0,
+      180.7,
+      106.0,
+      211.0
+     ]
+    },
+    {
+     "row": 3,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "Equities Preferenced Centre Point Trade Fee - Standard User",
+     "box": [
+      106.0,
+      180.7,
+      319.0,
+      211.0
+     ]
+    },
+    {
+     "row": 3,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "0.40 Basis Points Per Trade Per Side, plus GST",
+     "box": [
+      319.0,
+      180.7,
+      574.0,
+      211.0
+     ]
+    },
+    {
+     "row": 3,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "Monthly",
+     "box": [
+      574.0,
+      180.7,
+      666.0,
+      211.0
+     ]
+    },
+    {
+     "row": 3,
+     "col": 4,
+     "rows": 1,
+     "cols": 1,
+     "text": "1-Apr-13",
+     "box": [
+      666.0,
+      180.7,
+      723.0,
+      211.0
+     ]
+    },
+    {
+     "row": 3,
+     "col": 5,
+     "rows": 1,
+     "cols": 1,
+     "text": "0.40 Basis Points",
+     "box": [
+      723.0,
+      180.7,
+      801.0,
+      211.0
+     ]
+    },
+    {
+     "row": 4,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "02900371",
+     "box": [
+      43.0,
+      211.0,
+      106.0,
+      241.3
+     ]
+    },
+    {
+     "row": 4,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "Interest Rate Securities Preferenced Centre Point Trade Fee - Standard User",
+     "box": [
+      106.0,
+      211.0,
+      319.0,
+      241.3
+     ]
+    },
+    {
+     "row": 4,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "0.40 Basis Points Per Trade Per Side, plus GST",
+     "box": [
+      319.0,
+      211.0,
+      574.0,
+      241.3
+     ]
+    },
+    {
+     "row": 4,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "Monthly",
+     "box": [
+      574.0,
+      211.0,
+      666.0,
+      241.3
+     ]
+    },
+    {
+     "row": 4,
+     "col": 4,
+     "rows": 1,
+     "cols": 1,
+     "text": "1-Apr-13",
+     "box": [
+      666.0,
+      211.0,
+      723.0,
+      241.3
+     ]
+    },
+    {
+     "row": 4,
+     "col": 5,
+     "rows": 1,
+     "cols": 1,
+     "text": "0.40 Basis Points",
+     "box": [
+      723.0,
+      211.0,
+      801.0,
+      241.3
+     ]
+    },
+    {
+     "row": 5,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "02900373",
+     "box": [
+      43.0,
+      241.3,
+      106.0,
+      271.6
+     ]
+    },
+    {
+     "row": 5,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "Centre Point Sweep TradeMatch Trade Fee - Standard User",
+     "box": [
+      106.0,
+      241.3,
+      319.0,
+      271.6
+     ]
+    },
+    {
+     "row": 5,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "0.15 Basis Points Per Trade Per Side, plus GST",
+     "box": [
+      319.0,
+      241.3,
+      574.0,
+      271.6
+     ]
+    },
+    {
+     "row": 5,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "Monthly",
+     "box": [
+      574.0,
+      241.3,
+      666.0,
+      271.6
+     ]
+    },
+    {
+     "row": 5,
+     "col": 4,
+     "rows": 1,
+     "cols": 1,
+     "text": "1-Apr-13",
+     "box": [
+      666.0,
+      241.3,
+      723.0,
+      271.6
+     ]
+    },
+    {
+     "row": 5,
+     "col": 5,
+     "rows": 1,
+     "cols": 1,
+     "text": "0.15 Basis Points",
+     "box": [
+      723.0,
+      241.3,
+      801.0,
+      271.6
+     ]
+    },
+    {
+     "row": 6,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "02900374",
+     "box": [
+      43.0,
+      271.6,
+      106.0,
+      301.9
+     ]
+    },
+    {
+     "row": 6,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "Interest Rate Securities Sweep TradeMatch Trade Fee - Standard User",
+     "box": [
+      106.0,
+      271.6,
+      319.0,
+      301.9
+     ]
+    },
+    {
+     "row": 6,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "0.15 Basis Points Per Trade Per Side, plus GST",
+     "box": [
+      319.0,
+      271.6,
+      574.0,
+      301.9
+     ]
+    },
+    {
+     "row": 6,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "Monthly",
+     "box": [
+      574.0,
+      271.6,
+      666.0,
+      301.9
+     ]
+    },
+    {
+     "row": 6,
+     "col": 4,
+     "rows": 1,
+     "cols": 1,
+     "text": "1-Apr-13",
+     "box": [
+      666.0,
+      271.6,
+      723.0,
+      301.9
+     ]
+    },
+    {
+     "row": 6,
+     "col": 5,
+     "rows": 1,
+     "cols": 1,
+     "text": "0.15 Basis Points",
+     "box": [
+      723.0,
+      271.6,
+      801.0,
+      301.9
+     ]
+    },
+    {
+     "row": 7,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "02900375",
+     "box": [
+      43.0,
+      301.9,
+      106.0,
+      332.2
+     ]
+    },
+    {
+     "row": 7,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "Equities Sweep CentrePoint Trade Fee - Standard User",
+     "box": [
+      106.0,
+      301.9,
+      319.0,
+      332.2
+     ]
+    },
+    {
+     "row": 7,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "0.50 Basis Points Per Trade Per Side, plus GST",
+     "box": [
+      319.0,
+      301.9,
+      574.0,
+      332.2
+     ]
+    },
+    {
+     "row": 7,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "Monthly",
+     "box": [
+      574.0,
+      301.9,
+      666.0,
+      332.2
+     ]
+    },
+    {
+     "row": 7,
+     "col": 4,
+     "rows": 1,
+     "cols": 1,
+     "text": "30-Jun-17",
+     "box": [
+      666.0,
+      301.9,
+      723.0,
+      332.2
+     ]
+    },
+    {
+     "row": 7,
+     "col": 5,
+     "rows": 1,
+     "cols": 1,
+     "text": "0.50 Basis Points",
+     "box": [
+      723.0,
+      301.9,
+      801.0,
+      332.2
+     ]
+    },
+    {
+     "row": 8,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "02900378",
+     "box": [
+      43.0,
+      332.2,
+      106.0,
+      362.5
+     ]
+    },
+    {
+     "row": 8,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "Interest Rate Securities Sweep CentrePoint Trade Fee - Standard User",
+     "box": [
+      106.0,
+      332.2,
+      319.0,
+      362.5
+     ]
+    },
+    {
+     "row": 8,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "0.50 Basis Points Per Trade Per Side, plus GST",
+     "box": [
+      319.0,
+      332.2,
+      574.0,
+      362.5
+     ]
+    },
+    {
+     "row": 8,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "Monthly",
+     "box": [
+      574.0,
+      332.2,
+      666.0,
+      362.5
+     ]
+    },
+    {
+     "row": 8,
+     "col": 4,
+     "rows": 1,
+     "cols": 1,
+     "text": "30-Jun-17",
+     "box": [
+      666.0,
+      332.2,
+      723.0,
+      362.5
+     ]
+    },
+    {
+     "row": 8,
+     "col": 5,
+     "rows": 1,
+     "cols": 1,
+     "text": "0.50 Basis Points",
+     "box": [
+      723.0,
+      332.2,
+      801.0,
+      362.5
+     ]
+    },
+    {
+     "row": 9,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "02900389",
+     "box": [
+      43.0,
+      362.5,
+      106.0,
+      382.1
+     ]
+    },
+    {
+     "row": 9,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "Dual Post Centre Point Trade Fee",
+     "box": [
+      106.0,
+      362.5,
+      319.0,
+      382.1
+     ]
+    },
+    {
+     "row": 9,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "0.50 Basis Points Per Trade Per Side, plus GST",
+     "box": [
+      319.0,
+      362.5,
+      574.0,
+      382.1
+     ]
+    },
+    {
+     "row": 9,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "Monthly",
+     "box": [
+      574.0,
+      362.5,
+      666.0,
+      382.1
+     ]
+    },
+    {
+     "row": 9,
+     "col": 4,
+     "rows": 1,
+     "cols": 1,
+     "text": "23-Jun-25",
+     "box": [
+      666.0,
+      362.5,
+      723.0,
+      382.1
+     ]
+    },
+    {
+     "row": 9,
+     "col": 5,
+     "rows": 1,
+     "cols": 1,
+     "text": "0.50 Basis Points",
+     "box": [
+      723.0,
+      362.5,
+      801.0,
+      382.1
+     ]
+    },
+    {
+     "row": 10,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "2.6",
+     "box": [
+      43.0,
+      382.1,
+      106.0,
+      400.8
+     ]
+    },
+    {
+     "row": 10,
+     "col": 1,
+     "rows": 1,
+     "cols": 5,
+     "text": "Icebergs",
+     "box": [
+      106.0,
+      382.1,
+      801.0,
+      400.8
+     ]
+    },
+    {
+     "row": 11,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "02900049",
+     "box": [
+      43.0,
+      400.8,
+      106.0,
+      431.4
+     ]
+    },
+    {
+     "row": 11,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "Equities Iceberg Trade Fee",
+     "box": [
+      106.0,
+      400.8,
+      319.0,
+      431.4
+     ]
+    },
+    {
+     "row": 11,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "0.28 Basis Points Per Trade Per Side, Capped at $75, plus GST",
+     "box": [
+      319.0,
+      400.8,
+      574.0,
+      431.4
+     ]
+    },
+    {
+     "row": 11,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "Monthly",
+     "box": [
+      574.0,
+      400.8,
+      666.0,
+      431.4
+     ]
+    },
+    {
+     "row": 11,
+     "col": 4,
+     "rows": 1,
+     "cols": 1,
+     "text": "1-Jul-11",
+     "box": [
+      666.0,
+      400.8,
+      723.0,
+      431.4
+     ]
+    },
+    {
+     "row": 11,
+     "col": 5,
+     "rows": 1,
+     "cols": 1,
+     "text": "0.28 Basis Points",
+     "box": [
+      723.0,
+      400.8,
+      801.0,
+      431.4
+     ]
+    },
+    {
+     "row": 12,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "02900144",
+     "box": [
+      43.0,
+      431.4,
+      106.0,
+      461.7
+     ]
+    },
+    {
+     "row": 12,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "Warrants Iceberg Trade Fee",
+     "box": [
+      106.0,
+      431.4,
+      319.0,
+      461.7
+     ]
+    },
+    {
+     "row": 12,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "0.31 Basis Points Per Trade Per Side, Capped at $75, plus GST",
+     "box": [
+      319.0,
+      431.4,
+      574.0,
+      461.7
+     ]
+    },
+    {
+     "row": 12,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "Monthly",
+     "box": [
+      574.0,
+      431.4,
+      666.0,
+      461.7
+     ]
+    },
+    {
+     "row": 12,
+     "col": 4,
+     "rows": 1,
+     "cols": 1,
+     "text": "1-Jul-11",
+     "box": [
+      666.0,
+      431.4,
+      723.0,
+      461.7
+     ]
+    },
+    {
+     "row": 12,
+     "col": 5,
+     "rows": 1,
+     "cols": 1,
+     "text": "0.31 Basis Points",
+     "box": [
+      723.0,
+      431.4,
+      801.0,
+      461.7
+     ]
+    },
+    {
+     "row": 13,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "02900244",
+     "box": [
+      43.0,
+      461.7,
+      106.0,
+      492.0
+     ]
+    },
+    {
+     "row": 13,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "Structured Products Iceberg Trade Fee",
+     "box": [
+      106.0,
+      461.7,
+      319.0,
+      492.0
+     ]
+    },
+    {
+     "row": 13,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "0.31 Basis Points Per Trade Per Side, Capped at $75, plus GST",
+     "box": [
+      319.0,
+      461.7,
+      574.0,
+      492.0
+     ]
+    },
+    {
+     "row": 13,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "Monthly",
+     "box": [
+      574.0,
+      461.7,
+      666.0,
+      492.0
+     ]
+    },
+    {
+     "row": 13,
+     "col": 4,
+     "rows": 1,
+     "cols": 1,
+     "text": "1-Jul-11",
+     "box": [
+      666.0,
+      461.7,
+      723.0,
+      492.0
+     ]
+    },
+    {
+     "row": 13,
+     "col": 5,
+     "rows": 1,
+     "cols": 1,
+     "text": "0.31 Basis Points",
+     "box": [
+      723.0,
+      461.7,
+      801.0,
+      492.0
+     ]
+    },
+    {
+     "row": 14,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "02900347",
+     "box": [
+      43.0,
+      492.0,
+      106.0,
+      522.3
+     ]
+    },
+    {
+     "row": 14,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "Interest Rate Securities Iceberg Trade Fee",
+     "box": [
+      106.0,
+      492.0,
+      319.0,
+      522.3
+     ]
+    },
+    {
+     "row": 14,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "0.31 Basis Points Per Trade Per Side, Capped at $75, plus GST",
+     "box": [
+      319.0,
+      492.0,
+      574.0,
+      522.3
+     ]
+    },
+    {
+     "row": 14,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "Monthly",
+     "box": [
+      574.0,
+      492.0,
+      666.0,
+      522.3
+     ]
+    },
+    {
+     "row": 14,
+     "col": 4,
+     "rows": 1,
+     "cols": 1,
+     "text": "1-Jul-11",
+     "box": [
+      666.0,
+      492.0,
+      723.0,
+      522.3
+     ]
+    },
+    {
+     "row": 14,
+     "col": 5,
+     "rows": 1,
+     "cols": 1,
+     "text": "0.31 Basis Points",
+     "box": [
+      723.0,
+      492.0,
+      801.0,
+      522.3
+     ]
+    }
+   ]
+  },
+  {
+   "page": 11,
+   "bbox": [
+    43.0,
+    90.1,
+    801.0,
+    485.4
+   ],
+   "header_rows": 1,
+   "stub_cols": 2,
+   "cells": [
+    {
+     "row": 0,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Product",
+     "box": [
+      43.0,
+      90.1,
+      106.0,
+      119.8
+     ]
+    },
+    {
+     "row": 0,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "Service",
+     "box": [
+      106.0,
+      90.1,
+      320.0,
+      119.8
+     ]
+    },
+    {
+     "row": 0,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "Charge Basis",
+     "box": [
+      320.0,
+      90.1,
+      574.0,
+      119.8
+     ]
+    },
+    {
+     "row": 0,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "Charge Frequency",
+     "box": [
+      574.0,
+      90.1,
+      666.0,
+      119.8
+     ]
+    },
+    {
+     "row": 0,
+     "col": 4,
+     "rows": 1,
+     "cols": 1,
+     "text": "Effective Date",
+     "box": [
+      666.0,
+      90.1,
+      714.0,
+      119.8
+     ]
+    },
+    {
+     "row": 0,
+     "col": 5,
+     "rows": 1,
+     "cols": 1,
+     "text": "Charge (GST Exclusive*)",
+     "box": [
+      714.0,
+      90.1,
+      801.0,
+      119.8
+     ]
+    },
+    {
+     "row": 1,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "4.3",
+     "box": [
+      43.0,
+      119.8,
+      106.0,
+      138.6
+     ]
+    },
+    {
+     "row": 1,
+     "col": 1,
+     "rows": 1,
+     "cols": 5,
+     "text": "Annual Fees",
+     "box": [
+      106.0,
+      119.8,
+      801.0,
+      138.6
+     ]
+    },
+    {
+     "row": 2,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "06250012",
+     "box": [
+      43.0,
+      138.6,
+      106.0,
+      364.4
+     ]
+    },
+    {
+     "row": 2,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "Exchange Traded Funds and Structured Products (Trading Market)",
+     "box": [
+      106.0,
+      138.6,
+      320.0,
+      364.4
+     ]
+    },
+    {
+     "row": 2,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "Annual fee based on the market capitalisation in CHESS of each ETP (ETF or Structured Product) as at the end of each calendar quarter. Calculated and invoiced quarterly in arrears. <$55m: $5,000 $55m to $100m: $5,000 plus 0.9 bps of Mkt Cap >$55m $100m to $500m: $9,000 plus 0.6 bps of Mkt Cap >$100m $500m to $733m: $33,000 plus 0.3 bps of Mkt Cap >$500m $733m and over: $40,000 Issuer discount: Discounts applied to all ETPs operated by a common responsible entity (or other issuing entity as determined by ASX). 5-9 ETPs = 10% discount per ETP 10-29 ETPs = 30% discount per ETP 30-99 ETPs = 50% discount per ETP 100+ ETPs = 60% discount per ETP",
+     "box": [
+      320.0,
+      138.6,
+      574.0,
+      364.4
+     ]
+    },
+    {
+     "row": 2,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "Quarterly",
+     "box": [
+      574.0,
+      138.6,
+      666.0,
+      364.4
+     ]
+    },
+    {
+     "row": 2,
+     "col": 4,
+     "rows": 1,
+     "cols": 1,
+     "text": "1-Jul-26",
+     "box": [
+      666.0,
+      138.6,
+      714.0,
+      364.4
+     ]
+    },
+    {
+     "row": 2,
+     "col": 5,
+     "rows": 1,
+     "cols": 1,
+     "text": "Refer to Charge Basis column",
+     "box": [
+      714.0,
+      138.6,
+      801.0,
+      364.4
+     ]
+    },
+    {
+     "row": 3,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "4.4",
+     "box": [
+      43.0,
+      364.4,
+      106.0,
+      383.2
+     ]
+    },
+    {
+     "row": 3,
+     "col": 1,
+     "rows": 1,
+     "cols": 5,
+     "text": "Capacity Utilisation",
+     "box": [
+      106.0,
+      364.4,
+      801.0,
+      383.2
+     ]
+    },
+    {
+     "row": 4,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "06250014",
+     "box": [
+      43.0,
+      383.2,
+      106.0,
+      436.1
+     ]
+    },
+    {
+     "row": 4,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "Listing Capacity Utilisation Fee",
+     "box": [
+      106.0,
+      383.2,
+      320.0,
+      436.1
+     ]
+    },
+    {
+     "row": 4,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "For each series with a First Listing Date of 1 July 2009 or later, that has <$1,000 billable trade in the last three calendar months and also has an Order Book (OB) change average of >1000 changes per day in ITS",
+     "box": [
+      320.0,
+      383.2,
+      574.0,
+      436.1
+     ]
+    },
+    {
+     "row": 4,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "Monthly",
+     "box": [
+      574.0,
+      383.2,
+      666.0,
+      436.1
+     ]
+    },
+    {
+     "row": 4,
+     "col": 4,
+     "rows": 1,
+     "cols": 1,
+     "text": "1-Jul-11",
+     "box": [
+      666.0,
+      383.2,
+      714.0,
+      436.1
+     ]
+    },
+    {
+     "row": 4,
+     "col": 5,
+     "rows": 1,
+     "cols": 1,
+     "text": "$83.33",
+     "box": [
+      714.0,
+      383.2,
+      801.0,
+      436.1
+     ]
+    },
+    {
+     "row": 5,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "4.5",
+     "box": [
+      43.0,
+      436.1,
+      106.0,
+      454.8
+     ]
+    },
+    {
+     "row": 5,
+     "col": 1,
+     "rows": 1,
+     "cols": 5,
+     "text": "ISIN Code",
+     "box": [
+      106.0,
+      436.1,
+      801.0,
+      454.8
+     ]
+    },
+    {
+     "row": 6,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "06250013",
+     "box": [
+      43.0,
+      454.8,
+      106.0,
+      485.4
+     ]
+    },
+    {
+     "row": 6,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "ISIN Code Creation fee",
+     "box": [
+      106.0,
+      454.8,
+      320.0,
+      485.4
+     ]
+    },
+    {
+     "row": 6,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "Per ISIN, unlisted, unquoted securities, non-CHESS eligible securities",
+     "box": [
+      320.0,
+      454.8,
+      574.0,
+      485.4
+     ]
+    },
+    {
+     "row": 6,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "On Creation",
+     "box": [
+      574.0,
+      454.8,
+      666.0,
+      485.4
+     ]
+    },
+    {
+     "row": 6,
+     "col": 4,
+     "rows": 1,
+     "cols": 1,
+     "text": "1-Nov-14",
+     "box": [
+      666.0,
+      454.8,
+      714.0,
+      485.4
+     ]
+    },
+    {
+     "row": 6,
+     "col": 5,
+     "rows": 1,
+     "cols": 1,
+     "text": "$100.00",
+     "box": [
+      714.0,
+      454.8,
+      801.0,
+      485.4
+     ]
+    }
+   ]
+  }
+ ],
+ "drafted": {
+  "by": "claude",
+  "date": "2026-10-01",
+  "grids": "grids/asx-trade.json"
+ },
+ "verified": null
+}

@@ -1,0 +1,1823 @@
+{
+ "id": "psx-trading-fee",
+ "pages": [
+  1,
+  3,
+  4
+ ],
+ "tables": [
+  {
+   "page": 1,
+   "bbox": [
+    64.1,
+    440.8,
+    536.5,
+    521.7
+   ],
+   "header_rows": 1,
+   "stub_cols": 1,
+   "cells": [
+    {
+     "row": 0,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Transaction Type",
+     "box": [
+      64.1,
+      440.8,
+      205.6,
+      454.4
+     ]
+    },
+    {
+     "row": 0,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "Brokerage Commission",
+     "box": [
+      205.6,
+      440.8,
+      333.3,
+      454.4
+     ]
+    },
+    {
+     "row": 0,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "Calculation Basis",
+     "box": [
+      333.3,
+      440.8,
+      450.9,
+      454.4
+     ]
+    },
+    {
+     "row": 0,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "Applicable On",
+     "box": [
+      450.9,
+      440.8,
+      536.5,
+      454.4
+     ]
+    },
+    {
+     "row": 1,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "IDS based Non-Broker Clearing Members (NBCMs)",
+     "box": [
+      64.1,
+      454.4,
+      205.6,
+      495.1
+     ]
+    },
+    {
+     "row": 1,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "0.0100% (1 bps)",
+     "box": [
+      205.6,
+      454.4,
+      333.3,
+      495.1
+     ]
+    },
+    {
+     "row": 1,
+     "col": 2,
+     "rows": 2,
+     "cols": 1,
+     "text": "Based on Days-to- Maturity [DTM] for securities with DTM of less than one year.",
+     "box": [
+      333.3,
+      454.4,
+      450.9,
+      521.7
+     ]
+    },
+    {
+     "row": 1,
+     "col": 3,
+     "rows": 2,
+     "cols": 1,
+     "text": "On every buy and sell transaction",
+     "box": [
+      450.9,
+      454.4,
+      536.5,
+      521.7
+     ]
+    },
+    {
+     "row": 2,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Other than IDS based NBCMs",
+     "box": [
+      64.1,
+      495.1,
+      205.6,
+      521.7
+     ]
+    },
+    {
+     "row": 2,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "0.0700% \u2013 to 0.0900% (7 \u2013 9 bps)",
+     "box": [
+      205.6,
+      495.1,
+      333.3,
+      521.7
+     ]
+    }
+   ]
+  },
+  {
+   "page": 1,
+   "bbox": [
+    64.1,
+    574.5,
+    537.6,
+    654.5
+   ],
+   "header_rows": 1,
+   "stub_cols": 1,
+   "cells": [
+    {
+     "row": 0,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Schedule of Charges",
+     "box": [
+      64.1,
+      574.5,
+      177.3,
+      588.1
+     ]
+    },
+    {
+     "row": 0,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "Fee Type",
+     "box": [
+      177.3,
+      574.5,
+      283.7,
+      588.1
+     ]
+    },
+    {
+     "row": 0,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "Basis",
+     "box": [
+      283.7,
+      574.5,
+      397.0,
+      588.1
+     ]
+    },
+    {
+     "row": 0,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "Mode",
+     "box": [
+      397.0,
+      574.5,
+      446.7,
+      588.1
+     ]
+    },
+    {
+     "row": 0,
+     "col": 4,
+     "rows": 1,
+     "cols": 1,
+     "text": "Collection Date",
+     "box": [
+      446.7,
+      574.5,
+      537.6,
+      588.1
+     ]
+    },
+    {
+     "row": 1,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Schedule for Trading Fee",
+     "box": [
+      64.1,
+      588.1,
+      177.3,
+      614.7
+     ]
+    },
+    {
+     "row": 1,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "*Trading Fee: 0.001% (0.1 bps)",
+     "box": [
+      177.3,
+      588.1,
+      283.7,
+      614.7
+     ]
+    },
+    {
+     "row": 1,
+     "col": 2,
+     "rows": 2,
+     "cols": 1,
+     "text": "Settlement value. Also based on Days- to-Maturity [DTM] for securities with DTM of less than one year.",
+     "box": [
+      283.7,
+      588.1,
+      397.0,
+      654.5
+     ]
+    },
+    {
+     "row": 1,
+     "col": 3,
+     "rows": 2,
+     "cols": 1,
+     "text": "Trough Payment Order",
+     "box": [
+      397.0,
+      588.1,
+      446.7,
+      654.5
+     ]
+    },
+    {
+     "row": 1,
+     "col": 4,
+     "rows": 2,
+     "cols": 1,
+     "text": "On every settlement date",
+     "box": [
+      446.7,
+      588.1,
+      537.6,
+      654.5
+     ]
+    },
+    {
+     "row": 2,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Schedule for Government Taxes and Levies",
+     "box": [
+      64.1,
+      614.7,
+      177.3,
+      654.5
+     ]
+    },
+    {
+     "row": 2,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "SECP Levy: 0.00040% (0.04 bps)",
+     "box": [
+      177.3,
+      614.7,
+      283.7,
+      654.5
+     ]
+    }
+   ]
+  },
+  {
+   "page": 3,
+   "bbox": [
+    56.3,
+    149.4,
+    475.9,
+    536.6
+   ],
+   "header_rows": 1,
+   "stub_cols": 2,
+   "cells": [
+    {
+     "row": 0,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "SR.#",
+     "box": [
+      56.3,
+      149.4,
+      78.9,
+      160.8
+     ]
+    },
+    {
+     "row": 0,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "TRANSACTION TYPE",
+     "box": [
+      78.9,
+      149.4,
+      206.6,
+      160.8
+     ]
+    },
+    {
+     "row": 0,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "*MINIMUM RATE",
+     "box": [
+      206.6,
+      149.4,
+      305.7,
+      160.8
+     ]
+    },
+    {
+     "row": 0,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "EXPLANATION",
+     "box": [
+      305.7,
+      149.4,
+      475.9,
+      160.8
+     ]
+    },
+    {
+     "row": 1,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "1",
+     "box": [
+      56.3,
+      160.8,
+      78.9,
+      194.1
+     ]
+    },
+    {
+     "row": 1,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "Ready Delivery Contract Market (\u201cReady Market\u201d) \u2013 Normal",
+     "box": [
+      78.9,
+      160.8,
+      206.6,
+      194.1
+     ]
+    },
+    {
+     "row": 1,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "Minimum 3p or 0.15% whichever is higher",
+     "box": [
+      206.6,
+      160.8,
+      305.7,
+      194.1
+     ]
+    },
+    {
+     "row": 1,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "On every buy and sell transaction which is not squared during the same Trading Day.",
+     "box": [
+      305.7,
+      160.8,
+      475.9,
+      194.1
+     ]
+    },
+    {
+     "row": 2,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "2",
+     "box": [
+      56.3,
+      194.1,
+      78.9,
+      216.3
+     ]
+    },
+    {
+     "row": 2,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "Ready Market \u2013 Intra-Day Squared",
+     "box": [
+      78.9,
+      194.1,
+      206.6,
+      216.3
+     ]
+    },
+    {
+     "row": 2,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "Minimum 3p or 0.15% whichever is higher",
+     "box": [
+      206.6,
+      194.1,
+      305.7,
+      216.3
+     ]
+    },
+    {
+     "row": 2,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "On one side \u2013 either on buy side or sell side trade.",
+     "box": [
+      305.7,
+      194.1,
+      475.9,
+      216.3
+     ]
+    },
+    {
+     "row": 3,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "3",
+     "box": [
+      56.3,
+      216.3,
+      78.9,
+      249.5
+     ]
+    },
+    {
+     "row": 3,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "Fixed Income ETF \u2013 Normal",
+     "box": [
+      78.9,
+      216.3,
+      206.6,
+      249.5
+     ]
+    },
+    {
+     "row": 3,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "Minimum 1p or 0.01% whichever is higher",
+     "box": [
+      206.6,
+      216.3,
+      305.7,
+      249.5
+     ]
+    },
+    {
+     "row": 3,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "On every buy and sell transaction which is not squared during the same Trading Day.",
+     "box": [
+      305.7,
+      216.3,
+      475.9,
+      249.5
+     ]
+    },
+    {
+     "row": 4,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "4",
+     "box": [
+      56.3,
+      249.5,
+      78.9,
+      271.7
+     ]
+    },
+    {
+     "row": 4,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "Fixed Income ETF \u2013 Intra-Day Squared",
+     "box": [
+      78.9,
+      249.5,
+      206.6,
+      271.7
+     ]
+    },
+    {
+     "row": 4,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "Minimum 1p or 0.01% whichever is higher",
+     "box": [
+      206.6,
+      249.5,
+      305.7,
+      271.7
+     ]
+    },
+    {
+     "row": 4,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "On one side \u2013 either on buy side or sell side trade.",
+     "box": [
+      305.7,
+      249.5,
+      475.9,
+      271.7
+     ]
+    },
+    {
+     "row": 5,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "5",
+     "box": [
+      56.3,
+      271.7,
+      78.9,
+      294.1
+     ]
+    },
+    {
+     "row": 5,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "Arbitrage between Ready and Future Market",
+     "box": [
+      78.9,
+      271.7,
+      206.6,
+      294.1
+     ]
+    },
+    {
+     "row": 5,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "No minimum rate of commission",
+     "box": [
+      206.6,
+      271.7,
+      305.7,
+      294.1
+     ]
+    },
+    {
+     "row": 5,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "-",
+     "box": [
+      305.7,
+      271.7,
+      475.9,
+      294.1
+     ]
+    },
+    {
+     "row": 6,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "6",
+     "box": [
+      56.3,
+      294.1,
+      78.9,
+      349.0
+     ]
+    },
+    {
+     "row": 6,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "Ready Market Trade financed through Margin Trading System/ Margin Financing System/ Morabaha Share Financing",
+     "box": [
+      78.9,
+      294.1,
+      206.6,
+      349.0
+     ]
+    },
+    {
+     "row": 6,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "Minimum 3p or 0.15% whichever is higher",
+     "box": [
+      206.6,
+      294.1,
+      305.7,
+      349.0
+     ]
+    },
+    {
+     "row": 6,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "Minimum commission on Ready Market purchase or sale only. No minimum commission on Margin Trading System, Margin Financing System market and Morabaha Share Financing transaction.",
+     "box": [
+      305.7,
+      294.1,
+      475.9,
+      349.0
+     ]
+    },
+    {
+     "row": 7,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "7",
+     "box": [
+      56.3,
+      349.0,
+      78.9,
+      382.1
+     ]
+    },
+    {
+     "row": 7,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "Deliverable Futures Contract Market",
+     "box": [
+      78.9,
+      349.0,
+      206.6,
+      382.1
+     ]
+    },
+    {
+     "row": 7,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "Minimum 3p or 0.15% whichever is higher",
+     "box": [
+      206.6,
+      349.0,
+      305.7,
+      382.1
+     ]
+    },
+    {
+     "row": 7,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "Minimum commission on every buy and sell transaction which is not squared during the contract period.",
+     "box": [
+      305.7,
+      349.0,
+      475.9,
+      382.1
+     ]
+    },
+    {
+     "row": 8,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "8",
+     "box": [
+      56.3,
+      382.1,
+      78.9,
+      426.2
+     ]
+    },
+    {
+     "row": 8,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "Deliverable Futures Contract Market \u2013 Squared Transaction",
+     "box": [
+      78.9,
+      382.1,
+      206.6,
+      426.2
+     ]
+    },
+    {
+     "row": 8,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "Minimum 3p or 0.15% whichever is higher",
+     "box": [
+      206.6,
+      382.1,
+      305.7,
+      426.2
+     ]
+    },
+    {
+     "row": 8,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "Minimum commission on one side \u2013 if transaction is squared-up in Deliverable Futures Contract Market either through offsetting transaction or rollover.",
+     "box": [
+      305.7,
+      382.1,
+      475.9,
+      426.2
+     ]
+    },
+    {
+     "row": 9,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "9",
+     "box": [
+      56.3,
+      426.2,
+      78.9,
+      470.3
+     ]
+    },
+    {
+     "row": 9,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "Proprietary Trade and trades of Sponsors and Directors of the Securities Broker and their immediate family members**",
+     "box": [
+      78.9,
+      426.2,
+      206.6,
+      470.3
+     ]
+    },
+    {
+     "row": 9,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "No minimum rate of commission",
+     "box": [
+      206.6,
+      426.2,
+      305.7,
+      470.3
+     ]
+    },
+    {
+     "row": 9,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "-",
+     "box": [
+      305.7,
+      426.2,
+      475.9,
+      470.3
+     ]
+    },
+    {
+     "row": 10,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "10",
+     "box": [
+      56.3,
+      470.3,
+      78.9,
+      503.5
+     ]
+    },
+    {
+     "row": 10,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "Government of Pakistan Ijarah Sukuk (GIS) - IDS based NBCMs",
+     "box": [
+      78.9,
+      470.3,
+      206.6,
+      503.5
+     ]
+    },
+    {
+     "row": 10,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "Fixed 1 basis point (0.0100%)",
+     "box": [
+      206.6,
+      470.3,
+      305.7,
+      503.5
+     ]
+    },
+    {
+     "row": 10,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "On every buy and sell transaction.***",
+     "box": [
+      305.7,
+      470.3,
+      475.9,
+      503.5
+     ]
+    },
+    {
+     "row": 11,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "11",
+     "box": [
+      56.3,
+      503.5,
+      78.9,
+      536.6
+     ]
+    },
+    {
+     "row": 11,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "Government of Pakistan Ijarah Sukuk (GIS) - Other than IDS based NBCMs",
+     "box": [
+      78.9,
+      503.5,
+      206.6,
+      536.6
+     ]
+    },
+    {
+     "row": 11,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "Minimum 7 basis points (0.0700%)",
+     "box": [
+      206.6,
+      503.5,
+      305.7,
+      536.6
+     ]
+    },
+    {
+     "row": 11,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "On every buy and sell transaction.***",
+     "box": [
+      305.7,
+      503.5,
+      475.9,
+      536.6
+     ]
+    }
+   ]
+  },
+  {
+   "page": 4,
+   "bbox": [
+    56.3,
+    140.3,
+    474.1,
+    364.0
+   ],
+   "header_rows": 1,
+   "stub_cols": 1,
+   "cells": [
+    {
+     "row": 0,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Market Name",
+     "box": [
+      56.3,
+      140.3,
+      227.7,
+      165.7
+     ]
+    },
+    {
+     "row": 0,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "Rate in Rupees",
+     "box": [
+      227.7,
+      140.3,
+      341.1,
+      165.7
+     ]
+    },
+    {
+     "row": 0,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "Basis",
+     "box": [
+      341.1,
+      140.3,
+      397.9,
+      165.7
+     ]
+    },
+    {
+     "row": 0,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "Mode",
+     "box": [
+      397.9,
+      140.3,
+      426.3,
+      165.7
+     ]
+    },
+    {
+     "row": 0,
+     "col": 4,
+     "rows": 1,
+     "cols": 1,
+     "text": "Collection Date",
+     "box": [
+      426.3,
+      140.3,
+      474.1,
+      165.7
+     ]
+    },
+    {
+     "row": 1,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Ready Market Trade",
+     "box": [
+      56.3,
+      165.7,
+      227.7,
+      178.2
+     ]
+    },
+    {
+     "row": 1,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "3.50",
+     "box": [
+      227.7,
+      165.7,
+      341.1,
+      178.2
+     ]
+    },
+    {
+     "row": 1,
+     "col": 2,
+     "rows": 7,
+     "cols": 1,
+     "text": "Rs. 100,000/- value traded",
+     "box": [
+      341.1,
+      165.7,
+      397.9,
+      312.2
+     ]
+    },
+    {
+     "row": 1,
+     "col": 3,
+     "rows": 10,
+     "cols": 1,
+     "text": "Through Payment Order",
+     "box": [
+      397.9,
+      165.7,
+      426.3,
+      364.0
+     ]
+    },
+    {
+     "row": 1,
+     "col": 4,
+     "rows": 10,
+     "cols": 1,
+     "text": "On Every Settlement Day",
+     "box": [
+      426.3,
+      165.7,
+      474.1,
+      364.0
+     ]
+    },
+    {
+     "row": 2,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Deliverable Futures Contract Market- contract",
+     "box": [
+      56.3,
+      178.2,
+      227.7,
+      202.7
+     ]
+    },
+    {
+     "row": 2,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "3.90",
+     "box": [
+      227.7,
+      178.2,
+      341.1,
+      202.7
+     ]
+    },
+    {
+     "row": 3,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Single Stock Cash-Settled Futures Contract Market - contract",
+     "box": [
+      56.3,
+      202.7,
+      227.7,
+      225.0
+     ]
+    },
+    {
+     "row": 3,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "3.90",
+     "box": [
+      227.7,
+      202.7,
+      341.1,
+      225.0
+     ]
+    },
+    {
+     "row": 4,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Stock Index Futures Contract Market - contract",
+     "box": [
+      56.3,
+      225.0,
+      227.7,
+      248.8
+     ]
+    },
+    {
+     "row": 4,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "3.90",
+     "box": [
+      227.7,
+      225.0,
+      341.1,
+      248.8
+     ]
+    },
+    {
+     "row": 5,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Squaring-Up Market - trade",
+     "box": [
+      56.3,
+      248.8,
+      227.7,
+      260.5
+     ]
+    },
+    {
+     "row": 5,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "3.50",
+     "box": [
+      227.7,
+      248.8,
+      341.1,
+      260.5
+     ]
+    },
+    {
+     "row": 6,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Negotiated Deals Market - transaction",
+     "box": [
+      56.3,
+      260.5,
+      227.7,
+      288.4
+     ]
+    },
+    {
+     "row": 6,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "3.50",
+     "box": [
+      227.7,
+      260.5,
+      341.1,
+      288.4
+     ]
+    },
+    {
+     "row": 7,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Trade Rectification - transaction",
+     "box": [
+      56.3,
+      288.4,
+      227.7,
+      312.2
+     ]
+    },
+    {
+     "row": 7,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "One side of fee applicable to Original",
+     "box": [
+      227.7,
+      288.4,
+      341.1,
+      312.2
+     ]
+    },
+    {
+     "row": 8,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Corporate Debt Securities Market",
+     "box": [
+      56.3,
+      312.2,
+      227.7,
+      327.1
+     ]
+    },
+    {
+     "row": 8,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "2.80",
+     "box": [
+      227.7,
+      312.2,
+      341.1,
+      327.1
+     ]
+    },
+    {
+     "row": 8,
+     "col": 2,
+     "rows": 3,
+     "cols": 1,
+     "text": "Rs.100,000/ - Settlement Value",
+     "box": [
+      341.1,
+      312.2,
+      397.9,
+      364.0
+     ]
+    },
+    {
+     "row": 9,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Government Debt Securities Market (Other than GoP Ijarah Sukuk)",
+     "box": [
+      56.3,
+      327.1,
+      227.7,
+      351.5
+     ]
+    },
+    {
+     "row": 9,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "2.80",
+     "box": [
+      227.7,
+      327.1,
+      341.1,
+      351.5
+     ]
+    },
+    {
+     "row": 10,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "GoP Ijarah Sukuk (GIS) Market",
+     "box": [
+      56.3,
+      351.5,
+      227.7,
+      364.0
+     ]
+    },
+    {
+     "row": 10,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "1.00",
+     "box": [
+      227.7,
+      351.5,
+      341.1,
+      364.0
+     ]
+    }
+   ]
+  },
+  {
+   "page": 4,
+   "bbox": [
+    56.3,
+    388.5,
+    477.8,
+    678.2
+   ],
+   "header_rows": 2,
+   "stub_cols": 1,
+   "cells": [
+    {
+     "row": 0,
+     "col": 0,
+     "rows": 2,
+     "cols": 1,
+     "text": "Market Name",
+     "box": [
+      56.3,
+      388.5,
+      199.4,
+      449.5
+     ]
+    },
+    {
+     "row": 0,
+     "col": 1,
+     "rows": 1,
+     "cols": 2,
+     "text": "Rate in %age",
+     "box": [
+      199.4,
+      388.5,
+      243.1,
+      413.9
+     ]
+    },
+    {
+     "row": 0,
+     "col": 3,
+     "rows": 1,
+     "cols": 2,
+     "text": "Rate in %age",
+     "box": [
+      243.1,
+      388.5,
+      292.8,
+      413.9
+     ]
+    },
+    {
+     "row": 0,
+     "col": 5,
+     "rows": 1,
+     "cols": 2,
+     "text": "Rate in %age",
+     "box": [
+      292.8,
+      388.5,
+      337.5,
+      413.9
+     ]
+    },
+    {
+     "row": 0,
+     "col": 7,
+     "rows": 2,
+     "cols": 1,
+     "text": "SECP Levy",
+     "box": [
+      337.5,
+      388.5,
+      363.9,
+      449.5
+     ]
+    },
+    {
+     "row": 0,
+     "col": 8,
+     "rows": 2,
+     "cols": 1,
+     "text": "Basis",
+     "box": [
+      363.9,
+      388.5,
+      399.3,
+      449.5
+     ]
+    },
+    {
+     "row": 0,
+     "col": 9,
+     "rows": 2,
+     "cols": 1,
+     "text": "Mode",
+     "box": [
+      399.3,
+      388.5,
+      427.6,
+      449.5
+     ]
+    },
+    {
+     "row": 0,
+     "col": 10,
+     "rows": 2,
+     "cols": 1,
+     "text": "Collection",
+     "box": [
+      427.6,
+      388.5,
+      477.8,
+      449.5
+     ]
+    },
+    {
+     "row": 1,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "CVT",
+     "box": [
+      199.4,
+      413.9,
+      218.8,
+      449.5
+     ]
+    },
+    {
+     "row": 1,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "Basis",
+     "box": [
+      218.8,
+      413.9,
+      243.1,
+      449.5
+     ]
+    },
+    {
+     "row": 1,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "Adv. Tax",
+     "box": [
+      243.1,
+      413.9,
+      268.6,
+      449.5
+     ]
+    },
+    {
+     "row": 1,
+     "col": 4,
+     "rows": 1,
+     "cols": 1,
+     "text": "Basis",
+     "box": [
+      268.6,
+      413.9,
+      292.8,
+      449.5
+     ]
+    },
+    {
+     "row": 1,
+     "col": 5,
+     "rows": 1,
+     "cols": 1,
+     "text": "Sales Tax",
+     "box": [
+      292.8,
+      413.9,
+      315.2,
+      449.5
+     ]
+    },
+    {
+     "row": 1,
+     "col": 6,
+     "rows": 1,
+     "cols": 1,
+     "text": "Basis",
+     "box": [
+      315.2,
+      413.9,
+      337.5,
+      449.5
+     ]
+    },
+    {
+     "row": 2,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Ready Market Trade",
+     "box": [
+      56.3,
+      449.5,
+      199.4,
+      461.9
+     ]
+    },
+    {
+     "row": 2,
+     "col": 1,
+     "rows": 9,
+     "cols": 1,
+     "text": "0.00%",
+     "box": [
+      199.4,
+      449.5,
+      218.8,
+      678.2
+     ]
+    },
+    {
+     "row": 2,
+     "col": 2,
+     "rows": 9,
+     "cols": 1,
+     "text": "On Purchase Value",
+     "box": [
+      218.8,
+      449.5,
+      243.1,
+      678.2
+     ]
+    },
+    {
+     "row": 2,
+     "col": 3,
+     "rows": 9,
+     "cols": 1,
+     "text": "0.00%",
+     "box": [
+      243.1,
+      449.5,
+      268.6,
+      678.2
+     ]
+    },
+    {
+     "row": 2,
+     "col": 4,
+     "rows": 9,
+     "cols": 1,
+     "text": "On Purchase and Sale Value in lieu of Brokerage Commission",
+     "box": [
+      268.6,
+      449.5,
+      292.8,
+      678.2
+     ]
+    },
+    {
+     "row": 2,
+     "col": 5,
+     "rows": 9,
+     "cols": 1,
+     "text": "The applicable rate as notified from time to time",
+     "box": [
+      292.8,
+      449.5,
+      315.2,
+      678.2
+     ]
+    },
+    {
+     "row": 2,
+     "col": 6,
+     "rows": 9,
+     "cols": 1,
+     "text": "On the trading fee amount",
+     "box": [
+      315.2,
+      449.5,
+      337.5,
+      678.2
+     ]
+    },
+    {
+     "row": 2,
+     "col": 7,
+     "rows": 8,
+     "cols": 1,
+     "text": "0.00065% PKR 0.65",
+     "box": [
+      337.5,
+      449.5,
+      363.9,
+      627.5
+     ]
+    },
+    {
+     "row": 2,
+     "col": 8,
+     "rows": 6,
+     "cols": 1,
+     "text": "Per Rs. 100,000/- value traded",
+     "box": [
+      363.9,
+      449.5,
+      399.3,
+      590.6
+     ]
+    },
+    {
+     "row": 2,
+     "col": 9,
+     "rows": 9,
+     "cols": 1,
+     "text": "Through Payment Order",
+     "box": [
+      399.3,
+      449.5,
+      427.6,
+      678.2
+     ]
+    },
+    {
+     "row": 2,
+     "col": 10,
+     "rows": 9,
+     "cols": 1,
+     "text": "On Every Settlement Day",
+     "box": [
+      427.6,
+      449.5,
+      477.8,
+      678.2
+     ]
+    },
+    {
+     "row": 3,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Deliverable Futures Contract Market- contract",
+     "box": [
+      56.3,
+      461.9,
+      199.4,
+      486.4
+     ]
+    },
+    {
+     "row": 4,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Single Stock Cash-Settled Futures Contract Market- contract",
+     "box": [
+      56.3,
+      486.4,
+      199.4,
+      522.8
+     ]
+    },
+    {
+     "row": 5,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Stock Index Futures Contract Market-contract",
+     "box": [
+      56.3,
+      522.8,
+      199.4,
+      547.3
+     ]
+    },
+    {
+     "row": 6,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Squaring-Up Market-trade",
+     "box": [
+      56.3,
+      547.3,
+      199.4,
+      562.4
+     ]
+    },
+    {
+     "row": 7,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Negotiated Deals Market- transaction",
+     "box": [
+      56.3,
+      562.4,
+      199.4,
+      590.6
+     ]
+    },
+    {
+     "row": 8,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Government Debt Securities (Other than GIS)",
+     "box": [
+      56.3,
+      590.6,
+      199.4,
+      615.0
+     ]
+    },
+    {
+     "row": 8,
+     "col": 8,
+     "rows": 3,
+     "cols": 1,
+     "text": "Per Rs. 100,000/- Settlement value",
+     "box": [
+      363.9,
+      590.6,
+      399.3,
+      678.2
+     ]
+    },
+    {
+     "row": 9,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Corporate Debt Securities",
+     "box": [
+      56.3,
+      615.0,
+      199.4,
+      627.5
+     ]
+    },
+    {
+     "row": 10,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Gop Ijarah Sukuk (GIS)",
+     "box": [
+      56.3,
+      627.5,
+      199.4,
+      678.2
+     ]
+    },
+    {
+     "row": 10,
+     "col": 7,
+     "rows": 1,
+     "cols": 1,
+     "text": "PKR 0.40",
+     "box": [
+      337.5,
+      627.5,
+      363.9,
+      678.2
+     ]
+    }
+   ]
+  }
+ ],
+ "drafted": {
+  "by": "claude",
+  "date": "2026-10-01",
+  "grids": "grids/psx-trading-fee.json"
+ },
+ "verified": null
+}

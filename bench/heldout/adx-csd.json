@@ -1,0 +1,926 @@
+{
+ "id": "adx-csd",
+ "pages": [
+  4,
+  7,
+  10
+ ],
+ "tables": [
+  {
+   "page": 4,
+   "bbox": [
+    56.8,
+    56.8,
+    538.5,
+    686.9
+   ],
+   "header_rows": 1,
+   "stub_cols": 1,
+   "cells": [
+    {
+     "row": 0,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Type of Service",
+     "box": [
+      56.8,
+      56.8,
+      313.2,
+      86.9
+     ]
+    },
+    {
+     "row": 0,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "Fee (AED)",
+     "box": [
+      313.2,
+      56.8,
+      538.5,
+      86.9
+     ]
+    },
+    {
+     "row": 1,
+     "col": 0,
+     "rows": 1,
+     "cols": 2,
+     "text": "Off-Market Transfers",
+     "box": [
+      56.8,
+      86.9,
+      538.5,
+      106.8
+     ]
+    },
+    {
+     "row": 2,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Transfer ownership between an owner account to company account and vice versa. Or from the company account to another related company account",
+     "box": [
+      56.8,
+      106.8,
+      313.2,
+      197.8
+     ]
+    },
+    {
+     "row": 2,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "0.4% of MKT value using previous day closing price with a minimum of AED 50 from one side",
+     "box": [
+      313.2,
+      106.8,
+      538.5,
+      197.8
+     ]
+    },
+    {
+     "row": 3,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Transfer of securities from the individual investor account to the account of the individual institution or vice versa",
+     "box": [
+      56.8,
+      197.8,
+      313.2,
+      272.8
+     ]
+    },
+    {
+     "row": 3,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "0.20% of MKT value using previous day closing price with a minimum of AED 25 from one side.",
+     "box": [
+      313.2,
+      197.8,
+      538.5,
+      272.8
+     ]
+    },
+    {
+     "row": 4,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Family Transfer",
+     "box": [
+      56.8,
+      272.8,
+      313.2,
+      327.8
+     ]
+    },
+    {
+     "row": 4,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "0.20% of MKT value using previous day closing price with a minimum of AED 25 from one side",
+     "box": [
+      313.2,
+      272.8,
+      538.5,
+      327.8
+     ]
+    },
+    {
+     "row": 5,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Founders Transfer",
+     "box": [
+      56.8,
+      327.8,
+      313.2,
+      382.9
+     ]
+    },
+    {
+     "row": 5,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "0.20% of MKT value using previous day closing price with a minimum of AED 25 from both sides",
+     "box": [
+      313.2,
+      327.8,
+      538.5,
+      382.9
+     ]
+    },
+    {
+     "row": 6,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Open Deed Transfer",
+     "box": [
+      56.8,
+      382.9,
+      313.2,
+      437.9
+     ]
+    },
+    {
+     "row": 6,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "0.20% of MKT value using previous day closing price with a minimum of AED 200 from one side",
+     "box": [
+      313.2,
+      382.9,
+      538.5,
+      437.9
+     ]
+    },
+    {
+     "row": 7,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Court Order Transfer",
+     "box": [
+      56.8,
+      437.9,
+      313.2,
+      493.0
+     ]
+    },
+    {
+     "row": 7,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "0.20% of MKT value using previous day closing price with a minimum of AED 25 from one side",
+     "box": [
+      313.2,
+      437.9,
+      538.5,
+      493.0
+     ]
+    },
+    {
+     "row": 8,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Joint Certificate Transfer",
+     "box": [
+      56.8,
+      493.0,
+      313.2,
+      548.0
+     ]
+    },
+    {
+     "row": 8,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "0.20% of MKT value using previous day closing price with a minimum of AED 25 from one side",
+     "box": [
+      313.2,
+      493.0,
+      538.5,
+      548.0
+     ]
+    },
+    {
+     "row": 9,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Financial Settlement Transfer",
+     "box": [
+      56.8,
+      548.0,
+      313.2,
+      603.1
+     ]
+    },
+    {
+     "row": 9,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "0.20% of MKT value using previous day closing price with a minimum of AED 100 from one side",
+     "box": [
+      313.2,
+      548.0,
+      538.5,
+      603.1
+     ]
+    },
+    {
+     "row": 10,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Transfer shares from the financial institution to the investor account for financing (Islamic Finance)",
+     "box": [
+      56.8,
+      603.1,
+      313.2,
+      686.9
+     ]
+    },
+    {
+     "row": 10,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "0.20% of MKT value using previous day closing price with a minimum of AED 100 including SCA commission 0.05% from every transfer transaction",
+     "box": [
+      313.2,
+      603.1,
+      538.5,
+      686.9
+     ]
+    }
+   ]
+  },
+  {
+   "page": 7,
+   "bbox": [
+    56.8,
+    56.8,
+    538.5,
+    638.8
+   ],
+   "header_rows": 1,
+   "stub_cols": 1,
+   "cells": [
+    {
+     "row": 0,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Type of Service",
+     "box": [
+      56.8,
+      56.8,
+      309.0,
+      86.9
+     ]
+    },
+    {
+     "row": 0,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "Fee (AED)",
+     "box": [
+      309.0,
+      56.8,
+      538.5,
+      86.9
+     ]
+    },
+    {
+     "row": 1,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Pledge Report",
+     "box": [
+      56.8,
+      86.9,
+      309.0,
+      207.5
+     ]
+    },
+    {
+     "row": 1,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "AED 5 / shareholder as a soft copy with a minimum of AED 300 and a maximum of AED 5,000 And/ Or AED 200 for the first 20 pages and another AED 20 for each additional page if a hard copy is requested",
+     "box": [
+      309.0,
+      86.9,
+      538.5,
+      207.5
+     ]
+    },
+    {
+     "row": 2,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Other Reports (Hard Copy)",
+     "box": [
+      56.8,
+      207.5,
+      309.0,
+      265.8
+     ]
+    },
+    {
+     "row": 2,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "AED 200 for the first 20 pages, AED 20 each additional page. With maximum of AED 5,000",
+     "box": [
+      309.0,
+      207.5,
+      538.5,
+      265.8
+     ]
+    },
+    {
+     "row": 3,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Other Reports (Soft Copy)",
+     "box": [
+      56.8,
+      265.8,
+      309.0,
+      324.0
+     ]
+    },
+    {
+     "row": 3,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "AED 0.5 / record as a soft copy with a minimum of AED 300 and a maximum of AED 15,000",
+     "box": [
+      309.0,
+      265.8,
+      538.5,
+      324.0
+     ]
+    },
+    {
+     "row": 4,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Equator Access: Initial Set Up User Access",
+     "box": [
+      56.8,
+      324.0,
+      309.0,
+      383.0
+     ]
+    },
+    {
+     "row": 4,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "2,000 / PC 5,000 / User / Year",
+     "box": [
+      309.0,
+      324.0,
+      538.5,
+      383.0
+     ]
+    },
+    {
+     "row": 5,
+     "col": 0,
+     "rows": 1,
+     "cols": 2,
+     "text": "Fees for annual subscription packages",
+     "box": [
+      56.8,
+      383.0,
+      538.5,
+      402.8
+     ]
+    },
+    {
+     "row": 6,
+     "col": 0,
+     "rows": 2,
+     "cols": 1,
+     "text": "Daily Share Book Daily Trade Log (Report)",
+     "box": [
+      56.8,
+      402.8,
+      309.0,
+      456.9
+     ]
+    },
+    {
+     "row": 6,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "AED 200,000 *",
+     "box": [
+      309.0,
+      402.8,
+      538.5,
+      429.8
+     ]
+    },
+    {
+     "row": 7,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "AED 500,000 **",
+     "box": [
+      309.0,
+      429.8,
+      538.5,
+      456.9
+     ]
+    },
+    {
+     "row": 8,
+     "col": 0,
+     "rows": 2,
+     "cols": 1,
+     "text": "Monthly Share Book Daily Trade Log (Report)",
+     "box": [
+      56.8,
+      456.9,
+      309.0,
+      510.9
+     ]
+    },
+    {
+     "row": 8,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "AED 100,000 ***",
+     "box": [
+      309.0,
+      456.9,
+      538.5,
+      483.9
+     ]
+    },
+    {
+     "row": 9,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "AED 200,000 ****",
+     "box": [
+      309.0,
+      483.9,
+      538.5,
+      510.9
+     ]
+    },
+    {
+     "row": 10,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Quarterly Share Book Daily Trade Log (Report)",
+     "box": [
+      56.8,
+      510.9,
+      309.0,
+      553.5
+     ]
+    },
+    {
+     "row": 10,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "AED 50,000",
+     "box": [
+      309.0,
+      510.9,
+      538.5,
+      553.5
+     ]
+    },
+    {
+     "row": 11,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Monthly Share Book Weekly Trade Log (Report)",
+     "box": [
+      56.8,
+      553.5,
+      309.0,
+      596.1
+     ]
+    },
+    {
+     "row": 11,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "AED 20,000",
+     "box": [
+      309.0,
+      553.5,
+      538.5,
+      596.1
+     ]
+    },
+    {
+     "row": 12,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Quarterly Share Book Weekly Trade Log (Report)",
+     "box": [
+      56.8,
+      596.1,
+      309.0,
+      638.8
+     ]
+    },
+    {
+     "row": 12,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "AED 15,000",
+     "box": [
+      309.0,
+      596.1,
+      538.5,
+      638.8
+     ]
+    }
+   ]
+  },
+  {
+   "page": 10,
+   "bbox": [
+    56.8,
+    56.8,
+    538.5,
+    722.3
+   ],
+   "header_rows": 1,
+   "stub_cols": 1,
+   "cells": [
+    {
+     "row": 0,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Type of Service",
+     "box": [
+      56.8,
+      56.8,
+      367.2,
+      86.9
+     ]
+    },
+    {
+     "row": 0,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "Fee (AED)",
+     "box": [
+      367.2,
+      56.8,
+      538.5,
+      86.9
+     ]
+    },
+    {
+     "row": 1,
+     "col": 0,
+     "rows": 1,
+     "cols": 2,
+     "text": "Access for Equator:",
+     "box": [
+      56.8,
+      86.9,
+      538.5,
+      106.8
+     ]
+    },
+    {
+     "row": 2,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Up to 6 users",
+     "box": [
+      56.8,
+      106.8,
+      367.2,
+      133.8
+     ]
+    },
+    {
+     "row": 2,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "Free",
+     "box": [
+      367.2,
+      106.8,
+      538.5,
+      133.8
+     ]
+    },
+    {
+     "row": 3,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "7 to 12 users",
+     "box": [
+      56.8,
+      133.8,
+      367.2,
+      160.8
+     ]
+    },
+    {
+     "row": 3,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "20,000 / Year",
+     "box": [
+      367.2,
+      133.8,
+      538.5,
+      160.8
+     ]
+    },
+    {
+     "row": 4,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "13 & up",
+     "box": [
+      56.8,
+      160.8,
+      367.2,
+      187.8
+     ]
+    },
+    {
+     "row": 4,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "40,000 / Year",
+     "box": [
+      367.2,
+      160.8,
+      538.5,
+      187.8
+     ]
+    },
+    {
+     "row": 5,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Clients\u2019 positions report",
+     "box": [
+      56.8,
+      187.8,
+      367.2,
+      354.9
+     ]
+    },
+    {
+     "row": 5,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "AED 0.3 / shareholder as a soft copy with a minimum of AED 500 and a maximum of AED 5,000 And / Or AED 0.5 / shareholder with a minimum of AED 1,000 and a maximum of AED 10,000 if a hard copy is requested",
+     "box": [
+      367.2,
+      187.8,
+      538.5,
+      354.9
+     ]
+    },
+    {
+     "row": 6,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Other Reports (Hard Copy)",
+     "box": [
+      56.8,
+      354.9,
+      367.2,
+      438.7
+     ]
+    },
+    {
+     "row": 6,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "AED 200 for the first 20 pages, AED 20 each additional page. With maximum of AED 5,000",
+     "box": [
+      367.2,
+      354.9,
+      538.5,
+      438.7
+     ]
+    },
+    {
+     "row": 7,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Other Reports (Soft Copy)",
+     "box": [
+      56.8,
+      438.7,
+      367.2,
+      508.2
+     ]
+    },
+    {
+     "row": 7,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "AED 0.5 / record as a soft copy with a minimum of AED 300 and a maximum of AED 15,000",
+     "box": [
+      367.2,
+      438.7,
+      538.5,
+      508.2
+     ]
+    },
+    {
+     "row": 8,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "\u2022 Ownership letter \u2022 To whom it may concern letter \u2022 Audit confirmation letter",
+     "box": [
+      56.8,
+      508.2,
+      367.2,
+      566.4
+     ]
+    },
+    {
+     "row": 8,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "AED 100",
+     "box": [
+      367.2,
+      508.2,
+      538.5,
+      566.4
+     ]
+    },
+    {
+     "row": 9,
+     "col": 0,
+     "rows": 1,
+     "cols": 2,
+     "text": "Printing Investors Reports",
+     "box": [
+      56.8,
+      566.4,
+      538.5,
+      587.7
+     ]
+    },
+    {
+     "row": 10,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Report with different specifications (Soft Copy)",
+     "box": [
+      56.8,
+      587.7,
+      367.2,
+      642.8
+     ]
+    },
+    {
+     "row": 10,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "0.5 for each line, minimum of AED 400, Maximum of AED 15,000",
+     "box": [
+      367.2,
+      587.7,
+      538.5,
+      642.8
+     ]
+    },
+    {
+     "row": 11,
+     "col": 0,
+     "rows": 1,
+     "cols": 2,
+     "text": "Transfer of securities from margin account between broker",
+     "box": [
+      56.8,
+      642.8,
+      538.5,
+      664.1
+     ]
+    },
+    {
+     "row": 12,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Transfer of securities from the margin trading account with a Brokerage Firm to his margin trading account with another Brokerage Firm",
+     "box": [
+      56.8,
+      664.1,
+      367.2,
+      722.3
+     ]
+    },
+    {
+     "row": 12,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "25 dirhams for each security.",
+     "box": [
+      367.2,
+      664.1,
+      538.5,
+      722.3
+     ]
+    }
+   ]
+  }
+ ],
+ "drafted": {
+  "by": "claude",
+  "date": "2026-10-01",
+  "grids": "grids/adx-csd.json"
+ },
+ "verified": null
+}

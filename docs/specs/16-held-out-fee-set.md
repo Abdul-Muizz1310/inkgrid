@@ -72,9 +72,15 @@ document, as a user would; only its tables on scored pages are scored.
 
 ## 3 · Drafting (Claude, never inkgrid)
 
-- Each scored page is rendered at 150 DPI with a ruler in points; Claude reads the rendering and
-  states each table's grid as its row and column boundaries in points, its spans, its header rows, and
-  its stub columns.
+- Each scored page is rendered with a ruler in points; Claude reads the rendering, with the page's
+  drawn rules and word positions as PyMuPDF reports them, and states each table's grid as its row and
+  column boundaries in points, its merges, its header rows, and its stub columns
+  (`bench/heldout/grids/<id>.json`, committed, so the ground truth can be rebuilt from it).
+- Conventions the drafts follow, each for the user to confirm: a cell's extent follows the drawn
+  rules, except that one phrase broken across a rule is one cell; a group label with no values of its
+  own spans its row; a table of contents, a navigation sidebar, a list of `label: value` lines, and a
+  frame around tables (spec 14 § 4.2) are not tables; a header continuing onto the next page with no
+  body row on this one is not a table; printed text struck through is still the cell's text.
 - A cell's text is the PDF's words (PyMuPDF `get_text("words")`) whose centres lie in the cell's box,
   in reading order, joined by one space. **inkgrid's reading is never consulted**; the drafter does not
   run inkgrid, or any benchmarked tool, on a held-out document before § 6's run.
@@ -98,8 +104,9 @@ document, as a user would; only its tables on scored pages are scored.
 - **Cell CER** of a tool: for each sampled cell with truth `g`, the tool's table on that page matched
   to the cell's ground-truth table (binding's region match), and `d` the least Levenshtein distance
   between `g` and any of that table's cell texts (any table on the page when none matches; `len(g)`
-  when the tool has no table there), capped at `len(g)`. Texts compare after NFKC and collapsing
-  whitespace runs to one space; case and punctuation count. CER is `Σ d / Σ len(g)`, pooled, with the
+  when the tool has no table there), capped at `len(g)`. Texts compare after NFKC with all whitespace
+  removed (CER counts glyphs, and the text layer glues a raised footnote number to its word, as in
+  `Removing10`, which a tool may write `Removing 10`); case and punctuation count. CER is `Σ d / Σ len(g)`, pooled, with the
   clustered bootstrap over documents.
 
 ## 6 · Scoring and the run
@@ -126,13 +133,14 @@ document, as a user would; only its tables on scored pages are scored.
 | GT2 | a table with 2 header rows (a spanning group label), 1 stub column | access paths with column labels outer then leaf, row labels; an empty header cell skipped |
 | GT3 | a value with no label; a table of headers only | no path; no path |
 | GS1 | 3 documents' cells, sample of 200 | every non-empty cell when fewer; the same sample twice |
-| CE1 | truth `0.10%`, tool cells `0.1O%`, `0.10 %`, `fee` | distance 1 (the closest); whitespace collapsed |
+| CE1 | truth `0.10%`, tool cells `0.1O%`, `0.10 %`, `fee` | distance 0 (`0.10 %`, whitespace removed); without it, 1 (`0.1O%`) |
 | CE2 | a tool with no table on the page; a tool cell much longer than the truth | `len(g)`; capped at `len(g)` |
 | RN1 | `--datasets heldout` with `src/` changed since the tuned run | refused, naming the commit |
 | RN2 | `--datasets heldout` | only held-out readings; results under `<date>-<commit>-heldout/`; the report's title says held out |
 | DR1 | words and a drafted grid | each word in the cell holding its centre, in reading order |
 | DR2 | a stated grid with a merge running past the grid, or two merges overlapping | refused |
 | DR3 | the ruler, overlay, and crop renderings of a fixture page | images of the page's size at their DPI; a crop of the box's |
+| DR4 | a grid file with a text correction, and the page words | a ground-truth file that loads, the correction applied, `verified` null; its text the same when rebuilt |
 
 ## 8 · Acceptance
 

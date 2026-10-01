@@ -1,0 +1,1576 @@
+{
+ "id": "bist-data",
+ "pages": [
+  4,
+  5,
+  8
+ ],
+ "tables": [
+  {
+   "page": 4,
+   "bbox": [
+    54.0,
+    76.0,
+    545.0,
+    253.0
+   ],
+   "header_rows": 0,
+   "stub_cols": 1,
+   "cells": [
+    {
+     "row": 0,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "GKULEND \u2013 Borsa \u0130stanbul Indices",
+     "box": [
+      54.0,
+      76.0,
+      440.0,
+      95.3
+     ]
+    },
+    {
+     "row": 0,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "925 TL / 325 USD",
+     "box": [
+      440.0,
+      76.0,
+      545.0,
+      95.3
+     ]
+    },
+    {
+     "row": 1,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "GKULKYD \u2013 BIST-KYD Indices",
+     "box": [
+      54.0,
+      95.3,
+      440.0,
+      115.1
+     ]
+    },
+    {
+     "row": 1,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "375 TL / 140 USD",
+     "box": [
+      440.0,
+      95.3,
+      545.0,
+      115.1
+     ]
+    },
+    {
+     "row": 2,
+     "col": 0,
+     "rows": 1,
+     "cols": 2,
+     "text": "GTUYE-Non Display Usage, Derived Data\u2013Other (Borsa \u0130stanbul Members)",
+     "box": [
+      54.0,
+      115.1,
+      545.0,
+      134.9
+     ]
+    },
+    {
+     "row": 3,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "GUYED2 - Level 2/2+ (Per Market)",
+     "box": [
+      54.0,
+      134.9,
+      440.0,
+      154.7
+     ]
+    },
+    {
+     "row": 3,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "1,300 TL / (N/A)",
+     "box": [
+      440.0,
+      134.9,
+      545.0,
+      154.7
+     ]
+    },
+    {
+     "row": 4,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "GUYED1P - Level 1/1+ (Per Market)",
+     "box": [
+      54.0,
+      154.7,
+      440.0,
+      174.5
+     ]
+    },
+    {
+     "row": 4,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "650TL / (N/A)",
+     "box": [
+      440.0,
+      154.7,
+      545.0,
+      174.5
+     ]
+    },
+    {
+     "row": 5,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "GUYEPVA \u2013 Equity Market Data Analytics",
+     "box": [
+      54.0,
+      174.5,
+      440.0,
+      194.3
+     ]
+    },
+    {
+     "row": 5,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "1,650 TL / (N/A)",
+     "box": [
+      440.0,
+      174.5,
+      545.0,
+      194.3
+     ]
+    },
+    {
+     "row": 6,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "GUYEPITE - Equity Market Broker ID Real-time",
+     "box": [
+      54.0,
+      194.3,
+      440.0,
+      214.1
+     ]
+    },
+    {
+     "row": 6,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "1,650 TL / (N/A)",
+     "box": [
+      440.0,
+      194.3,
+      545.0,
+      214.1
+     ]
+    },
+    {
+     "row": 7,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "GUYEEND \u2013 Borsa \u0130stanbul Indices",
+     "box": [
+      54.0,
+      214.1,
+      440.0,
+      234.0
+     ]
+    },
+    {
+     "row": 7,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "575 TL / (N/A)",
+     "box": [
+      440.0,
+      214.1,
+      545.0,
+      234.0
+     ]
+    },
+    {
+     "row": 8,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "GUYEKYD \u2013 BIST-KYD Indices",
+     "box": [
+      54.0,
+      234.0,
+      440.0,
+      253.0
+     ]
+    },
+    {
+     "row": 8,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "250 TL / (N/A)",
+     "box": [
+      440.0,
+      234.0,
+      545.0,
+      253.0
+     ]
+    }
+   ]
+  },
+  {
+   "page": 4,
+   "bbox": [
+    65.0,
+    430.0,
+    554.0,
+    470.7
+   ],
+   "header_rows": 1,
+   "stub_cols": 1,
+   "cells": [
+    {
+     "row": 0,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Monthly Distribution Fees (TL)",
+     "box": [
+      65.0,
+      430.0,
+      450.0,
+      445.6
+     ]
+    },
+    {
+     "row": 0,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "",
+     "box": [
+      450.0,
+      430.0,
+      554.0,
+      445.6
+     ]
+    },
+    {
+     "row": 1,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Indices Owned by Other Companies",
+     "box": [
+      65.0,
+      445.6,
+      450.0,
+      470.7
+     ]
+    },
+    {
+     "row": 1,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "Free of Charge",
+     "box": [
+      450.0,
+      445.6,
+      554.0,
+      470.7
+     ]
+    }
+   ]
+  },
+  {
+   "page": 4,
+   "bbox": [
+    71.0,
+    532.0,
+    540.0,
+    642.0
+   ],
+   "header_rows": 1,
+   "stub_cols": 1,
+   "cells": [
+    {
+     "row": 0,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "",
+     "box": [
+      71.0,
+      532.0,
+      300.0,
+      552.1
+     ]
+    },
+    {
+     "row": 0,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "Real-time",
+     "box": [
+      300.0,
+      532.0,
+      360.0,
+      552.1
+     ]
+    },
+    {
+     "row": 0,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "Delayed",
+     "box": [
+      360.0,
+      532.0,
+      440.0,
+      552.1
+     ]
+    },
+    {
+     "row": 0,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "End of Day",
+     "box": [
+      440.0,
+      532.0,
+      540.0,
+      552.1
+     ]
+    },
+    {
+     "row": 1,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "SASE Indices",
+     "box": [
+      71.0,
+      552.1,
+      300.0,
+      568.9
+     ]
+    },
+    {
+     "row": 1,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "60",
+     "box": [
+      300.0,
+      552.1,
+      360.0,
+      568.9
+     ]
+    },
+    {
+     "row": 1,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "40",
+     "box": [
+      360.0,
+      552.1,
+      440.0,
+      568.9
+     ]
+    },
+    {
+     "row": 1,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "25",
+     "box": [
+      440.0,
+      552.1,
+      540.0,
+      568.9
+     ]
+    },
+    {
+     "row": 2,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "SASE Level 1",
+     "box": [
+      71.0,
+      568.9,
+      300.0,
+      587.5
+     ]
+    },
+    {
+     "row": 2,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "250",
+     "box": [
+      300.0,
+      568.9,
+      360.0,
+      587.5
+     ]
+    },
+    {
+     "row": 2,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "150",
+     "box": [
+      360.0,
+      568.9,
+      440.0,
+      587.5
+     ]
+    },
+    {
+     "row": 2,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "100",
+     "box": [
+      440.0,
+      568.9,
+      540.0,
+      587.5
+     ]
+    },
+    {
+     "row": 3,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "SASE Level 2",
+     "box": [
+      71.0,
+      587.5,
+      300.0,
+      606.1
+     ]
+    },
+    {
+     "row": 3,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "400",
+     "box": [
+      300.0,
+      587.5,
+      360.0,
+      606.1
+     ]
+    },
+    {
+     "row": 3,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "N/A",
+     "box": [
+      360.0,
+      587.5,
+      440.0,
+      606.1
+     ]
+    },
+    {
+     "row": 3,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "N/A",
+     "box": [
+      440.0,
+      587.5,
+      540.0,
+      606.1
+     ]
+    },
+    {
+     "row": 4,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "SASE PDP Data",
+     "box": [
+      71.0,
+      606.1,
+      300.0,
+      624.8
+     ]
+    },
+    {
+     "row": 4,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "100",
+     "box": [
+      300.0,
+      606.1,
+      360.0,
+      624.8
+     ]
+    },
+    {
+     "row": 4,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "N/A",
+     "box": [
+      360.0,
+      606.1,
+      440.0,
+      624.8
+     ]
+    },
+    {
+     "row": 4,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "50",
+     "box": [
+      440.0,
+      606.1,
+      540.0,
+      624.8
+     ]
+    },
+    {
+     "row": 5,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "SASE Non-Display Usage, Derived Data",
+     "box": [
+      71.0,
+      624.8,
+      300.0,
+      642.0
+     ]
+    },
+    {
+     "row": 5,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "100",
+     "box": [
+      300.0,
+      624.8,
+      360.0,
+      642.0
+     ]
+    },
+    {
+     "row": 5,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "Free of Charge",
+     "box": [
+      360.0,
+      624.8,
+      440.0,
+      642.0
+     ]
+    },
+    {
+     "row": 5,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "Free of Charge",
+     "box": [
+      440.0,
+      624.8,
+      540.0,
+      642.0
+     ]
+    }
+   ]
+  },
+  {
+   "page": 4,
+   "bbox": [
+    71.0,
+    664.0,
+    540.0,
+    739.0
+   ],
+   "header_rows": 1,
+   "stub_cols": 1,
+   "cells": [
+    {
+     "row": 0,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Reference Data",
+     "box": [
+      71.0,
+      664.0,
+      505.0,
+      683.0
+     ]
+    },
+    {
+     "row": 0,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "",
+     "box": [
+      505.0,
+      664.0,
+      540.0,
+      683.0
+     ]
+    },
+    {
+     "row": 1,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Index Constituents Data",
+     "box": [
+      71.0,
+      683.0,
+      505.0,
+      701.5
+     ]
+    },
+    {
+     "row": 1,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "100",
+     "box": [
+      505.0,
+      683.0,
+      540.0,
+      701.5
+     ]
+    },
+    {
+     "row": 2,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Descriptive Data",
+     "box": [
+      71.0,
+      701.5,
+      505.0,
+      720.2
+     ]
+    },
+    {
+     "row": 2,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "100",
+     "box": [
+      505.0,
+      701.5,
+      540.0,
+      720.2
+     ]
+    },
+    {
+     "row": 3,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Corporate Action Data",
+     "box": [
+      71.0,
+      720.2,
+      505.0,
+      739.0
+     ]
+    },
+    {
+     "row": 3,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "100",
+     "box": [
+      505.0,
+      720.2,
+      540.0,
+      739.0
+     ]
+    }
+   ]
+  },
+  {
+   "page": 5,
+   "bbox": [
+    65.0,
+    106.0,
+    535.0,
+    165.0
+   ],
+   "header_rows": 1,
+   "stub_cols": 1,
+   "cells": [
+    {
+     "row": 0,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Reporting Code-Real time Data",
+     "box": [
+      65.0,
+      106.0,
+      480.0,
+      129.4
+     ]
+    },
+    {
+     "row": 0,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "EURO",
+     "box": [
+      480.0,
+      106.0,
+      535.0,
+      129.4
+     ]
+    },
+    {
+     "row": 1,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "SASED1-SASE Level 1",
+     "box": [
+      65.0,
+      129.4,
+      480.0,
+      146.5
+     ]
+    },
+    {
+     "row": 1,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "5",
+     "box": [
+      480.0,
+      129.4,
+      535.0,
+      146.5
+     ]
+    },
+    {
+     "row": 2,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "SASED2-SASE Level 2",
+     "box": [
+      65.0,
+      146.5,
+      480.0,
+      165.0
+     ]
+    },
+    {
+     "row": 2,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "10",
+     "box": [
+      480.0,
+      146.5,
+      535.0,
+      165.0
+     ]
+    }
+   ]
+  },
+  {
+   "page": 5,
+   "bbox": [
+    65.0,
+    201.0,
+    535.0,
+    278.0
+   ],
+   "header_rows": 1,
+   "stub_cols": 1,
+   "cells": [
+    {
+     "row": 0,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Web Site",
+     "box": [
+      65.0,
+      201.0,
+      300.0,
+      223.7
+     ]
+    },
+    {
+     "row": 0,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "Real-time",
+     "box": [
+      300.0,
+      201.0,
+      360.0,
+      223.7
+     ]
+    },
+    {
+     "row": 0,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "Delayed",
+     "box": [
+      360.0,
+      201.0,
+      440.0,
+      223.7
+     ]
+    },
+    {
+     "row": 0,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "End of Day",
+     "box": [
+      440.0,
+      201.0,
+      535.0,
+      223.7
+     ]
+    },
+    {
+     "row": 1,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "SASE Indices",
+     "box": [
+      65.0,
+      223.7,
+      300.0,
+      241.0
+     ]
+    },
+    {
+     "row": 1,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "60",
+     "box": [
+      300.0,
+      223.7,
+      360.0,
+      241.0
+     ]
+    },
+    {
+     "row": 1,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "40",
+     "box": [
+      360.0,
+      223.7,
+      440.0,
+      241.0
+     ]
+    },
+    {
+     "row": 1,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "Free of Charge",
+     "box": [
+      440.0,
+      223.7,
+      535.0,
+      241.0
+     ]
+    },
+    {
+     "row": 2,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "SASE Level 1",
+     "box": [
+      65.0,
+      241.0,
+      300.0,
+      259.5
+     ]
+    },
+    {
+     "row": 2,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "N/A",
+     "box": [
+      300.0,
+      241.0,
+      360.0,
+      259.5
+     ]
+    },
+    {
+     "row": 2,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "150",
+     "box": [
+      360.0,
+      241.0,
+      440.0,
+      259.5
+     ]
+    },
+    {
+     "row": 2,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "Free of Charge",
+     "box": [
+      440.0,
+      241.0,
+      535.0,
+      259.5
+     ]
+    },
+    {
+     "row": 3,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "SASE PDP Data",
+     "box": [
+      65.0,
+      259.5,
+      300.0,
+      278.0
+     ]
+    },
+    {
+     "row": 3,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "100",
+     "box": [
+      300.0,
+      259.5,
+      360.0,
+      278.0
+     ]
+    },
+    {
+     "row": 3,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "N/A",
+     "box": [
+      360.0,
+      259.5,
+      440.0,
+      278.0
+     ]
+    },
+    {
+     "row": 3,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "50",
+     "box": [
+      440.0,
+      259.5,
+      535.0,
+      278.0
+     ]
+    }
+   ]
+  },
+  {
+   "page": 5,
+   "bbox": [
+    65.0,
+    282.0,
+    535.0,
+    377.0
+   ],
+   "header_rows": 1,
+   "stub_cols": 1,
+   "cells": [
+    {
+     "row": 0,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "TV Channel",
+     "box": [
+      65.0,
+      282.0,
+      300.0,
+      305.0
+     ]
+    },
+    {
+     "row": 0,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "Real-time",
+     "box": [
+      300.0,
+      282.0,
+      360.0,
+      305.0
+     ]
+    },
+    {
+     "row": 0,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "Delayed",
+     "box": [
+      360.0,
+      282.0,
+      440.0,
+      305.0
+     ]
+    },
+    {
+     "row": 0,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "End of Day",
+     "box": [
+      440.0,
+      282.0,
+      535.0,
+      305.0
+     ]
+    },
+    {
+     "row": 1,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "SASE Indices",
+     "box": [
+      65.0,
+      305.0,
+      300.0,
+      322.0
+     ]
+    },
+    {
+     "row": 1,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "60",
+     "box": [
+      300.0,
+      305.0,
+      360.0,
+      322.0
+     ]
+    },
+    {
+     "row": 1,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "40",
+     "box": [
+      360.0,
+      305.0,
+      440.0,
+      322.0
+     ]
+    },
+    {
+     "row": 1,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "Free of Charge",
+     "box": [
+      440.0,
+      305.0,
+      535.0,
+      322.0
+     ]
+    },
+    {
+     "row": 2,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "SASE Limited Level 1",
+     "box": [
+      65.0,
+      322.0,
+      300.0,
+      340.5
+     ]
+    },
+    {
+     "row": 2,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "300",
+     "box": [
+      300.0,
+      322.0,
+      360.0,
+      340.5
+     ]
+    },
+    {
+     "row": 2,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "N/A",
+     "box": [
+      360.0,
+      322.0,
+      440.0,
+      340.5
+     ]
+    },
+    {
+     "row": 2,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "N/A",
+     "box": [
+      440.0,
+      322.0,
+      535.0,
+      340.5
+     ]
+    },
+    {
+     "row": 3,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "SASE Level 1",
+     "box": [
+      65.0,
+      340.5,
+      300.0,
+      359.0
+     ]
+    },
+    {
+     "row": 3,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "N/A",
+     "box": [
+      300.0,
+      340.5,
+      360.0,
+      359.0
+     ]
+    },
+    {
+     "row": 3,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "Free of Charge",
+     "box": [
+      360.0,
+      340.5,
+      440.0,
+      359.0
+     ]
+    },
+    {
+     "row": 3,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "Free of Charge",
+     "box": [
+      440.0,
+      340.5,
+      535.0,
+      359.0
+     ]
+    },
+    {
+     "row": 4,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "SASE PDP Data",
+     "box": [
+      65.0,
+      359.0,
+      300.0,
+      377.0
+     ]
+    },
+    {
+     "row": 4,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "100",
+     "box": [
+      300.0,
+      359.0,
+      360.0,
+      377.0
+     ]
+    },
+    {
+     "row": 4,
+     "col": 2,
+     "rows": 1,
+     "cols": 1,
+     "text": "N/A",
+     "box": [
+      360.0,
+      359.0,
+      440.0,
+      377.0
+     ]
+    },
+    {
+     "row": 4,
+     "col": 3,
+     "rows": 1,
+     "cols": 1,
+     "text": "50",
+     "box": [
+      440.0,
+      359.0,
+      535.0,
+      377.0
+     ]
+    }
+   ]
+  },
+  {
+   "page": 5,
+   "bbox": [
+    65.0,
+    423.3,
+    532.0,
+    490.0
+   ],
+   "header_rows": 1,
+   "stub_cols": 1,
+   "cells": [
+    {
+     "row": 0,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "a. Technical Connection Fixed Fees",
+     "box": [
+      65.0,
+      423.3,
+      400.0,
+      449.1
+     ]
+    },
+    {
+     "row": 0,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "TR Local / Overseas",
+     "box": [
+      400.0,
+      423.3,
+      532.0,
+      449.1
+     ]
+    },
+    {
+     "row": 1,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Initial Technical Connection Fee",
+     "box": [
+      65.0,
+      449.1,
+      400.0,
+      470.5
+     ]
+    },
+    {
+     "row": 1,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "5,000 TL / 875 USD",
+     "box": [
+      400.0,
+      449.1,
+      532.0,
+      470.5
+     ]
+    },
+    {
+     "row": 2,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "Annual Technical Connection Fee",
+     "box": [
+      65.0,
+      470.5,
+      400.0,
+      490.0
+     ]
+    },
+    {
+     "row": 2,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "7,000 TL /1,500 USD",
+     "box": [
+      400.0,
+      470.5,
+      532.0,
+      490.0
+     ]
+    }
+   ]
+  },
+  {
+   "page": 5,
+   "bbox": [
+    65.0,
+    501.7,
+    532.0,
+    641.0
+   ],
+   "header_rows": 1,
+   "stub_cols": 1,
+   "cells": [
+    {
+     "row": 0,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "b. MKK Monthly Distribution Fixed Fees",
+     "box": [
+      65.0,
+      501.7,
+      400.0,
+      527.5
+     ]
+    },
+    {
+     "row": 0,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "TR Local / Overseas",
+     "box": [
+      400.0,
+      501.7,
+      532.0,
+      527.5
+     ]
+    },
+    {
+     "row": 1,
+     "col": 0,
+     "rows": 1,
+     "cols": 2,
+     "text": "Real-time Data",
+     "box": [
+      65.0,
+      527.5,
+      532.0,
+      559.0
+     ]
+    },
+    {
+     "row": 2,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "PDP Data",
+     "box": [
+      65.0,
+      559.0,
+      400.0,
+      580.0
+     ]
+    },
+    {
+     "row": 2,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "1,500 TL / 375 USD",
+     "box": [
+      400.0,
+      559.0,
+      532.0,
+      580.0
+     ]
+    },
+    {
+     "row": 3,
+     "col": 0,
+     "rows": 1,
+     "cols": 2,
+     "text": "Other Data",
+     "box": [
+      65.0,
+      580.0,
+      532.0,
+      603.0
+     ]
+    },
+    {
+     "row": 4,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "MKK Data",
+     "box": [
+      65.0,
+      603.0,
+      400.0,
+      622.0
+     ]
+    },
+    {
+     "row": 4,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "8,750 TL / 1,825 USD",
+     "box": [
+      400.0,
+      603.0,
+      532.0,
+      622.0
+     ]
+    },
+    {
+     "row": 5,
+     "col": 0,
+     "rows": 1,
+     "cols": 1,
+     "text": "MKK Data (10 business days lag)",
+     "box": [
+      65.0,
+      622.0,
+      400.0,
+      641.0
+     ]
+    },
+    {
+     "row": 5,
+     "col": 1,
+     "rows": 1,
+     "cols": 1,
+     "text": "650 TL / 175 USD",
+     "box": [
+      400.0,
+      622.0,
+      532.0,
+      641.0
+     ]
+    }
+   ]
+  }
+ ],
+ "drafted": {
+  "by": "claude",
+  "date": "2026-10-01",
+  "grids": "grids/bist-data.json"
+ },
+ "verified": null
+}

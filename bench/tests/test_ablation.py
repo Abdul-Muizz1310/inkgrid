@@ -1,11 +1,10 @@
 from pathlib import Path
 
-from inkgrid_bench.ablation import ocr_tables, words_from_tsv
-
 import pdf_factory
 from inkgrid.model.geometry import Rect
 from inkgrid.read.pymupdf_reader import read_pdf
 from inkgrid_bench import pages
+from inkgrid_bench.ablation import ocr_tables, words_from_tsv
 from inkgrid_bench.adapters import inkgrid_read
 from inkgrid_bench.tables import NPage
 

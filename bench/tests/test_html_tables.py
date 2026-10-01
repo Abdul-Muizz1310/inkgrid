@@ -1,7 +1,7 @@
 from hypothesis import given
 from hypothesis import strategies as st
-from inkgrid_bench.html_tables import cells_from_html
 
+from inkgrid_bench.html_tables import cells_from_html
 from inkgrid_bench.tables import NCell, NTable
 
 

@@ -88,9 +88,13 @@ def test_TR1_the_whole_report_renders_under_its_label() -> None:
     }
     text = report.document(data, head="abc1234", date="2026-09-30", label="tuned", resamples=20)
     assert text.startswith("# inkgrid benchmark: tuned on these documents")
-    for title, groups in report.DATASETS.values():
+    for dataset, (title, groups) in report.DATASETS.items():
+        if dataset not in data["counts"]:
+            assert f"## {title} (" not in text  # a run reports the datasets it holds
+            continue
         assert f"## {title} (" in text
         assert all(f"### {name}\n" in text for name, _ in groups)
+    assert "## Held-out fee set" not in text
 
 
 def test_RP1_the_heavy_competitors_get_rows_and_paired_differences() -> None:

@@ -117,7 +117,7 @@ enable_error_code = [
 minversion = "9.0"
 strict = true
 testpaths = ["tests", "bench/tests"]
-pythonpath = ["tests/support", "bench"]
+pythonpath = ["tests/support", "bench", "bench/tests/support"]
 markers = ["slow: builds distributions or runs subprocesses; run with -m slow"]
 addopts = [
     "-ra",

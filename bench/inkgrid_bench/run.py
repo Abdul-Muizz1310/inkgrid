@@ -116,7 +116,8 @@ def _kill(proc: "subprocess.Popen[str]") -> None:
             os.killpg(proc.pid, signal.SIGKILL)  # the tool's children too (`uv run` spawns them)
 
 
-def _last_line(text: str) -> str | None:
+def last_line(text: str) -> str | None:
+    """The text's last non-blank line, stripped: a failed process's reason."""
     lines = [line.strip() for line in text.splitlines() if line.strip()]
     return lines[-1] if lines else None
 
@@ -144,7 +145,7 @@ def read_document(
         except TimeoutError as exc:
             return failed(str(exc))
         if code != 0:
-            return failed(_last_line(err) or f"exit status {code}")
+            return failed(last_line(err) or f"exit status {code}")
         return _reading(out, frames, tool=tool, version=version, sha=sha)
 
 
@@ -239,7 +240,7 @@ class _Worker:
             return f"timeout after {limit:g} s"
         code = self.proc.wait()
         self.pumps[1].join(timeout=5)
-        return _last_line("".join(self.errors)) or f"exit status {code}"
+        return last_line("".join(self.errors)) or f"exit status {code}"
 
     def close(self, *, finished: bool) -> None:
         """The process ended (a finished batch is let exit), its threads joined, its pipes shut."""
@@ -563,7 +564,7 @@ def reading_path(run: Path, tool: str, dataset: str, doc: Doc) -> Path:
     return run / "readings" / tool / dataset / f"{safe(doc.id)}.json"
 
 
-def _readings(
+def tool_readings(
     tool: Tool, cmd: Sequence[str], ver: str, todo: Sequence[Doc]
 ) -> Iterator[tuple[Doc, NDocument]]:
     """The tool's readings of the documents: a heavy tool's from one batch process (spec 15)."""
@@ -593,7 +594,7 @@ def read_all(run: Path, head: str, cfg: dict[str, Any]) -> None:
             todo = [
                 d for d in docs[dataset] if not reading_path(run, tool.name, dataset, d).exists()
             ]
-            for doc, reading in _readings(tool, cmd, ver, todo):
+            for doc, reading in tool_readings(tool, cmd, ver, todo):
                 out = reading_path(run, tool.name, dataset, doc)
                 out.parent.mkdir(parents=True, exist_ok=True)
                 out.write_text(reading.to_json(), encoding="utf-8")
@@ -617,14 +618,15 @@ def verify_all(run: Path) -> None:
             except TimeoutError as exc:
                 code, err = 1, str(exc)
             if code != 0:
-                out.write_text(json.dumps({"error": _last_line(err) or f"exit {code}"}))
+                out.write_text(json.dumps({"error": last_line(err) or f"exit {code}"}))
             log(f"verify {dataset} {doc.id}")
 
 
 # --- scores ------------------------------------------------------------------------------------
 
 
-def _load(path: Path) -> dict[str, Any]:
+def load(path: Path) -> dict[str, Any]:
+    """A JSON object from a file; anything else is refused."""
     data = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(data, dict):
         msg = f"{path} holds no JSON object"
@@ -632,18 +634,20 @@ def _load(path: Path) -> dict[str, Any]:
     return data
 
 
-def _save(path: Path, data: object) -> None:
+def save(path: Path, data: object) -> None:
+    """Data as ASCII JSON with sorted keys, its directory made."""
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(data, ensure_ascii=True, sort_keys=True), encoding="utf-8")
 
 
-def _jar(mode: str, work: Path, gt: str, result: str, pdf: str) -> str:
+def jar(mode: str, work: Path, gt: str, result: str, pdf: str) -> str:
+    """The ICDAR-2013 competition scorer's output comparing `result` with `gt`, both in `work`."""
     cmd = icdar.command(
         JAVA, CACHE / "tools", mode, gt=work / gt, result=work / result, pdf=work / pdf
     )
     code, out, err = run_process([*NICE, *cmd], timeout=SCORER_TIMEOUT, cwd=work)
     if code != 0:
-        msg = f"the jar failed on {work / result}: {_last_line(err)}"
+        msg = f"the jar failed on {work / result}: {last_line(err)}"
         raise RuntimeError(msg)
     return out
 
@@ -661,11 +665,11 @@ def score_icdar(run: Path, cfg: dict[str, Any]) -> None:
                     shutil.copy(doc.pdf.with_name(name), work / name)
             sizes_path = work / "gt-sizes.json"
             if not sizes_path.exists():
-                _save(
+                save(
                     sizes_path,
-                    icdar.gt_sizes(_jar("-str", work, names["str"], names["str"], names["pdf"])),
+                    icdar.gt_sizes(jar("-str", work, names["str"], names["str"], names["pdf"])),
                 )
-            sizes = {int(k): v for k, v in _load(sizes_path).items()}
+            sizes = {int(k): v for k, v in load(sizes_path).items()}
             for tool in tools(cfg):
                 out = work / f"{tool.name}-counts.json"
                 if dataset not in tool.datasets or out.exists():
@@ -677,12 +681,12 @@ def score_icdar(run: Path, cfg: dict[str, Any]) -> None:
                 (work / res_str).write_text(icdar_str_xml(reading, names["pdf"]), encoding="utf-8")
                 (work / res_reg).write_text(icdar_reg_xml(reading, names["pdf"]), encoding="utf-8")
                 structure = icdar.structure_counts(
-                    _jar("-str", work, names["str"], res_str, names["pdf"]), sizes
+                    jar("-str", work, names["str"], res_str, names["pdf"]), sizes
                 )
                 regions = icdar.region_counts(
-                    _jar("-reg", work, names["reg"], res_reg, names["pdf"])
+                    jar("-reg", work, names["reg"], res_reg, names["pdf"])
                 )
-                _save(out, {"str": structure, "reg": regions})
+                save(out, {"str": structure, "reg": regions})
                 log(f"icdar {dataset} {doc.id} {tool.name} {structure} {regions}")
 
 
@@ -705,7 +709,7 @@ def _soric_eval(cfg: dict[str, Any], model: str, pred_dir: Path, save_dir: Path)
     code, out, err = run_process(cmd, timeout=SCORER_TIMEOUT, cwd=SORIC_REPO)
     (save_dir / "stdout.txt").write_text(out + "\n--- stderr\n" + err, encoding="utf-8")
     if code != 0 or not result.exists():
-        msg = f"Soric et al.'s evaluator failed for {model}: {_last_line(err)}"
+        msg = f"Soric et al.'s evaluator failed for {model}: {last_line(err)}"
         raise RuntimeError(msg)
     soric.check_log(out + "\n" + err)
     return result
@@ -724,19 +728,19 @@ def score_soric(run: Path, cfg: dict[str, Any]) -> None:
             for d in docs
         }
         pred_dir = run / "soric" / tool.name
-        _save(pred_dir / f"predictions_{soric.MODEL}.json", soric.predictions(readings))
+        save(pred_dir / f"predictions_{soric.MODEL}.json", soric.predictions(readings))
         result = _soric_eval(cfg, soric.MODEL, pred_dir, pred_dir / "results")
-        _save(out, soric.result_counts(_load(result), gt))
+        save(out, soric.result_counts(load(result), gt))
         log(f"soric {tool.name}")
     for model in SORIC_MODELS:
         out = run / "soric" / f"released-{model}" / "counts.json"
         if out.exists():
             continue
         result = _soric_eval(cfg, model, SORIC_RELEASED, out.parent / "results")
-        _save(out, soric.result_counts(_load(result), gt))
-        _save(
+        save(out, soric.result_counts(load(result), gt))
+        save(
             out.parent / "released-counts.json",
-            soric.result_counts(_load(SORIC_RELEASED / f"results_{model}_final_bbox.json"), gt),
+            soric.result_counts(load(SORIC_RELEASED / f"results_{model}_final_bbox.json"), gt),
         )
         log(f"soric released {model}")
 
@@ -767,16 +771,16 @@ def score_olmocr(run: Path, cfg: dict[str, Any]) -> None:
             [*cmd, str(OLMOCR_DATA), candidate, str(driver)], timeout=SCORER_TIMEOUT
         )
         if code != 0:
-            msg = f"olmOCR's scorer failed for {tool.name}: {_last_line(err)}"
+            msg = f"olmOCR's scorer failed for {tool.name}: {last_line(err)}"
             raise RuntimeError(msg)
         cli = [*NICE, *env, "python", "-m", "olmocr.bench.benchmark", "--dir", str(OLMOCR_DATA)]
         code, stdout, err = run_process(
             [*cli, "--candidate", candidate, "--skip_baseline"], timeout=SCORER_TIMEOUT
         )
         if code != 0:
-            msg = f"olmOCR's command line failed for {tool.name}: {_last_line(err)}"
+            msg = f"olmOCR's command line failed for {tool.name}: {last_line(err)}"
             raise RuntimeError(msg)
-        result = _load(driver)
+        result = load(driver)
         if result["errors"]:
             msg = f"olmOCR's scorer met errors for {tool.name}: {result['errors'][0]}"
             raise RuntimeError(msg)
@@ -785,7 +789,7 @@ def score_olmocr(run: Path, cfg: dict[str, Any]) -> None:
         passed = int(sum(c["passed"] for c in counts.values()))
         total = int(sum(c["tests"] for c in counts.values()))
         cli_score = olmocr.cli_score(stdout, candidate, passed=passed, total=total)
-        _save(out, {"counts": counts, "errors": result["errors"], "cli_score": cli_score})
+        save(out, {"counts": counts, "errors": result["errors"], "cli_score": cli_score})
         log(f"olmocr {tool.name} {passed}/{total} (command line {cli_score}%)")
 
 
@@ -800,7 +804,7 @@ def score_binding(run: Path, cfg: dict[str, Any]) -> None:
         for tool in tools(cfg):
             reading = NDocument.from_json(reading_path(run, tool.name, "practice", doc).read_text())
             counts = binding.binding_counts(gt, paths, reading.tables)
-            _save(run / "binding" / tool.name / f"{doc.id}.json", counts)
+            save(run / "binding" / tool.name / f"{doc.id}.json", counts)
     log("binding done")
 
 
@@ -825,14 +829,14 @@ def _scores(run: Path, tool: str, dataset: str, doc: Doc) -> dict[str, float]:
     """A document's scorer counts for one tool, prefixed by scorer."""
     c: dict[str, float] = {}
     if dataset in ("competition", "practice"):
-        ic = _load(run / "icdar" / dataset / doc.id / f"{tool}-counts.json")
+        ic = load(run / "icdar" / dataset / doc.id / f"{tool}-counts.json")
         c |= _with_prefix("str", ic["str"]) | _with_prefix("reg", ic["reg"])
     if dataset == "competition":
-        c |= _with_prefix("soric", _load(run / "soric" / tool / "counts.json")[doc.id])
+        c |= _with_prefix("soric", load(run / "soric" / tool / "counts.json")[doc.id])
     if dataset == "practice":
-        c |= _with_prefix("bind", _load(run / "binding" / tool / f"{doc.id}.json"))
+        c |= _with_prefix("bind", load(run / "binding" / tool / f"{doc.id}.json"))
     if dataset == "olmocr":
-        c |= _with_prefix("olm", _load(run / "olmocr" / f"{tool}.json")["counts"][doc.id])
+        c |= _with_prefix("olm", load(run / "olmocr" / f"{tool}.json")["counts"][doc.id])
     return c
 
 
@@ -843,7 +847,7 @@ def _defects(run: Path, docs: dict[str, list[Doc]]) -> dict[str, dict[str, Any]]
         by_code: dict[str, int] = {}
         flagged = errors = 0
         for doc in ds:
-            v = _load(run / "verify" / dataset / f"{safe(doc.id)}.json")
+            v = load(run / "verify" / dataset / f"{safe(doc.id)}.json")
             if "error" in v:
                 errors += 1
                 continue
@@ -883,13 +887,13 @@ def gather(run: Path, cfg: dict[str, Any]) -> dict[str, Any]:
     }
     reproduction = {
         model: {
-            "here": _load(run / "soric" / f"released-{model}" / "counts.json"),
-            "released": _load(run / "soric" / f"released-{model}" / "released-counts.json"),
+            "here": load(run / "soric" / f"released-{model}" / "counts.json"),
+            "released": load(run / "soric" / f"released-{model}" / "released-counts.json"),
         }
         for model in SORIC_MODELS
     }
     olm_errors = {
-        tool.name: _load(run / "olmocr" / f"{tool.name}.json")["errors"]
+        tool.name: load(run / "olmocr" / f"{tool.name}.json")["errors"]
         for tool in tools(cfg)
         if "olmocr" in tool.datasets
     }
@@ -951,10 +955,10 @@ def write_results(
     suffix = "" if label == "baseline" else f"-{label}"
     target = BENCH / "results" / f"{date}-{head}{suffix}"
     target.mkdir(parents=True, exist_ok=True)
-    _save(target / "counts.json", data["counts"])
-    _save(target / "environment.json", environments(cfg))
+    save(target / "counts.json", data["counts"])
+    save(target / "environment.json", environments(cfg))
     extra = {k: v for k, v in data.items() if k != "counts"}
-    _save(target / "checks.json", extra)
+    save(target / "checks.json", extra)
     text = report.document(data, head=head, date=date, label=label)
     (target / "report.md").write_text(text, encoding="utf-8")
     (BENCH / "results" / "latest.md").write_text(
@@ -964,18 +968,40 @@ def write_results(
     log(f"report written to {target}")
 
 
+def _option(args: list[str], name: str) -> str | None:
+    """Take `name` and its value out of `args`: the value, "" if it has none, None if absent."""
+    if name not in args:
+        return None
+    at = args.index(name)
+    value = args[at + 1] if at + 1 < len(args) else ""
+    del args[at : at + 2]
+    return value
+
+
+def _heldout_stages() -> dict[str, Callable[[Path, str, dict[str, Any]], None]]:
+    from inkgrid_bench import heldout_run  # noqa: PLC0415 - heldout_run imports this module
+
+    return heldout_run.stages()
+
+
 def main(argv: Sequence[str] = sys.argv[1:]) -> int:
-    """Run the stages named, or all of them; `--label tuned` labels the run's report."""
+    """Run the stages named, or all of them; `--label tuned` labels the run's report.
+
+    `--datasets heldout` runs the held-out fee set's stages instead of spec 12's (spec 16 s. 6).
+    """
     wanted = list(argv)
-    label: report.RunLabel | None = "baseline"
-    if "--label" in wanted:
-        at = wanted.index("--label")
-        label = report.LABELS.get(wanted[at + 1]) if at + 1 < len(wanted) else None
-        del wanted[at : at + 2]
+    given = _option(wanted, "--label")
+    label = report.LABELS.get("baseline" if given is None else given)
     if label is None:
         sys.stderr.write(f"--label takes one of: {', '.join(report.LABELS)}\n")
         return 2
-    stages = _stages(label)
+    datasets = _option(wanted, "--datasets")
+    if datasets not in {None, "heldout"}:
+        sys.stderr.write(
+            "--datasets takes: heldout; without it, the run reads spec 12's datasets\n"
+        )
+        return 2
+    stages = _stages(label) if datasets is None else _heldout_stages()
     wanted = wanted or ["all"]
     if wanted == ["all"]:
         wanted = list(stages)

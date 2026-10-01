@@ -117,6 +117,8 @@ document, as a user would; only its tables on scored pages are scored.
 - **Tools:** every tool of specs 12 and 15 (the ground truth read as a tool is a check, as on ICDAR).
 - **Frozen reading:** the run refuses to start unless `src/inkgrid` is identical to the tuned run's
   commit (`7f70dd6`), so the held-out numbers are the reading the tuned run measured.
+- The confirmed glyph sample is `bench/heldout/glyphs.json`, exported from the review once it is
+  done: each sampled cell's document, table, cell, and confirmed text.
 - `run.py --datasets heldout` reads only the held-out documents and writes
   `bench/results/<date>-<commit>-heldout/`, whose report says in its title and first paragraph that no
   fix has seen these documents and that 11 documents give wide intervals.
@@ -135,8 +137,10 @@ document, as a user would; only its tables on scored pages are scored.
 | GS1 | 3 documents' cells, sample of 200 | every non-empty cell when fewer; the same sample twice |
 | CE1 | truth `0.10%`, tool cells `0.1O%`, `0.10 %`, `fee` | distance 0 (`0.10 %`, whitespace removed); without it, 1 (`0.1O%`) |
 | CE2 | a tool with no table on the page; a tool cell much longer than the truth | `len(g)`; capped at `len(g)` |
-| RN1 | `--datasets heldout` with `src/` changed since the tuned run | refused, naming the commit |
-| RN2 | `--datasets heldout` | only held-out readings; results under `<date>-<commit>-heldout/`; the report's title says held out |
+| RN1 | the held-out run with `src/` changed since the tuned run; with an unverified ground truth; with no confirmed glyph sample | each refused, naming the reason |
+| RN2 | `run.py --datasets heldout` | the held-out pipeline's stages, not spec 12's; results under `<date>-<commit>-heldout/` |
+| SC1 | a ground truth and a tool's tables, one of them on an unscored page | binding and CER counts from the scored page's table only |
+| RP3 | a report of held-out counts | its title and first paragraph say held out; structure, regions, binding, CER, and speed; no Soric, olmOCR, or reproduction section |
 | DR1 | words and a drafted grid | each word in the cell holding its centre, in reading order |
 | DR2 | a stated grid with a merge running past the grid, or two merges overlapping | refused |
 | DR3 | the ruler, overlay, and crop renderings of a fixture page | images of the page's size at their DPI; a crop of the box's |

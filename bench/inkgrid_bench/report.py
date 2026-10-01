@@ -61,6 +61,7 @@ OLMOCR = (
     MetricSpec("olm_neighbour", "Neighbour tests", pooled("olm_neighbour_passed", "olm_neighbour")),
 )
 SPEED = (MetricSpec("seconds_per_page", "Seconds per page", pooled("seconds", "pages")),)
+CER = (MetricSpec("cer", "Cell CER (lower is better)", pooled("cer_errors", "cer_chars")),)
 
 
 @dataclass(frozen=True, slots=True)
@@ -197,7 +198,18 @@ DATASETS: dict[str, tuple[str, tuple[tuple[str, tuple[MetricSpec, ...]], ...]]] 
         "olmOCR-bench tables, PDFs with a text layer",
         (("Table tests", OLMOCR),),
     ),
+    "heldout": (
+        "Held-out fee set",
+        (
+            ("Structure (the competition's DAR)", STRUCTURE),
+            ("Regions", REGIONS),
+            ("Binding (the access paths)", BINDING),
+            ("Cell character error rate", CER),
+            ("Speed", SPEED),
+        ),
+    ),
 }
+"""Every dataset a report knows, in its section order; a run reports those it holds."""
 SORIC_KEYS = (
     ("tp", "F1-bbox"),
     ("top", "F1-GriTS-Top"),
@@ -236,8 +248,9 @@ def reproduction_table(reproduction: Mapping[str, Mapping[str, Mapping[str, Coun
     return "\n".join(lines) + "\n"
 
 
-type RunLabel = Literal["baseline", "tuned"]
+type RunLabel = Literal["baseline", "tuned", "heldout"]
 LABELS: dict[str, RunLabel] = {"baseline": "baseline", "tuned": "tuned"}
+"""The labels `--label` takes; a held-out run is `--datasets heldout`'s (spec 16 section 6)."""
 
 
 def _reading_modes(tools: Sequence[str]) -> str:
@@ -260,7 +273,9 @@ def _reading_modes(tools: Sequence[str]) -> str:
     return "".join(parts)
 
 
-def heading(label: RunLabel, *, head: str, date: str, tools: Sequence[str] = ()) -> list[str]:
+def heading(
+    label: RunLabel, *, head: str, date: str, tools: Sequence[str] = (), documents: int = 0
+) -> list[str]:
     """The report's title and first paragraph: was inkgrid tuned, and what each tool read."""
     measured = (
         f"Measured on {date} at commit `{head}` by `bench/inkgrid_bench/run.py`, under the "
@@ -290,6 +305,22 @@ def heading(label: RunLabel, *, head: str, date: str, tools: Sequence[str] = ())
                     f"again, at their pinned versions.{modes}\n"
                 ),
             ]
+        case "heldout":
+            return [
+                "# inkgrid benchmark: the held-out fee set (M5d)\n",
+                (
+                    f"Measured on {date} at commit `{head}` by `bench/inkgrid_bench/run.py "
+                    "--datasets heldout`, under the pre-registered protocol of "
+                    "`docs/specs/16-held-out-fee-set.md`. **These documents are held out**: "
+                    "exchange fee schedules chosen by a fixed rule after M5c's fixes were frozen, "
+                    "read by inkgrid as the tuned run read (`src/inkgrid` as at `7f70dd6`), so its "
+                    "numbers are its reading of documents no fix has seen. Each table's ground "
+                    "truth was drafted from the page's rendering, never from inkgrid's reading, "
+                    "and verified by hand; the cell character error rate is over glyph-verified "
+                    "cells. "
+                    f"{documents} documents give wide intervals.{modes}\n"
+                ),
+            ]
         case _:
             assert_never(label)
 
@@ -305,16 +336,19 @@ def document(
     """The whole report: every dataset's tables, the checks, crashes, and inkgrid's defects."""
     counts = data["counts"]
     held = [t for t in TOOLS if any(t in by_tool for by_tool in counts.values())]
+    documents = len(next(iter(counts.get("heldout", {}).values()), {}))
     parts = [
-        *heading(label, head=head, date=date, tools=held),
+        *heading(label, head=head, date=date, tools=held, documents=documents),
         (
             "Each cell is the point estimate and its 95% interval from 10,000 resamples of "
             "documents (seed 20260928). A difference marked `*` has an interval that excludes 0; "
-            "only those are findings. `ground-truth` is the ICDAR ground truth read as a tool: a "
-            "check on the pipeline and on each metric's ceiling, not a competitor.\n"
+            "only those are findings. `ground-truth` is the dataset's ground truth read as a tool: "
+            "a check on the pipeline and on each metric's ceiling, not a competitor.\n"
         ),
     ]
     for dataset, (title, groups) in DATASETS.items():
+        if dataset not in counts:
+            continue
         scored_tools = {t: counts[dataset][t] for t in held if t in counts[dataset]}
         n = len(next(iter(scored_tools.values())))
         parts.append(f"## {title} ({n} documents)\n")
@@ -330,13 +364,13 @@ def document(
                     {CHECK: counts[dataset][CHECK]}, specs, baseline=None, resamples=resamples
                 )
                 parts.append(
-                    "Check, the ICDAR ground truth read as a tool:\n\n"
-                    + markdown_table(check, specs)
+                    "Check, the ground truth read as a tool:\n\n" + markdown_table(check, specs)
                 )
-    parts += [
-        "## Soric et al.'s released predictions, re-scored here\n",
-        reproduction_table(data["reproduction"]),
-    ]
+    if "reproduction" in data:
+        parts += [
+            "## Soric et al.'s released predictions, re-scored here\n",
+            reproduction_table(data["reproduction"]),
+        ]
     parts.append("## Crashes and timeouts (each scored as no tables)\n")
     crash_rows = [_row(["Tool", "Dataset", "Documents"]), _row(["---"] * 3)]
     for tool, by_dataset in data["crashes"].items():
@@ -354,7 +388,7 @@ def document(
         unverified = f" ({d['errors']} not verified)" if d["errors"] else ""
         defect_rows.append(_row([dataset, f"{d['documents_with_defects']}{unverified}", classes]))
     parts.append("\n".join(defect_rows) + "\n")
-    errors = {t: e for t, e in data["olmocr_errors"].items() if e}
+    errors = {t: e for t, e in data.get("olmocr_errors", {}).items() if e}
     if errors:
         parts.append("## olmOCR scorer errors\n")
         parts += [f"- {t}: {len(e)} (first: {e[0]})\n" for t, e in errors.items()]

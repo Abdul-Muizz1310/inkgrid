@@ -59,6 +59,11 @@ All notable changes to this project are documented here. The format follows
   each PDF, marker on the text layer, and unstructured `hi_res` with Tesseract, each batched in its
   own pinned CPU environment; and the ablation `inkgrid-ocr`, inkgrid fed Tesseract's words, which
   measures what the text layer gives inkgrid's own gridders.
+- The held-out fee set (M5d-2): 11 exchange fee schedules no fix has seen, chosen by a rule fixed
+  before any tool read them, with ground truth drafted from each page's rendering and verified by hand,
+  table by table and over 200 cells glyph by glyph. `run.py --datasets heldout` scores every tool on
+  them, adding a cell character error rate over the checked cells; its results are the README's
+  headline.
 - `Document.to_markdown()`, the HTML inspector, and the `inkgrid read` command with `--markdown`,
   `--inspector`, and `--strict`.
 - A layer-table test on the import graph, and CI across Linux, Windows, and macOS.

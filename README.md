@@ -16,11 +16,12 @@
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue"></a>
 </p>
 
-> **Status: pre-alpha (milestone M4 of M6 complete).** Today inkgrid reads a PDF into a validated
-> `Document`: every word in exactly one block, in reading order, with running headers and footers set
-> apart, tables, ruled or not, as explicit cell grids, glossaries as definitions, and footnote calls
-> linked to their notes. Tables and sentences that run onto the next page are joined. `inkgrid.verify`
-> then grades the document against its PDF with a second engine, PDFium. The roadmap is in
+> **Status: pre-alpha (milestones M0 to M4 complete; M5, the benchmark, has its held-out results).**
+> Today inkgrid reads a PDF into a validated `Document`: every word in exactly one block, in reading
+> order, with running headers and footers set apart, tables, ruled or not, as explicit cell grids,
+> glossaries as definitions, and footnote calls linked to their notes. Tables and sentences that run
+> onto the next page are joined. `inkgrid.verify` then grades the document against its PDF with a
+> second engine, PDFium. The roadmap is in
 > [`docs/specs/00-design.md`](docs/specs/00-design.md) § 14.
 
 ## What it does
@@ -156,10 +157,13 @@ can tell. inkgrid commits to four guarantees instead:
    (`docs/specs/10-verify.md` § 0).
 4. **Never silent.** Anything degraded becomes a typed finding on the result.
 
-Whether this beats OCR and vision parsers at *table structure* is an open question, and the public
-evidence so far favors the vision hybrids. The first benchmark (below) compares inkgrid only with other
-readers of the text layer; OCR and vision parsers come next, and until they are measured this README
-claims nothing against them.
+Whether this beats OCR and vision parsers at *table structure* was an open question, and the public
+evidence favored the vision hybrids. On 11 fee schedules no fix has seen (below), no difference
+between inkgrid's table structure and Docling's, the strongest hybrid measured, is distinguishable
+from 0; inkgrid's is ahead of marker's and unstructured's, and its structure recall ahead of the other
+text-layer readers'. Docling places tables better, finds more of their values, and misreads fewer
+glyphs. inkgrid does not beat it there; what it offers instead is the four guarantees, in a 35th of
+Docling's time per page.
 
 ## Quick start
 
@@ -197,6 +201,62 @@ encrypted PDF takes `password=`. On the command line, the password is read from 
 `--password-stdin`, never from arguments, because arguments show up in the process list.
 
 ## Benchmarks / Evals
+
+**The headline: 11 fee schedules no fix has seen** (M5d). Fee schedules from 11 exchange groups that
+none of inkgrid's 42 tuning documents comes from, chosen by a rule fixed before any tool read them,
+three seeded pages each: 31 pages and 53 tables. Each table's grid was drafted from the page's
+rendering, never from any tool's reading; each cell's text is the PDF's own words; and every table,
+with 200 cells glyph by glyph, was checked by hand. inkgrid reads them as it read the tuned run below.
+Every tool reads each whole document (146 pages); only its tables on the scored pages count. Eleven
+documents give wide intervals. The protocol:
+[`docs/specs/16-held-out-fee-set.md`](docs/specs/16-held-out-fee-set.md); the full report, with every
+metric and paired difference:
+[`bench/results/2026-10-01-fb58b0a-heldout/report.md`](bench/results/2026-10-01-fb58b0a-heldout/report.md).
+
+| Tool | Structure F | Table regions F | Values bound to all labels | Values found | Cell CER (lower is better) | Seconds per page |
+|---|---|---|---|---|---|---|
+| **inkgrid** | 0.647 [0.418, 0.849] | 0.818 [0.655, 0.945] | 0.579 [0.363, 0.793] | 0.704 [0.451, 0.899] | 0.098 [0.029, 0.240] | 0.294 [0.211, 0.434] |
+| Docling | 0.708 [0.521, 0.867] | 0.895 [0.747, 1.000] † | 0.743 [0.593, 0.865] | 0.932 [0.834, 0.988] † | 0.024 [0.003, 0.055] † | 10.158 [9.054, 11.836] † |
+| Docling, image-only (OCR) | 0.707 [0.519, 0.862] | 0.862 [0.661, 1.000] | 0.772 [0.592, 0.892] | 0.923 [0.817, 0.983] † | 0.035 [0.011, 0.083] | 18.404 [12.969, 22.064] † |
+| marker | 0.234 [0.114, 0.364] † | 0.850 [0.709, 0.953] | 0.153 [0.047, 0.272] † | 0.459 [0.249, 0.647] | 0.465 [0.273, 0.618] † | 0.566 [0.489, 0.732] † |
+| unstructured `hi_res` (OCR) | 0.336 [0.206, 0.473] † | 0.905 [0.839, 0.962] | 0.082 [0.017, 0.175] † | 0.612 [0.388, 0.810] | 0.259 [0.147, 0.352] | 5.327 [4.824, 6.194] † |
+| Camelot | 0.476 [0.202, 0.725] | 0.725 [0.496, 0.900] | 0.350 [0.114, 0.627] † | 0.357 [0.115, 0.641] † | 0.308 [0.097, 0.635] † | 0.284 [0.263, 0.326] |
+| PyMuPDF | 0.490 [0.259, 0.711] | 0.776 [0.558, 0.939] | 0.320 [0.105, 0.592] † | 0.343 [0.113, 0.622] † | 0.477 [0.222, 0.703] † | 0.070 [0.058, 0.086] † |
+| pdfplumber | 0.498 [0.263, 0.711] | 0.714 [0.480, 0.900] | 0.320 [0.105, 0.592] † | 0.343 [0.113, 0.622] † | 0.520 [0.241, 0.760] † | 0.096 [0.080, 0.113] † |
+| inkgrid on Tesseract's words | 0.368 [0.218, 0.532] † | 0.809 [0.673, 0.928] | 0.136 [0.028, 0.305] † | 0.468 [0.291, 0.650] † | 0.144 [0.071, 0.265] | 1.681 [1.575, 1.912] † |
+
+A † marks a tool whose paired difference from inkgrid on that metric has an interval excluding 0.
+"Values bound to all labels" and "values found" score the truth's access paths (each value with its row
+and column labels); cell CER counts glyph errors on the 200 checked cells, each against the closest
+cell of the tool's matching table, so a missed table costs all its glyphs. Docling reads the text layer
+through its layout and table models, with OCR only where a page has none; its image-only run, and
+unstructured, read every page with OCR; marker reads with OCR off. The heavy tools' seconds are a warm
+process's on a 16-thread CPU, their models loaded.
+
+- **Against the other text-layer readers** (Camelot, PyMuPDF, pdfplumber): inkgrid files more values
+  under all their labels (0.579 against 0.320 to 0.350) and finds more of them (0.704 against 0.343 to
+  0.357), misreads fewer glyphs (0.098 against 0.308 to 0.520), and its structure recall is higher
+  (0.628 against 0.402 to 0.443). Its structure F and table regions are not distinguishable from theirs.
+- **Against Docling:** no difference in structure (F 0.647 against 0.708) or in values bound to all
+  their labels (0.579 against 0.743) is distinguishable from 0. Docling places tables better (regions F
+  0.895 against 0.818), finds more values (0.932 against 0.704), and misreads fewer glyphs (0.024
+  against 0.098), at 10.2 seconds a page to inkgrid's 0.29. On the image-only copy, Docling finds more
+  values (0.923); no other difference from inkgrid is distinguishable, at 18.4 seconds a page.
+- **Against marker and unstructured `hi_res`:** inkgrid's structure (F 0.647 against 0.234 and 0.336)
+  and values bound to all their labels (0.579 against 0.153 and 0.082) are higher, and marker misreads
+  more glyphs (0.465); no difference in table regions is distinguishable.
+- **What the text layer gives inkgrid:** fed Tesseract's words instead of the PDF's, inkgrid's
+  structure F falls from 0.647 to 0.368 and its values bound to all their labels from 0.579 to 0.136,
+  and it runs 5.7 times slower.
+- **Where inkgrid fails:** on three of the 11 documents (Borsa Istanbul's data fees, JPX's participant
+  fees, LuxSE's listing fees) it binds no value to all its labels and gets few of the tables' cell
+  relations right; they hold 283 of its 407 misread glyphs.
+- **The verifier** reports 8 cells on these documents, all on one (PSX's trading fees, pages 3 and 4),
+  each a word inkgrid's grid cuts in two. **Camelot refuses one document** whose permissions forbid
+  text extraction (SET's TFEX fees), scored as no tables; every other tool reads all 11.
+- **The truth shares the text layer:** its cell text is the characters inkgrid and the other
+  text-layer readers also read, so an OCR tool can misread a glyph where they cannot. Values found and
+  cell CER compare the two kinds of tool on those terms.
 
 **Two runs against other text-layer readers** (pdfplumber 0.11.10, PyMuPDF 1.28.2's
 `find_tables()`, and Camelot 2.0.0's lattice, each with its defaults). The **baseline** is inkgrid's
@@ -244,9 +304,9 @@ excluding 0.
   predictions, re-scored here with their evaluator, reproduce their results within 0.01 on 15 of 16
   numbers (PyMuPDF's F1-TEDS misses by 0.00002).
 
-Not measured yet: OCR, vision, and hybrid parsers (Docling, marker, unstructured, Tesseract),
-FinTabNet, and a held-out set of fee schedules that no fix has seen. Headline claims wait for that
-held-out set.
+Still running: the heavy tools (Docling, marker, unstructured, and inkgrid on Tesseract's words) on
+ICDAR-2013 and olmOCR-bench (M5d-1); the held-out set above has them all. Not measured: FinTabNet, of
+which no official source of the PDFs remains.
 
 ## Architecture
 

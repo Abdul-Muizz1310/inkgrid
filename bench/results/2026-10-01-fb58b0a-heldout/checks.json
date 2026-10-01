@@ -1,0 +1,1 @@
+{"crashes": {"camelot": {"heldout": [["tfex-usd", "playa.exceptions.PDFTextExtractionNotAllowed: Text extraction is not allowed: /tmp/camelot-4_p_b0lx.pdf"]]}}, "defects": {"heldout": {"by_code": {"text": 8}, "documents_with_defects": 1, "errors": 0}}}

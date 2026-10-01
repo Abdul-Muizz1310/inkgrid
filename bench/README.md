@@ -27,6 +27,16 @@ A run after inkgrid's fixes for errors found on these datasets is labelled `--la
 (DR-0023): its results go to `bench/results/<date>-<commit>-tuned/`, and its report says it is
 tuned on these documents in its title and first paragraph. The baseline's results stay beside it.
 
+The held-out fee set of `docs/specs/16-held-out-fee-set.md` runs on its own:
+
+```bash
+PYTHONPATH=bench uv run python -m inkgrid_bench.run all --datasets heldout
+```
+
+It refuses to start unless `src/inkgrid` is the tuned run's and every ground truth in `heldout/` is
+verified, and it writes `bench/results/<date>-<commit>-heldout/`. Its 11 documents take about two
+hours, nearly all of it the heavy tools.
+
 Everything it fetches and writes lives in `~/.cache/inkgrid-bench/`; each stage skips the documents
 an earlier run of it finished. The datasets and tools take about 0.6 GB there; uv builds each tool's
 and scorer's environment on first use (PyTorch's CPU build among them). It runs one document at a

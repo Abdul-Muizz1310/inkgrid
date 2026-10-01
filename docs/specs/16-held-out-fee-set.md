@@ -156,9 +156,10 @@ document, as a user would; only its tables on scored pages are scored.
 
 ## 8 · Acceptance
 
-- [ ] Every case above has a test named `test_<CaseId>_<slug>`, and it failed before its code.
-- [ ] Every table of the 31 scored pages is drafted and verified by the user; every ground-truth file
-      records its verification.
-- [ ] The glyph sample is confirmed by the user.
-- [ ] The held-out run completes for every tool; its results are committed; README states its numbers
-      as the headline, labelled held out, and claims only what the intervals support.
+- [x] Every case above has a test named `test_<CaseId>_<slug>`, and it failed before its code.
+- [x] Every table of the 31 scored pages is drafted and verified by the user; every ground-truth file
+      records its verification (the user's messages of 2026-10-01 and 2026-10-02, quoted).
+- [x] The glyph sample is confirmed by the user: 200 cells, none corrected.
+- [x] The held-out run completes for every tool (`bench/results/2026-10-01-fb58b0a-heldout/`; Camelot
+      refuses one document whose permissions forbid text extraction, scored as no tables); README states
+      its numbers as the headline, labelled held out, and claims only what the intervals support.

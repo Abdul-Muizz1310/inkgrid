@@ -1,0 +1,76 @@
+# The held-out fee schedules' candidates (docs/specs/16-held-out-fee-set.md section 1), fetched from
+# each exchange's own site on 2026-10-01 and pinned by SHA-256. The PDFs are never committed: the
+# benchmark fetches them into ~/.cache/inkgrid-bench/heldout/ and checks each hash.
+
+seed = "20261001"
+fetched = "2026-10-01"
+
+[candidate.adx-csd]
+group = "ADX"
+url = "https://www.adx.ae/-/media/adx/related-documents/csd-fees-list---eng.pdf"
+sha256 = "58265ca637009d57a379fd4468c98443fae5f1bca1470326934eed1ca7d218db"
+
+[candidate.asx-sso]
+group = "ASX"
+url = "https://www.asx.com.au/content/dam/asx/markets/market-resources/asx-single-stock-options-registration-fee-schedule.pdf"
+sha256 = "861e78e1bd35240f13d212d467b6f79945fca5f94d1a95786eafa5817398aeb0"
+
+[candidate.asx-trade]
+group = "ASX"
+url = "https://asxonline.com/content/dam/asxonline/public/documents/schedule-of-fees/asx-trade-markets-participant-and-trading-schedule-of-fees.pdf"
+sha256 = "9ce9a1d6c8b057cdb7aea4db3337a47e3060647b297eff3434cb777483005c6b"
+
+[candidate.b3-equities]
+group = "B3"
+url = "https://b3.com.br/data/files/CA/A5/90/23/744C89100A29E189AC094EA8/Tarifacao_Equities_V3_EN.pdf"
+sha256 = "7f4ec4dbff2aaefb8501efdacb2cd64f83a259de59ca0ad1d994bc449a7110c3"
+
+[candidate.bist-data]
+group = "Borsa Istanbul"
+url = "https://www.borsaistanbul.com/files/borsa-istanbul-data-fee-schedule.pdf"
+sha256 = "46dd9d6568f02b6de836a23dff6d987697d26550e7c7d17464a4f6fc1b670a01"
+
+[candidate.bvb-participants]
+group = "BVB"
+url = "https://m.bvb.ro/Juridic/files/EN_Jan_2021_Participant_fees_rv1.pdf"
+sha256 = "cc11f33c1e5bf18e7ce0de84937ab69df4628456085147802e29c3d612d1695b"
+
+[candidate.jpx-participant]
+group = "JPX"
+url = "https://www.jpx.co.jp/english/rules-participants/participants/fees/tvdivq000000v276-att/TradingParticipantFees_20261001_E.pdf"
+sha256 = "e01e8de776decb1b45b7d9961532ecf9aef89717165804992702b81724e338ae"
+
+[candidate.jpx-tocom]
+group = "JPX"
+url = "https://www.jpx.co.jp/english/rules-participants/participants/fees/tvdivq000000v276-att/TOCOM_TradingParticipantFees_20260413e.pdf"
+sha256 = "d303efca3596aad2ced51cd85c99491710a4ce23317f1e24fafa02f1cf27c197"
+
+[candidate.luxse-listing]
+group = "LuxSE"
+url = "https://www.luxse.com/-/media/bdl-port-luxse-ssr/Data/Media/Files/fees/LuxSE_Fees_for_Listing_Services.pdf"
+sha256 = "67ea4598323cea5d6eb95073acc3029371b4a12f9bd8a7af20a8eb9098552e53"
+
+[candidate.nzx-clearing]
+group = "NZX"
+url = "https://assets.ctfassets.net/m5mydry9e35f/2O87jjct4TtG5rr8LMH9q7/ccca30a3418999ec32e2aafb372dcf56/NZX_Clearing_Depository_Participant_Fee_Schedule_-_Effective_Jan_2026.pdf"
+sha256 = "706e9c3afafac0c1057d8de7fef02dee5e89fb30fbc7edcbbad4a48f6bc59503"
+
+[candidate.psx-trading-fee]
+group = "PSX"
+url = "https://www.psx.com.pk/psx/themes/psx/uploads/N-1026-GIS-Brokerage-Commission-and-Trading-Fee-Oc-24-2024.pdf"
+sha256 = "621fd9f9064617e7c651d5ba4e2e3b58b6f989714db52fbec9cfdcf255ed5c74"
+
+[candidate.set-tch]
+group = "SET"
+url = "https://media.set.or.th/rulebook/regulation/Fees_020114En.pdf"
+sha256 = "971938c73309ee77fccd00fdd90b4b966e50b49db16271205e9352db06d9425b"
+
+[candidate.tfex-usd]
+group = "SET"
+url = "https://weblink.set.or.th/dat/content/rule/en/TFEX_PS023_1_USDFeeEng.pdf"
+sha256 = "c9ab2ddd891951eeefe6b9f411603767f4ebc87702ac5ad25fce61f50e0841c2"
+
+[candidate.tsx-trading]
+group = "TMX"
+url = "https://www.tsx.com/en/resource/3521/tsx-trading-fee-schedule-effective-july-2-2026-en.pdf"
+sha256 = "1c9e076b5d6780d5c6c987119b12f72f4af185a63afd8fc43fc3a11beab60c3e"

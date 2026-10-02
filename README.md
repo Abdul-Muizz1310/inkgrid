@@ -16,7 +16,7 @@
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue"></a>
 </p>
 
-> **Status: pre-alpha (milestones M0 to M4 complete; M5, the benchmark, has its held-out results).**
+> **Status: alpha, 0.1.0 (milestones M0 to M6 complete).**
 > Today inkgrid reads a PDF into a validated `Document`: every word in exactly one block, in reading
 > order, with running headers and footers set apart, tables, ruled or not, as explicit cell grids,
 > glossaries as definitions, and footnote calls linked to their notes. Tables and sentences that run
@@ -154,7 +154,7 @@ can tell. inkgrid commits to four guarantees instead:
    belong to exactly one word that holds it, every cell must hold the ink inside its rectangle, no
    drawn rule may divide a cell, and every value must be bound to one cell. On the 42 fee schedules
    of the look-back corpus, all 1,817,075 characters are accounted for, and 8 cells are reported
-   (`docs/specs/10-verify.md` § 0).
+   (`docs/specs/10-verify.md` § 0); re-checked for 0.1.0 on 2026-10-02, with the same result.
 4. **Never silent.** Anything degraded becomes a typed finding on the result.
 
 Whether this beats OCR and vision parsers at *table structure* was an open question, and the public
@@ -168,14 +168,15 @@ instead is the four guarantees, in a 20th to a 35th of Docling's time per page.
 
 ## Quick start
 
-inkgrid is not on PyPI yet. From a clone:
-
 ```bash
-uv sync --all-groups
-uv run inkgrid read path/to/file.pdf -o doc.json --markdown out.md --inspector out.html
-uv run inkgrid verify path/to/file.pdf doc.json --inspector checked.html   # exit 1 on any defect
-uv run inkgrid words path/to/file.pdf --pretty    # the raw page model, for debugging a reading
+pip install inkgrid              # or, in a uv project: uv add inkgrid
+inkgrid read path/to/file.pdf -o doc.json --markdown out.md --inspector out.html
+inkgrid verify path/to/file.pdf doc.json --inspector checked.html   # exit 1 on any defect
+inkgrid words path/to/file.pdf --pretty    # the raw page model, for debugging a reading
 ```
+
+To work on inkgrid itself, from a clone: `uv sync --all-groups`, then the same commands under
+`uv run`.
 
 From Python:
 
@@ -353,8 +354,11 @@ also available. pypdfium2 5.13 (PDFium) powers the independent verifier.
 
 ## Deployment
 
-inkgrid is a library, so there is nothing to deploy. Releases will publish to PyPI from version tags
-through Trusted Publishing, with attestations and no stored tokens (milestone M6).
+inkgrid is a library, so there is nothing to deploy. A release is a version tag: `release.yml` checks
+that the tag is the project's final version with a dated changelog section, runs every CI gate, builds
+the sdist and wheel once, and publishes them to TestPyPI and then PyPI through Trusted Publishing, with
+attestations and no stored token (`docs/specs/17-release.md`). Versions are bumped with
+`uv version --bump`.
 
 ## License
 

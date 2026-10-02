@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "inkgrid"
-version = "0.1.0.dev0"
+version = "0.1.0"
 description = "Exact tables and text from born-digital PDFs, read from the text layer and drawn rules, and verified by a second PDF engine."
 readme = "README.md"
 requires-python = ">=3.12"
@@ -13,7 +13,7 @@ license-files = ["LICENSE"]
 authors = [{ name = "Abdul-Muizz Anwar", email = "abdulmuizz1310@outlook.com" }]
 keywords = ["pdf", "tables", "text-extraction", "pymupdf", "camelot", "document-parsing"]
 classifiers = [
-    "Development Status :: 2 - Pre-Alpha",
+    "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3 :: Only",

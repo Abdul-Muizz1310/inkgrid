@@ -26,4 +26,4 @@ def test_A3_inkgrid_error_is_an_exception() -> None:
 
 
 def test_A4_version_matches_metadata() -> None:
-    assert inkgrid.__version__ == importlib.metadata.version("inkgrid") == "0.1.0.dev0"
+    assert inkgrid.__version__ == importlib.metadata.version("inkgrid") == "0.1.0"

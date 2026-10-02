@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-10-02
+
 ### Added
 
 - The page model (`Reading`, schema `inkgrid.reading/1`): words rebuilt from characters with
@@ -99,3 +101,6 @@ All notable changes to this project are documented here. The format follows
   - a line inside a ruled table the table stage reads is never furniture, unless the table is a
     running box repeated page after page, and furniture runs from the page's edge, so a table's
     spanning header or stub banner in the page band stays in its table.
+
+[Unreleased]: https://github.com/Abdul-Muizz1310/inkgrid/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/Abdul-Muizz1310/inkgrid/releases/tag/v0.1.0

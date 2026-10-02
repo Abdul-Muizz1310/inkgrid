@@ -11,7 +11,7 @@
 import inkgrid
 
 reading = inkgrid.read_pages("fees.pdf", password=None)   # -> inkgrid.Reading
-inkgrid.__version__                                        # "0.1.0.dev0" during development
+inkgrid.__version__                                        # "0.1.0" (it was "0.1.0.dev0" during development)
 ```
 
 - `read_pages` lives in `api.py`. It is the raw page model, for debugging a reading. `inkgrid.read()`,

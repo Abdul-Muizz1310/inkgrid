@@ -1,10 +1,11 @@
 name: Release
 
-# A version tag publishes to TestPyPI, then PyPI, through Trusted Publishing with attestations
-# (docs/specs/17-release.md). No credential is stored: PyPI trusts this workflow's OIDC identity.
+# A version tag publishes to PyPI with the repository's API token, as feathers and
+# slowquery-detective publish; a testpypi-v tag rehearses the same build on TestPyPI with its own
+# token (docs/specs/17-release.md). Each token is read only by its own environment's job.
 on:
   push:
-    tags: ["v*"]
+    tags: ["v*", "testpypi-v*"]
 
 permissions: {}
 
@@ -27,7 +28,7 @@ jobs:
       - name: Refuse a tag that must not publish
         env:
           TAG: "${{ github.ref_name }}"
-        run: uv run python scripts/check_release.py "$TAG"
+        run: uv run python scripts/check_release.py "${TAG#testpypi-}"
       - run: uv run ruff check --output-format=github .
       - run: uv run ruff format --check .
       - run: uv run mypy
@@ -44,38 +45,44 @@ jobs:
 
   publish-testpypi:
     name: Publish to TestPyPI
+    if: startsWith(github.ref, 'refs/tags/testpypi-v')
     needs: build
     runs-on: ubuntu-latest
     environment:
       name: testpypi
       url: https://test.pypi.org/p/inkgrid
-    permissions:
-      id-token: write # Trusted Publishing and attestations
     steps:
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: dist
           path: dist/
-      - uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
-          repository-url: https://test.pypi.org/legacy/
-          attestations: true
-          skip-existing: true # a rerun after a failed PyPI upload passes this step
+          version: "0.12.19"
+      - name: Upload, skipping files TestPyPI already has
+        env:
+          UV_PUBLISH_TOKEN: "${{ secrets.TEST_PYPI_API_TOKEN }}"
+        run: >-
+          uv publish --trusted-publishing never --publish-url https://test.pypi.org/legacy/
+          --check-url https://test.pypi.org/simple/ dist/*
 
   publish-pypi:
     name: Publish to PyPI
-    needs: publish-testpypi
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
     runs-on: ubuntu-latest
     environment:
       name: pypi
       url: https://pypi.org/p/inkgrid
-    permissions:
-      id-token: write # Trusted Publishing and attestations
     steps:
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: dist
           path: dist/
-      - uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
-          attestations: true
+          version: "0.12.19"
+      - name: Upload, skipping files PyPI already has (a rerun after a partial upload)
+        env:
+          UV_PUBLISH_TOKEN: "${{ secrets.PYPI_API_TOKEN }}"
+        run: uv publish --trusted-publishing never --check-url https://pypi.org/simple/ dist/*

@@ -598,8 +598,9 @@ Datasets are fetched by script and never redistributed.
 - **Tests:** pytest 9 with `strict = true`, importlib import mode, and warnings as errors.
 - **CI:** GitHub Actions pinned by commit SHA (setup-uv has no floating major tag since v8), default
   `permissions: {}`, and Dependabot for uv and Actions.
-- **Release:** a version tag publishes to TestPyPI and then PyPI through Trusted Publishing with
-  attestations, so no token secret exists. The changelog follows Keep a Changelog 1.1.0, and versions
+- **Release:** a version tag publishes to PyPI with the repository's API token, as the owner's other
+  packages publish, and a `testpypi-v` tag rehearses on TestPyPI (amended by spec 17 on 2026-10-02;
+  the first plan was Trusted Publishing with attestations). The changelog follows Keep a Changelog 1.1.0, and versions
   are bumped with `uv version --bump`.
 - **Licensing:** inkgrid's code is MIT. PyMuPDF is dual-licensed, AGPL-3.0 or Artifex commercial, and
   inkgrid requires it. The README's Licensing section says plainly that software distributed or served
@@ -626,7 +627,7 @@ Each milestone runs its own cycle: spec with enumerated cases, failing tests, im
 | M3 | Document | table and paragraph continuation, footnote register and calls | the twenty call cases pass; the continuation fixture carries its header |
 | M4 | Verify | PDFium reader, table and document checks, value fidelity, `inkgrid verify`, defect overlays in the inspector | zero defects on the fixture suite; the look-back corpus runs and reports |
 | M5 | Evaluate | benchmark harness, datasets, competitor adapters, ablation, look-back comparison | results with confidence intervals committed; README claims match them |
-| M6 | Release | 0.1.0 on PyPI | a tag publishes through Trusted Publishing with attestations |
+| M6 | Release | 0.1.0 on PyPI | a tag publishes to PyPI (spec 17) |
 
 ---
 

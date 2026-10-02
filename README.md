@@ -355,8 +355,8 @@ also available. pypdfium2 5.13 (PDFium) powers the independent verifier.
 inkgrid is a library, so there is nothing to deploy. A release is a version tag: `release.yml` checks
 that the tag is the project's final version with a dated changelog section, runs the lint, type, and
 test gates and the distribution smoke tests on Linux (CI on `main` covers the other platforms), builds
-the sdist and wheel, and publishes those files to TestPyPI and then PyPI through Trusted Publishing,
-with attestations and no stored token (`docs/specs/17-release.md`). Versions are bumped with
+the sdist and wheel, and uploads those files to PyPI with the repository's API token; a `testpypi-v`
+tag rehearses the same on TestPyPI (`docs/specs/17-release.md`). Versions are bumped with
 `uv version --bump`.
 
 ## License

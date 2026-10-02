@@ -124,38 +124,47 @@ def jobs(text: str) -> dict[str, str]:
     return dict(zip(parts[1::2], parts[2::2], strict=True))
 
 
-def test_RL7_a_tag_builds_once_then_publishes_to_testpypi_then_pypi() -> None:
+def test_RL7_a_tag_builds_once_then_uploads_with_the_repositorys_token() -> None:
+    # As feathers and slowquery-detective publish: v* to PyPI, testpypi-v* to TestPyPI, each with
+    # its repository secret (docs/specs/17-release.md section 3)
     text = (WORKFLOWS / "release.yml").read_text(encoding="utf-8")
-    assert re.search(r"^on:\n  push:\n    tags: \[\"v\*\"\]\n\n", text, flags=re.MULTILINE)
+    assert re.search(
+        r"^on:\n  push:\n    tags: \[\"v\*\", \"testpypi-v\*\"\]\n\n", text, flags=re.MULTILINE
+    )
     assert "pull_request" not in text
     assert "workflow_dispatch" not in text
     assert re.search(r"^permissions: \{\}$", text, flags=re.MULTILINE)
-    assert "secrets." not in text
+    assert "id-token" not in text
     assert "password" not in text
+    secrets = re.findall(r"^.*secrets\..*$", text, flags=re.MULTILINE)
+    assert secrets == [
+        '          UV_PUBLISH_TOKEN: "${{ secrets.TEST_PYPI_API_TOKEN }}"',
+        '          UV_PUBLISH_TOKEN: "${{ secrets.PYPI_API_TOKEN }}"',
+    ]
     by_id = jobs(text)
     assert list(by_id) == ["build", "publish-testpypi", "publish-pypi"]
     build, testpypi, pypi = by_id["build"], by_id["publish-testpypi"], by_id["publish-pypi"]
-    assert "id-token" not in build
     assert "contents: read" in build
     assert "persist-credentials: false" in build
     assert 'TAG: "${{ github.ref_name }}"' in build
-    assert 'python scripts/check_release.py "$TAG"' in build
+    assert 'python scripts/check_release.py "${TAG#testpypi-}"' in build
     assert "uv run pytest\n" in build
     assert "uv run pytest -m slow --no-cov" in build
     assert "uv build --no-sources" in build
-    assert "needs: build" in testpypi
-    assert "needs: publish-testpypi" in pypi
+    assert "if: startsWith(github.ref, 'refs/tags/testpypi-v')" in testpypi
+    assert "if: startsWith(github.ref, 'refs/tags/v')" in pypi
     for job, env in ((testpypi, "testpypi"), (pypi, "pypi")):
+        assert "needs: build" in job
         assert re.search(rf"environment:\n      name: {env}\n", job)
-        assert "id-token: write" in job
-        assert "attestations: true" in job
         assert "actions/checkout" not in job
-        assert "run:" not in job
-    assert "repository-url: https://test.pypi.org/legacy/" in testpypi
-    assert "skip-existing: true" in testpypi
-    assert "repository-url" not in pypi
-    assert "skip-existing" not in pypi
-    assert text.count("id-token: write") == 2
+        assert (
+            "permissions" not in job
+        )  # the workflow's empty set: the token is the only credential
+        assert "uv publish --trusted-publishing never" in job
+    assert "--publish-url https://test.pypi.org/legacy/" in testpypi
+    assert "--check-url https://test.pypi.org/simple/" in testpypi
+    assert "--check-url https://pypi.org/simple/" in pypi
+    assert "--publish-url" not in pypi
 
 
 def test_RL8_every_action_is_pinned_to_a_commit() -> None:

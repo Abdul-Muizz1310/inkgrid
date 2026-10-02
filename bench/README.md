@@ -21,7 +21,8 @@ The heavy competitors of `docs/specs/15-heavy-competitors.md` (Docling, marker, 
 run in one process per tool, their models loaded once, from PyTorch's CPU build and with every
 dependency resolved as of the date `sources.toml` pins; `prepare` builds the pinned Tesseract into the
 cache with micromamba (no root needed). With them, a full run takes about eight to ten hours on a
-16-thread CPU.
+16-thread CPU: in the run of 2026-10-02 the tools read for 6.1 hours (Docling's two runs 4.5 of them,
+unstructured 0.9), and scoring took 1.6.
 
 A run after inkgrid's fixes for errors found on these datasets is labelled `--label tuned`
 (DR-0023): its results go to `bench/results/<date>-<commit>-tuned/`, and its report says it is
@@ -40,7 +41,7 @@ hours, nearly all of it the heavy tools.
 Everything it fetches and writes lives in `~/.cache/inkgrid-bench/`; each stage skips the documents
 an earlier run of it finished. The datasets and tools take about 0.6 GB there; uv builds each tool's
 and scorer's environment on first use (PyTorch's CPU build among them). It runs one document at a
-time, niced, in about two and a half hours.
+time, niced; without the heavy tools, in about two and a half hours.
 
 Datasets are the property of their publishers: ICDAR-2013 (Göbel, Hassan, Oro and Orsi, 2013);
 olmOCR-bench (ODC-BY-1.0, Poznanski et al., arXiv 2502.18443); Soric et al.'s ICDAR-2013 ground truth

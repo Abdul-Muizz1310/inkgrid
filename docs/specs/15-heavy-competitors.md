@@ -198,7 +198,8 @@ no cell is none.
 
 ## 7 · Acceptance
 
-- [ ] Every case above has a test named `test_<CaseId>_<slug>`, and it failed before its code.
-- [ ] The run completes on the three datasets for every tool; crashes and timeouts are listed; the
-      results are committed beside the earlier runs.
-- [ ] README shows the competitors and the ablation, and claims only what the intervals support.
+- [x] Every case above has a test named `test_<CaseId>_<slug>`, and it failed before its code.
+- [x] The run completes on the three datasets for every tool (`bench/results/2026-10-02-bea4c95-tuned/`:
+      no heavy tool crashed or timed out on any of the 313 documents); crashes and timeouts are
+      listed; the results are committed beside the earlier runs.
+- [x] README shows the competitors and the ablation, and claims only what the intervals support.

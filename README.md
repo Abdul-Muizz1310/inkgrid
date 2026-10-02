@@ -158,12 +158,13 @@ can tell. inkgrid commits to four guarantees instead:
 4. **Never silent.** Anything degraded becomes a typed finding on the result.
 
 Whether this beats OCR and vision parsers at *table structure* was an open question, and the public
-evidence favored the vision hybrids. On 11 fee schedules no fix has seen (below), no difference
-between inkgrid's table structure and Docling's, the strongest hybrid measured, is distinguishable
-from 0; inkgrid's is ahead of marker's and unstructured's, and its structure recall ahead of the other
-text-layer readers'. Docling places tables better, finds more of their values, and misreads fewer
-glyphs. inkgrid does not beat it there; what it offers instead is the four guarantees, in a 35th of
-Docling's time per page.
+evidence favored the vision hybrids. The benchmark (below) bears that out for Docling, the strongest
+hybrid measured. On 11 fee schedules no fix has seen, no difference between inkgrid's table structure
+and Docling's is distinguishable from 0, but Docling places tables better, finds more of their values,
+and misreads fewer glyphs; on the public sets, where inkgrid is tuned, Docling is ahead on every
+headline score. inkgrid is ahead of unstructured on both, of marker on the held-out set, and of the
+other text-layer readers on the scores the tables below mark. It does not beat Docling; what it offers
+instead is the four guarantees, in a 20th to a 35th of Docling's time per page.
 
 ## Quick start
 
@@ -267,7 +268,8 @@ documents no fix has seen (DR-0023). The peers are measured again in each run, a
 identical. Each number is a point estimate with its 95% interval from 10,000 resamples of documents.
 The protocol was fixed before anything was scored:
 [`docs/specs/12-benchmark.md`](docs/specs/12-benchmark.md). The full reports, with every metric and
-every paired difference, are [`bench/results/latest.md`](bench/results/latest.md) (tuned) and
+every paired difference, are [`bench/results/latest.md`](bench/results/latest.md) (tuned, with the
+heavy tools below) and
 [`bench/results/2026-09-29-b33b3cb/report.md`](bench/results/2026-09-29-b33b3cb/report.md) (baseline).
 
 | Dataset (documents) | Metric | inkgrid, tuned | inkgrid, baseline | Camelot | PyMuPDF | pdfplumber |
@@ -304,9 +306,34 @@ excluding 0.
   predictions, re-scored here with their evaluator, reproduce their results within 0.01 on 15 of 16
   numbers (PyMuPDF's F1-TEDS misses by 0.00002).
 
-Still running: the heavy tools (Docling, marker, unstructured, and inkgrid on Tesseract's words) on
-ICDAR-2013 and olmOCR-bench (M5d-1); the held-out set above has them all. Not measured: FinTabNet, of
-which no official source of the PDFs remains.
+**OCR, vision, and hybrid parsers on the public sets** (M5d-1). The tuned run again, at `bea4c95`,
+with Docling (by default and on an image-only copy of each PDF), marker (OCR off), unstructured
+`hi_res` (Tesseract), and inkgrid on Tesseract's words added; inkgrid's and the three peers' counts are
+identical to the first tuned run's. inkgrid is tuned on these documents and the heavy tools are not,
+so the comparison flatters inkgrid. A † marks a tool whose paired difference from inkgrid has an
+interval excluding 0. The full report is [`bench/results/latest.md`](bench/results/latest.md).
+
+| Dataset (documents) | Metric | inkgrid, tuned | Docling | Docling, image-only (OCR) | marker | unstructured `hi_res` (OCR) | inkgrid on Tesseract's words |
+|---|---|---|---|---|---|---|---|
+| ICDAR-2013 competition (67) | Structure F, the competition's scorer | 0.788 [0.711, 0.861] | 0.901 [0.857, 0.937] † | 0.880 [0.827, 0.924] † | 0.768 [0.697, 0.833] | 0.467 [0.398, 0.534] † | 0.354 [0.280, 0.428] † |
+| ICDAR-2013 competition (67) | F1-TEDS, Soric et al.'s protocol | 0.628 [0.466, 0.788] | 0.894 [0.846, 0.934] † | 0.881 [0.829, 0.923] † | 0.759 [0.682, 0.827] | 0.585 [0.510, 0.654] | 0.341 [0.245, 0.446] † |
+| ICDAR-2013 practice (58) | Structure F, the competition's scorer | 0.688 [0.596, 0.776] | 0.847 [0.775, 0.910] † | 0.829 [0.763, 0.888] † | 0.783 [0.708, 0.850] † | 0.468 [0.397, 0.541] † | 0.328 [0.253, 0.404] † |
+| ICDAR-2013 practice (58) | Values filed under their labels | 0.323 [0.199, 0.488] | 0.494 [0.329, 0.708] † | 0.473 [0.314, 0.672] † | 0.303 [0.183, 0.464] | 0.074 [0.035, 0.131] † | 0.065 [0.024, 0.126] † |
+| olmOCR-bench tables (188) | Table tests passed | 0.486 [0.415, 0.558] | 0.744 [0.692, 0.792] † | 0.736 [0.683, 0.787] † | 0.460 [0.397, 0.521] | 0.413 [0.359, 0.468] | 0.303 [0.252, 0.358] † |
+| ICDAR-2013 practice (58) | Seconds per page | 0.427 [0.374, 0.486] | 8.254 [6.876, 9.904] † | 13.525 [12.634, 14.583] † | 0.451 [0.440, 0.464] | 5.186 [4.962, 5.443] † | 2.226 [2.070, 2.391] † |
+
+- **Docling is ahead of inkgrid on every one of these**, in both its runs: structure F by 0.09 to
+  0.16, F1-TEDS by 0.25 to 0.27, values filed under their labels by 0.15 to 0.17, and olmOCR-bench's
+  table tests by 0.25 to 0.26, at 8.3 and 13.5 seconds a page on the practice set to inkgrid's 0.43.
+- **marker** is ahead on the practice set's structure (0.783 against 0.688); no other difference
+  from inkgrid is distinguishable, its speed included. On the held-out fee set it is far behind.
+- **unstructured `hi_res`** trails inkgrid on structure, on both sets, and on values filed under
+  their labels; on F1-TEDS and olmOCR-bench no difference is distinguishable.
+- **On Tesseract's words**, inkgrid trails itself on every metric (structure F 0.354 and 0.328,
+  against 0.788 and 0.688): the text layer, not the gridders alone, is what puts inkgrid where it is.
+- No heavy tool crashed or timed out on any of the 313 documents.
+
+Not measured: FinTabNet, of which no official source of the PDFs remains.
 
 ## Architecture
 

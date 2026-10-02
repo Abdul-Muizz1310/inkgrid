@@ -58,7 +58,8 @@ All notable changes to this project are documented here. The format follows
 - The benchmark's OCR and vision competitors (M5d-1): Docling by default and on an image-only copy of
   each PDF, marker on the text layer, and unstructured `hi_res` with Tesseract, each batched in its
   own pinned CPU environment; and the ablation `inkgrid-ocr`, inkgrid fed Tesseract's words, which
-  measures what the text layer gives inkgrid's own gridders.
+  measures what the text layer gives inkgrid's own gridders. Their run on the three public sets,
+  inkgrid tuned on them, is in `bench/results/`.
 - The held-out fee set (M5d-2): 11 exchange fee schedules no fix has seen, chosen by a rule fixed
   before any tool read them, with ground truth drafted from each page's rendering and verified by hand,
   table by table and over 200 cells glyph by glyph. `run.py --datasets heldout` scores every tool on

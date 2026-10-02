@@ -1,19 +1,17 @@
-<p align="center"><em>A demo GIF of the inspector (<code>inkgrid read --inspector</code>) is still to be recorded.</em></p>
-
 <h1 align="center">inkgrid</h1>
 
 <p align="center">Exact tables and text from born-digital PDFs, read from the text layer and the drawn rules, and checked by a second PDF engine.</p>
 
 <p align="center">
-  <a href="WHY.md">Why</a> •
-  <a href="docs/ARCHITECTURE.md">Architecture</a> •
-  <a href="docs/DEMO.md">Demo Script</a> •
-  <a href="docs/specs/00-design.md">Design</a>
+  <a href="https://github.com/Abdul-Muizz1310/inkgrid/blob/v0.1.0/WHY.md">Why</a> •
+  <a href="https://github.com/Abdul-Muizz1310/inkgrid/blob/v0.1.0/docs/ARCHITECTURE.md">Architecture</a> •
+  <a href="https://github.com/Abdul-Muizz1310/inkgrid/blob/v0.1.0/docs/DEMO.md">Demo Script</a> •
+  <a href="https://github.com/Abdul-Muizz1310/inkgrid/blob/v0.1.0/docs/specs/00-design.md">Design</a>
 </p>
 
 <p align="center">
   <a href="https://github.com/Abdul-Muizz1310/inkgrid/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/Abdul-Muizz1310/inkgrid/ci.yml?branch=main&label=ci"></a>
-  <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue"></a>
+  <a href="https://github.com/Abdul-Muizz1310/inkgrid/blob/v0.1.0/LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue"></a>
 </p>
 
 > **Status: alpha, 0.1.0 (milestones M0 to M6 complete).**
@@ -22,7 +20,7 @@
 > glossaries as definitions, and footnote calls linked to their notes. Tables and sentences that run
 > onto the next page are joined. `inkgrid.verify` then grades the document against its PDF with a
 > second engine, PDFium. The roadmap is in
-> [`docs/specs/00-design.md`](docs/specs/00-design.md) § 14.
+> [`docs/specs/00-design.md`](https://github.com/Abdul-Muizz1310/inkgrid/blob/v0.1.0/docs/specs/00-design.md) § 14.
 
 ## What it does
 
@@ -100,7 +98,7 @@ Shipped so far (M0 to M4):
   values from two columns read as one word, and a note mark in the column after its word. On
   ICDAR-2013 and olmOCR-bench's table pages it names the ways the two engines read a page
   differently (ligatures, unmappable glyphs, overprinted titles), so what it still reports there is
-  inkgrid's own errors: [`docs/specs/11-verify-on-public-corpora.md`](docs/specs/11-verify-on-public-corpora.md) § 5 lists them.
+  inkgrid's own errors: [`docs/specs/11-verify-on-public-corpora.md`](https://github.com/Abdul-Muizz1310/inkgrid/blob/v0.1.0/docs/specs/11-verify-on-public-corpora.md) § 5 lists them.
 - **The full output contract,** `inkgrid.document/1`, with its invariants enforced: every word owned
   exactly once, cells that tile their grid exactly, and block text spelled from its own words in
   their order.
@@ -211,9 +209,9 @@ rendering, never from any tool's reading; each cell's text is the PDF's own word
 with 200 cells glyph by glyph, was checked by hand. inkgrid reads them as it read the tuned run below.
 Every tool reads each whole document (146 pages); only its tables on the scored pages count. Eleven
 documents give wide intervals. The protocol:
-[`docs/specs/16-held-out-fee-set.md`](docs/specs/16-held-out-fee-set.md); the full report, with every
+[`docs/specs/16-held-out-fee-set.md`](https://github.com/Abdul-Muizz1310/inkgrid/blob/v0.1.0/docs/specs/16-held-out-fee-set.md); the full report, with every
 metric and paired difference:
-[`bench/results/2026-10-01-fb58b0a-heldout/report.md`](bench/results/2026-10-01-fb58b0a-heldout/report.md).
+[`bench/results/2026-10-01-fb58b0a-heldout/report.md`](https://github.com/Abdul-Muizz1310/inkgrid/blob/v0.1.0/bench/results/2026-10-01-fb58b0a-heldout/report.md).
 
 | Tool | Structure F | Table regions F | Values bound to all labels | Values found | Cell CER (lower is better) | Seconds per page |
 |---|---|---|---|---|---|---|
@@ -268,10 +266,10 @@ the M5c fixes, which were designed while looking at those errors, so it overstat
 documents no fix has seen (DR-0023). The peers are measured again in each run, and their numbers are
 identical. Each number is a point estimate with its 95% interval from 10,000 resamples of documents.
 The protocol was fixed before anything was scored:
-[`docs/specs/12-benchmark.md`](docs/specs/12-benchmark.md). The full reports, with every metric and
-every paired difference, are [`bench/results/latest.md`](bench/results/latest.md) (tuned, with the
+[`docs/specs/12-benchmark.md`](https://github.com/Abdul-Muizz1310/inkgrid/blob/v0.1.0/docs/specs/12-benchmark.md). The full reports, with every metric and
+every paired difference, are [`bench/results/latest.md`](https://github.com/Abdul-Muizz1310/inkgrid/blob/v0.1.0/bench/results/latest.md) (tuned, with the
 heavy tools below) and
-[`bench/results/2026-09-29-b33b3cb/report.md`](bench/results/2026-09-29-b33b3cb/report.md) (baseline).
+[`bench/results/2026-09-29-b33b3cb/report.md`](https://github.com/Abdul-Muizz1310/inkgrid/blob/v0.1.0/bench/results/2026-09-29-b33b3cb/report.md) (baseline).
 
 | Dataset (documents) | Metric | inkgrid, tuned | inkgrid, baseline | Camelot | PyMuPDF | pdfplumber |
 |---|---|---|---|---|---|---|
@@ -312,7 +310,7 @@ with Docling (by default and on an image-only copy of each PDF), marker (OCR off
 `hi_res` (Tesseract), and inkgrid on Tesseract's words added; inkgrid's and the three peers' counts are
 identical to the first tuned run's. inkgrid is tuned on these documents and the heavy tools are not,
 so the comparison flatters inkgrid. A † marks a tool whose paired difference from inkgrid has an
-interval excluding 0. The full report is [`bench/results/latest.md`](bench/results/latest.md).
+interval excluding 0. The full report is [`bench/results/latest.md`](https://github.com/Abdul-Muizz1310/inkgrid/blob/v0.1.0/bench/results/latest.md).
 
 | Dataset (documents) | Metric | inkgrid, tuned | Docling | Docling, image-only (OCR) | marker | unstructured `hi_res` (OCR) | inkgrid on Tesseract's words |
 |---|---|---|---|---|---|---|---|
@@ -341,7 +339,7 @@ Not measured: FinTabNet, of which no official source of the PDFs remains.
 A pure core sits between two thin shells. Only `inkgrid.read` touches MuPDF and Camelot, and only
 `inkgrid.verify`'s reader touches PDFium; a test enforces the layer table on the import graph. The
 verifier cannot import the code that builds the output, so its independence is structural. Details:
-[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+[`docs/ARCHITECTURE.md`](https://github.com/Abdul-Muizz1310/inkgrid/blob/v0.1.0/docs/ARCHITECTURE.md).
 
 ## Tech stack
 
@@ -355,14 +353,15 @@ also available. pypdfium2 5.13 (PDFium) powers the independent verifier.
 ## Deployment
 
 inkgrid is a library, so there is nothing to deploy. A release is a version tag: `release.yml` checks
-that the tag is the project's final version with a dated changelog section, runs every CI gate, builds
-the sdist and wheel once, and publishes them to TestPyPI and then PyPI through Trusted Publishing, with
-attestations and no stored token (`docs/specs/17-release.md`). Versions are bumped with
+that the tag is the project's final version with a dated changelog section, runs the lint, type, and
+test gates and the distribution smoke tests on Linux (CI on `main` covers the other platforms), builds
+the sdist and wheel, and publishes those files to TestPyPI and then PyPI through Trusted Publishing,
+with attestations and no stored token (`docs/specs/17-release.md`). Versions are bumped with
 `uv version --bump`.
 
 ## License
 
-inkgrid's own code is MIT; see [LICENSE](LICENSE).
+inkgrid's own code is MIT; see [LICENSE](https://github.com/Abdul-Muizz1310/inkgrid/blob/v0.1.0/LICENSE).
 
 **Read this before you ship inkgrid in a product.** inkgrid requires
 [PyMuPDF](https://pymupdf.readthedocs.io/en/latest/about.html#license-and-copyright), which Artifex

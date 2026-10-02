@@ -167,3 +167,17 @@ def test_RL8_every_action_is_pinned_to_a_commit() -> None:
         for action, rest in uses:
             assert re.fullmatch(r"[\w.-]+/[\w./-]+@[0-9a-f]{40}", action), (f.name, action)
             assert re.fullmatch(r" # v\d+(\.\d+)*", rest), (f.name, action, rest)
+
+
+def test_RL9_a_readme_linking_relatively_cannot_publish() -> None:
+    # PyPI renders the README at pypi.org/project/inkgrid/, where a relative link is a 404
+    relative = README + '\n<a href="LICENSE">License</a> and the [spec](docs/specs/12.md).\n'
+    (problem,) = problems(readme=relative)
+    assert "relative" in problem
+    assert "LICENSE" in problem
+    assert "docs/specs/12.md" in problem
+    absolute = README + (
+        "\n[spec](https://github.com/Abdul-Muizz1310/inkgrid/blob/v0.1.0/docs/specs/12.md),"
+        ' [below](#benchmarks), <img src="https://img.shields.io/badge/x">\n'
+    )
+    assert problems(readme=absolute) == []

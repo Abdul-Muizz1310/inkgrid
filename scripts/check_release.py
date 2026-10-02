@@ -19,6 +19,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 REPOSITORY = "https://github.com/Abdul-Muizz1310/inkgrid"
 FINAL_TAG = re.compile(r"v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)")
+# A Markdown or HTML link target that is not absolute or in-page; PyPI cannot follow one.
+RELATIVE = re.compile(
+    r'\]\((?!https?://|mailto:|#)([^)\s]+)\)|(?:href|src)="(?!https?://|mailto:|#)([^"]+)"'
+)
 
 
 def _section(text: str, heading: str) -> str | None:
@@ -61,6 +65,9 @@ def problems(tag: str, *, version: str, changelog: str, readme: str) -> list[str
         out.append("CHANGELOG.md's [Unreleased] section still holds entries")
     if "not on PyPI" in readme:
         out.append("README.md still says inkgrid is not on PyPI")
+    relative = sorted({a or b for a, b in RELATIVE.findall(readme)})
+    if relative:
+        out.append(f"README.md links relatively, which PyPI cannot follow: {', '.join(relative)}")
     quick_start = _section(readme, "## Quick start") or ""
     if "pip install inkgrid" not in quick_start:
         out.append("README.md's Quick start has no `pip install inkgrid`")

@@ -48,6 +48,9 @@ version from `pyproject.toml` (`[project].version`). The refusals:
   `[X.Y.Z]: https://github.com/Abdul-Muizz1310/inkgrid/releases/tag/vX.Y.Z`, or its `[Unreleased]`
   section holds an entry (anything but blank lines before the next `## ` heading);
 - the README still says inkgrid is not on PyPI, or its Quick start has no `pip install inkgrid`.
+- the README links relatively (a Markdown `](path)` or an HTML `href`/`src` that is not absolute or
+  in-page): PyPI renders the README at `pypi.org/project/inkgrid/`, where such a link is a 404, and a
+  release's description cannot be changed after upload.
 
 ## 3 · The release workflow (`.github/workflows/release.yml`)
 
@@ -95,6 +98,7 @@ required reviewer on `pypi` is the user's choice and is not required by this spe
 | RL6 | `scripts/check_release.py` run on a refused tag; on the release commit's tag | exits 1 printing every problem; exits 0 |
 | RL7 | `release.yml` | triggered only by `v*` tags; `permissions: {}`; `build` then `publish-testpypi` then `publish-pypi`; `id-token: write` in exactly the two publish jobs, each in its environment; TestPyPI's upload URL and `skip-existing`; attestations on both; no checkout or `run:` in a publish job; no `secrets.` |
 | RL8 | every workflow under `.github/workflows/` | every `uses:` pinned to a 40-character commit SHA with a version comment |
+| RL9 | a README with `<a href="LICENSE">` and `[spec](docs/specs/12.md)`; one whose links are absolute or in-page | refused, naming both targets; no problem |
 
 ## 7 · Acceptance
 

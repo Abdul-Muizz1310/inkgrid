@@ -106,10 +106,11 @@ required reviewer on `pypi` is the owner's choice and is not required by this sp
 | RL7 | `release.yml` | triggered only by `v*` and `testpypi-v*` tags; `permissions: {}`; `build`, then `publish-testpypi` (a `testpypi-v` tag) or `publish-pypi` (a `v` tag), each in its environment; each token only as its job's `UV_PUBLISH_TOKEN`; `uv publish --trusted-publishing never` with its index's `--check-url`; no checkout or `id-token` in a publish job |
 | RL8 | every workflow under `.github/workflows/` | every `uses:` pinned to a 40-character commit SHA with a version comment |
 | RL9 | a README with `<a href="LICENSE">` and `[spec](docs/specs/12.md)`; one whose links are absolute or in-page | refused, naming both targets; no problem |
+| RL10 | a README whose Quick start heading carries the house style's emoji (`## <emoji> Quick start`); one whose `pip install inkgrid` stands only in another section | no problem; refused |
 
 ## 7 · Acceptance
 
-- RL1 to RL9 pass, and `scripts/dev.sh` is green.
+- RL1 to RL10 pass, and `scripts/dev.sh` is green.
 - § 1's steps 1 to 3 are done, with the look-back run's result recorded in the README and in
   `docs/specs/10-verify.md`.
 - Once the token is the repository's secret (§ 5): the tag is pushed, the upload succeeds, and a

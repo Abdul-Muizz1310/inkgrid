@@ -26,8 +26,12 @@ RELATIVE = re.compile(
 
 
 def _section(text: str, heading: str) -> str | None:
-    """The text under a `## ` heading, up to the next one; None when there is no such heading."""
-    at = re.search(rf"^{re.escape(heading)}$", text, flags=re.MULTILINE)
+    """The text under a `## ` heading, up to the next one; None when there is no such heading.
+
+    The heading may carry one emoji after its `## `, as the house style writes its headings.
+    """
+    name = re.escape(heading.removeprefix("## "))
+    at = re.search(rf"^## (?:\S+ )?{name}$", text, flags=re.MULTILINE)
     if at is None:
         return None
     rest = text[at.end() :]

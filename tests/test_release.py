@@ -190,3 +190,13 @@ def test_RL9_a_readme_linking_relatively_cannot_publish() -> None:
         ' [below](#benchmarks), <img src="https://img.shields.io/badge/x">\n'
     )
     assert problems(readme=absolute) == []
+
+
+def test_RL10_the_quick_start_may_carry_the_house_emoji() -> None:
+    styled = README.replace("## Quick start", "## \U0001f680 Quick start")
+    assert problems(readme=styled) == []
+    elsewhere = (
+        styled.replace("pip install inkgrid", "uv sync") + "\n## Other\n\npip install inkgrid\n"
+    )
+    (problem,) = problems(readme=elsewhere)
+    assert "Quick start" in problem

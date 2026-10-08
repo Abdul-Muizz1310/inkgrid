@@ -170,13 +170,22 @@ def _reading(
             return failed(str(data["error"]))
         tables = tuple(_table(t) for t in data["tables"])
         seconds = float(data["seconds"])
+        markdown = data.get("markdown", "")
     except (OSError, ValueError, KeyError, TypeError) as exc:
         return failed(f"unreadable output: {exc}")
+    if not isinstance(markdown, str):
+        return failed(f"unreadable output: markdown is a {type(markdown).__name__}")
     for t in tables:
         if not 1 <= t.page <= len(frames):
             return failed(f"a table on page {t.page} of {len(frames)}")
     return NDocument(
-        tool=tool, version=version, pdf_sha256=sha, pages=frames, tables=tables, seconds=seconds
+        tool=tool,
+        version=version,
+        pdf_sha256=sha,
+        pages=frames,
+        tables=tables,
+        seconds=seconds,
+        markdown=markdown,
     )
 
 
@@ -434,6 +443,28 @@ def tools(cfg: dict[str, Any]) -> list[Tool]:
             exclude_newer=frozen,
         ),
         Tool("inkgrid-ocr", "inkgrid_ocr", None),
+        # Whole-page text-layer converters, read only for the OCR benchmarks (spec 18 section 3).
+        Tool(
+            "pymupdf4llm",
+            "pymupdf4llm_markdown",
+            f"pymupdf4llm=={pins['pymupdf4llm']}",
+            datasets=(),
+            exclude_newer=pins["text-layer-exclude-newer"],
+        ),
+        Tool(
+            "markitdown",
+            "markitdown_markdown",
+            f"markitdown[pdf]=={pins['markitdown']}",
+            datasets=(),
+            exclude_newer=pins["text-layer-exclude-newer"],
+        ),
+        Tool(
+            "liteparse",
+            "liteparse_markdown",
+            f"liteparse=={pins['liteparse']}",
+            datasets=(),
+            exclude_newer=pins["text-layer-exclude-newer"],
+        ),
     ]
 
 

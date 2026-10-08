@@ -13,10 +13,12 @@ from pathlib import Path
 import pypdfium2 as pdfium
 
 from inkgrid_bench import pages
-from inkgrid_bench.ablation import DPI, ocr_tables
+from inkgrid_bench.ablation import DPI, ocr_document
 from inkgrid_bench.adapters._cli import main
+from inkgrid_bench.adapters.inkgrid_read import tables_of
 from inkgrid_bench.fetch import TESSERACT
-from inkgrid_bench.tables import NTable
+from inkgrid_bench.page_markdown import inkgrid_markdown
+from inkgrid_bench.tables import Output
 
 ARGS = ("--psm", "3", "-l", "eng", "tsv")
 
@@ -40,14 +42,15 @@ def _tesseract(doc: pdfium.PdfDocument) -> Callable[[int], str]:
     return page_tsv
 
 
-def read(pdf: Path) -> list[NTable]:
-    """The tables inkgrid reads with Tesseract's words for its own."""
+def read(pdf: Path) -> Output:
+    """The tables and the page Markdown inkgrid reads with Tesseract's words for its own."""
     data = pdf.read_bytes()
-    doc = pdfium.PdfDocument(data)
+    rendered = pdfium.PdfDocument(data)
     try:
-        return ocr_tables(data, pages.frames(pdf), _tesseract(doc))
+        doc = ocr_document(data, pages.frames(pdf), _tesseract(rendered))
     finally:
-        doc.close()
+        rendered.close()
+    return Output(tuple(tables_of(doc)), inkgrid_markdown(doc))
 
 
 if __name__ == "__main__":

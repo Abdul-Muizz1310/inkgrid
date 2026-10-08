@@ -6,8 +6,13 @@ import pdf_factory
 from inkgrid_bench.adapters import camelot_lattice, inkgrid_read, pdfplumber_tables, pymupdf_tables
 from inkgrid_bench.tables import Box, NTable
 
+
+def inkgrid_tables(pdf: Path) -> list[NTable]:
+    return list(inkgrid_read.read(pdf).tables)
+
+
 ADAPTERS = {
-    "inkgrid": inkgrid_read.read,
+    "inkgrid": inkgrid_tables,
     "pdfplumber": pdfplumber_tables.read,
     "pymupdf": pymupdf_tables.read,
     "camelot": camelot_lattice.read,
@@ -65,14 +70,14 @@ def test_adapters_place_a_turned_pages_grid_unrotated(
         else pdf_factory.ruled_grid(rotation=90)
     )
     pdf.write_bytes(data)
-    expected = inkgrid_read.read(pdf)[0].bbox
+    expected = inkgrid_tables(pdf)[0].bbox
     assert iou(only(ADAPTERS[tool](pdf)).bbox, expected) > 0.8
 
 
 def test_inkgrid_marks_its_header_rows(tmp_path: Path) -> None:
     pdf = tmp_path / "grid.pdf"
     pdf.write_bytes(pdf_factory.ruled_grid())
-    table = only(inkgrid_read.read(pdf))
+    table = only(inkgrid_tables(pdf))
     assert {c.text for c in table.cells if c.header} == {"Fee", "Rate"}
 
 
@@ -80,7 +85,7 @@ def test_inkgrid_marks_its_header_rows(tmp_path: Path) -> None:
 def test_adapters_place_boxes_on_an_offset_mediabox(tool: str, tmp_path: Path) -> None:
     pdf = tmp_path / "offset.pdf"
     pdf.write_bytes(pdf_factory.ruled_grid(mediabox=(-100, -100, 512, 692)))
-    expected = inkgrid_read.read(pdf)[0].bbox
+    expected = inkgrid_tables(pdf)[0].bbox
     assert iou(only(ADAPTERS[tool](pdf)).bbox, expected) > 0.9
 
 

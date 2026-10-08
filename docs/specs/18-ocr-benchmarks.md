@@ -180,7 +180,7 @@ baseline is labelled `baseline`, later runs `tuned` (`--label tuned`).
 | AD2 | unstructured elements: Title, NarrativeText, ListItem, Table with `text_as_html`, Header, Footer, PageNumber, Image | Markdown in element order: `#` title, paragraph, `- ` item, the table's HTML; no header, footer, page number or image |
 | AD3 | *heavy:* each text-layer converter (pymupdf4llm, MarkItDown, LiteParse) on that page, in its pinned environment | Markdown holding both paragraphs |
 | AD4 | *heavy:* Docling and marker on that page, in their pinned environments | their tables as before, and Markdown holding both paragraphs and the table as HTML |
-| AD5 | *heavy:* inkgrid on Tesseract's words on that page | Markdown from the same document the ablation's tables come from |
+| AD5 | *heavy:* inkgrid on Tesseract's words on that page | Markdown holding both paragraphs as Tesseract reads them, and any table it finds written as HTML |
 | SC1 | an olmOCR category restricted to born-digital PDFs, a tool missing one PDF's output | an empty file written for it; per-PDF tests and passes read back |
 | SC2 | OmniDocBench's per-page Edit and TEDS files for a subset | per-page values keyed by page, with each page's language |
 | SC3 | a ParseBench run through the saved-Markdown provider | the provider returns exactly the saved Markdown; per-document values read back |

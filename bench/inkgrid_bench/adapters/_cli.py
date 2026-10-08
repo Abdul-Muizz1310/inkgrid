@@ -11,23 +11,33 @@ from collections.abc import Callable, Sequence
 from dataclasses import asdict
 from pathlib import Path
 
-from inkgrid_bench.tables import NPage, NTable
+from inkgrid_bench.tables import NPage, NTable, Output
 
+type Read = list[NTable] | Output
+"""A read's result: a table-only tool's tables, or a whole-page tool's tables and Markdown."""
 DONE = "inkgrid-bench done "
 """The line a batch prints after each document's output is written, then the document's index."""
 
 
-def main(read: Callable[[Path], list[NTable]]) -> int:
-    """Read the PDF named by argv[1]; write its tables and the read's seconds to argv[2] as JSON.
+def _data(result: Read, seconds: float) -> dict[str, object]:
+    output = result if isinstance(result, Output) else Output(tuple(result))
+    return {
+        "tables": [asdict(t) for t in output.tables],
+        "markdown": output.markdown,
+        "seconds": seconds,
+    }
+
+
+def main(read: Callable[[Path], Read]) -> int:
+    """Read the PDF named by argv[1]; write its reading and the read's seconds to argv[2] as JSON.
 
     The seconds are the read's own, the interpreter and the tool's imports already paid for.
     """
     pdf, out = Path(sys.argv[1]), Path(sys.argv[2])
     start = time.perf_counter()
-    tables = read(pdf)
+    result = read(pdf)
     seconds = time.perf_counter() - start
-    data = {"tables": [asdict(t) for t in tables], "seconds": seconds}
-    out.write_text(json.dumps(data, ensure_ascii=True), encoding="utf-8")
+    out.write_text(json.dumps(_data(result, seconds), ensure_ascii=True), encoding="utf-8")
     return 0
 
 
@@ -38,7 +48,7 @@ def _write(out: Path, data: dict[str, object]) -> None:
     part.replace(out)
 
 
-def batch(read: Callable[[Path, Sequence[NPage]], list[NTable]]) -> int:
+def batch(read: Callable[[Path, Sequence[NPage]], Read]) -> int:
     """Read every document of the manifest named by argv[2], one at a time, in this process.
 
     Each manifest line is a JSON object: the PDF, its output path, and its pages' frames (box and
@@ -53,12 +63,11 @@ def batch(read: Callable[[Path, Sequence[NPage]], list[NTable]]) -> int:
         frames = tuple(NPage(box=(p[0], p[1], p[2], p[3]), rotation=p[4]) for p in entry["pages"])
         start = time.perf_counter()
         try:
-            tables = read(Path(entry["pdf"]), frames)
+            result = read(Path(entry["pdf"]), frames)
         except Exception as exc:  # noqa: BLE001 - any failure is this document's, not the batch's
             data: dict[str, object] = {"error": f"{type(exc).__name__}: {exc}"}
         else:
-            seconds = time.perf_counter() - start
-            data = {"tables": [asdict(t) for t in tables], "seconds": seconds}
+            data = _data(result, time.perf_counter() - start)
         _write(Path(entry["out"]), data)
         sys.stdout.write(f"\n{DONE}{index}\n")  # its own line, whatever the tool left unfinished
         sys.stdout.flush()

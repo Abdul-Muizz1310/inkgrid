@@ -1,16 +1,21 @@
-"""inkgrid's tables: every `Table` block of `inkgrid.read` (spec 12 section 2)."""
+"""inkgrid's tables (spec 12 section 2) and its page Markdown (spec 18 section 3)."""
 
 from pathlib import Path
 
 import inkgrid
 from inkgrid.model.document import Document
 from inkgrid_bench.adapters._cli import main
-from inkgrid_bench.tables import NCell, NTable
+from inkgrid_bench.page_markdown import inkgrid_markdown
+from inkgrid_bench.tables import NCell, NTable, Output
 
 
-def read(pdf: Path) -> list[NTable]:
-    """The document's tables, header rows marked; a carried header cell is empty on its page."""
-    return tables_of(inkgrid.read(pdf))
+def read(pdf: Path) -> Output:
+    """The document's tables, header rows marked, and its Markdown with each table as HTML.
+
+    A carried header cell is empty on its page.
+    """
+    doc = inkgrid.read(pdf)
+    return Output(tuple(tables_of(doc)), inkgrid_markdown(doc))
 
 
 def tables_of(doc: Document) -> list[NTable]:

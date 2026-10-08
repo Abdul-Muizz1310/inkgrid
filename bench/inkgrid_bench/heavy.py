@@ -211,3 +211,33 @@ def unstructured_tables(
             bbox = _turned_back(frame, min(xs), min(ys), max(xs), max(ys))
             out.append(NTable.filled(page=page, bbox=bbox, cells=cells))
     return out
+
+
+# The elements unstructured labels as page furniture or pictures, left out of its page's Markdown as
+# Docling's and marker's own exports leave out theirs (docs/specs/18-ocr-benchmarks.md section 3).
+UNSTRUCTURED_LEFT_OUT = frozenset({"Header", "Footer", "PageNumber", "Image", "PageBreak"})
+
+
+def unstructured_markdown(elements: Sequence[Mapping[str, object]]) -> str:
+    """The page's Markdown from unstructured's elements, in their order.
+
+    A title is written as `#`, a list item as `- `, a table as its `text_as_html` (its text when it
+    has none), everything else as a paragraph.
+    """
+    parts = []
+    for e in elements:
+        kind = _str(e, "type")
+        text = str(e.get("text") or "").strip()
+        if kind in UNSTRUCTURED_LEFT_OUT:
+            continue
+        if kind == "Table":
+            meta = e.get("metadata")
+            html = meta.get("text_as_html") if isinstance(meta, Mapping) else None
+            parts.append(str(html) if html else text)
+        elif kind == "Title":
+            parts.append(f"# {text}")
+        elif kind == "ListItem":
+            parts.append(f"- {text}")
+        else:
+            parts.append(text)
+    return "\n\n".join(p for p in parts if p)

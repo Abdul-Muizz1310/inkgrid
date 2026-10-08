@@ -165,6 +165,14 @@ class NPage:
 
 
 @dataclass(frozen=True, slots=True)
+class Output:
+    """What an adapter reads from one PDF: its tables and, for whole-page benchmarks, Markdown."""
+
+    tables: tuple[NTable, ...]
+    markdown: str = ""
+
+
+@dataclass(frozen=True, slots=True)
 class NDocument:
     """One tool's reading of one PDF; `error` is set when it crashed or timed out."""
 
@@ -175,6 +183,7 @@ class NDocument:
     tables: tuple[NTable, ...] = field(default=())
     seconds: float = 0.0
     error: str | None = None
+    markdown: str = ""  # the whole page as the tool writes it (spec 18 section 3); "" before M7
 
     def to_json(self) -> str:
         """The document as JSON, keys sorted, ASCII only."""

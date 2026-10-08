@@ -11,6 +11,7 @@ from collections.abc import Callable, Sequence
 from inkgrid.core.pipeline import build_document
 from inkgrid.core.tables.pages import lattice_pages
 from inkgrid.model.config import Lexicon, Profile
+from inkgrid.model.document import Document
 from inkgrid.model.geometry import Rect
 from inkgrid.model.page import PageModel, Reading, Word
 from inkgrid.read.camelot_reader import read_lattice
@@ -105,6 +106,11 @@ def ocr_reading(reading: Reading, frames: Sequence[NPage], ocr: Callable[[int], 
 
 def ocr_tables(data: bytes, frames: Sequence[NPage], ocr: Callable[[int], str]) -> list[NTable]:
     """Inkgrid's tables with its words from `ocr` (a page number to Tesseract's TSV)."""
+    return tables_of(ocr_document(data, frames, ocr))
+
+
+def ocr_document(data: bytes, frames: Sequence[NPage], ocr: Callable[[int], str]) -> Document:
+    """The document inkgrid builds with its words from `ocr`, all else as for the text layer."""
     reading = ocr_reading(read_pdf(data, file_name=None, password=None), frames, ocr)
     ruled = lattice_pages(reading)
     grids = (
@@ -118,7 +124,6 @@ def ocr_tables(data: bytes, frames: Sequence[NPage], ocr: Callable[[int], str]) 
         if ruled
         else None
     )
-    doc = build_document(
+    return build_document(
         reading, lexicon=Lexicon(), profile=Profile(), lattice="combined", grids=grids
     )
-    return tables_of(doc)

@@ -64,6 +64,6 @@ def test_AB2_inkgrid_fed_its_own_words_through_tesseract_reads_the_same_table(
     pdf.write_bytes(data)
     tsv = tsv_of(data)
     tables = ocr_tables(data, pages.frames(pdf), lambda number: tsv[number])
-    expected = inkgrid_read.read(pdf)
+    expected = list(inkgrid_read.read(pdf).tables)
     assert [(t.page, t.cells) for t in tables] == [(t.page, t.cells) for t in expected]
     assert len(tables) == 1

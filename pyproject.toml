@@ -118,11 +118,14 @@ minversion = "9.0"
 strict = true
 testpaths = ["tests", "bench/tests"]
 pythonpath = ["tests/support", "bench", "bench/tests/support"]
-markers = ["slow: builds distributions or runs subprocesses; run with -m slow"]
+markers = [
+    "slow: builds distributions or runs subprocesses; run with -m slow",
+    "heavy: needs a benchmark tool's pinned environment; run with -m heavy",
+]
 addopts = [
     "-ra",
     "--import-mode=importlib",
-    "-m", "not slow",
+    "-m", "not slow and not heavy",
     "--cov",
     "--cov-branch",
     "--cov-report=term-missing:skip-covered",

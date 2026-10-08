@@ -38,6 +38,19 @@ It refuses to start unless `src/inkgrid` is the tuned run's and every ground tru
 verified, and it writes `bench/results/<date>-<commit>-heldout/`. Its 11 documents take about two
 hours, nearly all of it the heavy tools.
 
+The OCR benchmarks of `docs/specs/18-ocr-benchmarks.md` (born-digital text and tables only, from
+olmOCR-bench, OmniDocBench, ParseBench and DP-Bench) run on their own too:
+
+```bash
+PYTHONPATH=bench uv run python -m inkgrid_bench.run prepare --datasets ocr   # then read, score, report
+```
+
+`bench/ocr/` holds the census manifests, which fix the 2,238 scored documents, and the listings of
+the files each benchmark is fetched as. Every stage refuses data or a census other than the pinned
+ones, and a run labelled baseline refuses an `src/inkgrid` other than 0.1.0's. Each scorer runs
+unmodified at its pin in its own environment; the results go to `bench/results/<date>-<commit>-ocr/`.
+`uv run pytest -m heavy --no-cov` runs each scorer on two documents first (SC5).
+
 Everything it fetches and writes lives in `~/.cache/inkgrid-bench/`; each stage skips the documents
 an earlier run of it finished. The datasets and tools take about 0.6 GB there; uv builds each tool's
 and scorer's environment on first use (PyTorch's CPU build among them). It runs one document at a
@@ -45,4 +58,5 @@ time, niced; without the heavy tools, in about two and a half hours.
 
 Datasets are the property of their publishers: ICDAR-2013 (Göbel, Hassan, Oro and Orsi, 2013);
 olmOCR-bench (ODC-BY-1.0, Poznanski et al., arXiv 2502.18443); Soric et al.'s ICDAR-2013 ground truth
-(KDD '26).
+(KDD '26); OmniDocBench (OpenDataLab, research use); ParseBench (LlamaIndex, Apache-2.0); DP-Bench
+(Upstage, MIT, through opendataloader-bench, Apache-2.0).

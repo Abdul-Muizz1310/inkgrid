@@ -7,6 +7,7 @@ Each scorer runs unmodified at its pin, in its own environment, through its driv
 """
 
 import contextlib
+import itertools
 import json
 import os
 import shutil
@@ -33,6 +34,9 @@ STAGES = ("prepare", "read", "score", "report")
 PIPELINE = "inkgrid_bench_saved"  # the ParseBench pipeline that returns the saved Markdown
 SCORER_TIMEOUT = 4 * 3600  # seconds for one scorer on one tool's documents of one benchmark
 SCORERS_USED = ("olmocr", "omnidocbench", "parsebench", "opendataloader")
+# A heavy tool reads at most this many documents per process, its models loaded once per batch: a
+# failure, or a run stopped and resumed, then re-renders and re-starts at most one batch.
+BATCH_DOCUMENTS = 100
 WARM_TIMEOUT = 3600  # seconds to build one environment the first time
 # What a tool's reading depends on besides its pin: the readings of a run at another commit carry
 # over only when none of it changed, and inkgrid's own only when src/inkgrid did not (RR1).
@@ -250,10 +254,16 @@ def _read_tool(
             for d in docs
             if not run.reading_path(run_dir, tool.name, name, _doc(d)).exists()
         ]
-        for doc, reading in run.tool_readings(tool, cmd, ver, todo):
-            _save(run.reading_path(run_dir, tool.name, name, doc), reading)
-            note = f" ERROR {reading.error}" if reading.error else f" {len(reading.markdown)} chars"
-            run.log(f"read {tool.name} {name} {doc.id}{note}")
+        batches = itertools.batched(todo, BATCH_DOCUMENTS) if tool.batch else [tuple(todo)]
+        for batch in batches:
+            for doc, reading in run.tool_readings(tool, cmd, ver, list(batch)):
+                _save(run.reading_path(run_dir, tool.name, name, doc), reading)
+                note = (
+                    f" ERROR {reading.error}"
+                    if reading.error
+                    else f" {len(reading.markdown)} chars"
+                )
+                run.log(f"read {tool.name} {name} {doc.id}{note}")
 
 
 def changed_files(commit: str, paths: Sequence[str]) -> list[str]:

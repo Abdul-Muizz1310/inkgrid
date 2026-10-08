@@ -282,3 +282,22 @@ def test_RR1_run_py_carries_readings_over_for_the_ocr_run_only(
     assert given == [("baseline", "aaa1111"), ("tuned", None)]
     assert run.main(["read", "--readings-from", "aaa1111"]) == 2
     assert "--readings-from" in capsys.readouterr().err
+
+
+def test_RD1_a_heavy_tool_reads_in_batches_of_at_most_a_hundred_documents(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    docs = [BenchDoc("dpbench", f"{i:03}", tmp_path / f"{i:03}.pdf", "page") for i in range(250)]
+    batches: dict[str, list[int]] = {}
+
+    def readings(tool: run.Tool, _cmd: object, _ver: str, todo: list[run.Doc]) -> object:
+        batches.setdefault(tool.name, []).append(len(todo))
+        return iter(())
+
+    monkeypatch.setattr(run, "tool_readings", readings)
+    cfg = run.config()
+    for tool in ocr_run.tools(cfg):
+        ocr_run._read_tool(tmp_path, tool, ["unused"], "1", {"dpbench": docs})  # noqa: SLF001
+    assert batches["docling"] == [100, 100, 50]
+    assert batches["marker"] == [100, 100, 50]
+    assert batches["inkgrid"] == [250]  # one process a document anyway

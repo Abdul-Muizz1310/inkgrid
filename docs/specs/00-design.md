@@ -606,7 +606,8 @@ Datasets are fetched by script and never redistributed.
   inkgrid requires it. The README's Licensing section says plainly that software distributed or served
   with inkgrid must meet PyMuPDF's AGPL terms unless the user holds Artifex's commercial license.
 - **House skeleton:**
-  - README in the house section order;
+  - README in the house style the owner's other packages ship (feathers, slowquery-detective;
+    amended 2026-10-08 by DR-0027, replacing a documented section order no README followed);
   - `WHY.md`, `LICENSE`, `CHANGELOG.md`;
   - a pull request template with the Spec-TDD checklist;
   - `docs/ARCHITECTURE.md` with a Mermaid diagram, `docs/DEMO.md`, and `docs/specs/`;

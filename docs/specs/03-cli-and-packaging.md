@@ -149,7 +149,8 @@ may import pypdfium2). This keeps `words.py`, `rules.py`, and the verifier's che
   Actions are pinned by SHA, with `permissions: {}` by default. Dependabot covers `uv` and
   `github-actions`.
 - **House skeleton:**
-  - `README.md` in the house section order;
+  - `README.md` in the house style (amended 2026-10-08 by DR-0027: the style feathers and
+    slowquery-detective ship);
   - `WHY.md`;
   - `LICENSE` (MIT);
   - `CHANGELOG.md` (Keep a Changelog 1.1.0);

@@ -160,10 +160,49 @@ def test_SC3_parsebench_reads_saved_markdown_with_html_tables_and_scores_back(
             "pb_normalized_order_n": 1,
             "pb_normalized_text_correctness": 0.875,
             "pb_normalized_text_correctness_n": 1,
+            "pb_unscored": 0,
+            "pb_failed": 0,
         }
     }
     with pytest.raises(ValueError, match="text/c"):
         parsebench.document_scores(report, ["text/b", "text/c"], parsebench.TEXT_METRICS)
-    failed = {"per_example_results": [{"test_id": "text/b", "success": False, "metrics": []}]}
-    with pytest.raises(ValueError, match="text/b"):
-        parsebench.document_scores(failed, ["text/b"], parsebench.TEXT_METRICS)
+
+
+def test_SC3_a_document_parsebench_failed_counts_as_parsebench_counts_it() -> None:
+    def failed(doc: str, error: str) -> dict[str, object]:
+        return {"test_id": doc, "success": False, "error": error, "metrics": []}
+
+    report = {
+        "per_example_results": [
+            failed("text/b", "Evaluation error: list index out of range"),  # the scorer's own
+            failed("text/d", "Inference failed: no output"),  # the tool's: counts 0
+        ]
+    }
+    scores = parsebench.document_scores(report, ["text/b", "text/d"], parsebench.TEXT_METRICS)
+    names = parsebench.TEXT_METRICS
+    assert scores["text/b"] == {f"pb_{m}": 0.0 for m in names} | {f"pb_{m}_n": 0 for m in names} | {
+        "pb_unscored": 1,
+        "pb_failed": 0,
+    }
+    assert scores["text/d"] == {f"pb_{m}": 0.0 for m in names} | {f"pb_{m}_n": 1 for m in names} | {
+        "pb_unscored": 0,
+        "pb_failed": 1,
+    }
+
+
+def test_SC1_a_lone_surrogate_in_a_reading_reaches_every_scorer_as_a_replacement(
+    tmp_path: Path,
+) -> None:
+    text = "fee \ud800 due"  # a lone surrogate survives a JSON round trip; UTF-8 cannot hold it
+    olmocr_pages.write_candidate(tmp_path / "olm", ["tables/a.pdf"], {"tables/a.pdf": text})
+    omnidocbench.write_predictions(tmp_path / "omni", ["p1"], {"p1": text})
+    parsebench.write_saved(tmp_path / "pb", ["text/b"], {"text/b": text})
+    dpbench.write_predictions(tmp_path / "dp", "candidate", ["01"], {"01": text})
+    written = [
+        tmp_path / "olm" / "tables" / "a_pg1_repeat1.md",
+        tmp_path / "omni" / "p1.md",
+        tmp_path / "pb" / "text__b.md",
+        tmp_path / "dp" / "candidate" / "markdown" / "01.md",
+    ]
+    for path in written:
+        assert path.read_text(encoding="utf-8") == "fee � due"

@@ -50,6 +50,7 @@ SORIC_RELEASED = CACHE / "soric" / "x" / "icdar-2013"
 SORIC_REPO = CACHE / "soric" / "repo"
 SORIC_MODELS = ("cam", "pymu", "plum", "doc")  # their Camelot, PyMuPDF, pdfplumber, Docling
 OLMOCR_DATA = CACHE / "olmocr" / "bench_data"
+OLMOCR_TABLES = CACHE / "olmocr" / "tables"  # spec 12's view of it (olmocr_table_view)
 NO_TEXT_LAYER = BENCH / "olmocr-no-text-layer.txt"
 EXPECTED = {"competition": 67, "practice": 58, "olmocr": 188}
 # Each archive and the path its extraction creates.
@@ -783,11 +784,27 @@ def score_soric(run: Path, cfg: dict[str, Any]) -> None:
         log(f"soric released {model}")
 
 
+def olmocr_table_view(data: Path, view: Path) -> Path:
+    """Spec 12's olmOCR-bench folder: `table_tests.jsonl` and `pdfs/tables/`, linked from `data`.
+
+    olmOCR-bench's command line scores every PDF under `pdfs/` against every `*.jsonl` beside it,
+    and spec 18's categories share `data` (docs/specs/18-ocr-benchmarks.md s. 8, DS2). The view is
+    made afresh, with hard links, so it holds spec 12's files and nothing else.
+    """
+    shutil.rmtree(view, ignore_errors=True)
+    (view / "pdfs" / "tables").mkdir(parents=True)
+    for pdf in sorted((data / "pdfs" / "tables").glob("*.pdf")):
+        os.link(pdf, view / "pdfs" / "tables" / pdf.name)
+    os.link(data / "table_tests.jsonl", view / "table_tests.jsonl")
+    return view
+
+
 def score_olmocr(run: Path, cfg: dict[str, Any]) -> None:
     """olmOCR-bench's table tests for every tool, per test, checked against its command line."""
     scorer = cfg["scorer"]["olmocr"]
     env = isolated([scorer["package"], *scorer["with"]])
     docs = datasets()["olmocr"]
+    data = olmocr_table_view(OLMOCR_DATA, OLMOCR_TABLES)
     for tool in tools(cfg):
         if "olmocr" not in tool.datasets:
             continue
@@ -795,7 +812,7 @@ def score_olmocr(run: Path, cfg: dict[str, Any]) -> None:
         if out.exists():
             continue
         candidate = f"inkgrid-bench-{tool.name}"
-        folder = OLMOCR_DATA / candidate
+        folder = data / candidate
         shutil.rmtree(folder, ignore_errors=True)
         for doc in docs:
             reading = NDocument.from_json(reading_path(run, tool.name, "olmocr", doc).read_text())
@@ -806,12 +823,12 @@ def score_olmocr(run: Path, cfg: dict[str, Any]) -> None:
         driver.parent.mkdir(parents=True, exist_ok=True)
         cmd = [*NICE, *env, "python", "-m", "inkgrid_bench.scores.olmocr_driver"]
         code, _, err = run_process(
-            [*cmd, str(OLMOCR_DATA), candidate, str(driver)], timeout=SCORER_TIMEOUT
+            [*cmd, str(data), candidate, str(driver)], timeout=SCORER_TIMEOUT
         )
         if code != 0:
             msg = f"olmOCR's scorer failed for {tool.name}: {last_line(err)}"
             raise RuntimeError(msg)
-        cli = [*NICE, *env, "python", "-m", "olmocr.bench.benchmark", "--dir", str(OLMOCR_DATA)]
+        cli = [*NICE, *env, "python", "-m", "olmocr.bench.benchmark", "--dir", str(data)]
         code, stdout, err = run_process(
             [*cli, "--candidate", candidate, "--skip_baseline"], timeout=SCORER_TIMEOUT
         )
@@ -822,7 +839,7 @@ def score_olmocr(run: Path, cfg: dict[str, Any]) -> None:
         if result["errors"]:
             msg = f"olmOCR's scorer met errors for {tool.name}: {result['errors'][0]}"
             raise RuntimeError(msg)
-        tests = [json.loads(line) for line in (OLMOCR_DATA / "table_tests.jsonl").open()]
+        tests = [json.loads(line) for line in (data / "table_tests.jsonl").open()]
         counts = olmocr.result_counts(tests, result["passed"])
         passed = int(sum(c["passed"] for c in counts.values()))
         total = int(sum(c["tests"] for c in counts.values()))

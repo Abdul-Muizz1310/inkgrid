@@ -174,6 +174,7 @@ baseline is labelled `baseline`, later runs `tuned` (`--label tuned`).
 | Case | Input | Expected |
 |---|---|---|
 | DS1 | each benchmark's files, laid out as fetched (test files or truth listing their PDFs) | every document once, with its id (the benchmark's own) and group (olmOCR category, OmniDocBench language, ParseBench track or text tag); a referenced PDF that is missing is refused |
+| DS2 | spec 12's olmOCR-bench folder after this spec's categories are fetched beside its table tests | spec 12 scores in a view of it holding only `table_tests.jsonl` and `pdfs/tables/`, so olmOCR's command line and spec 12's driver see the table tests and the 188 table PDFs and nothing else |
 | CS1 | page statistics at each threshold's edge: 49 and 50 visible characters; invisible equal to visible; one image covering 89% and 90% | `no_text`; `born_digital`; `ocr_layer`; `born_digital`; `image_backed` |
 | CS2 | a document with one `image_backed` page among born-digital ones | not born-digital |
 | CS3 | a PDF built with visible text, invisible text, and a page-size image | the census shell's counts match what was drawn |

@@ -1,3 +1,4 @@
+import glob
 import json
 import os
 import signal
@@ -340,3 +341,28 @@ def test_BM7_a_refused_group_kill_kills_the_process_itself(monkeypatch: pytest.M
     monkeypatch.setattr(os, "killpg", refused)
     run._kill(proc)  # noqa: SLF001 - the shared kill
     assert proc.wait(timeout=10) == -signal.SIGKILL
+
+
+def test_DS2_spec_12_scores_olmocr_tables_in_a_view_holding_only_its_own_files(
+    tmp_path: Path,
+) -> None:
+    # spec 18's categories share olmOCR-bench's folder; its command line lists every PDF and test
+    data = tmp_path / "bench_data"
+    for category, name in (("tables", "a"), ("tables", "b"), ("headers_footers", "c")):
+        pdf = data / "pdfs" / category / f"{name}.pdf"
+        pdf.parent.mkdir(parents=True, exist_ok=True)
+        pdf.write_bytes(name.encode())
+    (data / "table_tests.jsonl").write_text('{"pdf": "tables/a.pdf"}\n')
+    (data / "headers_footers.jsonl").write_text('{"pdf": "headers_footers/c.pdf"}\n')
+    old = tmp_path / "view" / "inkgrid-bench-old" / "x.md"
+    old.parent.mkdir(parents=True)
+    old.write_text("left from an earlier run")
+    view = run.olmocr_table_view(data, tmp_path / "view")
+    listed = glob.glob(str(view / "pdfs" / "**" / "*.pdf"), recursive=True)  # noqa: PTH207 - its CLI's
+    assert sorted(Path(p).relative_to(view / "pdfs").as_posix() for p in listed) == [
+        "tables/a.pdf",
+        "tables/b.pdf",
+    ]
+    assert sorted(p.name for p in view.iterdir()) == ["pdfs", "table_tests.jsonl"]
+    assert (view / "pdfs" / "tables" / "b.pdf").read_bytes() == b"b"
+    assert (view / "table_tests.jsonl").read_text() == '{"pdf": "tables/a.pdf"}\n'

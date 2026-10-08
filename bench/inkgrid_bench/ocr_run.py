@@ -240,7 +240,14 @@ def score_omnidocbench(
     script = run.CACHE / cfg["scorer"]["omnidocbench"]["root"] / "pdf_validation.py"
     env = _scorer_env(cfg, "omnidocbench")
     _call([*env, "python", str(script), "--config", str(config)], "OmniDocBench's scorer", work)
-    return omnidocbench.page_counts(work / "result", omnidocbench.save_name(predictions), ids)
+    name = omnidocbench.save_name(predictions)
+    pages = omnidocbench.page_counts(work / "result", name, ids)
+    result = run.load(work / "result" / f"{name}_metric_result.json")
+    problems = omnidocbench.check(pages, {d.id: d.group for d in docs}, result)
+    if problems:
+        msg = f"OmniDocBench's pages do not reproduce its own averages: {'; '.join(problems)}"
+        raise RuntimeError(msg)
+    return pages
 
 
 def score_parsebench(

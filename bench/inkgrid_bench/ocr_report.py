@@ -81,7 +81,7 @@ OMNI_TEXT = (
     MetricSpec("omni_text", "Text Edit distance", mean_of("omni_text_edit", "omni_text_len")),
 )
 OMNI_TABLES = (
-    MetricSpec("omni_teds", "Table TEDS", pooled("omni_teds_sum", "omni_teds_n")),
+    MetricSpec("omni_teds", "Table TEDS", mean_of("omni_teds_sum", "omni_teds_n")),
     MetricSpec(
         "omni_table_edit", "Table Edit distance", mean_of("omni_table_edit", "omni_table_len")
     ),
@@ -119,9 +119,14 @@ OLMOCR_NOTE = (
     "test, one a page, fails a page with no text, one ending in repeated words, or one with "
     "characters the benchmark disallows.\n"
 )
+MIXED = (
+    "As OmniDocBench reports text by language, pages in mixed English and Chinese count in neither "
+    "language's text; they count in the tables and the reading order.\n"
+)
 OMNI_TABLE_NOTE = (
-    "TEDS is pooled over the truth's tables, as the scorer pools it; a table Edit distance is each "
-    "page's own, and lower is better for it, so there a negative difference favours inkgrid.\n"
+    "A page's TEDS is the mean over its truth's tables, and each number is the mean over the pages "
+    "with a table in their truth, as OmniDocBench averages them. Lower is better for a table Edit "
+    "distance, so there a negative difference favours inkgrid.\n"
 )
 DP_NOTE = (
     "NID scores the page's text in reading order; TEDS only pages whose truth has a table, and "
@@ -175,12 +180,7 @@ SPEED_PART = Part("Speed", _every, SPEED)
 def _omni_parts(*, speed: bool) -> tuple[Part, ...]:
     return (
         Part("Text, English pages", _groups("english"), OMNI_TEXT, LOWER),
-        Part(
-            "Text, Chinese pages (simplified Chinese and mixed)",
-            _groups("simplified_chinese", "en_ch_mixed"),
-            OMNI_TEXT,
-            LOWER,
-        ),
+        Part("Text, Chinese pages", _groups("simplified_chinese"), OMNI_TEXT, LOWER + MIXED),
         Part("Tables", _every, OMNI_TABLES, OMNI_TABLE_NOTE),
         Part("Reading order", _every, OMNI_ORDER, LOWER),
         *((SPEED_PART,) if speed else ()),

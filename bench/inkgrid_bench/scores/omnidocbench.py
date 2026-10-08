@@ -3,14 +3,18 @@
 The scorer reads `<page>.md` predictions and a ground-truth JSON; the driver gives it only the
 scored pages (it skips a page with no prediction, so every scored page gets one, empty when the tool
 has none) and rebuilds each page's counts from the scorer's per-sample results: a page's edit
-distance is its summed edits over its summed lengths, and TEDS is pooled over tables, as the scorer
-computes them.
+distance is its summed edits over its summed lengths, and its TEDS the mean over its tables, each
+averaged over pages as the scorer averages them; `check` holds the pages to the scorer's own page
+averages.
 """
 
 import json
+import math
 from collections.abc import Collection, Mapping, Sequence
 from pathlib import Path
 from typing import Any
+
+from inkgrid_bench.scores.metrics import Counts, Metric, mean_of
 
 MATCH = "quick_match"
 ELEMENTS = {
@@ -87,4 +91,59 @@ def page_counts(result: Path, name: str, ids: Sequence[str]) -> dict[str, dict[s
                     raise TypeError(msg)
                 out[page]["omni_teds_sum"] += metric["TEDS"]
                 out[page]["omni_teds_n"] += 1
+    return out
+
+
+AVERAGES: dict[str, tuple[Metric, tuple[str, ...]]] = {
+    "text Edit distance": (
+        mean_of("omni_text_edit", "omni_text_len"),
+        ("text_block", "all", "Edit_dist", "ALL_page_avg"),
+    ),
+    "table TEDS": (mean_of("omni_teds_sum", "omni_teds_n"), ("table", "page", "TEDS", "ALL")),
+    "table Edit distance": (
+        mean_of("omni_table_edit", "omni_table_len"),
+        ("table", "all", "Edit_dist", "ALL_page_avg"),
+    ),
+    "reading-order Edit distance": (
+        mean_of("omni_order_edit", "omni_order_len"),
+        ("reading_order", "all", "Edit_dist", "ALL_page_avg"),
+    ),
+}
+LANGUAGES = ("english", "simplified_chinese")  # the text averages reported by language
+TOLERANCE = 1e-9
+
+
+def _theirs(result: Mapping[str, Any], path: Sequence[str]) -> float:
+    """The scorer's number at `path`, NaN where it has none (its own "NaN" included)."""
+    node: Any = result
+    for key in path:
+        if not isinstance(node, Mapping) or key not in node:
+            return math.nan
+        node = node[key]
+    return float(node)
+
+
+def _differ(ours: float, theirs: float) -> bool:
+    if math.isnan(ours) or math.isnan(theirs):
+        return math.isnan(ours) != math.isnan(theirs)
+    return abs(ours - theirs) > TOLERANCE
+
+
+def check(
+    pages: Mapping[str, Counts], languages: Mapping[str, str], result: Mapping[str, Any]
+) -> list[str]:
+    """Where the pages' averages differ from the scorer's own (`*_metric_result.json`)."""
+    out = []
+    docs = list(pages.values())
+    for name, (metric, path) in AVERAGES.items():
+        ours, theirs = metric(docs), _theirs(result, path)
+        if _differ(ours, theirs):
+            out.append(f"{name}: {ours} here, {theirs} by the scorer")
+    text = AVERAGES["text Edit distance"][0]
+    for language in LANGUAGES:
+        ours = text([c for page, c in pages.items() if languages[page] == language])
+        path = ("text_block", "page", "Edit_dist", f"language: {language}")
+        theirs = _theirs(result, path)
+        if _differ(ours, theirs):
+            out.append(f"text Edit distance, {language} pages: {ours} here, {theirs} by the scorer")
     return out

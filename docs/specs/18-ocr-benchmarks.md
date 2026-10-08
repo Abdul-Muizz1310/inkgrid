@@ -86,8 +86,9 @@ benchmark's report states how many documents each class holds and lists the excl
 **Further strata, fixed here:**
 - OmniDocBench: the primary stratum is born-digital pages **not** listed in `with_mask.json` (where the
   original PDF equals the evaluated page); all born-digital pages are reported as a second stratum. Text
-  results are reported for English pages and for Chinese (simplified Chinese and mixed) pages separately,
-  as OmniDocBench v1.0 reports them.
+  results are reported for English pages and for simplified Chinese pages separately, as OmniDocBench
+  v1.0 reports them by its `language` attribute; pages in mixed English and Chinese count in neither
+  language's text, and in the tables and reading order.
 - ParseBench: `text_multilang` is reported apart from the other five text tags.
 - olmOCR-bench: long_tiny_text is reported apart; it is not in the headline.
 
@@ -129,7 +130,7 @@ benchmark's report states how many documents each class holds and lists the excl
 | Benchmark | Reported | Per-document value | Pooling |
 |---|---|---|---|
 | olmOCR-bench | pass rate per category (headers_footers, multi_column, tables, long_tiny_text); the automatic baseline tests as their own group; a **born-digital macro** over headers_footers, multi_column and tables | tests passed, tests | pooled over tests, per category |
-| OmniDocBench | text Edit distance (lower is better), table TEDS and table Edit distance, reading-order Edit distance | the scorer's per-page value | mean over pages, as `ALL_page_avg` |
+| OmniDocBench | text Edit distance (lower is better), table TEDS and table Edit distance, reading-order Edit distance | the scorer's per-page value (a page's TEDS is the mean over its tables) | mean over pages, as the scorer's page averages (`ALL_page_avg`; `page.TEDS.ALL`), which each run's pages must reproduce |
 | ParseBench | tables: GTRM (headline), GriTS-Con and TableRecordMatch; text: Content Faithfulness, with its text-correctness and order parts | the scorer's per-document value | mean over documents |
 | DP-Bench | NID, TEDS (documents with tables), MHS (documents with headings) | the scorer's per-document value | mean over documents |
 
@@ -198,7 +199,7 @@ baseline is labelled `baseline`, later runs `tuned` (`--label tuned`).
 | AD5 | *heavy:* inkgrid on Tesseract's words on that page | Markdown holding both paragraphs as Tesseract reads them, and any table it finds written as HTML |
 | AD6 | *heavy:* pymupdf4llm on a five-page document with a running header and page numbers | Markdown holding the body and neither the header nor a page number |
 | SC1 | an olmOCR category restricted to born-digital PDFs, a tool missing one PDF's output | an empty file written for it; per-PDF tests and passes read back |
-| SC2 | OmniDocBench's per-page Edit and TEDS files for a subset | per-page values keyed by page, with each page's language |
+| SC2 | OmniDocBench's per-page Edit and TEDS files for a subset, and its own averages | per-page values keyed by page, with each page's language; their means reproduce the scorer's page averages (overall, and English and simplified Chinese text), and a difference is refused |
 | SC3 | a ParseBench run through the saved-Markdown provider | the provider returns exactly the saved Markdown; per-document values read back |
 | SC4 | an opendataloader-bench `evaluation.json` | per-document NID, TEDS and MHS, missing where the document has no table or heading |
 | SC5 | *heavy:* inkgrid's pages of two scored documents of each benchmark, scored as the run scores them | each pinned scorer, in its environment, returns values for exactly those documents |

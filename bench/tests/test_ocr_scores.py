@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 
 from inkgrid_bench.scores import dpbench, olmocr_pages, omnidocbench, parsebench
-from inkgrid_bench.scores.metrics import mean_of, pooled
+from inkgrid_bench.scores.metrics import mean_of
 
 
 def test_SC1_every_scored_pdf_gets_a_page_and_its_tests_are_counted(tmp_path: Path) -> None:
@@ -64,12 +64,45 @@ def test_SC2_omnidocbench_pages_reproduce_its_own_aggregates(tmp_path: Path) -> 
     assert pages["p3"] == dict.fromkeys(omnidocbench.KEYS, 0)  # nothing matched: no value
     docs = list(pages.values())
     assert mean_of("omni_text_edit", "omni_text_len")(docs) == pytest.approx((0.1 + 0.5) / 2)
-    assert pooled("omni_teds_sum", "omni_teds_n")(docs) == pytest.approx(1.5 / 3)
+    assert mean_of("omni_teds_sum", "omni_teds_n")(docs) == pytest.approx((0.7 + 0.1) / 2)
     assert mean_of("omni_order_edit", "omni_order_len")(docs) == pytest.approx((0.25 + 0) / 2)
     gt = [{"page_info": {"image_path": f"images/{p}.jpg"}} for p in ("p1", "p2", "p3")]
     assert [p["page_info"]["image_path"] for p in omnidocbench.subset(gt, {"p2"})] == [
         "images/p2.jpg"
     ]
+
+
+def scorer_result(text: float, teds: float, english: float) -> dict[str, object]:
+    by_language = {"language: english": english, "language: simplified_chinese": 0.3}
+    return {
+        "text_block": {
+            "all": {"Edit_dist": {"ALL_page_avg": text}},
+            "page": {"Edit_dist": {"ALL": text, **by_language}},
+        },
+        "table": {
+            "all": {"Edit_dist": {"ALL_page_avg": 0.25}, "TEDS": {"all": 0.5}},
+            "page": {"TEDS": {"ALL": teds}},
+        },
+        "reading_order": {"all": {"Edit_dist": {"ALL_page_avg": "NaN"}}},
+    }
+
+
+def test_SC2_the_pages_reproduce_the_scorers_own_page_averages() -> None:
+    zero = dict.fromkeys(omnidocbench.KEYS, 0.0)
+    pages = {
+        "p1": zero
+        | {"omni_text_edit": 1, "omni_text_len": 10, "omni_teds_sum": 1.4, "omni_teds_n": 2},
+        "p2": zero | {"omni_text_edit": 3, "omni_text_len": 10, "omni_table_edit": 1},
+        "p3": zero
+        | {"omni_table_edit": 1, "omni_table_len": 4, "omni_teds_sum": 0.1, "omni_teds_n": 1},
+    }
+    pages["p2"]["omni_table_len"] = 4
+    languages = {"p1": "english", "p2": "simplified_chinese", "p3": "english"}
+    assert omnidocbench.check(pages, languages, scorer_result(0.2, 0.4, 0.1)) == []
+    problems = omnidocbench.check(pages, languages, scorer_result(0.2, 0.5, 0.3))
+    assert len(problems) == 2
+    assert "table TEDS" in problems[0]
+    assert "english" in problems[1]
 
 
 def test_SC4_dpbench_scores_each_document_and_refuses_a_dropped_one() -> None:

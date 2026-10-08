@@ -17,7 +17,7 @@ def olm(group: str, passed: int, tests: int) -> dict[str, float]:
     return counts | {"olm_baseline_tests": 1, "olm_baseline_passed": 1}
 
 
-def omni(edit: float) -> dict[str, float]:
+def omni(edit: float, teds: tuple[float, int] = (0.5, 1)) -> dict[str, float]:
     return {
         "omni_text_edit": edit,
         "omni_text_len": 10,
@@ -25,8 +25,8 @@ def omni(edit: float) -> dict[str, float]:
         "omni_table_len": 0,
         "omni_order_edit": edit / 2,
         "omni_order_len": 10,
-        "omni_teds_sum": 0.5,
-        "omni_teds_n": 1,
+        "omni_teds_sum": teds[0],
+        "omni_teds_n": teds[1],
     }
 
 
@@ -73,7 +73,11 @@ def counts(shift: float) -> dict[str, dict[str, dict[str, float]]]:
             "tables/1.pdf": olm("tables", 0, 1),
             "long_tiny_text/1.pdf": olm("long_tiny_text", 3, 4),
         },
-        "omnidocbench": {"en1": omni(1 + shift), "zh1": omni(2), "mx1": omni(4)},
+        "omnidocbench": {
+            "en1": omni(1 + shift, (1.4, 2)),
+            "zh1": omni(2, (0.1, 1)),
+            "mx1": omni(4),
+        },
         "parsebench": {"table/a": pb(0.5), "text/b": pb(0.75), "text/c": pb(0.25)},
         "dpbench": {"01": dp(0.9), "02": dp(0.7 - shift / 10)},
     }
@@ -164,9 +168,10 @@ def test_RP1_omnidocbench_reports_its_strata_and_its_text_by_language() -> None:
         "0.100"
     )
     chinese = section(every, "### Text, Chinese pages")
-    assert "(2 documents)" in chinese
-    assert cell(chinese, "inkgrid", "Text Edit distance") == "0.300"  # (0.2 + 0.4) / 2
-    assert cell(section(primary, "### Tables"), "inkgrid", "Table TEDS") == "0.500"
+    assert "(1 documents)" in chinese  # simplified Chinese only, as OmniDocBench reports it
+    assert cell(chinese, "inkgrid", "Text Edit distance") == "0.200"
+    tables = section(primary, "### Tables")
+    assert cell(tables, "inkgrid", "Table TEDS") == "0.400"  # (1.4 / 2 + 0.1) / 2, page by page
     assert "lower is better" in section(primary, "### Text, English pages").lower()
 
 

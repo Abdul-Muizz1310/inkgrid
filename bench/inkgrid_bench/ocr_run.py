@@ -28,6 +28,7 @@ CENSUS = run.BENCH / "ocr"
 BENCHMARKS = tuple(ocr_report.BENCHMARKS)
 STAGES = ("prepare", "read", "score", "report")
 PIPELINE = "inkgrid_bench_saved"  # the ParseBench pipeline that returns the saved Markdown
+SCORER_TIMEOUT = 4 * 3600  # seconds for one scorer on one tool's documents of one benchmark
 BASELINE_READING = "v0.1.0"  # the release whose reading a baseline run measures (DR-0023)
 ENGINE = "candidate"  # the engine folder opendataloader-bench's evaluator scores
 
@@ -191,11 +192,20 @@ def _scorer_env(cfg: dict[str, Any], name: str) -> list[str]:
     return [*run.NICE, *env]
 
 
-def _call(cmd: Sequence[str], what: str, cwd: Path | None = None) -> None:
-    code, _, err = run.run_process(cmd, timeout=run.SCORER_TIMEOUT, cwd=cwd)
+def call(cmd: Sequence[str], what: str, log: Path, cwd: Path | None = None) -> str:
+    """Run a scorer, keeping all it prints in `log`; its output, or a failure naming the log."""
+    log.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        code, out, err = run.run_process(cmd, timeout=SCORER_TIMEOUT, cwd=cwd)
+    except TimeoutError as exc:
+        log.write_text(f"{what}: {exc}\n", encoding="utf-8")
+        msg = f"{what} failed: {exc}; see {log}"
+        raise RuntimeError(msg) from exc
+    log.write_text(f"{out}\n--- stderr ---\n{err}", encoding="utf-8")
     if code != 0:
-        msg = f"{what} failed: {run.last_line(err) or f'exit status {code}'}"
+        msg = f"{what} failed: {run.last_line(err) or f'exit status {code}'}; see {log}"
         raise RuntimeError(msg)
+    return out
 
 
 def score_olmocr(
@@ -213,7 +223,11 @@ def score_olmocr(
     args = [str(data), str(work / "candidate"), str(work / "pdfs.txt"), str(out), *groups]
     scorer = cfg["scorer"]["olmocr"]
     env = run.isolated([scorer["package"], *scorer["with"]])
-    _call([*run.NICE, *env, "python", "-m", driver, *args], "olmOCR-bench's scorer")
+    call(
+        [*run.NICE, *env, "python", "-m", driver, *args],
+        "olmOCR-bench's scorer",
+        work / "scorer.log",
+    )
     result = run.load(out)
     if result["errors"]:
         msg = f"olmOCR-bench's scorer met {len(result['errors'])} errors: {result['errors'][0]}"
@@ -239,9 +253,16 @@ def score_omnidocbench(
     (work / "result").mkdir()  # the scorer writes to ./result and does not make it
     script = run.CACHE / cfg["scorer"]["omnidocbench"]["root"] / "pdf_validation.py"
     env = _scorer_env(cfg, "omnidocbench")
-    _call([*env, "python", str(script), "--config", str(config)], "OmniDocBench's scorer", work)
+    cmd = [*env, "python", str(script), "--config", str(config)]
+    log = call(cmd, "OmniDocBench's scorer", work / "scorer.log", work)
+    missing = omnidocbench.unpredicted(log)
+    if missing:
+        msg = f"OmniDocBench's scorer found no prediction for {len(missing)} pages: {missing[:5]}"
+        raise RuntimeError(msg)
     name = omnidocbench.save_name(predictions)
     pages = omnidocbench.page_counts(work / "result", name, ids)
+    for page in omnidocbench.fallbacks(log):
+        pages[page]["omni_fallback"] = 1  # matched the simple way: listed in the report
     result = run.load(work / "result" / f"{name}_metric_result.json")
     problems = omnidocbench.check(pages, {d.id: d.group for d in docs}, result)
     if problems:
@@ -270,7 +291,7 @@ def score_parsebench(
         target = work / f"out-{group}"
         driver = ["python", "-m", "inkgrid_bench.scores.parsebench_driver"]
         args = [str(data), str(saved), str(target), group, PIPELINE]
-        _call([*env, *driver, *args], f"ParseBench's {group} scorer", work)
+        call([*env, *driver, *args], f"ParseBench's {group} scorer", work / f"{group}.log", work)
         result = run.load(target / PIPELINE / "_evaluation_report.json")
         out |= parsebench.document_scores(result, ids, metrics)
     return out
@@ -292,7 +313,8 @@ def score_dpbench(
         "--log-level", "WARNING",
     ]  # fmt: skip
     env = _scorer_env(cfg, "opendataloader")
-    _call([*env, "python", str(repo / "src" / "evaluator.py"), *args], "DP-Bench's scorer", work)
+    cmd = [*env, "python", str(repo / "src" / "evaluator.py"), *args]
+    call(cmd, "DP-Bench's scorer", work / "scorer.log", work)
     return dpbench.document_scores(run.load(root / ENGINE / "evaluation.json"), ids)
 
 
@@ -335,6 +357,7 @@ def gather(run_dir: Path, cfg: dict[str, Any]) -> dict[str, Any]:
     counts: dict[str, dict[str, DocCounts]] = {}
     crashes: dict[str, dict[str, list[list[str]]]] = {}
     classes: dict[str, dict[str, Any]] = {}
+    left_out: dict[str, dict[str, list[str]]] = {}
     for benchmark in BENCHMARKS:
         docs = checked(benchmark, cfg)
         manifest = census(benchmark)["documents"]
@@ -350,6 +373,7 @@ def gather(run_dir: Path, cfg: dict[str, Any]) -> dict[str, Any]:
             "documents": len(manifest),
             "classes": dict(Counter(str(v["class"]) for v in manifest.values())),
         }
+        left_out[benchmark] = ocr_data.excluded(manifest, {d.id for d in docs})
         by_tool: dict[str, dict[str, dict[str, float]]] = {}
         for tool in ocr_report.TOOLS:
             scores = run.load(run_dir / "ocr" / benchmark / f"{tool}.json")
@@ -366,7 +390,13 @@ def gather(run_dir: Path, cfg: dict[str, Any]) -> dict[str, Any]:
                 }
             by_tool[tool] = per_doc
         counts[benchmark] = filled(by_tool)
-    return {"documents": documents, "counts": counts, "census": classes, "crashes": crashes}
+    return {
+        "documents": documents,
+        "counts": counts,
+        "census": classes,
+        "crashes": crashes,
+        "excluded": left_out,
+    }
 
 
 def environments(cfg: dict[str, Any]) -> dict[str, Any]:
@@ -397,7 +427,8 @@ def write_results(
     target.mkdir(parents=True, exist_ok=True)
     run.save(target / "counts.json", data["counts"])
     run.save(target / "documents.json", data["documents"])
-    run.save(target / "checks.json", {"census": data["census"], "crashes": data["crashes"]})
+    checks = {k: data[k] for k in ("census", "crashes", "excluded")}
+    run.save(target / "checks.json", checks)
     run.save(target / "environment.json", environments(cfg))
     text = ocr_report.document(data, head=head, date=date, label=label)
     (target / "report.md").write_text(text, encoding="utf-8")

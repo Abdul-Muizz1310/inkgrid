@@ -10,6 +10,7 @@ averages.
 
 import json
 import math
+import re
 from collections.abc import Collection, Mapping, Sequence
 from pathlib import Path
 from typing import Any
@@ -18,6 +19,10 @@ from inkgrid_bench.page_markdown import scorable
 from inkgrid_bench.scores.metrics import Counts, Metric, mean_of
 
 MATCH = "quick_match"
+# What the scorer prints when a page's text match passes its 30 s and falls back to the simple
+# match (so a page's match can depend on the machine's load), and when a page has no prediction.
+FALLBACK = re.compile(r"^Time out for plain text match of (.+)\.jpg, ", re.MULTILINE)
+UNPREDICTED = re.compile(r"^!!!WARNING: No prediction for (.+)\.jpg$", re.MULTILINE)
 ELEMENTS = {
     "text_block": ("omni_text_edit", "omni_text_len"),
     "table": ("omni_table_edit", "omni_table_len"),
@@ -148,3 +153,13 @@ def check(
         if _differ(ours, theirs):
             out.append(f"text Edit distance, {language} pages: {ours} here, {theirs} by the scorer")
     return out
+
+
+def fallbacks(log: str) -> set[str]:
+    """The pages whose text the scorer matched the simple way, from its output."""
+    return set(FALLBACK.findall(log))
+
+
+def unpredicted(log: str) -> list[str]:
+    """The pages the scorer found no prediction for, from its output."""
+    return UNPREDICTED.findall(log)

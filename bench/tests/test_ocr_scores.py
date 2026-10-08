@@ -206,3 +206,15 @@ def test_SC1_a_lone_surrogate_in_a_reading_reaches_every_scorer_as_a_replacement
     ]
     for path in written:
         assert path.read_text(encoding="utf-8") == "fee � due"
+
+
+def test_SC2_pages_omnidocbench_matched_the_simple_way_or_could_not_find_are_named() -> None:
+    log = (
+        "Processing a.pdf_3.md\n"
+        "Time out for plain text match of a.pdf_3.jpg, match_gt2pred_simple will be used.\n"
+        "!!!WARNING: No prediction for b.jpg\n"
+        "Time out for plain text match of c.jpg, match_gt2pred_simple will be used.\n"
+    )
+    assert omnidocbench.fallbacks(log) == {"a.pdf_3", "c"}
+    assert omnidocbench.unpredicted(log) == ["b"]
+    assert omnidocbench.fallbacks("") == set()

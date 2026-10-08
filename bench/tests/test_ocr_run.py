@@ -1,5 +1,6 @@
 import hashlib
 import json
+import sys
 from pathlib import Path
 
 import pytest
@@ -131,3 +132,16 @@ def test_RN2_a_baseline_run_refuses_an_inkgrid_that_is_not_0_1_0s(
     monkeypatch.setattr(ocr_run, "src_changed", lambda _tag: False)
     ocr_run.stages("baseline")["read"](tmp_path, "abc1234", {})
     assert ran == ["read", "tuned", "read"]
+
+
+def test_SC5_a_scorers_output_is_kept_and_its_failure_names_its_log(tmp_path: Path) -> None:
+    script = "import sys; print('scored 3 pages'); print('a warning', file=sys.stderr)"
+    log = tmp_path / "work" / "scorer.log"
+    ocr_run.call([sys.executable, "-c", script], "a scorer", log)
+    kept = log.read_text(encoding="utf-8")
+    assert "scored 3 pages" in kept
+    assert "a warning" in kept
+    failing = "import sys; print('matching error'); sys.exit(3)"
+    with pytest.raises(RuntimeError, match=r"a scorer failed.*scorer\.log"):
+        ocr_run.call([sys.executable, "-c", failing], "a scorer", log)
+    assert "matching error" in log.read_text(encoding="utf-8")

@@ -124,6 +124,8 @@ type TraceChar = tuple[int, int, tuple[float, float], Box]
 class TraceDict(TypedDict):
     font: str
     chars: list[TraceChar]
+    type: int  # the text render mode: 3 is invisible (measured on 1.28.2)
+    opacity: float
 
 class Font:
     def __init__(self, *, fontbuffer: bytes) -> None: ...

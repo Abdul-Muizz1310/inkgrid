@@ -158,9 +158,11 @@ baseline is labelled `baseline`, later runs `tuned` (`--label tuned`).
 
 | Case | Input | Expected |
 |---|---|---|
+| DS1 | each benchmark's files, laid out as fetched (test files or truth listing their PDFs) | every document once, with its id (the benchmark's own) and group (olmOCR category, OmniDocBench language, ParseBench track or text tag); a referenced PDF that is missing is refused |
 | CS1 | page statistics at each threshold's edge: 49 and 50 visible characters; invisible equal to visible; one image covering 89% and 90% | `no_text`; `born_digital`; `ocr_layer`; `born_digital`; `image_backed` |
 | CS2 | a document with one `image_backed` page among born-digital ones | not born-digital |
 | CS3 | a PDF built with visible text, invisible text, and a page-size image | the census shell's counts match what was drawn |
+| CS4 | a benchmark's documents and their PDFs | a manifest holding, per document id, the PDF's SHA-256, its page classes, its class and its half, and the benchmark's pinned revision |
 | SP1 | any document ids, in any order (property) | the same split every time; dev exactly when the first hex digit is 0–7 |
 | MD1 | GFM pipe tables (header row, escaped pipes, ragged rows), and text around them | each table becomes HTML with the first row in `<thead>`, every cell's text kept, the text around it unchanged |
 | MD2 | an inkgrid `Document` with a heading, paragraphs, a table and furniture | its Markdown with the table as `Table.to_html()` and no furniture |

@@ -66,9 +66,9 @@ def test_DS1_each_benchmark_lists_every_document_once_with_its_group(tmp_path: P
     jsonl(
         pb / "text_content.jsonl",
         [
-            {"pdf": "docs/text/s.pdf", "category": "text_content", "tags": ["text_simple", "easy"]},
-            {"pdf": "docs/text/s.pdf", "category": "text_content", "tags": ["text_simple"]},
-            {"pdf": "docs/text/o.pdf", "category": "text_content", "tags": ["text_ocr"]},
+            {"pdf": "docs/text/s.pdf", "category": "text_content", "tags": ["easy", "simple"]},
+            {"pdf": "docs/text/s.pdf", "category": "text_content", "tags": ["simple"]},
+            {"pdf": "docs/text/o.pdf", "category": "text_content", "tags": ["hard", "ocr"]},
         ],
     )
     for name in ("table/t1", "text/s", "text/o"):

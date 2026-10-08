@@ -16,6 +16,7 @@ OLMOCR_SPLITS = {
     "long_tiny_text": "long_tiny_text.jsonl",
 }
 PARSEBENCH_FILES = ("table.jsonl", "text_content.jsonl")
+DIFFICULTY = frozenset({"easy", "hard"})  # ParseBench's other tags name the text's kind
 CACHE = Path.home() / ".cache" / "inkgrid-bench"
 # Where each benchmark is fetched to, and the revision it is pinned at (spec 18 section 0).
 LOCATIONS = {
@@ -100,7 +101,8 @@ def parsebench_docs(data: Path) -> list[BenchDoc]:
         if doc_id.startswith("table/"):
             group = "table"
         else:
-            group = next((t for t in tags.get(doc_id, []) if t.startswith("text_")), "text")
+            kind = next((t for t in tags.get(doc_id, []) if t not in DIFFICULTY), None)
+            group = f"text_{kind}" if kind else "text"
         docs.append(BenchDoc("parsebench", doc_id, pdf, group))
     return _checked(docs)
 

@@ -70,6 +70,15 @@ manifests. A page is:
 A document is born-digital when every page is. **Only born-digital documents are scored.** Each
 benchmark's report states how many documents each class holds and lists the excluded ones by class.
 
+**The census, run on 2026-10-08 before any benchmarked tool read a page** (`bench/ocr/census-*.json`):
+
+| Benchmark | Documents | Born-digital | No text | Image-backed | OCR layer | Scored | Dev / test |
+|---|---|---|---|---|---|---|---|
+| olmOCR-bench | 747 | 603 | 125 | 14 | 5 | headers_footers 231, multi_column 194, tables 162, long_tiny_text 16 | 283 / 320 |
+| OmniDocBench v1.0 | 981 | 620 | 264 | 97 | 0 | 393 primary (born-digital, no mask: 190 English, 195 Chinese, 8 mixed); 620 in all | 203 / 190 (primary) |
+| ParseBench | 1,009 | 827 | 159 | 22 | 1 | tables 495; text 324 (simple 158, multi-column 87, multilingual 38, misc 23, dense 12, sparse 6) | 393 / 426 |
+| DP-Bench | 200 | 196 | 1 | 3 | 0 | 196 | 94 / 102 |
+
 **Further strata, fixed here:**
 - OmniDocBench: the primary stratum is born-digital pages **not** listed in `with_mask.json` (where the
   original PDF equals the evaluated page); all born-digital pages are reported as a second stratum. Text
@@ -166,9 +175,12 @@ baseline is labelled `baseline`, later runs `tuned` (`--label tuned`).
 | SP1 | any document ids, in any order (property) | the same split every time; dev exactly when the first hex digit is 0–7 |
 | MD1 | GFM pipe tables (header row, escaped pipes, ragged rows), and text around them | each table becomes HTML with the first row in `<thead>`, every cell's text kept, the text around it unchanged |
 | MD2 | an inkgrid `Document` with a heading, paragraphs, a table and furniture | its Markdown with the table as `Table.to_html()` and no furniture |
-| AD1 | a Docling export dict with a heading, text, a list, a table, and a page header | Markdown with the table as HTML and no page header |
-| AD2 | unstructured elements: Title, NarrativeText, ListItem, Table with `text_as_html`, Header, Footer, PageNumber | Markdown with the table's HTML, and no header, footer or page number |
-| AD3 | each text-layer converter on a generated two-paragraph PDF | Markdown holding both paragraphs |
+| AD0 | a reading with Markdown; a reading written before readings had Markdown | written and read back unchanged; the older one reads with empty Markdown |
+| AD1 | inkgrid's adapter on a page with paragraphs and a table | its tables as before, and its Markdown equal to `page_markdown.inkgrid_markdown` of the same reading |
+| AD2 | unstructured elements: Title, NarrativeText, ListItem, Table with `text_as_html`, Header, Footer, PageNumber, Image | Markdown in element order: `#` title, paragraph, `- ` item, the table's HTML; no header, footer, page number or image |
+| AD3 | *heavy:* each text-layer converter (pymupdf4llm, MarkItDown, LiteParse) on that page, in its pinned environment | Markdown holding both paragraphs |
+| AD4 | *heavy:* Docling and marker on that page, in their pinned environments | their tables as before, and Markdown holding both paragraphs and the table as HTML |
+| AD5 | *heavy:* inkgrid on Tesseract's words on that page | Markdown from the same document the ablation's tables come from |
 | SC1 | an olmOCR category restricted to born-digital PDFs, a tool missing one PDF's output | an empty file written for it; per-PDF tests and passes read back |
 | SC2 | OmniDocBench's per-page Edit and TEDS files for a subset | per-page values keyed by page, with each page's language |
 | SC3 | a ParseBench run through the saved-Markdown provider | the provider returns exactly the saved Markdown; per-document values read back |
@@ -177,6 +189,9 @@ baseline is labelled `baseline`, later runs `tuned` (`--label tuned`).
 | RN1 | a census manifest or data hash that does not match the pin | the run refuses, naming the file |
 
 ## 9 · Acceptance
+
+- *Heavy* cases need a tool's pinned environment or the pinned Tesseract; they run with
+  `pytest -m heavy` before the baseline run, not in CI, and their run is recorded.
 
 - Every case above has a test named `test_<CaseId>_<slug>`, and it failed before its code.
 - The census manifests are committed before any benchmarked tool reads a page.

@@ -9,6 +9,8 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
+from inkgrid_bench.page_markdown import scorable
+
 SCORES = ("nid", "teds", "mhs")
 
 
@@ -19,7 +21,7 @@ def write_predictions(
     folder = root / engine / "markdown"
     folder.mkdir(parents=True, exist_ok=True)
     for doc in ids:
-        (folder / f"{doc}.md").write_text(markdown.get(doc, ""), encoding="utf-8")
+        (folder / f"{doc}.md").write_text(scorable(markdown.get(doc, "")), encoding="utf-8")
     return folder
 
 

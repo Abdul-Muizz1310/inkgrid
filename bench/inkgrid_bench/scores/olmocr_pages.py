@@ -9,6 +9,7 @@ category, or `baseline` for the per-PDF baseline tests the benchmark's command a
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 
+from inkgrid_bench.page_markdown import scorable
 from inkgrid_bench.scores.olmocr import candidate_path
 
 GROUPS = {
@@ -24,7 +25,7 @@ def write_candidate(folder: Path, ids: Sequence[str], markdown: Mapping[str, str
     for pdf in ids:
         page = folder / candidate_path(pdf)
         page.parent.mkdir(parents=True, exist_ok=True)
-        page.write_text(markdown.get(pdf, ""), encoding="utf-8")
+        page.write_text(scorable(markdown.get(pdf, "")), encoding="utf-8")
 
 
 def pdf_counts(

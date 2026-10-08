@@ -14,6 +14,7 @@ from collections.abc import Collection, Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
+from inkgrid_bench.page_markdown import scorable
 from inkgrid_bench.scores.metrics import Counts, Metric, mean_of
 
 MATCH = "quick_match"
@@ -39,7 +40,7 @@ def write_predictions(folder: Path, ids: Sequence[str], markdown: Mapping[str, s
     """One `<page>.md` per scored page: the tool's Markdown, or empty when it has none."""
     folder.mkdir(parents=True, exist_ok=True)
     for page in ids:
-        (folder / f"{page}.md").write_text(markdown.get(page, ""), encoding="utf-8")
+        (folder / f"{page}.md").write_text(scorable(markdown.get(page, "")), encoding="utf-8")
 
 
 def config_yaml(ground_truth: Path, predictions: Path) -> str:

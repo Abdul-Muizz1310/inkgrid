@@ -12,6 +12,12 @@ from inkgrid.model.document import Document
 
 SEPARATOR = re.compile(r"^\s*\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)*\|?\s*$")
 UNESCAPED_PIPE = re.compile(r"(?<!\\)\|")
+LONE_SURROGATE = re.compile("[\ud800-\udfff]")
+
+
+def scorable(text: str) -> str:
+    """The text as a scorer reads it from a UTF-8 file: a lone surrogate becomes U+FFFD."""
+    return LONE_SURROGATE.sub("\ufffd", text)
 
 
 def _cells(line: str) -> list[str]:

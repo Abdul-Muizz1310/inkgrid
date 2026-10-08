@@ -6,4 +6,7 @@ class BasePDFTest:
     page: int
     type: str
 
+class BaselineTest(BasePDFTest):
+    def __init__(self, *, id: str, pdf: str, page: int, type: str) -> None: ...
+
 def load_tests(jsonl_file: str) -> list[BasePDFTest]: ...

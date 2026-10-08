@@ -92,7 +92,7 @@ benchmark's report states how many documents each class holds and lists the excl
 | marker | 2.0.0, OCR off | text layer + layout models | HTML (`html_tables_in_markdown`) |
 | unstructured | 0.27.10 `hi_res`, Tesseract 5.5.3 | layout model + OCR | `text_as_html` |
 | inkgrid on Tesseract's words | the commit measured | OCR | `Table.to_html()` |
-| pymupdf4llm | 1.28.2, OCR off | text layer | its own tables (pipe), converted as below |
+| pymupdf4llm | 1.28.2, OCR off (`use_ocr=False`) | text layer (with PyMuPDF Layout) | HTML (`table_output="html"`) |
 | MarkItDown | 0.1.8 (`[pdf]`) | text layer (pdfminer) | its own output, converted as below |
 | LiteParse | 2.15.1, no OCR | text layer (PDFium) | its own output, converted as below |
 

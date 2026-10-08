@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from inkgrid_bench.scores import dpbench, olmocr_pages, omnidocbench
+from inkgrid_bench.scores import dpbench, olmocr_pages, omnidocbench, parsebench
 from inkgrid_bench.scores.metrics import mean_of, pooled
 
 
@@ -93,3 +93,44 @@ def test_SC4_dpbench_scores_each_document_and_refuses_a_dropped_one() -> None:
     assert mean_of("dp_teds", "dp_teds_n")(docs) == pytest.approx(0.8)
     with pytest.raises(ValueError, match="03"):
         dpbench.document_scores(evaluation, ["01", "02", "03"])
+
+
+def test_SC3_parsebench_reads_saved_markdown_with_html_tables_and_scores_back(
+    tmp_path: Path,
+) -> None:
+    saved = tmp_path / "saved"
+    md = {"table/a": "Intro\n\n| X | Y |\n| --- | --- |\n| 1 | 2 |", "text/b": "Plain text."}
+    parsebench.write_saved(saved, ["table/a", "text/b", "text/c"], md)
+    assert (saved / "table__a.md").read_text().startswith("Intro\n\n<table><thead>")
+    assert (saved / "text__b.md").read_text() == "Plain text."
+    assert (saved / "text__c.md").read_text() == ""
+    report = {
+        "per_example_results": [
+            {
+                "test_id": "text/b",
+                "success": True,
+                "metrics": [
+                    {"metric_name": "content_faithfulness", "value": 0.75},
+                    {"metric_name": "normalized_order", "value": 0.5},
+                    {"metric_name": "normalized_text_correctness", "value": 0.875},
+                ],
+            },
+            {"test_id": "text/z", "success": True, "metrics": []},
+        ]
+    }
+    scores = parsebench.document_scores(report, ["text/b"], parsebench.TEXT_METRICS)
+    assert scores == {
+        "text/b": {
+            "pb_content_faithfulness": 0.75,
+            "pb_content_faithfulness_n": 1,
+            "pb_normalized_order": 0.5,
+            "pb_normalized_order_n": 1,
+            "pb_normalized_text_correctness": 0.875,
+            "pb_normalized_text_correctness_n": 1,
+        }
+    }
+    with pytest.raises(ValueError, match="text/c"):
+        parsebench.document_scores(report, ["text/b", "text/c"], parsebench.TEXT_METRICS)
+    failed = {"per_example_results": [{"test_id": "text/b", "success": False, "metrics": []}]}
+    with pytest.raises(ValueError, match="text/b"):
+        parsebench.document_scores(failed, ["text/b"], parsebench.TEXT_METRICS)

@@ -124,13 +124,19 @@ benchmark's report states how many documents each class holds and lists the excl
 |---|---|---|---|
 | olmOCR-bench | pass rate per category (headers_footers, multi_column, tables, long_tiny_text); the automatic baseline tests as their own group; a **born-digital macro** over headers_footers, multi_column and tables | tests passed, tests | pooled over tests, per category |
 | OmniDocBench | text Edit distance (lower is better), table TEDS and table Edit distance, reading-order Edit distance | the scorer's per-page value | mean over pages, as `ALL_page_avg` |
-| ParseBench | tables: GTRM (headline) and TEDS; text: Content Faithfulness, with its text and order parts | the scorer's per-document value | mean over documents |
+| ParseBench | tables: GTRM (headline), GriTS-Con and TableRecordMatch; text: Content Faithfulness, with its text-correctness and order parts | the scorer's per-document value | mean over documents |
 | DP-Bench | NID, TEDS (documents with tables), MHS (documents with headings) | the scorer's per-document value | mean over documents |
 
 - Each scorer runs unmodified at its pin, in its own environment, on CPU. A driver writes the
   predictions where the scorer expects them, restricts it to the scored documents where the scorer
   allows (otherwise filters its per-document output), and reads back per-document values. ParseBench's
   run goes through a registered provider that returns the saved Markdown.
+- **Each pinned scorer was checked against its source before use** (2026-10-08): re-scoring
+  opendataloader-bench's committed Docling outputs gives every one of its committed metrics exactly;
+  OmniDocBench's evaluation of its own demo predictions gives its committed demo results exactly;
+  ParseBench's built-in PyMuPDF text pipeline gives Content Faithfulness 68.19 where the leaderboard
+  lists 68.28 (its PyMuPDF and parse-bench versions are not stated); and the saved-Markdown provider,
+  fed that pipeline's own outputs, gives its per-document scores exactly (506 of 506).
 - **Never an "Overall".** A benchmark's official overall averages parts excluded here (scans, math,
   charts); no number in this run is called one.
 - **Speed:** seconds per page, warm, as spec 15 defines it.

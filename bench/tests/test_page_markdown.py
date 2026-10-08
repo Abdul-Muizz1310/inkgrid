@@ -78,3 +78,40 @@ def test_MD2_inkgrid_writes_its_tables_as_html_and_leaves_furniture_out() -> Non
     assert pdf_factory.FURNISHED_HEADER not in text
     assert "Page 1 of 5" not in text
     assert "alpha tier charges" in text
+
+
+def test_MD2_each_table_is_written_as_html_in_its_own_place() -> None:
+    doc = inkgrid.read(pdf_factory.table_between_paragraphs())
+    (table,) = doc.tables()
+    grid = table.grid
+    rows = grid.header_rows + 1  # the table cut after its first body row
+    cut = table.model_copy(
+        update={
+            "grid": grid.model_copy(
+                update={
+                    "n_rows": rows,
+                    "row_bands": grid.row_bands[:rows],
+                    "cells": tuple(
+                        c.model_copy(update={"row_span": min(c.row_span, rows - c.row)})
+                        for c in grid.cells
+                        if c.row < rows
+                    ),
+                }
+            )
+        }
+    )
+    banner = table.model_copy(
+        update={"grid": grid.model_copy(update={"banner_rows": (grid.header_rows,)})}
+    )
+    assert table.to_markdown().startswith(cut.to_markdown())  # a prefix of the whole table
+    assert banner.to_markdown() == table.to_markdown()
+    assert banner.to_html() != table.to_html()
+    many = doc.model_copy(update={"blocks": (cut, *doc.blocks, banner)})
+
+    def alone(block: object) -> str:
+        return doc.model_copy(update={"blocks": (block,)}).to_markdown().rstrip("\n")
+
+    expected = "\n\n".join(
+        b.to_html() if b in (cut, table, banner) else alone(b) for b in many.blocks
+    )
+    assert inkgrid_markdown(many) == expected + "\n"

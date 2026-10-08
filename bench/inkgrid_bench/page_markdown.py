@@ -71,8 +71,22 @@ def pipe_to_html(markdown: str) -> str:
 
 
 def inkgrid_markdown(doc: Document) -> str:
-    """The document as inkgrid writes it, each table by its `Table.to_html()`."""
+    """The document as inkgrid writes it, each table by its `Table.to_html()` in its own place.
+
+    `to_markdown` writes the blocks in order, so each table's pipe table is the first one at or
+    after the end of the table before it: a table whose pipe table repeats another's, or begins
+    another's, still gets its own HTML. A table whose pipe table is not there is refused.
+    """
     text = doc.to_markdown()
+    parts: list[str] = []
+    at = 0
     for table in doc.tables():
-        text = text.replace(table.to_markdown(), table.to_html())
-    return text
+        pipe = table.to_markdown()
+        found = text.find(pipe, at)
+        if found < 0:
+            msg = f"table {table.id}'s Markdown is not in the document's Markdown"
+            raise ValueError(msg)
+        parts += [text[at:found], table.to_html()]
+        at = found + len(pipe)
+    parts.append(text[at:])
+    return "".join(parts)

@@ -50,7 +50,7 @@ manifests committed beside `sources.toml`; nothing downloaded is committed or ex
 |---|---|---|
 | olmOCR-bench | `bench_data/{headers_footers,multi_column,long_tiny_text}.jsonl` and their PDFs (266, 231, 62), beside the 188 table PDFs already cached | headers_footers (753 absent + 7 baseline tests), multi_column (884 order), tables (1,020 table + 2 baseline), long_tiny_text (442 present); not arxiv_math, old_scans, old_scans_math |
 | OmniDocBench v1.0 | `OmniDocBench.json`, `with_mask.json`, `ori_pdfs/*` | text blocks (Edit distance), tables (TEDS, Edit distance), reading order (Edit distance); not display formulas |
-| ParseBench | `table.jsonl`, `text_content.jsonl`, `docs/table/*`, `docs/text/*` | the table group (GTRM headline, TEDS); text_content's six text-layer tags (`text_simple`, `text_multicolumns`, `text_multilang`, `text_misc`, `text_dense`, `text_sparse`): Content Faithfulness; not `text_ocr`, `text_handwritting`, charts, layout, formatting |
+| ParseBench | `table.jsonl`, `text_content.jsonl`, `docs/table/*`, `docs/text/*` | the table group (GTRM headline, GriTS-Con, TableRecordMatch); text_content's six text-layer tags (`text_simple`, `text_multicolumns`, `text_multilang`, `text_misc`, `text_dense`, `text_sparse`): Content Faithfulness; not `text_ocr`, `text_handwritting`, charts, layout, formatting |
 | DP-Bench | the 200 PDFs, `ground-truth/` and the 14 engines' committed outputs from opendataloader-bench; `reference.json` from Upstage | NID (text in reading order), TEDS (tables), MHS (headings) |
 
 ## 2 · The census: which pages count

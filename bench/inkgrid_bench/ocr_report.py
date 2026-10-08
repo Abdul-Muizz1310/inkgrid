@@ -297,6 +297,18 @@ def _modes(tools: Sequence[str]) -> str:
     )
 
 
+def _carried(data: Mapping[str, Any]) -> str:
+    """Which tools' readings were made at another commit, whose reading code was this one's."""
+    carried = data.get("readings_from")
+    if not carried:
+        return ""
+    tools, commit = _named(carried["tools"]), carried["commit"]
+    return (
+        f" {tools} were read at commit `{commit}`, whose reading code and tool pins are this "
+        "commit's; their readings were carried over."
+    )
+
+
 def heading(label: OcrLabel, data: Mapping[str, Any], *, head: str, date: str) -> list[str]:
     """The title and first paragraph: what is scored, whether inkgrid is tuned, the census."""
     tools = [t for t in TOOLS if any(t in by_tool for by_tool in data["counts"].values())]
@@ -307,7 +319,7 @@ def heading(label: OcrLabel, data: Mapping[str, Any], *, head: str, date: str) -
         "before any tool read a page leaves out every page with almost no visible text, with as "
         "much invisible text as visible (an OCR layer over a scan), or with one image covering "
         "nine tenths of it, and the benchmarks' formula, chart and handwriting tests are not run, "
-        f"so no number here stands for a benchmark as a whole. {_kept(data)}"
+        f"so no number here stands for a benchmark as a whole. {_kept(data)}{_carried(data)}"
     )
     match label:
         case "baseline":

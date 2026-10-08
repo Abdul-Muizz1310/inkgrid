@@ -205,7 +205,7 @@ def test_SC1_a_lone_surrogate_in_a_reading_reaches_every_scorer_as_a_replacement
         tmp_path / "dp" / "candidate" / "markdown" / "01.md",
     ]
     for path in written:
-        assert path.read_text(encoding="utf-8") == "fee � due"
+        assert path.read_text(encoding="utf-8") == "fee \ufffd due"
 
 
 def test_SC2_pages_omnidocbench_matched_the_simple_way_or_could_not_find_are_named() -> None:

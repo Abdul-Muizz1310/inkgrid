@@ -96,6 +96,7 @@ with = [
 package = "olmocr[bench]==0.4.27"
 # olmocr 0.4.27's bench imports numpy without declaring it.
 with = ["numpy==2.3.3"]
+exclude-newer = "2026-10-08T00:00:00Z"
 
 # The OCR benchmarks' scorers (docs/specs/18-ocr-benchmarks.md section 4), each unmodified in an
 # environment of its own, resolved as of the day they were pinned. OmniDocBench's evaluation code at

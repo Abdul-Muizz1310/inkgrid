@@ -6,11 +6,14 @@ born-digital documents in the scored groups are read and scored, one document at
 Each scorer runs unmodified at its pin, in its own environment, through its driver (s. 4).
 """
 
+import contextlib
 import json
+import os
 import shutil
 import subprocess
+import tomllib
 from collections import Counter
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Iterator, Mapping, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -29,6 +32,22 @@ BENCHMARKS = tuple(ocr_report.BENCHMARKS)
 STAGES = ("prepare", "read", "score", "report")
 PIPELINE = "inkgrid_bench_saved"  # the ParseBench pipeline that returns the saved Markdown
 SCORER_TIMEOUT = 4 * 3600  # seconds for one scorer on one tool's documents of one benchmark
+SCORERS_USED = ("olmocr", "omnidocbench", "parsebench", "opendataloader")
+WARM_TIMEOUT = 3600  # seconds to build one environment the first time
+# What a tool's reading depends on besides its pin: the readings of a run at another commit carry
+# over only when none of it changed, and inkgrid's own only when src/inkgrid did not (RR1).
+READING_CODE = (
+    "bench/inkgrid_bench/adapters",
+    "bench/inkgrid_bench/ablation.py",
+    "bench/inkgrid_bench/heavy.py",
+    "bench/inkgrid_bench/page_markdown.py",
+    "bench/inkgrid_bench/pages.py",
+    "bench/inkgrid_bench/run.py",
+    "bench/inkgrid_bench/tables.py",
+)
+INKGRID_CODE = ("src/inkgrid", "uv.lock")
+INKGRID_TOOLS = ("inkgrid", "inkgrid-ocr")
+PINS = ("tool", "tesseract")  # the sources.toml tables a reading depends on
 BASELINE_READING = "v0.1.0"  # the release whose reading a baseline run measures (DR-0023)
 ENGINE = "candidate"  # the engine folder opendataloader-bench's evaluator scores
 
@@ -87,27 +106,35 @@ def verify_census(
             raise RuntimeError(msg)
 
 
-def git_head(repo: Path) -> str:
-    """The commit a clone is at."""
+def _git(*args: str, repo: Path = run.REPO) -> str:
     return subprocess.run(  # noqa: S603 - fixed arguments
-        ["git", "-C", str(repo), "rev-parse", "HEAD"],  # noqa: S607
+        ["git", "-C", str(repo), *args],  # noqa: S607
         capture_output=True,
         text=True,
         check=True,
     ).stdout.strip()
 
 
+def verify_clone(repo: Path, commit: str) -> None:
+    """A clone of a scorer or of data is at its pinned commit, with no change to a tracked file."""
+    head = _git("rev-parse", "HEAD", repo=repo)
+    if head != commit:
+        msg = f"{repo} is at {head}, not the pinned {commit}"
+        raise RuntimeError(msg)
+    changes = _git("status", "--porcelain", "--untracked-files=no", repo=repo)
+    if changes:
+        msg = f"{repo} has changes to tracked files: {changes.splitlines()[:5]}"
+        raise RuntimeError(msg)
+
+
 def clone(repository: str, commit: str, target: Path) -> None:
-    """The repository at `commit` in `target`, cloned once; a clone at another commit is refused."""
+    """The repository at `commit` in `target`, cloned once and verified each time."""
     if not target.exists():
         run.log(f"clone {repository} at {commit[:7]} -> {target}")
         git = ["git", "-c", "advice.detachedHead=false"]
         subprocess.run([*git, "clone", "--quiet", repository, str(target)], check=True)  # noqa: S603
         subprocess.run([*git, "-C", str(target), "checkout", "--quiet", commit], check=True)  # noqa: S603
-    head = git_head(target)
-    if head != commit:
-        msg = f"{target} is at {head}, not the pinned {commit}"
-        raise RuntimeError(msg)
+    verify_clone(target, commit)
 
 
 def checked(benchmark: str, cfg: dict[str, Any]) -> list[BenchDoc]:
@@ -116,9 +143,8 @@ def checked(benchmark: str, cfg: dict[str, Any]) -> list[BenchDoc]:
     root = run.CACHE / pin["root"]
     if "list" in pin:
         verify_listing(run.BENCH / pin["list"], root)
-    elif git_head(root) != pin["revision"]:
-        msg = f"{root} is at {git_head(root)}, not the pinned {pin['revision']}"
-        raise RuntimeError(msg)
+    else:
+        verify_clone(root, pin["revision"])
     docs = ocr_data.documents(benchmark)
     manifest = census(benchmark)
     path = CENSUS / f"census-{benchmark}.json"
@@ -126,8 +152,37 @@ def checked(benchmark: str, cfg: dict[str, Any]) -> list[BenchDoc]:
     return ocr_data.scored(docs, manifest["documents"])
 
 
+def warm(cfg: dict[str, Any]) -> None:
+    """Every OCR tool's environment built and its adapter imported, and every scorer's built.
+
+    The read stage then runs offline: a tool that cannot start fails here, never as a reading.
+    """
+    for tool in tools(cfg):
+        if tool.package is not None:
+            cmd = [
+                *run.environment(tool),
+                "python",
+                "-c",
+                f"import inkgrid_bench.adapters.{tool.module}",
+            ]
+            _warmed(cmd, tool.name)
+    for name in SCORERS_USED:
+        _warmed([*_scorer_env(cfg, name), "python", "-c", "pass"], f"the {name} scorer")
+
+
+def _warmed(cmd: Sequence[str], what: str) -> None:
+    code, _, err = run.run_process(cmd, timeout=WARM_TIMEOUT)
+    if code != 0:
+        msg = f"{what}'s environment does not start: {run.last_line(err) or f'exit status {code}'}"
+        raise RuntimeError(msg)
+    run.log(f"prepare: {what}'s environment is ready")
+
+
 def prepare(_run: Path, _head: str, cfg: dict[str, Any]) -> None:
-    """Spec 12's tools and Tesseract, then every OCR benchmark and scorer at its pin, verified."""
+    """Spec 12's tools and Tesseract, then every OCR benchmark, scorer and environment, verified.
+
+    Every tool's and scorer's environment is built here, so the read stage can run offline.
+    """
     run.prepare(cfg)
     for pin in cfg["ocr"].values():
         if "list" in pin:
@@ -138,6 +193,7 @@ def prepare(_run: Path, _head: str, cfg: dict[str, Any]) -> None:
     clone(omni["repository"], omni["commit"], run.CACHE / omni["root"])
     for benchmark in BENCHMARKS:
         run.log(f"prepare: {benchmark} verified, {len(checked(benchmark, cfg))} documents scored")
+    warm(cfg)
 
 
 def _doc(doc: BenchDoc) -> run.Doc:
@@ -150,28 +206,123 @@ def tools(cfg: dict[str, Any]) -> list[run.Tool]:
     return [by_name[name] for name in ocr_report.TOOLS]
 
 
+@contextlib.contextmanager
+def _offline() -> Iterator[None]:
+    """Uv neither resolves nor downloads while tools read: their environments are built already."""
+    before = os.environ.get("UV_OFFLINE")
+    os.environ["UV_OFFLINE"] = "1"
+    try:
+        yield
+    finally:
+        if before is None:
+            del os.environ["UV_OFFLINE"]
+        else:
+            os.environ["UV_OFFLINE"] = before
+
+
+def _save(out: Path, reading: NDocument) -> None:
+    """A reading, whole or not at all: a killed write leaves no reading for resume to skip."""
+    out.parent.mkdir(parents=True, exist_ok=True)
+    part = out.with_suffix(".part")
+    part.write_text(reading.to_json(), encoding="utf-8")
+    part.replace(out)
+
+
 def read(run_dir: Path, head: str, cfg: dict[str, Any]) -> None:
-    """Every tool on every scored document, one at a time; finished readings are kept."""
+    """Every tool on every scored document, one at a time, offline; finished readings are kept."""
     scored = {b: checked(b, cfg) for b in BENCHMARKS}
-    for tool in tools(cfg):
-        cmd, ver = run.command(tool), run.version(tool, head)
-        for benchmark, docs in scored.items():
-            name = dataset(benchmark)
-            todo = [
-                _doc(d)
-                for d in docs
-                if not run.reading_path(run_dir, tool.name, name, _doc(d)).exists()
-            ]
-            for doc, reading in run.tool_readings(tool, cmd, ver, todo):
-                out = run.reading_path(run_dir, tool.name, name, doc)
-                out.parent.mkdir(parents=True, exist_ok=True)
-                out.write_text(reading.to_json(), encoding="utf-8")
-                note = (
-                    f" ERROR {reading.error}"
-                    if reading.error
-                    else f" {len(reading.markdown)} chars"
-                )
-                run.log(f"read {tool.name} {name} {doc.id}{note}")
+    with _offline():
+        for tool in tools(cfg):
+            _read_tool(run_dir, tool, run.command(tool), run.version(tool, head), scored)
+
+
+def _read_tool(
+    run_dir: Path,
+    tool: run.Tool,
+    cmd: Sequence[str],
+    ver: str,
+    scored: Mapping[str, Sequence[BenchDoc]],
+) -> None:
+    for benchmark, docs in scored.items():
+        name = dataset(benchmark)
+        todo = [
+            _doc(d)
+            for d in docs
+            if not run.reading_path(run_dir, tool.name, name, _doc(d)).exists()
+        ]
+        for doc, reading in run.tool_readings(tool, cmd, ver, todo):
+            _save(run.reading_path(run_dir, tool.name, name, doc), reading)
+            note = f" ERROR {reading.error}" if reading.error else f" {len(reading.markdown)} chars"
+            run.log(f"read {tool.name} {name} {doc.id}{note}")
+
+
+def changed_files(commit: str, paths: Sequence[str]) -> list[str]:
+    """The committed files under `paths` that differ between `commit` and HEAD."""
+    return _git("diff", "--name-only", commit, "HEAD", "--", *paths).split()
+
+
+def pins_at(commit: str) -> dict[str, Any]:
+    """The tool pins `sources.toml` held at `commit`."""
+    data = tomllib.loads(_git("show", f"{commit}:bench/sources.toml"))
+    return {key: data.get(key) for key in PINS}
+
+
+def reusable(
+    commit: str,
+    cfg: Mapping[str, Any],
+    *,
+    changed: Callable[[str, Sequence[str]], list[str]] = changed_files,
+    pins: Callable[[str], Mapping[str, Any]] = pins_at,
+) -> tuple[str, ...]:
+    """The tools whose readings at `commit` this commit would read alike (spec 18 s. 6, RR1).
+
+    Raises:
+        RuntimeError: the reading code or a tool's pin changed since, so every tool reads again.
+    """
+    moved = changed(commit, READING_CODE)
+    if moved:
+        msg = f"the reading code changed since {commit} ({', '.join(moved[:5])}); read again"
+        raise RuntimeError(msg)
+    if dict(pins(commit)) != {key: cfg.get(key) for key in PINS}:
+        msg = f"the tool pins changed since {commit}; read again"
+        raise RuntimeError(msg)
+    fixed = INKGRID_TOOLS if changed(commit, INKGRID_CODE) else ()
+    return tuple(t for t in ocr_report.TOOLS if t not in fixed)
+
+
+def link_readings(source: Path, target: Path, tool_names: Sequence[str]) -> int:
+    """Hard-link the tools' OCR readings from the run `source` into `target`; how many it linked.
+
+    A reading `target` already holds is kept.
+    """
+    linked = 0
+    for tool in tool_names:
+        for benchmark in BENCHMARKS:
+            folder = source / "readings" / tool / dataset(benchmark)
+            for path in sorted(folder.glob("*.json")):
+                dest = target / "readings" / tool / dataset(benchmark) / path.name
+                if dest.exists():
+                    continue
+                dest.parent.mkdir(parents=True, exist_ok=True)
+                os.link(path, dest)
+                linked += 1
+    return linked
+
+
+def carry_over(run_dir: Path, commit: str, cfg: dict[str, Any]) -> None:
+    """Link the readings of the run at `commit` that this commit would read alike, and record them.
+
+    The record is `readings-from.json` in this run; the read stage then reads only the rest.
+    """
+    short = _git("rev-parse", "--short=7", commit)
+    source = run.CACHE / "runs" / short
+    if not source.is_dir():
+        msg = f"no run at {short} in {source.parent}"
+        raise RuntimeError(msg)
+    names = reusable(short, cfg)
+    linked = link_readings(source, run_dir, names)
+    run.save(run_dir / "readings-from.json", {"commit": short, "tools": list(names)})
+    run.log(f"read: {linked} readings of {', '.join(names)} carried over from {short}")
 
 
 def reading(run_dir: Path, tool: str, benchmark: str, doc: BenchDoc) -> NDocument:
@@ -221,13 +372,8 @@ def score_olmocr(
     data = ocr_data.LOCATIONS["olmocr"][0]
     groups = [f"{group}={name}" for group, name in olmocr_pages.GROUPS.items()]
     args = [str(data), str(work / "candidate"), str(work / "pdfs.txt"), str(out), *groups]
-    scorer = cfg["scorer"]["olmocr"]
-    env = run.isolated([scorer["package"], *scorer["with"]])
-    call(
-        [*run.NICE, *env, "python", "-m", driver, *args],
-        "olmOCR-bench's scorer",
-        work / "scorer.log",
-    )
+    env = _scorer_env(cfg, "olmocr")
+    call([*env, "python", "-m", driver, *args], "olmOCR-bench's scorer", work / "scorer.log")
     result = run.load(out)
     if result["errors"]:
         msg = f"olmOCR-bench's scorer met {len(result['errors'])} errors: {result['errors'][0]}"
@@ -390,12 +536,14 @@ def gather(run_dir: Path, cfg: dict[str, Any]) -> dict[str, Any]:
                 }
             by_tool[tool] = per_doc
         counts[benchmark] = filled(by_tool)
+    carried = run_dir / "readings-from.json"
     return {
         "documents": documents,
         "counts": counts,
         "census": classes,
         "crashes": crashes,
         "excluded": left_out,
+        "readings_from": run.load(carried) if carried.exists() else None,
     }
 
 
@@ -406,7 +554,7 @@ def environments(cfg: dict[str, Any]) -> dict[str, Any]:
         "import importlib.metadata as m, json; "
         "print(json.dumps({d.metadata['Name']: d.version for d in m.distributions()}))"
     )
-    for name in ("omnidocbench", "parsebench", "opendataloader"):
+    for name in SCORERS_USED:
         _, stdout, _ = run.run_process([*_scorer_env(cfg, name), "python", "-c", dump], timeout=600)
         out[f"scorer-{name}"] = json.loads(stdout)
     return out
@@ -427,7 +575,7 @@ def write_results(
     target.mkdir(parents=True, exist_ok=True)
     run.save(target / "counts.json", data["counts"])
     run.save(target / "documents.json", data["documents"])
-    checks = {k: data[k] for k in ("census", "crashes", "excluded")}
+    checks = {k: data[k] for k in ("census", "crashes", "excluded", "readings_from")}
     run.save(target / "checks.json", checks)
     run.save(target / "environment.json", environments(cfg))
     text = ocr_report.document(data, head=head, date=date, label=label)
@@ -448,8 +596,12 @@ def src_changed(tag: str) -> bool:
     return code == 1
 
 
-def stages(label: ocr_report.OcrLabel) -> dict[str, Stage]:
-    """The OCR run's stages, in order; a baseline run reads and reports only 0.1.0's inkgrid."""
+def stages(label: ocr_report.OcrLabel, readings_from: str | None = None) -> dict[str, Stage]:
+    """The OCR run's stages, in order; a baseline run reads and reports only 0.1.0's inkgrid.
+
+    With `readings_from`, the read stage first carries over that run's readings where this commit
+    would read alike (`carry_over`).
+    """
 
     def baseline_only(stage: Stage) -> Stage:
         def checked_stage(run_dir: Path, head: str, cfg: dict[str, Any]) -> None:
@@ -467,6 +619,8 @@ def stages(label: ocr_report.OcrLabel) -> dict[str, Stage]:
         write_results(run_dir, head, cfg, label=label)
 
     def reading_stage(run_dir: Path, head: str, cfg: dict[str, Any]) -> None:
+        if readings_from is not None:
+            carry_over(run_dir, readings_from, cfg)
         read(run_dir, head, cfg)
 
     return dict(

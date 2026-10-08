@@ -486,7 +486,7 @@ def isolated(
     return ["uv", "run", "--isolated", "--no-project", "--python", python, *extra, *withs]
 
 
-def _environment(tool: Tool) -> list[str]:
+def environment(tool: Tool) -> list[str]:
     """The tool's environment, exactly as the run builds it."""
     if tool.package is None:
         msg = f"{tool.name} runs in this environment, not an isolated one"
@@ -499,7 +499,7 @@ def command(tool: Tool) -> list[str]:
     module = ["-m", f"inkgrid_bench.adapters.{tool.module}"]
     if tool.package is None:
         return [*NICE, sys.executable, *module]
-    return [*NICE, *_environment(tool), "python", *module]
+    return [*NICE, *environment(tool), "python", *module]
 
 
 def tool_env(tool: Tool) -> dict[str, str]:
@@ -802,7 +802,7 @@ def olmocr_table_view(data: Path, view: Path) -> Path:
 def score_olmocr(run: Path, cfg: dict[str, Any]) -> None:
     """olmOCR-bench's table tests for every tool, per test, checked against its command line."""
     scorer = cfg["scorer"]["olmocr"]
-    env = isolated([scorer["package"], *scorer["with"]])
+    env = isolated([scorer["package"], *scorer["with"]], exclude_newer=scorer.get("exclude-newer"))
     docs = datasets()["olmocr"]
     data = olmocr_table_view(OLMOCR_DATA, OLMOCR_TABLES)
     for tool in tools(cfg):
@@ -971,7 +971,7 @@ def environments(cfg: dict[str, Any]) -> dict[str, Any]:
     for tool in tools(cfg):
         if tool.package is None:
             continue
-        _, stdout, _ = run_process([*_environment(tool), "python", "-c", dump], timeout=600)
+        _, stdout, _ = run_process([*environment(tool), "python", "-c", dump], timeout=600)
         out[tool.name] = json.loads(stdout)
     _, stdout, _ = run_process([str(TESSERACT / "bin" / "tesseract"), "--version"], timeout=60)
     out["tesseract"] = stdout.strip().splitlines()
@@ -1040,18 +1040,19 @@ def _heldout_stages() -> dict[str, Callable[[Path, str, dict[str, Any]], None]]:
 
 
 def _ocr_stages(
-    label: report.RunLabel,
+    label: report.RunLabel, readings_from: str | None
 ) -> dict[str, Callable[[Path, str, dict[str, Any]], None]]:
     from inkgrid_bench import ocr_run  # noqa: PLC0415 - ocr_run imports this module
 
-    return ocr_run.stages("tuned" if label == "tuned" else "baseline")
+    return ocr_run.stages("tuned" if label == "tuned" else "baseline", readings_from)
 
 
 def main(argv: Sequence[str] = sys.argv[1:]) -> int:
     """Run the stages named, or all of them; `--label tuned` labels the run's report.
 
     `--datasets heldout` runs the held-out fee set's stages instead of spec 12's (spec 16 s. 6),
-    and `--datasets ocr` the OCR benchmarks' (spec 18 s. 6).
+    and `--datasets ocr` the OCR benchmarks' (spec 18 s. 6), where `--readings-from COMMIT`
+    carries over that run's readings this commit would read alike.
     """
     wanted = list(argv)
     given = _option(wanted, "--label")
@@ -1065,11 +1066,15 @@ def main(argv: Sequence[str] = sys.argv[1:]) -> int:
             "--datasets takes: heldout or ocr; without it, the run reads spec 12's datasets\n"
         )
         return 2
+    readings_from = _option(wanted, "--readings-from")
+    if readings_from is not None and (datasets != "ocr" or not readings_from):
+        sys.stderr.write("--readings-from takes a commit, and only with --datasets ocr\n")
+        return 2
     match datasets:
         case "heldout":
             stages = _heldout_stages()
         case "ocr":
-            stages = _ocr_stages(label)
+            stages = _ocr_stages(label, readings_from)
         case _:
             stages = _stages(label)
     wanted = wanted or ["all"]

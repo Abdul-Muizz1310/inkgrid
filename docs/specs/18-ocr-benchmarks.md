@@ -167,7 +167,14 @@ benchmark's report states how many documents each class holds and lists the excl
 `run.py --datasets ocr [stages]` reads every tool on every scored document, scores, and reports, one
 document at a time, niced, in resumable pieces (stages `prepare`, `read`, `score`, `report`). It
 refuses to start unless the census manifests and the data hashes match the pinned ones, and a run
-labelled baseline refuses an `src/inkgrid` other than v0.1.0's. A run's results go to `bench/results/<date>-<commit>-ocr/`; the
+labelled baseline refuses an `src/inkgrid` other than v0.1.0's. `prepare` builds every tool's and
+scorer's environment, so the read stage runs offline (`UV_OFFLINE=1`): a tool that cannot start fails
+there, never as a document's reading. Each reading is written whole or not at all. With
+`--readings-from COMMIT`, the read stage first carries over the readings of the run at that commit
+for every tool this commit would read alike: none if the reading code (the adapters and the modules
+they use, `run.py` included) or a tool's pin changed, all but inkgrid and inkgrid on Tesseract's words
+if `src/inkgrid` or `uv.lock` changed, every tool otherwise; the report names the tools carried
+over. A run's results go to `bench/results/<date>-<commit>-ocr/`; the
 baseline is labelled `baseline`, later runs `tuned` (`--label tuned`).
 
 ## 7 · Improvements (M7b)
@@ -208,7 +215,9 @@ baseline is labelled `baseline`, later runs `tuned` (`--label tuned`).
 | SC4 | an opendataloader-bench `evaluation.json` | per-document NID, TEDS and MHS, missing where the document has no table or heading |
 | SC5 | *heavy:* inkgrid's pages of two scored documents of each benchmark, scored as the run scores them | each pinned scorer, in its environment, returns values for exactly those documents |
 | RP1 | a report of baseline counts; of tuned counts | its title and first paragraph say born-digital text and table tests only, baseline or tuned, and how many fetched documents the census found born-digital and how many are scored; each benchmark's strata and parts as § 2 fixes them; a tuned report's dev and test halves apart; every document left out, by class; the documents a scorer left out, scored 0 on failure, or matched the simple way; no "Overall"; tools covering different documents refused |
-| RN1 | a census manifest or data hash that does not match the pin; a census over other documents | the run refuses, naming the file |
+| RN1 | a census manifest or data hash that does not match the pin; a census over other documents; a scorer's or a benchmark's clone at another commit or with changed files | the run refuses, naming the file |
+| RR1 | the readings of a run at another commit; that commit's reading code, tool pins or `src/inkgrid` changed since | every tool's readings are linked when nothing changed, all but inkgrid's and inkgrid on Tesseract's words when `src/inkgrid` changed, a reading already made here kept; a change to the reading code or a pin is refused; `--readings-from` only with `--datasets ocr`; the report names the tools carried over |
+| RD1 | the read stage; prepare | tools read with `UV_OFFLINE=1`, restored after; a half-written reading never stands as one; prepare builds every tool's and scorer's environment and refuses one that does not start |
 | RN2 | a run labelled baseline whose `src/inkgrid` differs from v0.1.0's | its read and report stages refuse: the baseline is 0.1.0's reading, and a run after a fix is labelled tuned |
 
 ## 9 · Acceptance

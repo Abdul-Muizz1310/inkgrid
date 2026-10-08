@@ -254,3 +254,11 @@ def test_RP1_tools_covering_different_documents_are_refused() -> None:
         ocr_report.document(
             broken, head="abc1234", date="2026-10-09", label="baseline", resamples=5
         )
+
+
+def test_RP1_readings_carried_over_from_another_commit_are_named() -> None:
+    carried = data() | {"readings_from": {"commit": "aaa1111", "tools": ["docling", "marker"]}}
+    text = ocr_report.document(carried, head="abc1234", date="2026-10-09", resamples=5)
+    first = text.split("\n\n")[1]
+    assert "docling and marker were read at commit `aaa1111`" in first
+    assert "`aaa1111`" not in report().split("\n\n")[1]

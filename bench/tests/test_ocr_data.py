@@ -6,6 +6,7 @@ import pytest
 from inkgrid_bench.ocr_data import (
     BenchDoc,
     dpbench_docs,
+    excluded,
     olmocr_docs,
     omnidocbench_docs,
     parsebench_docs,
@@ -121,3 +122,18 @@ def test_SL1_only_born_digital_documents_in_a_scored_group_are_scored(tmp_path: 
         scored([doc("text/y", "text_new")], {"text/y": {"class": "born_digital"}})
     pages = [BenchDoc("dpbench", "01", tmp_path / "01.pdf", "page")]
     assert scored(pages, {"01": {"class": "born_digital"}}) == pages
+
+
+def test_SL1_every_document_not_scored_is_listed_by_its_class() -> None:
+    census = {
+        "table/a": {"class": "born_digital", "group": "table"},
+        "text/b": {"class": "no_text", "group": "text_simple"},
+        "text/c": {"class": "born_digital", "group": "text_ocr"},
+        "text/d": {"class": "ocr_layer", "group": "text_ocr"},
+        "text/e": {"class": "no_text", "group": "text_misc"},
+    }
+    assert excluded(census, {"table/a"}) == {
+        "no_text": ["text/b", "text/e"],
+        "ocr_layer": ["text/d"],
+        "group": ["text/c (text_ocr)"],
+    }

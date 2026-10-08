@@ -163,3 +163,20 @@ def scored(docs: Sequence[BenchDoc], census: Mapping[str, Mapping[str, Any]]) ->
         if doc.group in named and census[doc.id]["class"] == "born_digital":
             out.append(doc)
     return out
+
+
+def excluded(census: Mapping[str, Mapping[str, Any]], scored_ids: set[str]) -> dict[str, list[str]]:
+    """Every document not scored, by its census class (spec 18 section 2).
+
+    A born-digital document left out by its group is listed under `group`, with that group.
+    """
+    out: dict[str, list[str]] = {}
+    for doc_id in sorted(census):
+        if doc_id in scored_ids:
+            continue
+        entry = census[doc_id]
+        if entry["class"] == "born_digital":
+            out.setdefault("group", []).append(f"{doc_id} ({entry['group']})")
+        else:
+            out.setdefault(str(entry["class"]), []).append(doc_id)
+    return out

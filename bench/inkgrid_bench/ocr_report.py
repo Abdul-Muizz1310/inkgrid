@@ -133,8 +133,18 @@ DP_NOTE = (
     "MHS only pages whose truth has a heading.\n"
 )
 PB_TABLE_NOTE = (
-    "GTRM is ParseBench's headline table metric, the mean of GriTS-Con and TableRecordMatch; "
-    "every page is scored, a page whose reading has no table at 0.\n"
+    "GTRM is ParseBench's headline table metric: the mean of GriTS-Con and TableRecordMatch, or "
+    "GriTS-Con alone for a table ParseBench cannot match by its records. Every page is scored, a "
+    "page whose reading has no table at 0.\n"
+)
+SPEED_NOTE = (
+    "Lower is better for seconds per page, so a negative difference favours inkgrid; a document a "
+    "tool crashed or timed out on has no seconds.\n"
+)
+SCRIPTS = (
+    "inkgrid on Tesseract's words and unstructured OCR in English only, and Docling's image-only "
+    "run in its default OCR languages, so they misread other scripts by design; the text-layer "
+    "tools read whatever characters the PDF encodes.\n"
 )
 
 
@@ -174,13 +184,15 @@ def _half(half: str) -> Keep:
     return lambda info: info["half"] == half
 
 
-SPEED_PART = Part("Speed", _every, SPEED)
+SPEED_PART = Part("Speed", _every, SPEED, SPEED_NOTE)
 
 
 def _omni_parts(*, speed: bool) -> tuple[Part, ...]:
     return (
         Part("Text, English pages", _groups("english"), OMNI_TEXT, LOWER),
-        Part("Text, Chinese pages", _groups("simplified_chinese"), OMNI_TEXT, LOWER + MIXED),
+        Part(
+            "Text, Chinese pages", _groups("simplified_chinese"), OMNI_TEXT, LOWER + MIXED + SCRIPTS
+        ),
         Part("Tables", _every, OMNI_TABLES, OMNI_TABLE_NOTE),
         Part("Reading order", _every, OMNI_ORDER, LOWER),
         *((SPEED_PART,) if speed else ()),
@@ -228,7 +240,7 @@ SECTIONS = (
                 ),
                 PB_TEXT,
             ),
-            Part("Text, multilingual", _groups("text_multilang"), PB_TEXT),
+            Part("Text, multilingual", _groups("text_multilang"), PB_TEXT, SCRIPTS),
             SPEED_PART,
         ),
     ),
@@ -248,13 +260,20 @@ def _named(names: Sequence[str]) -> str:
 
 
 def _kept(data: Mapping[str, Any]) -> str:
-    """How many of each benchmark's documents the census kept."""
-    kept = [
-        f"{len(data['documents'][b]):,} of {name}'s {data['census'][b]['documents']:,}"
-        for b, name in BENCHMARKS.items()
-        if b in data["documents"]
-    ]
-    return f"The census kept {_named(kept)} documents."
+    """How many of each benchmark's fetched documents the census found born-digital, and scored."""
+    kept = []
+    for b, name in BENCHMARKS.items():
+        if b not in data["documents"]:
+            continue
+        census = data["census"][b]
+        born = census["classes"].get("born_digital", 0)
+        scored = len(data["documents"][b])
+        apart = f" ({scored:,} of them in a group scored here)" if scored != born else ""
+        kept.append(f"{born:,} of {name}'s {census['documents']:,}{apart}")
+    return (
+        "Of the documents fetched (the categories and tracks spec 18 names), the census found "
+        f"{_named(kept)} born-digital."
+    )
 
 
 def _modes(tools: Sequence[str]) -> str:
@@ -285,10 +304,10 @@ def heading(label: OcrLabel, data: Mapping[str, Any], *, head: str, date: str) -
         f"Measured on {date} at commit `{head}` by `bench/inkgrid_bench/run.py --datasets ocr`, "
         "under the pre-registered protocol of `docs/specs/18-ocr-benchmarks.md`. **Only "
         "born-digital pages and the benchmarks' text and table tests are scored**: a census taken "
-        "before any tool read a page leaves out every page that is a scan, carries an OCR layer, "
-        "is backed by a page-size image or holds almost no text, and the benchmarks' formula, "
-        "chart and handwriting tests are not run, so no number here stands for a benchmark as a "
-        f"whole. {_kept(data)}"
+        "before any tool read a page leaves out every page with almost no visible text, with as "
+        "much invisible text as visible (an OCR layer over a scan), or with one image covering "
+        "nine tenths of it, and the benchmarks' formula, chart and handwriting tests are not run, "
+        f"so no number here stands for a benchmark as a whole. {_kept(data)}"
     )
     match label:
         case "baseline":
@@ -377,6 +396,48 @@ def crash_table(crashes: Mapping[str, Mapping[str, Sequence[Sequence[str]]]]) ->
     return "\n".join(rows) + "\n" if len(rows) > 2 else "None.\n"  # noqa: PLR2004
 
 
+MARKS = (
+    ("pb_unscored", "left out of its means (an error of the scorer's)"),
+    ("pb_failed", "scored 0 (the scorer failed on its reading)"),
+    ("omni_fallback", "text matched the simple way after 30 s"),
+)
+"""The keys a driver sets on a document its scorer did not score as usual, and their meaning."""
+
+
+def marked_table(counts: Mapping[str, Mapping[str, Mapping[str, Counts]]]) -> str:
+    """Each tool's documents a scorer left out, scored 0 on failure, or matched the simple way."""
+    rows = [_row(["Tool", "Benchmark", "What the scorer did", "Documents"]), _row(["---"] * 4)]
+    for b, name in BENCHMARKS.items():
+        for tool in TOOLS:
+            per_doc = counts.get(b, {}).get(tool, {})
+            for key, meaning in MARKS:
+                marked = sorted(d for d, c in per_doc.items() if c.get(key))
+                if marked:
+                    rows.append(_row([tool, name, meaning, ", ".join(marked)]))
+    return "\n".join(rows) + "\n" if len(rows) > 2 else "None.\n"  # noqa: PLR2004
+
+
+LEFT_OUT = (*CLASSES[1:], ("group", "Born-digital, in a group not scored"))
+
+
+def left_out(data: Mapping[str, Any]) -> str:
+    """Every fetched document that is not scored, by benchmark and class (spec 18 section 2)."""
+    out = []
+    for b, name in BENCHMARKS.items():
+        by_class: Mapping[str, Sequence[str]] = data.get("excluded", {}).get(b, {})
+        total = sum(len(ids) for ids in by_class.values())
+        lines = [
+            f"- {label} ({len(by_class[key])}): {', '.join(sorted(by_class[key]))}"
+            for key, label in LEFT_OUT
+            if by_class.get(key)
+        ]
+        body = "\n".join(lines) if lines else "None."
+        out.append(
+            f"<details><summary>{name}: {total} left out</summary>\n\n{body}\n\n</details>\n"
+        )
+    return "\n".join(out)
+
+
 def document(
     data: Mapping[str, Any],
     *,
@@ -415,5 +476,9 @@ def document(
     parts += [
         "## Crashes and timeouts (each scored as an empty page)\n",
         crash_table(data["crashes"]),
+        "## Documents a scorer did not score as usual\n",
+        marked_table(data["counts"]),
+        "## Documents left out\n",
+        left_out(data),
     ]
     return "\n".join(parts)

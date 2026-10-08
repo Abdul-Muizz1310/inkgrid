@@ -98,6 +98,10 @@ def data() -> dict[str, object]:
             "dpbench": {"documents": 2, "classes": {"born_digital": 2}},
         },
         "crashes": {"docling": {"dpbench": [["02", "timed out"]]}},
+        "excluded": {
+            "olmocr": {"no_text": ["tables/9.pdf", "tables/8.pdf"]},
+            "parsebench": {"ocr_layer": ["text/s"], "group": ["text/h (text_handwritting)"]},
+        },
     }
 
 
@@ -141,9 +145,39 @@ def test_RP1_a_baseline_report_says_born_digital_text_and_tables_only_and_baseli
     assert "text and table tests" in first
     assert "baseline" in first
     assert "tuned" not in title
-    for kept in ("5 of olmOCR-bench's 9", "3 of OmniDocBench's 4", "3 of ParseBench's 5"):
+    for kept in (
+        "5 of olmOCR-bench's 9",
+        "3 of OmniDocBench's 4",
+        "4 of ParseBench's 5 (3 of them",
+    ):
         assert kept in first
     assert "overall" not in text.lower()
+
+
+def test_RP1_the_report_lists_every_document_left_out_by_class() -> None:
+    left_out = section(report(), "## Documents left out")
+    assert "No text (2): tables/8.pdf, tables/9.pdf" in left_out
+    assert "OCR layer (1): text/s" in left_out
+    assert "Born-digital, in a group not scored (1): text/h (text_handwritting)" in left_out
+
+
+def test_RP1_documents_a_scorer_could_not_score_as_usual_are_listed() -> None:
+    marked = data()
+    pb = marked["counts"]["parsebench"]["docling"]  # type: ignore[index]
+    pb["text/b"] |= {"pb_unscored": 1}
+    pb["table/a"] |= {"pb_failed": 1}
+    marked["counts"]["omnidocbench"]["inkgrid"]["zh1"] |= {"omni_fallback": 1}  # type: ignore[index]
+    text = ocr_report.document(marked, head="abc1234", date="2026-10-09", resamples=5)
+    listed = section(text, "## Documents a scorer did not score as usual")
+    assert (
+        "| docling | ParseBench | left out of its means (an error of the scorer's) | text/b |"
+        in listed
+    )
+    assert (
+        "| docling | ParseBench | scored 0 (the scorer failed on its reading) | table/a |" in listed
+    )
+    assert "| inkgrid | OmniDocBench | text matched the simple way after 30 s | zh1 |" in listed
+    assert "None." in section(report(), "## Documents a scorer did not score as usual")
 
 
 def test_RP1_olmocr_reports_each_category_and_the_born_digital_macro_tiny_text_apart() -> None:

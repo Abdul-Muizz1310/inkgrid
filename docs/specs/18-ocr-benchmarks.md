@@ -144,6 +144,10 @@ benchmark's report states how many documents each class holds and lists the excl
   ParseBench's built-in PyMuPDF text pipeline gives Content Faithfulness 68.19 where the leaderboard
   lists 68.28 (its PyMuPDF and parse-bench versions are not stated); and the saved-Markdown provider,
   fed that pipeline's own outputs, gives its per-document scores exactly (506 of 506).
+- **Every scorer's output is kept** beside its inputs in the run's directory, and a scorer gets four
+  hours a tool and benchmark. OmniDocBench falls back to a simpler text match when a page's match
+  passes 30 s, so a page's match can depend on the machine's load: the pages it prints as falling
+  back are marked and listed in the report, and a page it prints as unpredicted is refused.
 - **Never an "Overall".** A benchmark's official overall averages parts excluded here (scans, math,
   charts); no number in this run is called one.
 - **Speed:** seconds per page, warm, as spec 15 defines it.
@@ -203,7 +207,7 @@ baseline is labelled `baseline`, later runs `tuned` (`--label tuned`).
 | SC3 | a ParseBench run through the saved-Markdown provider; documents ParseBench could not evaluate | the provider returns exactly the saved Markdown; per-document values read back; a document ParseBench could not evaluate counts as ParseBench's own aggregates count it (an error of its evaluation harness leaves it out, any other failure scores 0), and the report lists it |
 | SC4 | an opendataloader-bench `evaluation.json` | per-document NID, TEDS and MHS, missing where the document has no table or heading |
 | SC5 | *heavy:* inkgrid's pages of two scored documents of each benchmark, scored as the run scores them | each pinned scorer, in its environment, returns values for exactly those documents |
-| RP1 | a report of baseline counts; of tuned counts | its title and first paragraph say born-digital text and table tests only, baseline or tuned, and how many documents the census kept; each benchmark's strata and parts as § 2 fixes them; a tuned report's dev and test halves apart; no "Overall"; tools covering different documents refused |
+| RP1 | a report of baseline counts; of tuned counts | its title and first paragraph say born-digital text and table tests only, baseline or tuned, and how many fetched documents the census found born-digital and how many are scored; each benchmark's strata and parts as § 2 fixes them; a tuned report's dev and test halves apart; every document left out, by class; the documents a scorer left out, scored 0 on failure, or matched the simple way; no "Overall"; tools covering different documents refused |
 | RN1 | a census manifest or data hash that does not match the pin; a census over other documents | the run refuses, naming the file |
 | RN2 | a run labelled baseline whose `src/inkgrid` differs from v0.1.0's | its read and report stages refuse: the baseline is 0.1.0's reading, and a run after a fix is labelled tuned |
 

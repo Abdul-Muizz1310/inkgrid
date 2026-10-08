@@ -1,3 +1,10 @@
 """Local type stub: only the part of pymupdf4llm 1.28.2 the benchmark's adapter calls (spec 18)."""
 
-def to_markdown(doc: str, *, table_output: str = ..., use_ocr: bool = ...) -> str: ...
+def to_markdown(
+    doc: str,
+    *,
+    table_output: str = ...,
+    use_ocr: bool = ...,
+    header: bool = ...,
+    footer: bool = ...,
+) -> str: ...

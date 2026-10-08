@@ -63,3 +63,13 @@ def test_AD5_inkgrid_on_tesseracts_words_writes_its_page(tmp_path: Path) -> None
     for paragraph in PARAGRAPHS:
         assert " ".join(words(paragraph)) in flat
     assert ("<table>" in doc.markdown) == bool(doc.tables)
+
+
+def test_AD6_pymupdf4llm_leaves_out_the_furniture_it_labels(tmp_path: Path) -> None:
+    pdf = tmp_path / "furnished.pdf"
+    pdf.write_bytes(pdf_factory.furnished())
+    doc = reading("pymupdf4llm", pdf)
+    assert doc.error is None
+    assert pdf_factory.FURNISHED_HEADER not in doc.markdown
+    assert "Page 1 of 5" not in doc.markdown
+    assert "alpha tier charges" in doc.markdown

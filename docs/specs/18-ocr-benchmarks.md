@@ -111,9 +111,11 @@ benchmark's report states how many documents each class holds and lists the excl
 
 - **One Markdown file per document**, the tool's whole reading of it, in its reading order. A crash or
   timeout writes an empty file and is listed; it scores as the scorer scores empty output.
-- **Furniture:** each tool's own default. inkgrid, Docling and marker leave out what they recognise as
-  page headers, footers and page numbers; unstructured's elements labelled `Header`, `Footer` or
-  `PageNumber` are left out; the text-layer converters label none.
+- **Furniture:** what a tool recognises as page headers, footers and page numbers is left out:
+  inkgrid, Docling and marker do so by default; pymupdf4llm labels them but keeps them by default, so
+  it is called with its own `header=False, footer=False`; unstructured's elements labelled `Header`,
+  `Footer` or `PageNumber` are left out, and so are its `Image` elements (the text inside a picture,
+  which Docling's Markdown leaves out too); MarkItDown and LiteParse recognise none.
 - **Tables:** where a scorer reads only HTML tables (ParseBench), a GFM pipe table in any tool's output is
   converted by one shared converter (`page_markdown.pipe_to_html`: first row `<thead>`/`<th>`, no spans),
   applied to every tool alike. olmOCR-bench, OmniDocBench and opendataloader-bench read Markdown and HTML
@@ -187,13 +189,14 @@ baseline is labelled `baseline`, later runs `tuned` (`--label tuned`).
 | CS4 | a benchmark's documents and their PDFs | a manifest holding, per document id, the PDF's SHA-256, its page classes, its class and its half, and the benchmark's pinned revision |
 | SP1 | any document ids, in any order (property) | the same split every time; dev exactly when the first hex digit is 0–7 |
 | MD1 | GFM pipe tables (header row, escaped pipes, ragged rows), and text around them | each table becomes HTML with the first row in `<thead>`, every cell's text kept, the text around it unchanged |
-| MD2 | an inkgrid `Document` with a heading, paragraphs, a table and furniture | its Markdown with the table as `Table.to_html()` and no furniture |
+| MD2 | an inkgrid `Document` with a heading, paragraphs, a table and furniture; one with a table that repeats another's pipe table, and one whose pipe table begins another's | its Markdown with each table as its own `Table.to_html()`, in its own place, and no furniture |
 | AD0 | a reading with Markdown; a reading written before readings had Markdown | written and read back unchanged; the older one reads with empty Markdown |
 | AD1 | inkgrid's adapter on a page with paragraphs and a table | its tables as before, and its Markdown equal to `page_markdown.inkgrid_markdown` of the same reading |
 | AD2 | unstructured elements: Title, NarrativeText, ListItem, Table with `text_as_html`, Header, Footer, PageNumber, Image | Markdown in element order: `#` title, paragraph, `- ` item, the table's HTML; no header, footer, page number or image |
 | AD3 | *heavy:* each text-layer converter (pymupdf4llm, MarkItDown, LiteParse) on that page, in its pinned environment | Markdown holding both paragraphs |
 | AD4 | *heavy:* Docling and marker on that page, in their pinned environments | their tables as before, and Markdown holding both paragraphs and the table as HTML |
 | AD5 | *heavy:* inkgrid on Tesseract's words on that page | Markdown holding both paragraphs as Tesseract reads them, and any table it finds written as HTML |
+| AD6 | *heavy:* pymupdf4llm on a five-page document with a running header and page numbers | Markdown holding the body and neither the header nor a page number |
 | SC1 | an olmOCR category restricted to born-digital PDFs, a tool missing one PDF's output | an empty file written for it; per-PDF tests and passes read back |
 | SC2 | OmniDocBench's per-page Edit and TEDS files for a subset | per-page values keyed by page, with each page's language |
 | SC3 | a ParseBench run through the saved-Markdown provider | the provider returns exactly the saved Markdown; per-document values read back |

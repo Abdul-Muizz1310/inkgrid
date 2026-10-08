@@ -44,7 +44,11 @@ chosen here are the ones whose inputs include born-digital PDFs and whose licenc
 ## 1 · Datasets, what is fetched, what is scored
 
 Everything is fetched by pinned revision into `~/.cache/inkgrid-bench/` and checked against SHA-256
-manifests committed beside `sources.toml`; nothing downloaded is committed or executed.
+manifests committed beside `sources.toml`; nothing downloaded is committed or executed. A benchmark
+on Hugging Face has a listing (`bench/ocr/<benchmark>.sha256`) of every file the run uses, each hash
+checked against the Hub's own at the pinned revision when it was written (2,748 files, none
+differing); DP-Bench is opendataloader-bench's repository, cloned at its pinned commit, and its PDFs
+are pinned by the census.
 
 | Benchmark | Fetched | Scored (before the census) |
 |---|---|---|
@@ -154,8 +158,9 @@ benchmark's report states how many documents each class holds and lists the excl
 ## 6 · The run
 
 `run.py --datasets ocr [stages]` reads every tool on every scored document, scores, and reports, one
-document at a time, niced, in resumable pieces. It refuses to start unless the census manifests and the
-data hashes match the pinned ones. A run's results go to `bench/results/<date>-<commit>-ocr/`; the
+document at a time, niced, in resumable pieces (stages `prepare`, `read`, `score`, `report`). It
+refuses to start unless the census manifests and the data hashes match the pinned ones, and a run
+labelled baseline refuses an `src/inkgrid` other than v0.1.0's. A run's results go to `bench/results/<date>-<commit>-ocr/`; the
 baseline is labelled `baseline`, later runs `tuned` (`--label tuned`).
 
 ## 7 · Improvements (M7b)
@@ -175,6 +180,7 @@ baseline is labelled `baseline`, later runs `tuned` (`--label tuned`).
 |---|---|---|
 | DS1 | each benchmark's files, laid out as fetched (test files or truth listing their PDFs) | every document once, with its id (the benchmark's own) and group (olmOCR category, OmniDocBench language, ParseBench track or text tag); a referenced PDF that is missing is refused |
 | DS2 | spec 12's olmOCR-bench folder after this spec's categories are fetched beside its table tests | spec 12 scores in a view of it holding only `table_tests.jsonl` and `pdfs/tables/`, so olmOCR's command line and spec 12's driver see the table tests and the 188 table PDFs and nothing else |
+| SL1 | documents of every class and group, with their census entries | the scored ones are the born-digital documents in a scored group (olmOCR's four categories, every OmniDocBench language, ParseBench's table track and six text tags, DP-Bench's pages); a document the census never classified, or a group this spec does not name, is refused |
 | CS1 | page statistics at each threshold's edge: 49 and 50 visible characters; invisible equal to visible; one image covering 89% and 90% | `no_text`; `born_digital`; `ocr_layer`; `born_digital`; `image_backed` |
 | CS2 | a document with one `image_backed` page among born-digital ones | not born-digital |
 | CS3 | a PDF built with visible text, invisible text, and a page-size image | the census shell's counts match what was drawn |
@@ -192,8 +198,10 @@ baseline is labelled `baseline`, later runs `tuned` (`--label tuned`).
 | SC2 | OmniDocBench's per-page Edit and TEDS files for a subset | per-page values keyed by page, with each page's language |
 | SC3 | a ParseBench run through the saved-Markdown provider | the provider returns exactly the saved Markdown; per-document values read back |
 | SC4 | an opendataloader-bench `evaluation.json` | per-document NID, TEDS and MHS, missing where the document has no table or heading |
-| RP1 | a report of baseline counts | its title and first paragraph say born-digital text and table tests only, and baseline; no "Overall" |
-| RN1 | a census manifest or data hash that does not match the pin | the run refuses, naming the file |
+| SC5 | *heavy:* inkgrid's pages of two scored documents of each benchmark, scored as the run scores them | each pinned scorer, in its environment, returns values for exactly those documents |
+| RP1 | a report of baseline counts; of tuned counts | its title and first paragraph say born-digital text and table tests only, baseline or tuned, and how many documents the census kept; each benchmark's strata and parts as § 2 fixes them; a tuned report's dev and test halves apart; no "Overall"; tools covering different documents refused |
+| RN1 | a census manifest or data hash that does not match the pin; a census over other documents | the run refuses, naming the file |
+| RN2 | a run labelled baseline whose `src/inkgrid` differs from v0.1.0's | its read and report stages refuse: the baseline is 0.1.0's reading, and a run after a fix is labelled tuned |
 
 ## 9 · Acceptance
 

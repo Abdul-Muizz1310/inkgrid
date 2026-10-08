@@ -3,7 +3,14 @@ from pathlib import Path
 
 import pytest
 
-from inkgrid_bench.ocr_data import dpbench_docs, olmocr_docs, omnidocbench_docs, parsebench_docs
+from inkgrid_bench.ocr_data import (
+    BenchDoc,
+    dpbench_docs,
+    olmocr_docs,
+    omnidocbench_docs,
+    parsebench_docs,
+    scored,
+)
 
 
 def touch(path: Path) -> Path:
@@ -87,3 +94,30 @@ def test_DS1_each_benchmark_lists_every_document_once_with_its_group(tmp_path: P
     (olm / "pdfs" / "tables" / "c.pdf").unlink()
     with pytest.raises(FileNotFoundError, match=r"tables/c\.pdf"):
         olmocr_docs(olm)
+
+
+def test_SL1_only_born_digital_documents_in_a_scored_group_are_scored(tmp_path: Path) -> None:
+    def doc(doc_id: str, group: str) -> BenchDoc:
+        return BenchDoc("parsebench", doc_id, tmp_path / f"{doc_id}.pdf", group)
+
+    docs = [
+        doc("table/a", "table"),
+        doc("text/b", "text_simple"),
+        doc("text/c", "text_ocr"),  # a scan's tag: never scored
+        doc("text/d", "text_multilang"),
+        doc("table/e", "table"),
+    ]
+    census = {
+        "table/a": {"class": "born_digital"},
+        "text/b": {"class": "born_digital"},
+        "text/c": {"class": "born_digital"},
+        "text/d": {"class": "born_digital"},
+        "table/e": {"class": "image_backed"},
+    }
+    assert [d.id for d in scored(docs, census)] == ["table/a", "text/b", "text/d"]
+    with pytest.raises(ValueError, match="text/x"):  # a document the census never classified
+        scored([*docs, doc("text/x", "text_simple")], census)
+    with pytest.raises(ValueError, match="text_new"):  # a group spec 18 never named
+        scored([doc("text/y", "text_new")], {"text/y": {"class": "born_digital"}})
+    pages = [BenchDoc("dpbench", "01", tmp_path / "01.pdf", "page")]
+    assert scored(pages, {"01": {"class": "born_digital"}}) == pages

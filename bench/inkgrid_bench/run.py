@@ -1039,10 +1039,19 @@ def _heldout_stages() -> dict[str, Callable[[Path, str, dict[str, Any]], None]]:
     return heldout_run.stages()
 
 
+def _ocr_stages(
+    label: report.RunLabel,
+) -> dict[str, Callable[[Path, str, dict[str, Any]], None]]:
+    from inkgrid_bench import ocr_run  # noqa: PLC0415 - ocr_run imports this module
+
+    return ocr_run.stages("tuned" if label == "tuned" else "baseline")
+
+
 def main(argv: Sequence[str] = sys.argv[1:]) -> int:
     """Run the stages named, or all of them; `--label tuned` labels the run's report.
 
-    `--datasets heldout` runs the held-out fee set's stages instead of spec 12's (spec 16 s. 6).
+    `--datasets heldout` runs the held-out fee set's stages instead of spec 12's (spec 16 s. 6),
+    and `--datasets ocr` the OCR benchmarks' (spec 18 s. 6).
     """
     wanted = list(argv)
     given = _option(wanted, "--label")
@@ -1051,12 +1060,18 @@ def main(argv: Sequence[str] = sys.argv[1:]) -> int:
         sys.stderr.write(f"--label takes one of: {', '.join(report.LABELS)}\n")
         return 2
     datasets = _option(wanted, "--datasets")
-    if datasets not in {None, "heldout"}:
+    if datasets not in {None, "heldout", "ocr"}:
         sys.stderr.write(
-            "--datasets takes: heldout; without it, the run reads spec 12's datasets\n"
+            "--datasets takes: heldout or ocr; without it, the run reads spec 12's datasets\n"
         )
         return 2
-    stages = _stages(label) if datasets is None else _heldout_stages()
+    match datasets:
+        case "heldout":
+            stages = _heldout_stages()
+        case "ocr":
+            stages = _ocr_stages(label)
+        case _:
+            stages = _stages(label)
     wanted = wanted or ["all"]
     if wanted == ["all"]:
         wanted = list(stages)

@@ -56,3 +56,13 @@ def dice(num: str, a: str, b: str) -> Metric:
         return 2 * _total(docs, num) / den if den else math.nan
 
     return metric
+
+
+def macro(*metrics: Metric) -> Metric:
+    """The mean of several metrics, each weighted alike (olmOCR-bench's born-digital macro)."""
+
+    def metric(docs: Sequence[Counts]) -> float:
+        values = [m(docs) for m in metrics]
+        return math.nan if any(math.isnan(v) for v in values) else math.fsum(values) / len(values)
+
+    return metric

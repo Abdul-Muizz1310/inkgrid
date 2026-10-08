@@ -33,7 +33,8 @@ def sources(path: Path = SOURCES) -> dict[str, Source]:
     return {name: Source(name=name, **entry) for name, entry in data["source"].items()}
 
 
-def _digest(path: Path) -> str:
+def digest(path: Path) -> str:
+    """A file's SHA-256, in hex."""
     h = hashlib.sha256()
     with path.open("rb") as f:
         for chunk in iter(lambda: f.read(1 << 20), b""):
@@ -61,10 +62,10 @@ def fetch(source: Source, cache: Path = CACHE) -> Path:
             msg = f"{source.name}: cannot download {source.url}: {exc}"
             raise FetchError(msg) from exc
         part.replace(target)
-    digest = _digest(target)
-    if digest != source.sha256:
+    found = digest(target)
+    if found != source.sha256:
         target.unlink()
-        msg = f"{source.name}: SHA-256 {digest} is not the pinned {source.sha256}"
+        msg = f"{source.name}: SHA-256 {found} is not the pinned {source.sha256}"
         raise FetchError(msg)
     return target
 
@@ -79,7 +80,7 @@ def fetch_manifest(base_url: str, listing: Path, root: str, cache: Path = CACHE)
     for line in listing.read_text(encoding="utf-8").splitlines():
         if not line.strip():
             continue
-        digest, relative = line.split(maxsplit=1)
+        pinned, relative = line.split(maxsplit=1)
         name = f"{root}/{relative}"
-        out.append(fetch(Source(name, base_url + relative, digest, name), cache))
+        out.append(fetch(Source(name, base_url + relative, pinned, name), cache))
     return out

@@ -5,9 +5,10 @@ whatever the benchmark itself scores; a PDF the benchmark refers to but the cach
 """
 
 import json
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 OLMOCR_SPLITS = {
     "headers_footers": "headers_footers.jsonl",
@@ -17,6 +18,25 @@ OLMOCR_SPLITS = {
 }
 PARSEBENCH_FILES = ("table.jsonl", "text_content.jsonl")
 DIFFICULTY = frozenset({"easy", "hard"})  # ParseBench's other tags name the text's kind
+# The groups scored, and the ones left out as a text-layer reader cannot fairly be tested on them
+# (spec 18 section 1): ParseBench's scans and handwriting. Any other group is refused.
+SCORED_GROUPS = {
+    "olmocr": frozenset(OLMOCR_SPLITS),
+    "omnidocbench": frozenset({"english", "simplified_chinese", "en_ch_mixed"}),
+    "parsebench": frozenset(
+        {
+            "table",
+            "text_simple",
+            "text_multicolumns",
+            "text_multilang",
+            "text_misc",
+            "text_dense",
+            "text_sparse",
+        }
+    ),
+    "dpbench": frozenset({"page"}),
+}
+UNSCORED_GROUPS = {"parsebench": frozenset({"text_ocr", "text_handwritting"})}
 CACHE = Path.home() / ".cache" / "inkgrid-bench"
 # Where each benchmark is fetched to, and the revision it is pinned at (spec 18 section 0).
 LOCATIONS = {
@@ -123,3 +143,23 @@ LISTERS = {
 def documents(benchmark: str) -> list[BenchDoc]:
     """The benchmark's documents, from its fetched copy."""
     return LISTERS[benchmark](LOCATIONS[benchmark][0])
+
+
+def scored(docs: Sequence[BenchDoc], census: Mapping[str, Mapping[str, Any]]) -> list[BenchDoc]:
+    """The documents scored: born-digital by the census, in a scored group (spec 18 s. 1, 2).
+
+    Raises:
+        ValueError: a document the census never classified, or a group spec 18 never named.
+    """
+    out = []
+    for doc in docs:
+        if doc.id not in census:
+            msg = f"{doc.benchmark} {doc.id} is not in the census"
+            raise ValueError(msg)
+        named = SCORED_GROUPS[doc.benchmark]
+        if doc.group not in named | UNSCORED_GROUPS.get(doc.benchmark, frozenset()):
+            msg = f"{doc.benchmark} {doc.id} is in group {doc.group}, which spec 18 does not name"
+            raise ValueError(msg)
+        if doc.group in named and census[doc.id]["class"] == "born_digital":
+            out.append(doc)
+    return out

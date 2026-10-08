@@ -97,6 +97,70 @@ package = "olmocr[bench]==0.4.27"
 # olmocr 0.4.27's bench imports numpy without declaring it.
 with = ["numpy==2.3.3"]
 
+# The OCR benchmarks' scorers (docs/specs/18-ocr-benchmarks.md section 4), each unmodified in an
+# environment of its own, resolved as of the day they were pinned. OmniDocBench's evaluation code at
+# its v1_0 branch, with the versions its requirements.txt names:
+[scorer.omnidocbench]
+repository = "https://github.com/opendatalab/OmniDocBench"
+branch = "v1_0"
+commit = "337cc26965893db3ef53ddc119a6d6bb5bde096f"
+root = "omnidocbench/eval"
+python = "3.10"
+with = [
+    "apted==1.0.3", "beautifulsoup4==4.11.1", "datasets==3.1.0", "evaluate==0.4.3",
+    "func-timeout==4.3.5", "Levenshtein==0.25.1", "loguru==0.7.2", "lxml==4.9.1",
+    "matplotlib==3.7.5", "mmeval==0.2.1", "numpy==1.24.4", "pandas==2.0.3", "pylatexenc==3.0a30",
+    "PyYAML==6.0.2", "rapidfuzz==3.9.7", "scipy==1.10.1", "tabulate==0.9.0", "tqdm==4.67.1",
+]
+exclude-newer = "2026-10-08T00:00:00Z"
+
+[scorer.parsebench]
+package = "parse-bench==1.0.4"
+python = "3.12"
+exclude-newer = "2026-10-08T00:00:00Z"
+
+# opendataloader-bench's evaluator ([ocr.dpbench]'s src/evaluator.py) with the packages it imports.
+[scorer.opendataloader]
+python = "3.13"
+with = [
+    "apted==1.0.3", "beautifulsoup4==4.14.3", "lxml==6.1.0", "rapidfuzz==3.14.3", "soupsieve==2.8.3",
+]
+exclude-newer = "2026-10-08T00:00:00Z"
+
+# The OCR benchmarks' data (docs/specs/18-ocr-benchmarks.md sections 0 and 1). One fetched from
+# Hugging Face lists every file it uses with its SHA-256 (`list`, under bench/; checked against the
+# Hub's own hashes when pinned), fetched from `url` + path into `root` under the cache; DP-Bench is
+# opendataloader-bench's repository, cloned at `revision`.
+[ocr.olmocr]
+revision = "54a96a6fb6a2bd3b297e59869491db4d3625b711"
+url = "https://huggingface.co/datasets/allenai/olmOCR-bench/resolve/54a96a6fb6a2bd3b297e59869491db4d3625b711/bench_data/"
+list = "ocr/olmocr.sha256"
+root = "olmocr/bench_data"
+
+[ocr.omnidocbench]
+revision = "f5f559bddf50e36f7f9899d842d0006f13ce8afc"
+url = "https://huggingface.co/datasets/opendatalab/OmniDocBench/resolve/f5f559bddf50e36f7f9899d842d0006f13ce8afc/"
+list = "ocr/omnidocbench.sha256"
+root = "omnidocbench/v1_0"
+
+[ocr.parsebench]
+revision = "2805a1d940f95a203e0ae4b88be9934f7765b3fc"
+url = "https://huggingface.co/datasets/llamaindex/ParseBench/resolve/2805a1d940f95a203e0ae4b88be9934f7765b3fc/"
+list = "ocr/parsebench.sha256"
+root = "parsebench/data"
+
+[ocr.dpbench]
+revision = "7af1d8f4d0c09f51ea1a5c6ba5f66e993286d109"
+repository = "https://github.com/opendataloader-project/opendataloader-bench"
+root = "dpbench/opendataloader-bench"
+
+# Upstage's own DP-Bench truth, from which opendataloader-bench's Markdown truth derives.
+[ocr.dpbench-upstage]
+revision = "24702c61a2fb13325534be664653bc6e60250d13"
+url = "https://huggingface.co/datasets/upstage/dp-bench/resolve/24702c61a2fb13325534be664653bc6e60250d13/"
+list = "ocr/dpbench-upstage.sha256"
+root = "dpbench/upstage"
+
 # Tesseract 5.5.3 for unstructured and the ablation, in a prefix under the cache (spec 15 section 1).
 [tesseract]
 channel = "conda-forge"

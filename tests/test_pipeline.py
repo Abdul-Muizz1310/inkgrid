@@ -128,3 +128,13 @@ def test_PC11_two_columns_of_chinese_prose_read_one_after_the_other() -> None:
     assert markdown.index(pdf_factory.CHINESE_LEFT[-1]) < markdown.index(
         pdf_factory.CHINESE_RIGHT[0]
     )
+
+
+def test_HR7_a_header_of_years_in_smaller_type_heads_its_table() -> None:
+    doc = build(pdf_factory.year_header_table())
+    (table,) = doc.tables()
+    html = table.to_html()
+    assert "</thead>" in html
+    head = html[: html.index("</thead>")]
+    assert all(year in head for year in pdf_factory.YEAR_HEADER)
+    assert table.grid.n_rows == 1 + len(pdf_factory.YEAR_ROWS)

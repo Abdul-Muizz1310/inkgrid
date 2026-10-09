@@ -840,3 +840,68 @@ def test_CX3_a_foreign_word_between_value_rows_refuses_the_table() -> None:
     between = place([P("note", 150, 110, size=9)], first_id=90)
     assert corridor_table(rows, columns(rows), PROFILE, page=1, frame=0) is not None
     assert corridor_table(rows, columns(rows), PROFILE, page=1, frame=0, others=between) is None
+
+
+# --- Header runs, H1 (docs/specs/19-ocr-benchmark-fixes.md section 3) --------------------------
+
+# The centres of `six_rows`' Floor, Scale and Cap columns: the value pieces' merged extents.
+SIX_CENTRES = (267.9, 330.15, 401.75)
+
+
+def year_row(
+    y: float, size: float = 8, years: tuple[str, ...] = ("2025", "2024", "2023")
+) -> list[P]:
+    """A header of years, each centred over one of `six_rows`' value columns."""
+    return [
+        P(year, c - CHAR_EM * size * len(year) / 2, y, size=size)
+        for year, c in zip(years, SIX_CENTRES, strict=True)
+    ]
+
+
+def holds_none_of(table: ProtoTable, ps: list[P]) -> bool:
+    """No word of `ps` is in the table: words compared by text and place, as texts repeat."""
+    mine = {(p.text, round(p.x, 2), round(p.y, 2)) for p in ps}
+    return not {(w.text, round(w.bbox.x0, 2), round(w.bbox.y0, 2)) for w in table.words} & mine
+
+
+def test_HR1_a_smaller_header_row_directly_above_joins_its_table() -> None:
+    (table,) = stage(year_row(100) + six_rows(112)).tables
+    assert table.header_rows == 1
+    first = [" ".join(w.text for w in c.words) for c in table.cells if c.cell.row == 0 and c.words]
+    assert first == ["2025", "2024", "2023"]
+
+
+def test_HR2_a_larger_header_row_stays_out() -> None:
+    years = year_row(98, size=10)
+    result = stage(years + six_rows(112))
+    (table,) = result.tables
+    assert holds_none_of(table, years)
+    assert table.header_rows == 0
+
+
+def test_HR3_a_one_piece_caption_stays_out() -> None:
+    caption = text_line(["Standard", "tariff", "2024"], x=72, y=100, size=8)
+    (table,) = stage(caption + six_rows(112)).tables
+    assert holds_none_of(table, caption)
+    assert table.header_rows == 0
+
+
+def test_HR4_a_header_row_set_apart_above_stays_out() -> None:
+    years = year_row(84)
+    (table,) = stage(years + six_rows(112)).tables
+    assert holds_none_of(table, years)
+    assert table.header_rows == 0
+
+
+def test_HR5_four_header_lines_are_no_header_run() -> None:
+    lines = [p for k in range(4) for p in year_row(64 + 12 * k, years=(f"A{k}", f"B{k}", f"C{k}"))]
+    (table,) = stage(lines + six_rows(112)).tables
+    assert holds_none_of(table, lines)
+    assert table.header_rows == 0
+
+
+def test_HR6_a_header_row_holding_a_value_stays_out() -> None:
+    row = year_row(100, years=("Fee", "1.00", "Cap"))
+    (table,) = stage(row + six_rows(112)).tables
+    assert holds_none_of(table, row)
+    assert table.header_rows == 0

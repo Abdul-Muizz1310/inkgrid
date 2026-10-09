@@ -155,7 +155,8 @@ label column reads as prose, lands in a prose region (layout needs `column_min_l
 gutter). A candidate without a table passes through unchanged. Its lines
 are split into *size runs* wherever a line's size differs from the previous line's by more than
 `size_change_ratio` × the smaller of the two, and each size run is folded into rows (§ 2) on its own, so
-the pitch of the headings around a table never sets the pitch its rows are measured by.
+the pitch of the headings around a table never sets the pitch its rows are measured by. A table's
+header set in smaller type directly above it joins the run below (spec 19 § 3, H1).
 
 `corridor_tables` also takes the page's rules, content words, fills, and the extents the lattice
 stage refused as charts. A table's extent holds no other region's word (spec 14 § 5), and a found

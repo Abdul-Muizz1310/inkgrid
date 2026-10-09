@@ -185,7 +185,7 @@ baseline dev number exactly. The 42 fee schedules were dumped with the rules and
 | PC10 | a Chinese column 10 ems wide, filled 0.6; one 9.5 ems wide | a prose column; not a prose column |
 | PC11 | `inkgrid.read` of a one-page PDF of two columns of Chinese prose | the left column's text, then the right's, in the Markdown |
 | HR1 | `2025 2024 2023` in 8 pt bold directly above a 9 pt table of three value columns | the table's header row |
-| HR2 | a 10 pt bold heading directly above a 9 pt table (`07` EX1) | not in the table |
+| HR2 | `2025 2024 2023` in 10 pt directly above a 9 pt table (and `07` EX1's bold heading) | not in the table: its type is larger |
 | HR3 | an 8 pt one-piece caption directly above a 9 pt table | not in the table |
 | HR4 | an 8 pt header row 20 pt above a 9 pt table | not in the table |
 | HR5 | four 8 pt header lines directly above a 9 pt table | not in the table |

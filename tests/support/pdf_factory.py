@@ -949,6 +949,38 @@ ONE_PAGE_BODY = [
 ]
 
 
+YEAR_HEADER = ("2025", "2024", "2023")
+YEAR_ROWS = [
+    ("iPhone", ("201,183", "201,183", "200,583")),
+    ("Mac", ("29,357", "29,984", "29,357")),
+    ("iPad", ("26,694", "28,300", "26,694")),
+    ("Services", ("96,169", "85,200", "78,129")),
+]
+YEAR_ENDS = (300.0, 380.0, 460.0)  # where each value column's numbers end
+
+
+def year_header_table() -> bytes:
+    """Spec 19 HR7: `2025 2024 2023` in 8 pt bold over a 9 pt unruled table, prose around it."""
+    doc = pymupdf.open()
+    page = _page(doc)
+    page.insert_text((72, 80), "Net sales by category", fontsize=12, fontname="hebo")
+    page.insert_text((72, 100), "The following table shows net sales by category.", fontsize=10)
+    widest = max(
+        pymupdf.get_text_length(v, fontname="helv", fontsize=9) for _, vs in YEAR_ROWS for v in vs
+    )
+    for year, end in zip(YEAR_HEADER, YEAR_ENDS, strict=True):
+        width = pymupdf.get_text_length(year, fontname="hebo", fontsize=8)
+        page.insert_text((end - widest / 2 - width / 2, 130), year, fontsize=8, fontname="hebo")
+    for n, (label, values) in enumerate(YEAR_ROWS):
+        y = 142 + 12 * n
+        page.insert_text((72, y), label, fontsize=9)
+        for value, end in zip(values, YEAR_ENDS, strict=True):
+            width = pymupdf.get_text_length(value, fontname="helv", fontsize=9)
+            page.insert_text((end - width, y), value, fontsize=9)
+    page.insert_text((72, 220), "Net sales grew in every category but one.", fontsize=10)
+    return _save(doc)
+
+
 CHINESE_LEFT = ["\u4e2d\u6587" * 9 + f"{i:02d}" for i in range(8)]
 CHINESE_RIGHT = ["\u6d4b\u8bd5" * 9 + f"{i:02d}" for i in range(8)]
 
@@ -1967,4 +1999,5 @@ OPENABLE: dict[str, Callable[[], bytes]] = {
     "furniture_only_page": furniture_only_page,
     "one_page_furnished": one_page_furnished,
     "chinese_columns": chinese_columns,
+    "year_header_table": year_header_table,
 }

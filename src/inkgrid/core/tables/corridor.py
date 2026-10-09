@@ -682,8 +682,28 @@ def _fits(row: Row, spans: Sequence[Span], tol: float) -> bool:
     return True
 
 
+def _header_run(run: Sequence[Line], profile: Profile) -> bool:
+    """H1: a short run of value-free lines, its last of pieces side by side: a column header."""
+    if len(run) > MAX_HEADER_ROWS:
+        return False
+    if any(_holds_value(piece.words) for line in run for piece in _pieces(line, profile)):
+        return False
+    return any(a.x1 <= b.x0 for a, b in pairwise(_pieces(run[-1], profile)))
+
+
+def _directly_above(run: Sequence[Line], below: Sequence[Line]) -> bool:
+    """The run's last line sits on the next run's first, within a line, in type no larger."""
+    last, first = run[-1], below[0]
+    height = max(last.bottom - last.top, first.bottom - first.top)
+    return first.top - last.bottom <= height and last.size <= first.size
+
+
 def _size_runs(lines: Sequence[Line], profile: Profile) -> list[list[Line]]:
-    """The lines split wherever the type size changes (prose rule 2, against the smaller size)."""
+    """The lines split wherever the type size changes (prose rule 2, against the smaller size).
+
+    A table's header set in smaller type is no run of its own: it joins the run below it
+    (docs/specs/19-ocr-benchmark-fixes.md section 3, H1).
+    """
     runs: list[list[Line]] = []
     for line in lines:
         if runs:
@@ -692,7 +712,13 @@ def _size_runs(lines: Sequence[Line], profile: Profile) -> list[list[Line]]:
                 runs[-1].append(line)
                 continue
         runs.append([line])
-    return runs
+    joined: list[list[Line]] = []
+    for run in runs:
+        if joined and _header_run(joined[-1], profile) and _directly_above(joined[-1], run):
+            joined[-1] = [*joined[-1], *run]
+        else:
+            joined.append(run)
+    return joined
 
 
 def _level_with(row: Row, spans: Sequence[Span], foreign: Sequence[Word]) -> bool:

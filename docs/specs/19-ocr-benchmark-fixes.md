@@ -91,8 +91,10 @@ OmniDocBench's text and order; the rest are higher-better.
 table losses on ParseBench were one prototype's error: it compared a line's raw size with the
 half-point body size, so a 6.96 pt header row under a 7.0 pt body read as smaller type. § 1 as
 written compares sizes rounded alike. § 2's prototype held a column of more than a quarter of
-busy lines to be no prose column; § 2 as written takes half (a quarter turned a prose column with
-a few split lines into rows read across).
+busy lines to be no prose column, and measured prose by width and fill in any script; § 2 as written
+takes half (a quarter turned a prose column with a few split lines into rows read across), measures
+width and fill only in wide script, and leaves a section holding a value as 0.1.0 read it, after the
+fee schedules' look-back found Latin tables read apart (§ 2's rejected options).
 
 ---
 
@@ -110,7 +112,8 @@ a few split lines into rows read across).
      § 2.1), and it does not open, in type at most `footnote_size_ratio` × the body size, with an
      enumerator (`(4)`, `1.`, `a)`) or a note mark (`*`, `†`).
   5. **It prints its role:** its first or last token is a page number, or its type is smaller than the
-     body size (`body_size` over the page's horizontal words, `04` § 2). The line's leading and
+     body size: its size, rounded to 0.5 pt as `body_size` rounds, is below `body_size` over the
+     page's horizontal words (`04` § 2). The line's leading and
      trailing dashes, brackets, bars, dots and colons are set aside first. A page number is 1 to 4
      digits, two such joined by `/` (`2/5`), or a roman numeral as § 3 item 2 defines one, with those
      marks around it; a year (1900–2099) and an enumerator (`3.`, `(4)`) are not. So `- 7 -`,
@@ -239,39 +242,50 @@ Every existing case keeps passing, but `04` FU4, amended above.
 
 ## 5 · Acceptance
 
-**Measured** (2026-10-09, the three rules as written at `68b6210`, dev documents only, each
+**Measured** (2026-10-09, the three rules as written at `87093ec`, dev documents only, each
 benchmark's pinned scorer called as the run calls it):
 
 | Dev number | 0.1.0 | Spec 19 |
 |---|---|---|
 | olmOCR headers and footers (295 tests) | 0.264 | 0.563 |
-| olmOCR multi-column (328) | 0.613 | 0.683 |
+| olmOCR multi-column (328) | 0.613 | 0.674 |
 | olmOCR tables (440) | 0.559 | 0.566 |
 | olmOCR long tiny text (51) | 0.255 | 0.392 |
 | olmOCR baseline tests (281) | 1.000 | 1.000 |
-| OmniDocBench text Edit distance, English (primary) | 0.293 | 0.217 |
+| OmniDocBench text Edit distance, English (primary) | 0.293 | 0.235 |
 | OmniDocBench text Edit distance, simplified Chinese (primary) | 0.512 | 0.386 |
 | OmniDocBench table TEDS (primary) | 0.521 | 0.521 |
-| OmniDocBench reading-order Edit distance (primary) | 0.274 | 0.227 |
+| OmniDocBench reading-order Edit distance (primary) | 0.274 | 0.233 |
 | ParseBench GTRM | 0.496 | 0.506 |
 | ParseBench TableRecordMatch | 0.329 | 0.343 |
-| ParseBench content faithfulness, five tags | 0.835 | 0.838 |
+| ParseBench content faithfulness, five tags | 0.835 | 0.832 |
+| ParseBench content faithfulness, multi-column tag | 0.747 | 0.762 |
 | ParseBench content faithfulness, multilingual | 0.615 | 0.612 |
 | DP-Bench NID | 0.903 | 0.896 |
 | DP-Bench TEDS | 0.682 | 0.682 |
-| DP-Bench MHS | 0.694 | 0.687 |
+| DP-Bench MHS | 0.694 | 0.689 |
 
 Together the rules do better than any alone on olmOCR's multi-column tests (furniture no longer
 breaks a passage) and on OmniDocBench's text. They cost ParseBench's simple and misc text tags and
-DP-Bench's NID and MHS, whose truths count page numbers and running heads as text. Keeping values
-out of both new column paths gave back six dev pages that held one incidental value (multi-column
-0.695 and Chinese text 0.373 without it); it keeps every table the look-back found split. These are
-dev numbers: the tuned run's test half is the measure of whether the rules carry.
+DP-Bench's NID and MHS, whose truths count page numbers and running heads as text. Leaving a section
+that holds a value as 0.1.0 read it, and measuring width and fill only in wide script, gave back
+some Latin pages (olmOCR multi-column 0.695 and OmniDocBench English text 0.217 without either), to
+keep every table the fee schedules' look-back found read apart. These are dev numbers: the tuned
+run's test half is the measure of whether the rules carry.
 
-- [ ] Every case above has a test named `test_<CaseId>_<slug>`, and it failed before its code.
-- [ ] The dev numbers of § 0's prototype hold for the implementation, scored as the run scores them.
-- [ ] The fixture suite passes, and every `OPENABLE` fixture verifies with no defect.
-- [ ] The 42 fee schedules read as 0.1.0 read them, or each change is explained.
+- [x] Every case above has a test named `test_<CaseId>_<slug>`, and it failed before its code. The
+      cases that guard what must not change (FP5, FP6, FP9, FP10, FP13, FP14, FP15, FU4, PC2, PC4,
+      PC5, PC8, HR2 to HR6) passed before it; PC12 to PC16 also pass on 0.1.0's own layout code;
+      HR2 to HR6, FP11's note mark, and PC7 and PC9's busy share each failed with its clause removed.
+- [x] The dev numbers above are the rules as written, scored as the run scores them.
+- [x] The fixture suite passes (`scripts/dev.sh`: 2,116 tests, coverage 98%, every floor met), and
+      every `OPENABLE` fixture, the four new ones among them, builds a valid document.
+- [x] The 42 fee schedules (2026-10-09, `87093ec`): 974 pages, all 1,817,075 characters owned, none
+      lost, the same 8 defects as 0.1.0. Three read differently, each by H1 reading a small table
+      whose header is set in other type as a table: Nasdaq Copenhagen's and Helsinki's
+      `INSTRUMENT TYPE | DKK` (`EUR`) over `Warrants and certificates | 0.25` (`0.03`), and Nasdaq
+      Stockholm's `TRANSACTION BASED FEE PER EXECUTED ORDER (SEK) | VALUE BASED FEE` over `- |
+      0.204 bps`, where 0.1.0 read headings and a list item.
 - [ ] Spec 12's ICDAR-2013 and olmOCR table sets and the held-out fee set run at the final commit, and
       each change in them is explained.
 - [ ] The tuned run reports the dev and test halves apart, labelled tuned.

@@ -9,6 +9,7 @@ is not prose beside prose columns is a stray, or a remainder laid out again in i
 
 import bisect
 import statistics
+import unicodedata
 from collections import Counter
 from collections.abc import Sequence
 from dataclasses import dataclass
@@ -93,30 +94,44 @@ class _Run:
         )
 
 
+def _wordy(parts: Sequence[Line], profile: Profile) -> bool:
+    """0.1.0's prose test: enough fragments, and enough words in each on average."""
+    return (
+        len(parts) >= profile.column_min_lines
+        and sum(len(part.words) for part in parts) / len(parts) >= profile.prose_min_words
+    )
+
+
+def _wide_script(parts: Sequence[Line]) -> bool:
+    """True when most of the column's characters are wide: Chinese, Japanese or Korean script.
+
+    Such text sets no space between its words, so words per fragment cannot see its prose.
+    """
+    chars = [ch for part in parts for word in part.words for ch in word.text]
+    wide = sum(unicodedata.east_asian_width(ch) in {"W", "F"} for ch in chars)
+    return 2 * wide > len(chars)
+
+
 def _prose_column(
     parts: Sequence[Line], lines: int, busy: int, profile: Profile, body_size: float
 ) -> bool:
     """A column of prose: enough fragments, one column, and either words or width and fill."""
     if len(parts) < profile.column_min_lines or busy > MAX_BUSY_SHARE * lines:
         return False
-    if sum(len(part.words) for part in parts) / len(parts) >= profile.prose_min_words:
+    if _wordy(parts, profile):
         return True
-    if any(is_value_piece(part.words) for part in parts):
-        return False  # a column of values is prose only by its words, as 0.1.0 read it
+    if not _wide_script(parts):
+        return False  # a Latin column is prose only by its words, as 0.1.0 read it
     width = max(part.x1 for part in parts) - min(part.x0 for part in parts)
     if width <= 0 or width < PROSE_MIN_WIDTH_EM * body_size:
         return False
     return statistics.mean(part.x1 - part.x0 for part in parts) >= PROSE_MIN_FILL * width
 
 
-def _columns(
-    run: _Run, gutters: Sequence[Interval], profile: Profile, body_size: float, depth: int
-) -> list[Region] | None:
-    """One prose region per column, or None when the section is not prose columns.
-
-    Beside prose columns, a stray (too few fragments) and a remainder holding prose columns of its
-    own are laid out again, in a section holding no value; any other column refuses the section.
-    """
+def _split(
+    run: _Run, gutters: Sequence[Interval]
+) -> tuple[list[list[Line]], list[list[Line]], list[int]]:
+    """Each column's fragments and lines, and how many of its lines hold several fragments."""
     cuts = [(lo + hi) / 2 for lo, hi in gutters]
     count = len(cuts) + 1
     parts: list[list[Line]] = [[] for _ in range(count)]
@@ -135,6 +150,23 @@ def _columns(
                 lines[index].append(Line(tuple(column_words)))
         for index, n in held.items():
             busy[index] += n > 1
+    return parts, lines, busy
+
+
+def _columns(
+    run: _Run, gutters: Sequence[Interval], profile: Profile, body_size: float, depth: int
+) -> list[Region] | None:
+    """One prose region per column, or None when the section is not prose columns.
+
+    A section holding a value is read as 0.1.0 read it. In any other, beside prose columns, a stray
+    (too few fragments) and a remainder holding prose columns of its own are laid out again; any
+    other column refuses the section.
+    """
+    parts, lines, busy = _split(run, gutters)
+    if any(is_value_piece(part.words) for column in parts for part in column):
+        # A table's columns stay its own: the section is prose only by 0.1.0's test.
+        wordy = all(_wordy(column, profile) for column in parts)
+        return [Region("prose", tuple(column)) for column in lines] if wordy else None
     prose = [
         _prose_column(column, len(column_lines), n, profile, body_size)
         for column, column_lines, n in zip(parts, lines, busy, strict=True)
@@ -143,17 +175,27 @@ def _columns(
         return [Region("prose", tuple(column)) for column in lines]
     if not any(prose) or depth >= MAX_DEPTH:
         return None
-    if any(is_value_piece(part.words) for column in parts for part in column):
-        return None  # values beside prose columns: a table's, read in rows as 0.1.0 read it
+    return _beside_prose(prose, parts, lines, profile, body_size=body_size, depth=depth)
+
+
+def _beside_prose(
+    prose: Sequence[bool],
+    parts: Sequence[Sequence[Line]],
+    lines: Sequence[Sequence[Line]],
+    profile: Profile,
+    *,
+    body_size: float,
+    depth: int,
+) -> list[Region] | None:
+    """Prose columns beside strays and remainders, each laid out again, or None."""
     out: list[Region] = []
     nested = False
     for ok, column, column_lines in zip(prose, parts, lines, strict=True):
         if ok:
             out.append(Region("prose", tuple(column_lines)))
             continue
-        stray = len(column) < profile.column_min_lines
         regions, held_columns = _again(column_lines, profile, body_size, depth)
-        if not stray and not held_columns:
+        if len(column) >= profile.column_min_lines and not held_columns:
             return None  # a table's label column beside its text
         nested = nested or held_columns
         out.extend(regions)

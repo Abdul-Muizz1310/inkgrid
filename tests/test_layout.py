@@ -395,3 +395,63 @@ def test_PC13_a_table_beside_a_stray_keeps_its_rows() -> None:
     stray = [P("400,000", RIGHT_X + COLUMN_WIDTH + 40, 100 + PITCH)]
     regions = layout(place(a + b + stray), PROFILE, BODY)
     assert read_order(regions) == [("rows", rows_order(a, b, stray))]
+
+
+def test_PC14_labels_wide_and_full_beside_fees_with_values_keep_their_rows() -> None:
+    # NYSE Arca's list: the labels pass only by width and fill, the fees by their words, and the
+    # fees hold values, so the section reads as 0.1.0 read it.
+    labels = [
+        p
+        for i in range(8)
+        for p in text_line([f"ISSUE{i}", "TRANSFER", "CHARGES"], x=72, y=100 + PITCH * i)
+    ]
+    fees: list[P] = []
+    for i in range(8):
+        words = (
+            [f"${100 + i}"]
+            if i in {2, 5}
+            else [f"${100 + i}", "per", "issue", "charged", "to", "the", "firm"]
+        )
+        fees += text_line(words, x=RIGHT_X, y=100 + PITCH * i)
+    regions = layout(place(labels + fees), PROFILE, BODY)
+    assert read_order(regions) == [("rows", rows_order(labels, fees))]
+
+
+def test_PC15_a_latin_column_of_short_phrases_is_prose_only_by_its_words() -> None:
+    # Euronext's two-column table of text: three words a line, but 12.6 ems wide and full; width
+    # and fill stand in for words only in a Chinese column, so the table keeps its rows.
+    left = [
+        p
+        for i in range(4)
+        for p in text_line(
+            ["Self", "Match", "monthly", f"value{i}", "traded"], x=72, y=100 + PITCH * i
+        )
+    ]
+    right = [
+        p
+        for i in range(4)
+        for p in text_line(
+            [f"Standardised{i}"[:12], "fees", "applying"], x=RIGHT_X, y=100 + PITCH * i
+        )
+    ]
+    regions = layout(place(left + right), PROFILE, BODY)
+    assert read_order(regions) == [("rows", rows_order(left, right))]
+
+
+def test_PC16_labels_beside_long_qualified_fees_keep_their_rows() -> None:
+    # NYSE Arca's floor fees: five tokens, so no fee is a value piece; the labels are three words
+    # a line and 13.6 ems wide, prose by no test of a Latin column.
+    labels = [
+        p
+        for i in range(6)
+        for p in text_line([f"OPTIONS-FLOOR{i}", "ACCESS", "CHARGE"], x=72, y=100 + PITCH * i)
+    ]
+    fees = [
+        p
+        for i in range(6)
+        for p in text_line(
+            [f"${100 + i}", "per", "month", "per", "line"], x=RIGHT_X, y=100 + PITCH * i
+        )
+    ]
+    regions = layout(place(labels + fees), PROFILE, BODY)
+    assert read_order(regions) == [("rows", rows_order(labels, fees))]

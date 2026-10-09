@@ -133,29 +133,34 @@ a few split lines into rows read across).
 
 ## 2 · Prose columns (`core/layout.py`, amends `04` § 4 step 5)
 
-- **A prose column** is a column of a gutter section that:
+- **A section holding a value** (a value piece, `07` § 1, in any column) is read as 0.1.0 read it:
+  prose columns exactly when every column holds at least `column_min_lines` fragments with a mean of
+  at least `prose_min_words` words, and none of the rules below applies. A table's columns stay its
+  own, however wide or wordy its label column.
+- **In a section holding no value, a prose column** is a column that:
   1. holds at least `column_min_lines` fragments;
   2. has at most `MAX_BUSY_SHARE` (half) of its lines holding two fragments or more: more, and it is
      several columns read across, not one;
-  3. either has a mean of at least `prose_min_words` words per fragment, as before, or holds no value
-     piece (`07` § 1) and is at least `PROSE_MIN_WIDTH_EM` (10) × the body size wide, from its
-     leftmost fragment's start to its rightmost's end, with its fragments' mean width at least
-     `PROSE_MIN_FILL` (0.6) of that width. A Chinese line is one word; a column of fees whose
-     qualifiers make it wide and full is still a column of values.
-- **A section of prose columns** is:
-  - a gutter section whose columns are all prose columns, as before; or
-  - one holding no value piece in any column, with at least one prose column whose every other
-    column is a stray or a remainder, and which holds at least two prose columns, or a remainder:
+  3. either has a mean of at least `prose_min_words` words per fragment, as before, or, when most of
+     its characters are wide (Chinese, Japanese or Korean script, East Asian width wide or
+     full-width), is at least `PROSE_MIN_WIDTH_EM` (10) × the body size wide, from its leftmost
+     fragment's start to its rightmost's end, with its fragments' mean width at least
+     `PROSE_MIN_FILL` (0.6) of that width. Such script sets no space between its words, so a line
+     is one word and words per fragment cannot see its prose; a Latin column is prose only by its
+     words, as 0.1.0 read it.
+- **A section of prose columns, holding no value,** is:
+  - one whose columns are all prose columns; or
+  - one with at least one prose column whose every other column is a stray or a remainder, and which
+    holds at least two prose columns, or a remainder:
     - a **stray** holds fewer than `column_min_lines` fragments: a margin's page number, a mark beside
       one line;
     - a **remainder**, laid out again on its own (steps 1–6 over its lines, the page's x-range its
       own), holds a section of prose columns: a newspaper's columns under a headline that breaks
       their gutters.
 
-  A value piece in any column, a column laid out with no prose columns of its own, or strays beside
-  a single prose column refuse the section, and step 5's other rules then apply as before. These are
-  a table's value columns beside its wordy column, a table beside a stray, and a table's label column
-  beside its text. Neither new path ever accepts a section 0.1.0 refused that holds a value.
+  A column laid out with no prose columns of its own, or strays beside a single prose column, refuse
+  the section, and step 5's other rules then apply as before: a table's label column beside its
+  text, or a short table's cells.
 - **Regions:** each prose column is one `prose` region, as before; each stray and remainder gives the
   regions its own layout gives, in its column's place. Layout goes at most `MAX_DEPTH` (4) levels deep:
   deeper, a remainder holds no prose columns.
@@ -166,9 +171,12 @@ a few split lines into rows read across).
     labels and text (OmniDocBench `eastmoney_8f87…`) read its labels apart, its text Edit distance
     0.006 to 0.391.
   - Strays beside a single prose column: a short table's label cells are strays too.
-  - Either new path for columns that hold values. The fee schedules' look-back found two tables read
-    apart: NYSE Arca's label and fee list, whose qualified fees made the fee column wide and full,
-    and Euronext's two options (`0.65 bp | 0.45 bp`), beside a stray.
+  - The new rules in a section holding values. The fee schedules' look-back found tables come apart
+    when they applied: Euronext's two options (`0.65 bp | 0.45 bp`) beside a stray passed as
+    columns, and NYSE Arca's labels passed by width and fill beside fees that passed by their words.
+  - Width and fill for a column of any script. On Latin text it read short phrases as prose:
+    Euronext's two-column table of text (`Standard fees apply`, 10.5 ems wide), and NYSE Arca's
+    floor-fee labels beside fees of five tokens, no value piece by `07` § 1.
 
 ## 3 · A header run above a table (`core/tables/corridor.py`, amends `07` § 3)
 
@@ -216,6 +224,9 @@ a few split lines into rows read across).
 | PC11 | `inkgrid.read` of a one-page PDF of two columns of Chinese prose | the left column's text, then the right's, in the Markdown |
 | PC12 | labels beside fees whose qualifiers make the fee column wide and full (`$100 charged-per-issue…`) | one `rows` region, as 0.1.0 read it |
 | PC13 | two columns that pass the words test and hold values (`0.65 bp`), beside a stray | one `rows` region, as 0.1.0 read it |
+| PC14 | labels that pass only by width and fill, beside fees that pass by their words and hold values (NYSE Arca's) | one `rows` region, as 0.1.0 read it |
+| PC15 | beside a prose column, a Latin column of three-word lines 12.6 ems wide and full (Euronext's text table) | one `rows` region, as 0.1.0 read it |
+| PC16 | Latin labels of three words, 13.6 ems wide, beside fees of five tokens (no value piece) | one `rows` region, as 0.1.0 read it |
 | HR1 | `2025 2024 2023` in 8 pt bold directly above a 9 pt table of three value columns | the table's header row |
 | HR2 | `2025 2024 2023` in 10 pt directly above a 9 pt table (and `07` EX1's bold heading) | not in the table: its type is larger |
 | HR3 | an 8 pt one-piece caption directly above a 9 pt table | not in the table |
@@ -228,32 +239,34 @@ Every existing case keeps passing, but `04` FU4, amended above.
 
 ## 5 · Acceptance
 
-**Measured** (2026-10-09, the three rules as written at `170347d`, dev documents only, each
+**Measured** (2026-10-09, the three rules as written at `68b6210`, dev documents only, each
 benchmark's pinned scorer called as the run calls it):
 
 | Dev number | 0.1.0 | Spec 19 |
 |---|---|---|
 | olmOCR headers and footers (295 tests) | 0.264 | 0.563 |
-| olmOCR multi-column (328) | 0.613 | 0.695 |
+| olmOCR multi-column (328) | 0.613 | 0.683 |
 | olmOCR tables (440) | 0.559 | 0.566 |
 | olmOCR long tiny text (51) | 0.255 | 0.392 |
 | olmOCR baseline tests (281) | 1.000 | 1.000 |
 | OmniDocBench text Edit distance, English (primary) | 0.293 | 0.217 |
-| OmniDocBench text Edit distance, simplified Chinese (primary) | 0.512 | 0.373 |
+| OmniDocBench text Edit distance, simplified Chinese (primary) | 0.512 | 0.386 |
 | OmniDocBench table TEDS (primary) | 0.521 | 0.521 |
-| OmniDocBench reading-order Edit distance (primary) | 0.274 | 0.225 |
+| OmniDocBench reading-order Edit distance (primary) | 0.274 | 0.227 |
 | ParseBench GTRM | 0.496 | 0.506 |
 | ParseBench TableRecordMatch | 0.329 | 0.343 |
 | ParseBench content faithfulness, five tags | 0.835 | 0.838 |
 | ParseBench content faithfulness, multilingual | 0.615 | 0.612 |
-| DP-Bench NID | 0.903 | 0.900 |
+| DP-Bench NID | 0.903 | 0.896 |
 | DP-Bench TEDS | 0.682 | 0.682 |
 | DP-Bench MHS | 0.694 | 0.687 |
 
 Together the rules do better than any alone on olmOCR's multi-column tests (furniture no longer
 breaks a passage) and on OmniDocBench's text. They cost ParseBench's simple and misc text tags and
-DP-Bench's NID and MHS, whose truths count page numbers and running heads as text. These are dev
-numbers: the tuned run's test half is the measure of whether the rules carry.
+DP-Bench's NID and MHS, whose truths count page numbers and running heads as text. Keeping values
+out of both new column paths gave back six dev pages that held one incidental value (multi-column
+0.695 and Chinese text 0.373 without it); it keeps every table the look-back found split. These are
+dev numbers: the tuned run's test half is the measure of whether the rules carry.
 
 - [ ] Every case above has a test named `test_<CaseId>_<slug>`, and it failed before its code.
 - [ ] The dev numbers of § 0's prototype hold for the implementation, scored as the run scores them.

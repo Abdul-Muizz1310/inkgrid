@@ -383,7 +383,7 @@ def test_FP7_a_ruled_tables_last_row_is_not_furniture() -> None:
 
 def test_FP8_larger_type_prints_its_role_only_by_a_page_number() -> None:
     title = text_line(["Annals", "of", "Things"], x=72, y=40, size=14)
-    foot = text_line(["Annals", "page", "9"], x=72, y=750, size=12)
+    foot = [*text_line(["Annals", "page"], x=72, y=750, size=12), P("9", 520, 750, size=12)]
     found = find_furniture(one_page(*title, *body(1), *foot), PROFILE)
     assert marked(found) == [(1, "footer", "Annals page 9")]
 
@@ -429,6 +429,100 @@ def test_FP15_a_two_page_document_keeps_recurrence() -> None:
     assert find_furniture(pages_of(specs), PROFILE).lines == ()
 
 
+def prose(y: float, *, size: float = 10.0, lines: int = 6) -> list[P]:
+    """Single-spaced body lines, 14 pt apart, each a different run of letters."""
+    out: list[P] = []
+    for i in range(lines):
+        words = [f"w{i}{j}" + "abcde"[j % 5] for j in range(8)]
+        out += text_line(words, x=72, y=y + 14 * i, size=size)
+    return out
+
+
+def three_cells(y: float, cells: tuple[str, str, str], size: float = 10.0) -> list[P]:
+    return [P(text, x, y, size=size) for text, x in zip(cells, (72, 250, 400), strict=True)]
+
+
+def widget_rows(y: float) -> list[P]:
+    """Six 10 pt rows of a three-column table, 14 pt apart."""
+    return [
+        p
+        for i in range(6)
+        for p in three_cells(y + 14 * i, (f"Widget{i}", f"{i + 2}", f"{i + 1}.50"))
+    ]
+
+
+@pytest.mark.parametrize(
+    "ps",
+    [
+        # 8 pt fee rows 18 pt apart at the foot, under the body
+        [
+            *prose(120),
+            *[
+                p
+                for i in range(5)
+                for p in three_cells(230 + 18 * i, (f"Service{i}", f"{i + 2}", f"{i + 1}.50"), 8)
+            ],
+        ],
+        # the table's 8 pt header row is the page's top line
+        [*three_cells(40, ("Item", "Quantity", "Price"), 8), *widget_rows(58)],
+        # its total row is set apart at the foot
+        [
+            *three_cells(40, ("Item", "Quantity", "Price")),
+            *widget_rows(58),
+            *three_cells(158, ("Total", "21.00", "27")),
+        ],
+    ],
+    ids=["fee-rows-at-the-foot", "header-row-at-the-top", "total-row-at-the-foot"],
+)
+def test_FP17_a_table_row_at_a_one_page_edge_is_not_furniture(ps: list[P]) -> None:
+    assert find_furniture(one_page(*ps), PROFILE).lines == ()
+
+
+@pytest.mark.parametrize("label", ["(1)", "1.", "*"])
+def test_FP18_a_footnote_just_under_body_size_is_not_furniture(label: str) -> None:
+    note = text_line([label, "Prices", "exclude", "VAT"], x=72, y=300, size=10)
+    assert find_furniture(one_page(*prose(120, size=11), *note), PROFILE).lines == ()
+
+
+@pytest.mark.parametrize(
+    ("text", "size", "y"),
+    [
+        ("Jane Doe, MD", 16, 40),
+        ("Appendix C", 14, 40),
+        ("Office of the Mayor, Washington, DC", 10, 40),
+        ("Homework 3", 16, 40),
+        ("Form 1040", 14, 40),
+        ("12 March 2024", 10, 40),
+        ("Overall width 120 cm", 10, 300),
+        ("I certify that the statements above are true", 10, 300),
+    ],
+)
+def test_FP20_a_title_date_or_closing_line_is_not_furniture(
+    text: str, size: float, y: float
+) -> None:
+    line = text_line(text.split(), x=72, y=y, size=size)
+    assert find_furniture(one_page(*line, *prose(120)), PROFILE).lines == ()
+
+
+def test_FP21_a_number_set_apart_from_a_head_in_larger_type_still_prints_its_role() -> None:
+    head = [*text_line(["Annals", "of", "Things"], x=72, y=40, size=12), P("153", 520, 40, size=12)]
+    assert marked(find_furniture(one_page(*head, *prose(120)), PROFILE)) == [
+        (1, "header", "Annals of Things 153")
+    ]
+
+
+def test_FP22_a_footer_in_three_parts_under_prose_is_furniture() -> None:
+    parts = [
+        P("Acme", 72, 750, size=8),
+        P("Confidential", 280, 750, size=8),
+        P("Page", 500, 750, size=8),
+    ]
+    parts.append(P("3", 522, 750, size=8))
+    assert marked(find_furniture(one_page(*prose(120), *parts), PROFILE)) == [
+        (1, "footer", "Acme Confidential Page 3")
+    ]
+
+
 @pytest.mark.parametrize("token", ["7", "xii", "2/5", "[4]", "|81", "0004"])
 def test_FP_page_number_tokens(token: str) -> None:
     assert page_number_token(token)
@@ -450,6 +544,13 @@ def test_FP_tokens_that_are_no_page_number(token: str) -> None:
         ("(4) Applies", False),
         ("Annual Report 2022", False),
         ("Annals of Things", False),
+        ("xii", True),
+        ("- iv -", True),
+        ("Appendix C", False),
+        ("Jane Doe, MD", False),
+        ("I certify that", False),
+        ("Overall width 120 cm", False),
+        ("12 March 2024", False),
     ],
 )
 def test_FP_lines_that_print_a_page_number(text: str, prints: bool) -> None:

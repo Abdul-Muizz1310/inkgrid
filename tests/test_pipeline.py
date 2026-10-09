@@ -121,6 +121,14 @@ def test_FP16_a_one_page_documents_furniture_stays_out_of_its_markdown() -> None
     assert all(text in markdown for text in pdf_factory.ONE_PAGE_BODY)
 
 
+def test_FP19_a_fee_tables_last_row_at_a_one_page_foot_stays_in_the_table() -> None:
+    doc = build(pdf_factory.fee_table_at_foot())
+    assert [b for b in doc.blocks if b.kind == "furniture"] == []
+    (table,) = doc.tables()
+    assert table.grid.n_rows == 1 + len(pdf_factory.FOOT_TABLE_ROWS)
+    assert all(text in table.text for row in pdf_factory.FOOT_TABLE_ROWS for text in row)
+
+
 def test_PC11_two_columns_of_chinese_prose_read_one_after_the_other() -> None:
     doc = build(pdf_factory.chinese_columns())
     markdown = doc.to_markdown()

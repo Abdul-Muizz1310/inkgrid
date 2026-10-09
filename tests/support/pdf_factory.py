@@ -1006,6 +1006,23 @@ def one_page_furnished() -> bytes:
     return _save(doc)
 
 
+FOOT_TABLE_ROWS = [(f"Order type {chr(65 + i)}", f"{i + 2}", f"CHF {i + 1}.50") for i in range(5)]
+
+
+def fee_table_at_foot() -> bytes:
+    """Spec 19 FP19: five 10 pt body lines, then an 8 pt fee table, its last row the page's foot."""
+    doc = pymupdf.open()
+    page = _page(doc)
+    for i, text in enumerate(ONE_PAGE_BODY):
+        page.insert_text((72, 100 + 14 * i), text, fontsize=10)
+    for x, text in zip((72, 300, 450), ("Service", "Orders", "Fee"), strict=True):
+        page.insert_text((x, 200), text, fontsize=8)
+    for n, row in enumerate(FOOT_TABLE_ROWS):
+        for x, text in zip((72, 300, 450), row, strict=True):
+            page.insert_text((x, 222 + 24 * n), text, fontsize=8)
+    return _save(doc)
+
+
 def encrypted(user_pw: str = "u", owner_pw: str = "o") -> bytes:
     """AES-256 encryption with a user password."""
     doc = pymupdf.open()
@@ -2000,4 +2017,5 @@ OPENABLE: dict[str, Callable[[], bytes]] = {
     "one_page_furnished": one_page_furnished,
     "chinese_columns": chinese_columns,
     "year_header_table": year_header_table,
+    "fee_table_at_foot": fee_table_at_foot,
 }

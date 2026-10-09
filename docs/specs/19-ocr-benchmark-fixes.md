@@ -109,17 +109,28 @@ fee schedules' look-back found Latin tables read apart (§ 2's rejected options)
   3. **It is set apart:** the gap between it and the next line toward the body is at least the median
      height of the page's lines.
   4. **It is no footnote:** its first word is not a label that a superscript on the page calls (spec 09
-     § 2.1), and it does not open, in type at most `footnote_size_ratio` × the body size, with an
-     enumerator (`(4)`, `1.`, `a)`) or a note mark (`*`, `†`).
-  5. **It prints its role:** its first or last token is a page number, or its type is smaller than the
-     body size: its size, rounded to 0.5 pt as `body_size` rounds, is below `body_size` over the
-     page's horizontal words (`04` § 2). The line's leading and
-     trailing dashes, brackets, bars, dots and colons are set aside first. A page number is 1 to 4
-     digits, two such joined by `/` (`2/5`), or a roman numeral as § 3 item 2 defines one, with those
-     marks around it; a year (1900–2099) and an enumerator (`3.`, `(4)`) are not. So `- 7 -`,
-     `Page 2 of 5`, `1 / 1`, `Vacuum 83` and `34 Observer #7` print their role, and any line in smaller
-     type does; a line in larger type prints it only by a page number.
-  6. It lies in no ruled table (S1).
+     § 2.1), and it does not open, in type smaller than the body as item 5 measures it, with an
+     enumerator (`(4)`, `1.`, `a)`) or a note mark (`*`, `†`). (Before the final review the bound
+     was `footnote_size_ratio` × the body size, which let a 10 pt note under an 11 pt body through.)
+  5. **It prints its role:** its type is smaller than the body size, or its first or last token is a
+     page number.
+     - Smaller: its size, rounded to 0.5 pt as `body_size` rounds, is below `body_size` over the
+       page's horizontal words (`04` § 2).
+     - A page number, once the line's leading and trailing dashes, brackets, bars, dots and colons
+       are set aside: 1 to 4 digits, or two such joined by `/` (`2/5`), with those marks around it;
+       a year (1900–2099) and an enumerator (`3.`, `(4)`) are not, and a number, a word and a year
+       are a date (`12 March 2024`). A roman numeral as § 3 item 2 defines one counts only as the
+       whole line (`xii`, `- iv -`): beside words it is as often a letter, a unit or a degree
+       (`Appendix C`, `120 cm`, `Jane Doe, MD`, `I certify`).
+     - In heading type (`heading_size_ratio` × the body size or more), the page number must stand
+       apart: the whole line, or a fragment of its own at the line's start or end. A title sets its
+       number among its words (`Homework 3`, `Form 1040`, `Chapter 3`); a running head sets it
+       apart.
+     - So `- 7 -`, `Page 2 of 5`, `1 / 1`, `Vacuum 83` and `34 Observer #7` print their role, and
+       any line in smaller type does.
+  6. It lies in no ruled table (S1), and it is no row of an unruled one: it and the next line toward
+     the body do not both hold `MAX_FRAGMENTS` (3) or more fragments with every fragment of it
+     starting, ending or centring within `furniture_x_tol` of one of the other's.
 - **Role** as § 3 item 6; its key is its own `line_key`.
 - **Rejected:**
   - Position alone (items 2 and 3): precision 0.656 on OmniDocBench's dev pages.
@@ -130,9 +141,27 @@ fee schedules' look-back found Latin tables read apart (§ 2's rejected options)
     dev pages is a running head (`922 Ding et al.`, a newspaper's masthead).
   - The two outermost lines of a band, each printing its role: 11 more failing olmOCR tests, at
     precision 0.952; the lines it adds are two-line captions.
-- **Limit:** a numbered heading (`1 Introduction`) that opens a one-page document, set apart from the
-  text under it, prints a page number at its start and is read as a running head. None of the dev
-  pages has one.
+  - § 3's shape rule, no line of `MAX_FRAGMENTS` fragments: of the 209 lines S3 found on
+    OmniDocBench's dev pages that its truth labels furniture, 28 are running heads in three or more
+    parts, and the rule removes none it found wrongly. Item 6 removes no line S3 finds on any dev
+    page.
+  - Item 6 for lines of two fragments: 6 of the 209, two-part running heads whose ends line up with
+    a two-column page's columns.
+  - In heading type, any line of a word and a number as a label: 6 of the 209 are Chinese footers,
+    one run of characters and a page number set apart, which item 5 keeps. Item 5's own heading
+    rule loses 1 of the 209; its roman and date rules none.
+  - Set apart measured against the gap between the next two lines toward the body, so that a
+    double-spaced page sets no line apart: 10 of the 209 (3 in body or larger type), on pages where a
+    figure or a table makes that gap wide.
+- **Limits:** each line is read as a running head or foot, its words owned as furniture and out of the
+  Markdown, and the rejected rules above measure what telling it apart would cost.
+  - A numbered heading (`1 Introduction`) that opens a one-page document, set apart from the text
+    under it, prints a page number at its start. None of the dev pages has one.
+  - A line in body type ending in a number at the top of the page: a caption label (`Table 23`, on
+    one of spec 12's olmOCR table pages) or a title (`Homework 3`). Nothing on the page tells it from
+    `Vacuum 83` without naming the word.
+  - A two-column table's last row at the page's foot, set apart, ending in an integer (`Total 12`).
+  - The last line of a double-spaced page, ending in a number.
 
 ## 2 · Prose columns (`core/layout.py`, amends `04` § 4 step 5)
 
@@ -209,7 +238,7 @@ fee schedules' look-back found Latin tables read apart (§ 2's rejected options)
 | FP5 | one page: a title in body size, no number, set apart at the top | no furniture |
 | FP6 | one page: `Page 2` at the bottom, closer to the last body line than a line height | no furniture |
 | FP7 | one page: its bottom line in a ruled 2 × 2 grid with two other cells filled (S1), set apart | no furniture |
-| FP8 | one page: a heading in larger type, no number, set apart; a bottom line in larger type ending in a page number | not furniture; `footer` |
+| FP8 (amended) | one page: a heading in larger type, no number, set apart; a bottom line in heading type with its page number set apart at the margin | not furniture; `footer` |
 | FP9 | one page of three lines, the last `Page 1` set apart | no furniture |
 | FP10 | one page: a smaller line set apart under a body-size top line | no furniture: not outermost |
 | FP11 | one page: `(4) Applies to members` in 7 pt set apart at the bottom (`assemble` AS11) | no furniture |
@@ -218,6 +247,12 @@ fee schedules' look-back found Latin tables read apart (§ 2's rejected options)
 | FP14 | one page: `Annual Report 2022` in body size set apart at the top | no furniture |
 | FP15 | two pages, page 1 ending in `Page 1` set apart, page 2 without it | no furniture: S3 is for one page |
 | FP16 | `inkgrid.read` of a one-page PDF with a smaller running head and `- 3 -` at its foot | both are furniture blocks, and the Markdown holds neither |
+| FP17 | one page: 8 pt three-column fee rows 18 pt apart at the foot under the body; an 8 pt header row `Item Quantity Price` as the top line over 10 pt rows; a total row `Total 21.00 27` set apart under the rows | no furniture (item 6) |
+| FP18 | one page: `(1) Prices exclude VAT`, `1. …`, `* …` in 10 pt at the foot of an 11 pt body | no furniture (item 4) |
+| FP19 | `inkgrid.read` of a one-page PDF: five 10 pt body lines, then an 8 pt three-column fee table whose last row is the page's foot | no furniture block; the table holds the header and all five rows |
+| FP20 | one page: `Jane Doe, MD` (16 pt), `Appendix C` (14 pt), `Office of the Mayor, Washington, DC`, `Homework 3` (16 pt), `Form 1040` (14 pt), `12 March 2024` at the top; `Overall width 120 cm`, `I certify that the statements above are true` at the foot | no furniture (item 5) |
+| FP21 | one page: `Annals of Things` in 12 pt over a 10 pt body, `153` set apart at the right margin | `header` |
+| FP22 | one page: an 8 pt footer in three parts, `Acme`, `Confidential`, `Page 3`, under prose | `footer`: its parts line up with no table row |
 | FU4 (amended) | one page: `Acme Fee Guide` at the foot, body size, no number, set apart | no furniture: recurrence needs 2 pages |
 | PC1 | two columns of Chinese prose, 8 lines each, each line one word of 20 characters | two `prose` regions, left then right |
 | PC2 | a table of 8 rows of one-word cells in three narrow columns | one `rows` region, as before |

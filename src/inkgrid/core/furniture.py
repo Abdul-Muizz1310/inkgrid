@@ -36,6 +36,7 @@ MAX_FRAGMENTS = 3  # a line of this many fragments is a table row, never furnitu
 ONE_PAGE_MIN_LINES = 4  # fewer, and a page has no body for S3 to set furniture apart from
 EDGE_MARKS = "-\u2013\u2014()[]|.:"  # dashes, brackets, bars, dots and colons around a page number
 PAGE_DIGITS = re.compile(r"\d{1,4}(?:/\d{1,4})?")  # `7`, `0004`, `2/5`
+DATE_TOKENS = 3  # a number, a word and a year: `12 March 2024`
 
 
 @dataclass(frozen=True, slots=True)
@@ -321,10 +322,47 @@ def page_number_token(token: str) -> bool:
     return PAGE_DIGITS.fullmatch(core) is not None or _is_roman(core)
 
 
+def _page_digits(token: str) -> bool:
+    """A page number in digits (`7`, `2/5`), never a roman numeral."""
+    return page_number_token(token) and PAGE_DIGITS.fullmatch(token.strip(EDGE_MARKS)) is not None
+
+
+def _tokens(line: Line) -> list[str]:
+    return " ".join(w.text for w in line.words).strip(EDGE_MARKS + " ").split()
+
+
 def prints_page_number(line: Line) -> bool:
-    """True when the line's first or last token is a page number, its edge marks set aside."""
-    tokens = " ".join(w.text for w in line.words).strip(EDGE_MARKS + " ").split()
-    return bool(tokens) and (page_number_token(tokens[0]) or page_number_token(tokens[-1]))
+    """True when the line's first or last token is a page number, its edge marks set aside.
+
+    A roman numeral counts only as the whole line (`xii`, `- iv -`): beside words it is as often a
+    letter, a unit or a title (`Appendix C`, `120 cm`, `Jane Doe, MD`). A number, a word and a year
+    are a date (`12 March 2024`).
+    """
+    tokens = _tokens(line)
+    if len(tokens) <= 1:
+        return bool(tokens) and page_number_token(tokens[0])
+    if len(tokens) == DATE_TOKENS and _page_digits(tokens[0]) and YEAR.fullmatch(tokens[-1]):
+        return False
+    return _page_digits(tokens[0]) or _page_digits(tokens[-1])
+
+
+def _prints_role(line: Line, body: float, profile: Profile) -> bool:
+    """S3 item 5: smaller type, or a page number; in heading type, one standing apart.
+
+    A title in heading type ending in its number (`Homework 3`, `Form 1040`) sets the number in
+    its words; a running head sets it apart, a fragment of its own.
+    """
+    size = _half_points(line.size)
+    if size < body:
+        return True
+    if not prints_page_number(line):
+        return False
+    if size < profile.heading_size_ratio * body:
+        return True
+    parts = fragments(line, profile)
+    return any(
+        len(_tokens(part)) == 1 and prints_page_number(part) for part in (parts[0], parts[-1])
+    )
 
 
 def _half_points(size: float) -> float:
@@ -332,18 +370,33 @@ def _half_points(size: float) -> float:
     return round(size * 2) / 2
 
 
-def _opens_as_note(line: Line, body: float, profile: Profile, called: frozenset[str]) -> bool:
+def _opens_as_note(line: Line, body: float, called: frozenset[str]) -> bool:
     """True when the line opens as a footnote does (S3 item 4).
 
-    It opens with a label a superscript on the page calls, or, in note type, with an enumerator
-    or a note mark.
+    It opens with a label a superscript on the page calls, or, in type smaller than the body as
+    item 5 measures it, with an enumerator or a note mark.
     """
     first = line.words[0].text
     if (strip_label(first) or first) in called:
         return True
-    if line.size > profile.footnote_size_ratio * body:
+    if _half_points(line.size) >= body:
         return False
     return enumerator(first) is not None or is_mark(first)
+
+
+def _table_rows(line: Line, beside: Line, profile: Profile) -> bool:
+    """S3 item 6: the line and the next one toward the body are rows of one unruled table.
+
+    Each holds `MAX_FRAGMENTS` or more fragments, and every fragment of the line starts, ends or
+    centres where one of the other's does, within `furniture_x_tol`: a column structure that goes
+    on. A running head's parts over a page's three columns do not all line up.
+    """
+    mine = fragments(line, profile)
+    theirs = fragments(beside, profile)
+    if len(mine) < MAX_FRAGMENTS or len(theirs) < MAX_FRAGMENTS:
+        return False
+    tol = profile.furniture_x_tol
+    return all(any(_aligned(part, other, tol) for other in theirs) for part in mine)
 
 
 def _one_page(
@@ -364,12 +417,14 @@ def _one_page(
     for edge, inner, where in ((lines[0], lines[1], "top"), (lines[-1], lines[-2], "bottom")):
         if _band(edge, top, bottom, band) != where:
             continue
+        if _table_rows(edge, inner, profile):
+            continue
         gap = inner.top - edge.bottom if where == "top" else edge.top - inner.bottom
         if gap < height or any(t.holds(edge) for t in tables):
             continue
-        if _opens_as_note(edge, body, profile, called):
+        if _opens_as_note(edge, body, called):
             continue
-        if prints_page_number(edge) or _half_points(edge.size) < body:
+        if _prints_role(edge, body, profile):
             key = line_key(edge)
             found.append(FurnitureLine(page.number, edge, _role(key, edge, page), key))
     return tuple(found)

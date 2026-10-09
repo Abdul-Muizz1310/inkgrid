@@ -110,8 +110,8 @@ baseline dev number exactly. The 42 fee schedules were dumped with the rules and
 
 - **A prose column** is a column of a gutter section that:
   1. holds at least `column_min_lines` fragments;
-  2. has at most `MAX_BUSY_SHARE` (a quarter) of its lines holding two fragments or more: more, and it
-     is several columns read across, not one;
+  2. has at most `MAX_BUSY_SHARE` (half) of its lines holding two fragments or more: more, and it is
+     several columns read across, not one;
   3. either has a mean of at least `prose_min_words` words per fragment, as before, or is at least
      `PROSE_MIN_WIDTH_EM` (10) × the body size wide, from its leftmost fragment's start to its
      rightmost's end, with its fragments' mean width at least `PROSE_MIN_FILL` (0.6) of that width.
@@ -180,8 +180,8 @@ baseline dev number exactly. The 42 fee schedules were dumped with the rules and
 | PC5 | a column of one-word labels beside a column of long text, 8 rows, no values | one `rows` region, as before |
 | PC6 | a prose column beside a value-free column holding two prose columns whose gutter a headline breaks | the prose column, then the headline, then the remainder's two columns |
 | PC7 | a prose column beside a column 60 ems wide whose lines hold three fragments each | the prose column, then the wide column's three columns, left to right |
-| PC8 | a stray beside a single prose column | one `rows` region, as before |
-| PC9 | a column with 2 of its 8 lines in two fragments; one with 3 of 8, both beside a prose column | a prose column; not a prose column |
+| PC8 | a stray beside a single prose column, on its fourth line | as before: the three lines above it one `prose` region, the rest and the stray one `rows` region |
+| PC9 | beside a prose column, a column with 4 of its 8 lines in two fragments; one with 5 of 8 | two `prose` regions; one `rows` region |
 | PC10 | a Chinese column 10 ems wide, filled 0.6; one 9.5 ems wide | a prose column; not a prose column |
 | PC11 | `inkgrid.read` of a one-page PDF of two columns of Chinese prose | the left column's text, then the right's, in the Markdown |
 | HR1 | `2025 2024 2023` in 8 pt bold directly above a 9 pt table of three value columns | the table's header row |

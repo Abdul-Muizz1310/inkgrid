@@ -119,3 +119,12 @@ def test_FP16_a_one_page_documents_furniture_stays_out_of_its_markdown() -> None
     assert pdf_factory.ONE_PAGE_HEAD not in markdown
     assert pdf_factory.ONE_PAGE_NUMBER not in markdown
     assert all(text in markdown for text in pdf_factory.ONE_PAGE_BODY)
+
+
+def test_PC11_two_columns_of_chinese_prose_read_one_after_the_other() -> None:
+    doc = build(pdf_factory.chinese_columns())
+    markdown = doc.to_markdown()
+    assert all(line in markdown for line in pdf_factory.CHINESE_LEFT + pdf_factory.CHINESE_RIGHT)
+    assert markdown.index(pdf_factory.CHINESE_LEFT[-1]) < markdown.index(
+        pdf_factory.CHINESE_RIGHT[0]
+    )

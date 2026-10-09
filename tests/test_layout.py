@@ -216,3 +216,148 @@ def test_LY16_a_flush_right_date_above_columns_reads_first() -> None:
         ("prose", texts(left)),
         ("prose", texts(right)),
     ]
+
+
+# --- Prose columns (docs/specs/19-ocr-benchmark-fixes.md section 2) ---------------------------
+
+HAN = ("\u4e2d", "\u6587")  # one character for each Chinese column, so the two read apart
+
+
+def han_column(n: int, *, x: float, y: float, chars: int = 21, side: int = 0) -> list[P]:
+    """`n` lines of Chinese prose, each one word of `chars` characters (no spaces between)."""
+    return [P(HAN[side] * (chars - 2) + f"{i:02d}", x, y + PITCH * i) for i in range(n)]
+
+
+def test_PC1_two_chinese_prose_columns_read_left_then_right() -> None:
+    # Each line is one word, 105 pt (10.5 em) wide; the columns are 24 pt apart.
+    left = han_column(8, x=72, y=100)
+    right = han_column(8, x=72 + 105 + 24, y=100, side=1)
+    regions = layout(place(left + right), PROFILE, BODY)
+    assert read_order(regions) == [("prose", texts(left)), ("prose", texts(right))]
+
+
+def test_PC2_a_table_of_one_word_cells_stays_rows() -> None:
+    ps: list[P] = []
+    for i in range(8):
+        y = 100 + PITCH * i
+        ps += [P(f"Tier{i}", 72, y), P(f"Band{i}", 200, y), P(f"Fee{i}", 330, y)]
+    assert read_order(layout(place(ps), PROFILE, BODY)) == [("rows", texts(ps))]
+
+
+def test_PC3_a_stray_in_the_margin_reads_after_the_columns() -> None:
+    left, right = two_columns(n=8)
+    stray = [P("12", 72 + 2 * COLUMN_WIDTH + 24 + 30, 100 + 3 * PITCH)]
+    regions = layout(place(left + right + stray), PROFILE, BODY)
+    assert read_order(regions) == [
+        ("prose", texts(left)),
+        ("prose", texts(right)),
+        ("prose", ["12"]),
+    ]
+
+
+def rows_order(*columns: list[P]) -> list[str]:
+    """The columns' words read row by row, across the columns, as a `rows` region holds them."""
+    placed = sorted((p for col in columns for p in col), key=lambda p: (p.y, p.x))
+    return [p.text for p in placed]
+
+
+def test_PC4_a_prose_column_beside_values_stays_rows() -> None:
+    prose = column("a", 8, x=72, y=100)
+    values = [P(f"{i},250.00", RIGHT_X + 40, 100 + PITCH * i) for i in range(8)]
+    regions = layout(place(prose + values), PROFILE, BODY)
+    assert read_order(regions) == [("rows", rows_order(prose, values))]
+
+
+def test_PC5_labels_beside_their_text_stay_rows() -> None:
+    labels = [P(f"Label{i}", 72, 100 + PITCH * i) for i in range(8)]
+    text = column("t", 8, x=160, y=100)
+    regions = layout(place(labels + text), PROFILE, BODY)
+    assert read_order(regions) == [("rows", rows_order(labels, text))]
+
+
+def test_PC6_a_remainder_holding_columns_under_a_headline_is_laid_out_again() -> None:
+    left = column("a", 8, x=72, y=100)
+    x_b = RIGHT_X
+    x_c = x_b + COLUMN_WIDTH + 24
+    headline = text_line(["Headline"] * 13, x=x_b, y=100)
+    assert headline[-1].x > x_c  # it crosses the remainder's own gutter
+    b = column("b", 7, x=x_b, y=100 + PITCH)
+    c = column("c", 7, x=x_c, y=100 + PITCH)
+    regions = layout(place(left + headline + b + c), PROFILE, BODY)
+    assert read_order(regions) == [
+        ("prose", texts(left)),
+        ("prose", texts(headline)),
+        ("prose", texts(b)),
+        ("prose", texts(c)),
+    ]
+
+
+def test_PC7_a_wide_column_read_across_three_columns_is_laid_out_again() -> None:
+    prose = column("p", 8, x=72, y=100)
+    x0 = RIGHT_X
+    span = text_line(["Spanning"] * 20, x=x0, y=100)
+    subs = [
+        column(tag, 7, x=x0 + k * (110 + 12), y=100 + PITCH, words=4) for k, tag in enumerate("xyz")
+    ]
+    assert span[-1].x > x0 + 2 * (110 + 12)  # the spanning line crosses both inner gutters
+    regions = layout(place(prose + span + subs[0] + subs[1] + subs[2]), PROFILE, BODY)
+    assert read_order(regions) == [
+        ("prose", texts(prose)),
+        ("prose", texts(span)),
+        *(("prose", texts(sub)) for sub in subs),
+    ]
+
+
+def split_column(n: int, *, x: float, y: float, split: set[int]) -> list[P]:
+    """`n` prose lines of 8 words; the lines in `split` are two halves of 4, 2 em apart."""
+    out: list[P] = []
+    for i in range(n):
+        words = [f"s{i:02d}{j:02d}"[:5] for j in range(8)]
+        at = y + PITCH * i
+        if i in split:
+            out += text_line(words[:4], x=x, y=at) + text_line(words[4:], x=x + 109 + 20, y=at)
+        else:
+            out += text_line(words, x=x, y=at)
+    return out
+
+
+def test_PC9_a_column_split_on_more_than_half_its_lines_is_no_prose_column() -> None:
+    # Every half line holds 4 words, so only the share of split lines tells the two apart.
+    left = column("a", 8, x=72, y=100)
+    half = split_column(8, x=RIGHT_X, y=100, split={1, 3, 5, 7})
+    regions = layout(place(left + half), PROFILE, BODY)
+    assert read_order(regions) == [("prose", texts(left)), ("prose", texts(half))]
+    more = split_column(8, x=RIGHT_X, y=100, split={0, 1, 3, 5, 7})
+    regions = layout(place(left + more), PROFILE, BODY)
+    assert read_order(regions) == [("rows", rows_order(left, more))]
+
+
+def filled_han_column(*, x: float, y: float, chars: int, side: int) -> list[P]:
+    """8 Chinese lines, 4 of `chars` characters and 4 of a fifth as many: filled 0.6."""
+    short = chars // 5
+    out = []
+    for i in range(8):
+        n = chars if i % 2 == 0 else short
+        out.append(P(HAN[side] * (n - 2) + f"{i:02d}", x, y + PITCH * i))
+    return out
+
+
+def test_PC10_a_column_ten_ems_wide_and_six_tenths_full_is_prose() -> None:
+    left = filled_han_column(x=72, y=100, chars=20, side=0)  # 100 pt wide, mean 60 pt
+    right = filled_han_column(x=72 + 100 + 24, y=100, chars=20, side=1)
+    regions = layout(place(left + right), PROFILE, BODY)
+    assert read_order(regions) == [("prose", texts(left)), ("prose", texts(right))]
+    narrow_left = filled_han_column(x=72, y=100, chars=19, side=0)  # 95 pt: 9.5 em
+    narrow_right = filled_han_column(x=72 + 95 + 24, y=100, chars=19, side=1)
+    regions = layout(place(narrow_left + narrow_right), PROFILE, BODY)
+    assert read_order(regions) == [("rows", rows_order(narrow_left, narrow_right))]
+
+
+def test_PC8_a_stray_beside_a_single_prose_column_reads_as_before() -> None:
+    # The stray opens a gutter from its own line down: the lines above it are plain prose, and
+    # from its line on the section is `rows`, as 0.1.0 read it.
+    prose = column("a", 8, x=72, y=100)
+    stray = [P("12", 72 + COLUMN_WIDTH + 40, 100 + 3 * PITCH)]
+    regions = layout(place(prose + stray), PROFILE, BODY)
+    above, below = prose[: 3 * 6], prose[3 * 6 :]
+    assert read_order(regions) == [("prose", texts(above)), ("rows", rows_order(below, stray))]

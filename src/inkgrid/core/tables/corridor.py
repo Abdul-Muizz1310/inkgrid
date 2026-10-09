@@ -12,7 +12,7 @@ from functools import cached_property
 from itertools import pairwise
 
 from inkgrid.core.layout import Region
-from inkgrid.core.lexicon import is_strong_value, is_value
+from inkgrid.core.lexicon import is_strong_value, is_value, is_value_piece, piece_tokens
 from inkgrid.core.lines import Line, fragments, group_lines
 from inkgrid.core.tables.chart import chart_evidence, chart_left_as_text
 from inkgrid.core.tables.proto import (
@@ -29,7 +29,6 @@ from inkgrid.model.page import Rule, Word
 
 Span = tuple[float, float]
 
-MAX_QUALIFIED_TOKENS = 4  # `$5,000 per month`: a value and a few words qualifying it
 WRAP_PITCH = 0.8  # a line whose pitch is at most this share of the row pitch wraps the line above
 VALUE_WRAP = 0.35  # a value line this close (share of the row pitch) to the last one wraps its row
 REACH = 0.5  # a line without a value joins the nearest value line within this share of the pitch
@@ -40,25 +39,9 @@ MAX_HEADER_ROWS = 3  # rows above the first value row a table may take: header, 
 RIGHT_PAD = 0.01  # pt past the rightmost word, so its centre sits inside the last band
 
 
-def _tokens(words: Sequence[Word]) -> list[str]:
-    """The piece's tokens without its note marks (superscript words)."""
-    return [w.text for w in words if not w.superscript]
-
-
-def is_value_piece(words: Sequence[Word]) -> bool:
-    """True for a piece that holds a value cell: it is a strong value, or opens with one."""
-    tokens = _tokens(words)
-    if not tokens:
-        return False
-    # Judged on the whole piece: `CHF 250` is money though neither `CHF` nor `250` is strong alone.
-    if is_strong_value(" ".join(tokens)):
-        return True
-    return len(tokens) <= MAX_QUALIFIED_TOKENS and is_strong_value(tokens[0])
-
-
 def is_value_like(words: Sequence[Word]) -> bool:
     """True for a piece that reads as a value at all, weak values included (`62`, `1 - 150`)."""
-    tokens = _tokens(words)
+    tokens = piece_tokens(words)
     return bool(tokens) and is_value(" ".join(tokens))
 
 
@@ -73,7 +56,7 @@ def _counts_as_value(words: Sequence[Word]) -> bool:
     `$10 per million on the value` is too long to make a value row, but it is still a fee, and it
     never shares a row's column or a cell with another.
     """
-    tokens = _tokens(words)
+    tokens = piece_tokens(words)
     return _holds_value(words) or (bool(tokens) and is_strong_value(tokens[0]))
 
 

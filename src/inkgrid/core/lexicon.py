@@ -2,8 +2,10 @@
 
 import re
 import unicodedata
+from collections.abc import Sequence
 
 from inkgrid.model.config import Lexicon
+from inkgrid.model.page import Word
 
 ENUMERATOR = re.compile(r"(\d{1,3}|[a-z]|[ivxlc]{1,6}|[A-Z])[.)]|\((\d{1,3}|[a-z]|[ivxlc]{1,6})\)")
 SECTION_NUMBER = re.compile(r"\d+(\.\d+)*\.?|[A-Z]\.")
@@ -299,3 +301,22 @@ def is_strong_value(token: str) -> bool:
     `Tier 1`, `Fee (47)`, and `Fee - Tier`.
     """
     return is_value(token) and STRONG_MARK.search(token) is not None
+
+
+MAX_QUALIFIED_TOKENS = 4  # `$5,000 per month`: a value and a few words qualifying it
+
+
+def piece_tokens(words: Sequence[Word]) -> list[str]:
+    """A piece's tokens without its note marks (superscript words)."""
+    return [w.text for w in words if not w.superscript]
+
+
+def is_value_piece(words: Sequence[Word]) -> bool:
+    """True for a piece that holds a value cell: it is a strong value, or opens with one."""
+    tokens = piece_tokens(words)
+    if not tokens:
+        return False
+    # Judged on the whole piece: `CHF 250` is money though neither `CHF` nor `250` is strong alone.
+    if is_strong_value(" ".join(tokens)):
+        return True
+    return len(tokens) <= MAX_QUALIFIED_TOKENS and is_strong_value(tokens[0])

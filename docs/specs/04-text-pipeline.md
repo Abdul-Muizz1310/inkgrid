@@ -282,7 +282,9 @@ The algorithm:
      its centre.
    - The section is **prose columns** when it has at least 2 columns, every column holds at least
      `column_min_lines` fragments, and every column's mean words per fragment is at least
-     `prose_min_words`.
+     `prose_min_words`. Spec 19 § 2 amends this: a prose column may instead be wide and filled
+     (a Chinese line is one word), a column read across several columns is none, and strays and
+     remainders beside prose columns are laid out again.
    - Prose columns become one `prose` region per column, left to right. Within a column, each source
      line contributes one line: its words in that column.
    - **A table beside the columns is cut away.** A row is *busy* when one of the section's columns

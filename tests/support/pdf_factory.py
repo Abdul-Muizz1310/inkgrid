@@ -949,6 +949,20 @@ ONE_PAGE_BODY = [
 ]
 
 
+CHINESE_LEFT = ["\u4e2d\u6587" * 9 + f"{i:02d}" for i in range(8)]
+CHINESE_RIGHT = ["\u6d4b\u8bd5" * 9 + f"{i:02d}" for i in range(8)]
+
+
+def chinese_columns() -> bytes:
+    """Two columns of Chinese prose (spec 19 PC11): 8 lines each, every line one word of 20."""
+    doc = pymupdf.open()
+    page = _page(doc)
+    for i, (left, right) in enumerate(zip(CHINESE_LEFT, CHINESE_RIGHT, strict=True)):
+        page.insert_text((72, 120 + 14 * i), left, fontsize=10, fontname="china-s")
+        page.insert_text((300, 120 + 14 * i), right, fontsize=10, fontname="china-s")
+    return _save(doc)
+
+
 def one_page_furnished() -> bytes:
     """One page (spec 19 FP16): a 7 pt running head, five 10 pt body lines, `- 3 -` at its foot."""
     doc = pymupdf.open()
@@ -1952,4 +1966,5 @@ OPENABLE: dict[str, Callable[[], bytes]] = {
     "furnished": furnished,
     "furniture_only_page": furniture_only_page,
     "one_page_furnished": one_page_furnished,
+    "chinese_columns": chinese_columns,
 }

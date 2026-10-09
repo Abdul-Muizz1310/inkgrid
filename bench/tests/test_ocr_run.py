@@ -104,6 +104,8 @@ def test_RP1_run_py_runs_the_ocr_stages_with_the_label_given(
     labels: list[str] = []
     monkeypatch.setattr(run, "commit", lambda: "abc1234")
     monkeypatch.setattr(run, "config", dict)
+    # The label's routing alone: RN2 tests the baseline guard, whatever src/inkgrid holds here.
+    monkeypatch.setattr(ocr_run, "src_changed", lambda _tag: False)
     monkeypatch.setattr(
         ocr_run, "write_results", lambda _run, _head, _cfg, *, label: labels.append(label)
     )

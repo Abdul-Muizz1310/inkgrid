@@ -215,7 +215,8 @@ page's frame (spec 14 § 8). The result holds `lines`, each with its page,
      outermost line does not when it is the band's only column-shaped line.
 4. **Frequency.** A key is furniture when it occurs as a candidate on at least
    `max(2, ceil(furniture_share × pages))` distinct pages, where `pages` counts every page of the
-   document.
+   document. A document of one page has nothing to recur: its furniture is the page's own evidence
+   (spec 19 § 1, S3).
 5. **Marking.**
    - An alphabetic key (one with a letter) is marked **wherever it occurs** on a page, in the band or
      not, except inside a ruled table (S1). The prototype's sparse last pages hold footers mid-page.
@@ -237,7 +238,7 @@ Decisions are per line, never per block (L9). Non-horizontal words are never fur
 | FU1 | 5 pages each opening with `Acme Fee Guide` and closing with `Page N of 5` | both lines furniture on every page; roles header and footer |
 | FU2 | a footer `Acme Fee Guide N`, with N at the head on odd pages, at the tail on even pages, and `i` on page 1 | one key; all five marked |
 | FU3 | a key on 1 page of 5 | not furniture |
-| FU4 | a 1-page document with a footer | no furniture (the floor of 2 pages) |
+| FU4 | a 1-page document whose footer `Acme Fee Guide` is set in body type with no number (amended by spec 19) | no furniture: recurrence needs 2 pages, and spec 19's S3 a page number or smaller type |
 | FU5 | bare page numbers at x = 300 on 4 pages, plus a bare `3` at x = 72 in the bottom band of one page | the four marked `page_number`; the `3` is not |
 | FU6 | an alphabetic footer key that sits mid-page on a sparse last page | marked there too |
 | FU7 | a mixed line (the footer key plus a body word on the same baseline) | the line's key differs, so it is not marked (per line, never partial) |

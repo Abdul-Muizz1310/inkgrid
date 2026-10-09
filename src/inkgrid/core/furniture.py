@@ -2,7 +2,9 @@
 
 Decisions are per line, never per block (L9): a line is furniture only when its whole key recurs.
 A line inside a ruled table is table content, and furniture runs from the page's edge
-(docs/specs/14-tables-and-furniture.md section 8).
+(docs/specs/14-tables-and-furniture.md section 8). On a document of one page, where nothing can
+recur, a band's outermost line is furniture when the page itself marks it so
+(docs/specs/19-ocr-benchmark-fixes.md section 1).
 """
 
 import bisect
@@ -14,11 +16,13 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import Literal, Self
 
-from inkgrid.core.lines import Line, fragments, group_lines
+from inkgrid.core.lexicon import YEAR, call_parts, enumerator, is_mark
+from inkgrid.core.lines import Line, body_size, fragments, group_lines
 from inkgrid.core.tables.lattice import MIN_COLS, MIN_FILLED, MIN_ROWS
 from inkgrid.core.tables.shape import GridShape, grid_shape
 from inkgrid.model.config import Profile
 from inkgrid.model.geometry import Rect
+from inkgrid.model.invariants import strip_label
 from inkgrid.model.page import PageModel, Word
 
 Role = Literal["header", "footer", "page_number"]
@@ -29,6 +33,9 @@ THREE_LETTERS = re.compile(r"[^\W\d_]{3}")
 ROMAN = re.compile(r"m{0,3}(cm|cd|d?c{0,3})(xc|xl|l?x{0,3})(ix|iv|v?i{0,3})", re.IGNORECASE)
 ROMAN_MAX = 6
 MAX_FRAGMENTS = 3  # a line of this many fragments is a table row, never furniture
+ONE_PAGE_MIN_LINES = 4  # fewer, and a page has no body for S3 to set furniture apart from
+EDGE_MARKS = "-\u2013\u2014()[]|.:"  # dashes, brackets, bars, dots and colons around a page number
+PAGE_DIGITS = re.compile(r"\d{1,4}(?:/\d{1,4})?")  # `7`, `0004`, `2/5`
 
 
 @dataclass(frozen=True, slots=True)
@@ -255,6 +262,7 @@ def find_furniture(
     `grids` are the pages' ruled tables in each page's frame, as the lattice stage reads them: a
     line inside one is never furniture (S1), unless the same box, its digits masked, recurs on
     as many pages as furniture needs, which makes it a running header or footer drawn as a box.
+    A document of one page has nothing to recur, and its furniture is S3's (`_one_page`).
     """
     need = max(2, math.ceil(profile.furniture_share * len(pages)))
     tables = {
@@ -265,6 +273,10 @@ def find_furniture(
         ]
         for page in pages
     }
+    if len(pages) == 1:
+        (page,) = pages
+        marked = _one_page(page, profile, tables[page.number])
+        return FoundFurniture(marked, frozenset(w.id for f in marked for w in f.line.words))
     boxed: defaultdict[tuple[str, ...], set[int]] = defaultdict(set)
     for number, found in tables.items():
         for t in found:
@@ -290,3 +302,74 @@ def find_furniture(
             continue
         lines.append(FurnitureLine(k.page.number, k.line, _role(k.key, k.line, k.page), k.key))
     return FoundFurniture(tuple(lines), frozenset(w.id for f in lines for w in f.line.words))
+
+
+# --- S3: a one-page document's furniture (docs/specs/19-ocr-benchmark-fixes.md section 1) ------
+
+
+def page_number_token(token: str) -> bool:
+    """A page number as printed: 1-4 digits, two such joined by `/`, or a roman numeral.
+
+    The marks around it (`- 7 -`, `[4]`, `|81`) are set aside; a year (1900-2099) and an
+    enumerator (`3.`, `(4)`, `a)`) are labels, not page numbers.
+    """
+    if enumerator(token) is not None:
+        return False
+    core = token.strip(EDGE_MARKS)
+    if YEAR.fullmatch(core):
+        return False
+    return PAGE_DIGITS.fullmatch(core) is not None or _is_roman(core)
+
+
+def prints_page_number(line: Line) -> bool:
+    """True when the line's first or last token is a page number, its edge marks set aside."""
+    tokens = " ".join(w.text for w in line.words).strip(EDGE_MARKS + " ").split()
+    return bool(tokens) and (page_number_token(tokens[0]) or page_number_token(tokens[-1]))
+
+
+def _half_points(size: float) -> float:
+    """A size rounded as `body_size` rounds it, to 0.5 pt."""
+    return round(size * 2) / 2
+
+
+def _opens_as_note(line: Line, body: float, profile: Profile, called: frozenset[str]) -> bool:
+    """True when the line opens as a footnote does (S3 item 4).
+
+    It opens with a label a superscript on the page calls, or, in note type, with an enumerator
+    or a note mark.
+    """
+    first = line.words[0].text
+    if (strip_label(first) or first) in called:
+        return True
+    if line.size > profile.footnote_size_ratio * body:
+        return False
+    return enumerator(first) is not None or is_mark(first)
+
+
+def _one_page(
+    page: PageModel, profile: Profile, tables: Sequence[_Table]
+) -> tuple[FurnitureLine, ...]:
+    """S3: each band's outermost line that the page sets apart and marks as furniture."""
+    words = [w for w in page.words if w.horizontal]
+    lines = sorted(group_lines(words, profile), key=_centre)
+    if len(lines) < ONE_PAGE_MIN_LINES:
+        return ()
+    body = body_size(words)
+    height = statistics.median(line.bottom - line.top for line in lines)
+    top = min(line.top for line in lines)
+    bottom = max(line.bottom for line in lines)
+    band = profile.furniture_band * (bottom - top)
+    called = frozenset(label for w in page.words if w.superscript for label in call_parts(w.text))
+    found: list[FurnitureLine] = []
+    for edge, inner, where in ((lines[0], lines[1], "top"), (lines[-1], lines[-2], "bottom")):
+        if _band(edge, top, bottom, band) != where:
+            continue
+        gap = inner.top - edge.bottom if where == "top" else edge.top - inner.bottom
+        if gap < height or any(t.holds(edge) for t in tables):
+            continue
+        if _opens_as_note(edge, body, profile, called):
+            continue
+        if prints_page_number(edge) or _half_points(edge.size) < body:
+            key = line_key(edge)
+            found.append(FurnitureLine(page.number, edge, _role(key, edge, page), key))
+    return tuple(found)

@@ -106,3 +106,16 @@ def test_FT2_a_stub_banner_below_a_column_header_is_not_furniture() -> None:
 def test_FT3_a_footer_above_a_mirrored_line_is_furniture() -> None:
     doc = build(pdf_factory.mirrored_footer_pages())
     assert furniture(doc) == [(1, "ECB"), (2, "ECB")]
+
+
+def test_FP16_a_one_page_documents_furniture_stays_out_of_its_markdown() -> None:
+    doc = build(pdf_factory.one_page_furnished())
+    furniture = sorted((b.role, b.text) for b in doc.blocks if b.kind == "furniture")
+    assert furniture == [
+        ("header", pdf_factory.ONE_PAGE_HEAD),
+        ("page_number", pdf_factory.ONE_PAGE_NUMBER),
+    ]
+    markdown = doc.to_markdown()
+    assert pdf_factory.ONE_PAGE_HEAD not in markdown
+    assert pdf_factory.ONE_PAGE_NUMBER not in markdown
+    assert all(text in markdown for text in pdf_factory.ONE_PAGE_BODY)

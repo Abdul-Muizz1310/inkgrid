@@ -938,6 +938,28 @@ def furniture_only_page() -> bytes:
     return furnished(empty_page=3)
 
 
+ONE_PAGE_HEAD = "Annals of Inkgrid Studies"
+ONE_PAGE_NUMBER = "- 3 -"
+ONE_PAGE_BODY = [
+    "Members pay the standard fee on every order",
+    "they route to the exchange, whatever its size,",
+    "and the fee is charged at the end of the month",
+    "on the total of the orders the member routed",
+    "in that month, as the schedule below sets out.",
+]
+
+
+def one_page_furnished() -> bytes:
+    """One page (spec 19 FP16): a 7 pt running head, five 10 pt body lines, `- 3 -` at its foot."""
+    doc = pymupdf.open()
+    page = _page(doc)
+    page.insert_text((72, 40), ONE_PAGE_HEAD, fontsize=7)
+    for i, text in enumerate(ONE_PAGE_BODY):
+        page.insert_text((72, 120 + 12 * i), text, fontsize=10)
+    page.insert_text((290, 750), ONE_PAGE_NUMBER, fontsize=10)
+    return _save(doc)
+
+
 def encrypted(user_pw: str = "u", owner_pw: str = "o") -> bytes:
     """AES-256 encryption with a user password."""
     doc = pymupdf.open()
@@ -1929,4 +1951,5 @@ OPENABLE: dict[str, Callable[[], bytes]] = {
     "spaced_paragraphs": spaced_paragraphs,
     "furnished": furnished,
     "furniture_only_page": furniture_only_page,
+    "one_page_furnished": one_page_furnished,
 }

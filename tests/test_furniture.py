@@ -3,7 +3,13 @@ from itertools import pairwise
 
 import pytest
 
-from inkgrid.core.furniture import FoundFurniture, find_furniture, line_key
+from inkgrid.core.furniture import (
+    FoundFurniture,
+    find_furniture,
+    line_key,
+    page_number_token,
+    prints_page_number,
+)
 from inkgrid.core.lines import Line
 from inkgrid.model.config import Profile
 from inkgrid.model.geometry import Rect
@@ -77,8 +83,9 @@ def test_FU3_a_key_on_one_page_is_not_furniture() -> None:
     assert find_furniture(pages_of(specs), PROFILE).lines == ()
 
 
-def test_FU4_a_one_page_document_has_no_furniture() -> None:
-    specs = [[*body(1), *header("Page 1 of 1", y=750)]]
+def test_FU4_a_one_page_footer_that_prints_no_role_is_not_furniture() -> None:
+    # Recurrence needs 2 pages; on one page, S3 needs a page number or smaller type (spec 19 s. 1).
+    specs = [[*body(1), *header("Acme Fee Guide", y=750)]]
     assert find_furniture(pages_of(specs), PROFILE).lines == ()
 
 
@@ -322,3 +329,129 @@ def test_FT7_a_footer_in_three_parts_nearest_the_edge_breaks_no_run() -> None:
         specs.append([*body(n), *header("Copyright 2026 Acme Exchange.", y=728), *parts])
     found = find_furniture(pages_of(specs), PROFILE)
     assert marked(found) == [(n, "footer", "Copyright 2026 Acme Exchange.") for n in (1, 2, 3)]
+
+
+# --- One-page furniture, S3 (docs/specs/19-ocr-benchmark-fixes.md section 1) -------------------
+
+
+def one_page(*ps: P) -> tuple[PageModel, ...]:
+    return pages_of([list(ps)])
+
+
+def test_FP1_a_one_page_footer_with_a_page_number_is_furniture() -> None:
+    found = find_furniture(one_page(*body(1), *header("Page 1 of 1", y=750)), PROFILE)
+    assert marked(found) == [(1, "footer", "Page 1 of 1")]
+
+
+def test_FP2_a_running_head_ending_in_a_page_number_is_furniture() -> None:
+    found = find_furniture(one_page(*header("Journal of Things 12"), *body(1)), PROFILE)
+    assert marked(found) == [(1, "header", "Journal of Things 12")]
+
+
+@pytest.mark.parametrize("number", [[P("7", 300, 750)], text_line(["-", "7", "-"], x=290, y=750)])
+def test_FP3_a_lone_page_number_is_furniture(number: list[P]) -> None:
+    found = find_furniture(one_page(*body(1), *number), PROFILE)
+    assert [(f.role, " ".join(w.text for w in f.line.words)) for f in found.lines] == [
+        ("page_number", " ".join(p.text for p in number))
+    ]
+
+
+def test_FP4_a_running_head_in_smaller_type_is_furniture() -> None:
+    head = text_line(["Annals", "of", "Things"], x=72, y=40, size=7)
+    assert marked(find_furniture(one_page(*head, *body(1)), PROFILE)) == [
+        (1, "header", "Annals of Things")
+    ]
+
+
+def test_FP5_a_title_in_body_type_without_a_number_is_not_furniture() -> None:
+    assert find_furniture(one_page(*header("Annals of Things"), *body(1)), PROFILE).lines == ()
+
+
+def test_FP6_a_page_number_close_under_the_body_is_not_furniture() -> None:
+    # The last body line ends at y = 290; `Page 2` sits 5 pt under it, less than a line's height.
+    assert find_furniture(one_page(*body(1), *header("Page 2", y=295)), PROFILE).lines == ()
+
+
+def test_FP7_a_ruled_tables_last_row_is_not_furniture() -> None:
+    cells = [Rect(72, 700, 200, 720), Rect(200, 700, 330, 720)]
+    cells += [Rect(72, 720, 200, 740), Rect(200, 720, 330, 740)]
+    table = [P("Fee", 80, 705), P("Rate", 210, 705), P("Total", 80, 725), P("12", 210, 725)]
+    pages = one_page(*body(1), *table)
+    assert marked(find_furniture(pages, PROFILE)) == [(1, "footer", "Total 12")]
+    assert find_furniture(pages, PROFILE, grids={1: [cells]}).lines == ()
+
+
+def test_FP8_larger_type_prints_its_role_only_by_a_page_number() -> None:
+    title = text_line(["Annals", "of", "Things"], x=72, y=40, size=14)
+    foot = text_line(["Annals", "page", "9"], x=72, y=750, size=12)
+    found = find_furniture(one_page(*title, *body(1), *foot), PROFILE)
+    assert marked(found) == [(1, "footer", "Annals page 9")]
+
+
+def test_FP9_a_page_of_three_lines_has_no_furniture() -> None:
+    ps = [*header("alpha beta", y=200), *header("gamma delta", y=240), *header("Page 1", y=750)]
+    assert find_furniture(one_page(*ps), PROFILE).lines == ()
+
+
+def test_FP10_only_a_bands_outermost_line_can_be_furniture() -> None:
+    second = text_line(["Volume", "two"], x=72, y=60, size=7)
+    ps = [*header("Annals of Things"), *second, *body(1)]
+    assert find_furniture(one_page(*ps), PROFILE).lines == ()
+
+
+@pytest.mark.parametrize("label", ["(4)", "*"])
+def test_FP11_a_footnote_in_note_type_is_not_furniture(label: str) -> None:
+    note = text_line([label, "Applies", "to", "members"], x=72, y=750, size=7)
+    assert find_furniture(one_page(*body(1), *note), PROFILE).lines == ()
+
+
+def test_FP12_a_note_the_page_calls_is_not_furniture() -> None:
+    note = text_line(["1", "Supported", "by", "grant"], x=72, y=750, size=7)
+    call = P("1", 250, 197, size=6, superscript=True)
+    assert find_furniture(one_page(*body(1), call, *note), PROFILE).lines == ()
+    assert marked(find_furniture(one_page(*body(1), *note), PROFILE)) == [
+        (1, "footer", "1 Supported by grant")
+    ]
+
+
+def test_FP13_a_numbered_item_is_not_furniture() -> None:
+    item = header("3. The driver sightlines")
+    assert find_furniture(one_page(*item, *body(1)), PROFILE).lines == ()
+
+
+def test_FP14_a_year_is_no_page_number() -> None:
+    title = header("Annual Report 2022")
+    assert find_furniture(one_page(*title, *body(1)), PROFILE).lines == ()
+
+
+def test_FP15_a_two_page_document_keeps_recurrence() -> None:
+    specs = [[*body(1), *header("Page 1", y=750)], body(2)]
+    assert find_furniture(pages_of(specs), PROFILE).lines == ()
+
+
+@pytest.mark.parametrize("token", ["7", "xii", "2/5", "[4]", "|81", "0004"])
+def test_FP_page_number_tokens(token: str) -> None:
+    assert page_number_token(token)
+
+
+@pytest.mark.parametrize("token", ["2020", "1999", "3.", "(4)", "a)", "civil", "12345", "1/22222"])
+def test_FP_tokens_that_are_no_page_number(token: str) -> None:
+    assert not page_number_token(token)
+
+
+@pytest.mark.parametrize(
+    ("text", "prints"),
+    [
+        ("- 7 -", True),
+        ("Page 2 of 5", True),
+        ("1 / 1", True),
+        ("Vacuum 83", True),
+        ("34 Observer #7", True),
+        ("(4) Applies", False),
+        ("Annual Report 2022", False),
+        ("Annals of Things", False),
+    ],
+)
+def test_FP_lines_that_print_a_page_number(text: str, prints: bool) -> None:
+    line = Line(place(text_line(text.split(), x=72, y=100)))
+    assert prints_page_number(line) is prints

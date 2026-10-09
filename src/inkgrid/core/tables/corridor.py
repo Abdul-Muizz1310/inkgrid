@@ -698,10 +698,19 @@ def _directly_above(run: Sequence[Line], below: Sequence[Line]) -> bool:
     return first.top - last.bottom <= height and last.size <= first.size
 
 
-def _size_runs(lines: Sequence[Line], profile: Profile) -> list[list[Line]]:
+def _holds_a_table(run: Sequence[Line], profile: Profile, rules: Sequence[Rule]) -> bool:
+    """The run folds into at least `MIN_ROWS` value rows: a table without any header."""
+    folded = fold_rows(run, profile, rules=rules)
+    return sum(1 for row in folded if is_value_row(row)) >= MIN_ROWS
+
+
+def _size_runs(
+    lines: Sequence[Line], profile: Profile, rules: Sequence[Rule] = ()
+) -> list[list[Line]]:
     """The lines split wherever the type size changes (prose rule 2, against the smaller size).
 
-    A table's header set in smaller type is no run of its own: it joins the run below it
+    A table's header set in smaller type is no run of its own: it joins the run below it when that
+    run holds a table without it; a header never makes a table of a single row
     (docs/specs/19-ocr-benchmark-fixes.md section 3, H1).
     """
     runs: list[list[Line]] = []
@@ -714,7 +723,12 @@ def _size_runs(lines: Sequence[Line], profile: Profile) -> list[list[Line]]:
         runs.append([line])
     joined: list[list[Line]] = []
     for run in runs:
-        if joined and _header_run(joined[-1], profile) and _directly_above(joined[-1], run):
+        if (
+            joined
+            and _header_run(joined[-1], profile)
+            and _directly_above(joined[-1], run)
+            and _holds_a_table(run, profile, rules)
+        ):
             joined[-1] = [*joined[-1], *run]
         else:
             joined.append(run)
@@ -933,7 +947,9 @@ def corridor_tables(
         group = regions[i:j]
         claimed: set[int] = set()
         # Fold each size run on its own: the headings' pitch must not set the table's.
-        for lines in _size_runs([line for region in group for line in region.lines], profile):
+        for lines in _size_runs(
+            [line for region in group for line in region.lines], profile, rules
+        ):
             run = fold_rows(lines, profile, rules=rules)
             found, left = _run_tables(run, profile, page=page, frame=frame, others=others)
             for lo, hi, table in found:

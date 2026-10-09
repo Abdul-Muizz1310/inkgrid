@@ -189,7 +189,12 @@ fee schedules' look-back found Latin tables read apart (§ 2's rejected options)
   - its last line holds pieces side by side: a column header, not a caption or a heading;
   - its last line sits directly above the next run's first line, the gap at most the taller line's
     height;
-  - its type is no larger than that line's.
+  - its type is no larger than that line's;
+  - the next run folds into at least `MIN_ROWS` (2) value rows: a header gives a table its header
+    row and never makes a table of a single row. A smaller line over one value row is as often a
+    chart's labels over its numbers, or a note over a total, as a header (the final review's
+    finding 4; on the dev pages, a chart's legend over its percentages beside a 10-K's one-row
+    statement), and 0.1.0 leaves both as text.
 - **Rejected:** aligning header rows more loosely. The dev tables' misaligned rows above a table are
   mostly data rows that merge two columns, wrapped description lines, or rows of placeholders.
 
@@ -237,6 +242,7 @@ fee schedules' look-back found Latin tables read apart (§ 2's rejected options)
 | HR5 | four 8 pt header lines directly above a 9 pt table | not in the table |
 | HR6 | an 8 pt header row holding a value directly above a 9 pt table | not in the table |
 | HR7 | `inkgrid.read` of a one-page PDF: `2025 2024 2023` in 8 pt bold over a 9 pt unruled table | the table's first row is its header, `<thead>` in its HTML |
+| HR8 | an 8 pt line `Thank you for your business` / `Terms: net thirty days` directly above a 9 pt `Total due` / `$1,250.00`, prose around them | no table |
 
 Every existing case keeps passing, but `04` FU4, amended above.
 

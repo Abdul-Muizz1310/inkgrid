@@ -905,3 +905,15 @@ def test_HR6_a_header_row_holding_a_value_stays_out() -> None:
     (table,) = stage(row + six_rows(112)).tables
     assert holds_none_of(table, row)
     assert table.header_rows == 0
+
+
+def test_HR8_a_header_run_over_a_single_value_row_makes_no_table() -> None:
+    # A header gives a table its header row; it never makes one (final review, finding 4).
+    above = text_line(
+        ["Payment", "is", "due", "on", "receipt", "of", "this", "invoice."], x=72, y=80
+    )
+    note = text_line(["Thank", "you", "for", "your", "business"], x=72, y=100, size=8)
+    note += right("Terms: net thirty days", 400, 100, size=8)
+    total = text_line(["Total", "due"], x=72, y=112, size=9) + right("$1,250.00", 400, 112)
+    below = text_line(["Questions", "go", "to", "the", "billing", "office."], x=72, y=140)
+    assert stage(above + note + total + below).tables == ()

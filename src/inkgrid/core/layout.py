@@ -101,6 +101,8 @@ def _prose_column(
         return False
     if sum(len(part.words) for part in parts) / len(parts) >= profile.prose_min_words:
         return True
+    if any(is_value_piece(part.words) for part in parts):
+        return False  # a column of values is prose only by its words, as 0.1.0 read it
     width = max(part.x1 for part in parts) - min(part.x0 for part in parts)
     if width <= 0 or width < PROSE_MIN_WIDTH_EM * body_size:
         return False
@@ -112,8 +114,8 @@ def _columns(
 ) -> list[Region] | None:
     """One prose region per column, or None when the section is not prose columns.
 
-    Beside prose columns, a stray (too few fragments) and a value-free remainder holding prose
-    columns of its own are laid out again; any other column refuses the section.
+    Beside prose columns, a stray (too few fragments) and a remainder holding prose columns of its
+    own are laid out again, in a section holding no value; any other column refuses the section.
     """
     cuts = [(lo + hi) / 2 for lo, hi in gutters]
     count = len(cuts) + 1
@@ -141,6 +143,8 @@ def _columns(
         return [Region("prose", tuple(column)) for column in lines]
     if not any(prose) or depth >= MAX_DEPTH:
         return None
+    if any(is_value_piece(part.words) for column in parts for part in column):
+        return None  # values beside prose columns: a table's, read in rows as 0.1.0 read it
     out: list[Region] = []
     nested = False
     for ok, column, column_lines in zip(prose, parts, lines, strict=True):
@@ -148,8 +152,6 @@ def _columns(
             out.append(Region("prose", tuple(column_lines)))
             continue
         stray = len(column) < profile.column_min_lines
-        if not stray and any(is_value_piece(part.words) for part in column):
-            return None  # a table's value column beside its wordy one
         regions, held_columns = _again(column_lines, profile, body_size, depth)
         if not stray and not held_columns:
             return None  # a table's label column beside its text

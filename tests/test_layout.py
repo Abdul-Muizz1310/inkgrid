@@ -361,3 +361,37 @@ def test_PC8_a_stray_beside_a_single_prose_column_reads_as_before() -> None:
     regions = layout(place(prose + stray), PROFILE, BODY)
     above, below = prose[: 3 * 6], prose[3 * 6 :]
     assert read_order(regions) == [("prose", texts(above)), ("rows", rows_order(below, stray))]
+
+
+def test_PC12_a_wide_full_column_of_values_is_no_prose_column() -> None:
+    # A label-value fee list (NYSE Arca's): the values' qualifiers make the column wide and full,
+    # but it holds values, so the list keeps its rows, as 0.1.0 read it.
+    labels = column("l", 6, x=72, y=100)
+    fees = [
+        text_line(
+            [f"${100 + 25 * i}", f"charged-per-issue-to-transferor-{i}"],
+            x=RIGHT_X,
+            y=100 + PITCH * i,
+        )
+        for i in range(6)
+    ]
+    values = [p for line in fees for p in line]
+    regions = layout(place(labels + values), PROFILE, BODY)
+    assert read_order(regions) == [("rows", rows_order(labels, values))]
+
+
+def test_PC13_a_table_beside_a_stray_keeps_its_rows() -> None:
+    # Euronext's two options: each column passes the words test, and both hold values.
+    a = [
+        *text_line(["Best", "of", "Book", "Member", "Option", "A"], x=72, y=100),
+        *text_line(["0.65", "bp"], x=72, y=100 + PITCH),
+        *text_line(["no", "minimum", "commitment", "fee"], x=72, y=100 + 2 * PITCH),
+    ]
+    b = [
+        *text_line(["Best", "of", "Book", "Member", "Option", "B"], x=RIGHT_X, y=100),
+        *text_line(["0.45", "bp"], x=RIGHT_X, y=100 + PITCH),
+        *text_line(["a", "minimum", "commitment", "fee"], x=RIGHT_X, y=100 + 2 * PITCH),
+    ]
+    stray = [P("400,000", RIGHT_X + COLUMN_WIDTH + 40, 100 + PITCH)]
+    regions = layout(place(a + b + stray), PROFILE, BODY)
+    assert read_order(regions) == [("rows", rows_order(a, b, stray))]

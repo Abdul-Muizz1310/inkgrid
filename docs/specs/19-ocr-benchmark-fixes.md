@@ -67,7 +67,32 @@ baseline dev number exactly. The 42 fee schedules were dumped with the rules and
     expects `...`; no rule may change these (G1);
   - headings the page sets as body text.
 
-**Prototype result (dev):** PLACEHOLDER
+**Prototype result (dev).** Each rule alone, prototyped in memory over 0.1.0, scored by the
+benchmark's own scorer on the dev documents. The Edit distances are lower-better, as are
+OmniDocBench's text and order; the rest are higher-better.
+
+| Dev number | 0.1.0 | § 1 alone | § 2 alone | § 3 alone |
+|---|---|---|---|---|
+| olmOCR headers and footers (295 tests) | 0.264 | 0.576 | 0.264 | 0.264 |
+| olmOCR multi-column (328) | 0.613 | 0.622 | 0.671 | 0.613 |
+| olmOCR tables (440) | 0.559 | 0.559 | 0.559 | 0.566 |
+| olmOCR long tiny text (51) | 0.255 | 0.255 | 0.392 | 0.255 |
+| OmniDocBench text, English (primary, 102 pages) | 0.293 | 0.233 | 0.279 | 0.293 |
+| OmniDocBench text, simplified Chinese (93) | 0.512 | 0.502 | 0.408 | 0.512 |
+| OmniDocBench table TEDS (69) | 0.521 | 0.521 | 0.520 | 0.521 |
+| OmniDocBench reading order (195) | 0.274 | 0.280 | 0.237 | 0.274 |
+| ParseBench GTRM (227 tables) | 0.496 | 0.495 | 0.496 | 0.506 |
+| ParseBench TableRecordMatch (227) | 0.329 | 0.327 | 0.329 | 0.343 |
+| ParseBench content faithfulness, five tags (148) | 0.835 | 0.828 | 0.850 | 0.835 |
+| DP-Bench NID (94) | 0.903 | 0.896 | 0.909 | 0.903 |
+| DP-Bench MHS (46) | 0.694 | 0.689 | 0.704 | 0.694 |
+
+§ 1's losses are on benchmarks that count furniture as text (ParseBench, DP-Bench), and its small
+table losses on ParseBench were one prototype's error: it compared a line's raw size with the
+half-point body size, so a 6.96 pt header row under a 7.0 pt body read as smaller type. § 1 as
+written compares sizes rounded alike. § 2's prototype held a column of more than a quarter of
+busy lines to be no prose column; § 2 as written takes half (a quarter turned a prose column with
+a few split lines into rows read across).
 
 ---
 
@@ -112,23 +137,25 @@ baseline dev number exactly. The 42 fee schedules were dumped with the rules and
   1. holds at least `column_min_lines` fragments;
   2. has at most `MAX_BUSY_SHARE` (half) of its lines holding two fragments or more: more, and it is
      several columns read across, not one;
-  3. either has a mean of at least `prose_min_words` words per fragment, as before, or is at least
-     `PROSE_MIN_WIDTH_EM` (10) × the body size wide, from its leftmost fragment's start to its
-     rightmost's end, with its fragments' mean width at least `PROSE_MIN_FILL` (0.6) of that width.
-     A Chinese line is one word.
+  3. either has a mean of at least `prose_min_words` words per fragment, as before, or holds no value
+     piece (`07` § 1) and is at least `PROSE_MIN_WIDTH_EM` (10) × the body size wide, from its
+     leftmost fragment's start to its rightmost's end, with its fragments' mean width at least
+     `PROSE_MIN_FILL` (0.6) of that width. A Chinese line is one word; a column of fees whose
+     qualifiers make it wide and full is still a column of values.
 - **A section of prose columns** is:
   - a gutter section whose columns are all prose columns, as before; or
-  - one with at least one prose column whose every other column is a stray or a remainder, and which
-    holds at least two prose columns, or a remainder:
+  - one holding no value piece in any column, with at least one prose column whose every other
+    column is a stray or a remainder, and which holds at least two prose columns, or a remainder:
     - a **stray** holds fewer than `column_min_lines` fragments: a margin's page number, a mark beside
       one line;
-    - a **remainder** holds no value piece (`07` § 1) and, laid out again on its own (steps 1–6 over its
-      lines, the page's x-range its own), holds a section of prose columns: a newspaper's columns under
-      a headline that breaks their gutters.
+    - a **remainder**, laid out again on its own (steps 1–6 over its lines, the page's x-range its
+      own), holds a section of prose columns: a newspaper's columns under a headline that breaks
+      their gutters.
 
-  A column holding a value piece, or one laid out with no prose columns of its own, refuses the
-  section, as do strays beside a single prose column; step 5's other rules then apply as before. These
-  are a table's value columns beside its wordy column, and a table's label column beside its text.
+  A value piece in any column, a column laid out with no prose columns of its own, or strays beside
+  a single prose column refuse the section, and step 5's other rules then apply as before. These are
+  a table's value columns beside its wordy column, a table beside a stray, and a table's label column
+  beside its text. Neither new path ever accepts a section 0.1.0 refused that holds a value.
 - **Regions:** each prose column is one `prose` region, as before; each stray and remainder gives the
   regions its own layout gives, in its column's place. Layout goes at most `MAX_DEPTH` (4) levels deep:
   deeper, a remainder holds no prose columns.
@@ -139,6 +166,9 @@ baseline dev number exactly. The 42 fee schedules were dumped with the rules and
     labels and text (OmniDocBench `eastmoney_8f87…`) read its labels apart, its text Edit distance
     0.006 to 0.391.
   - Strays beside a single prose column: a short table's label cells are strays too.
+  - Either new path for columns that hold values. The fee schedules' look-back found two tables read
+    apart: NYSE Arca's label and fee list, whose qualified fees made the fee column wide and full,
+    and Euronext's two options (`0.65 bp | 0.45 bp`), beside a stray.
 
 ## 3 · A header run above a table (`core/tables/corridor.py`, amends `07` § 3)
 
@@ -184,6 +214,8 @@ baseline dev number exactly. The 42 fee schedules were dumped with the rules and
 | PC9 | beside a prose column, a column with 4 of its 8 lines in two fragments; one with 5 of 8 | two `prose` regions; one `rows` region |
 | PC10 | a Chinese column 10 ems wide, filled 0.6; one 9.5 ems wide | a prose column; not a prose column |
 | PC11 | `inkgrid.read` of a one-page PDF of two columns of Chinese prose | the left column's text, then the right's, in the Markdown |
+| PC12 | labels beside fees whose qualifiers make the fee column wide and full (`$100 charged-per-issue…`) | one `rows` region, as 0.1.0 read it |
+| PC13 | two columns that pass the words test and hold values (`0.65 bp`), beside a stray | one `rows` region, as 0.1.0 read it |
 | HR1 | `2025 2024 2023` in 8 pt bold directly above a 9 pt table of three value columns | the table's header row |
 | HR2 | `2025 2024 2023` in 10 pt directly above a 9 pt table (and `07` EX1's bold heading) | not in the table: its type is larger |
 | HR3 | an 8 pt one-piece caption directly above a 9 pt table | not in the table |
@@ -195,6 +227,33 @@ baseline dev number exactly. The 42 fee schedules were dumped with the rules and
 Every existing case keeps passing, but `04` FU4, amended above.
 
 ## 5 · Acceptance
+
+**Measured** (2026-10-09, the three rules as written at `170347d`, dev documents only, each
+benchmark's pinned scorer called as the run calls it):
+
+| Dev number | 0.1.0 | Spec 19 |
+|---|---|---|
+| olmOCR headers and footers (295 tests) | 0.264 | 0.563 |
+| olmOCR multi-column (328) | 0.613 | 0.695 |
+| olmOCR tables (440) | 0.559 | 0.566 |
+| olmOCR long tiny text (51) | 0.255 | 0.392 |
+| olmOCR baseline tests (281) | 1.000 | 1.000 |
+| OmniDocBench text Edit distance, English (primary) | 0.293 | 0.217 |
+| OmniDocBench text Edit distance, simplified Chinese (primary) | 0.512 | 0.373 |
+| OmniDocBench table TEDS (primary) | 0.521 | 0.521 |
+| OmniDocBench reading-order Edit distance (primary) | 0.274 | 0.225 |
+| ParseBench GTRM | 0.496 | 0.506 |
+| ParseBench TableRecordMatch | 0.329 | 0.343 |
+| ParseBench content faithfulness, five tags | 0.835 | 0.838 |
+| ParseBench content faithfulness, multilingual | 0.615 | 0.612 |
+| DP-Bench NID | 0.903 | 0.900 |
+| DP-Bench TEDS | 0.682 | 0.682 |
+| DP-Bench MHS | 0.694 | 0.687 |
+
+Together the rules do better than any alone on olmOCR's multi-column tests (furniture no longer
+breaks a passage) and on OmniDocBench's text. They cost ParseBench's simple and misc text tags and
+DP-Bench's NID and MHS, whose truths count page numbers and running heads as text. These are dev
+numbers: the tuned run's test half is the measure of whether the rules carry.
 
 - [ ] Every case above has a test named `test_<CaseId>_<slug>`, and it failed before its code.
 - [ ] The dev numbers of § 0's prototype hold for the implementation, scored as the run scores them.

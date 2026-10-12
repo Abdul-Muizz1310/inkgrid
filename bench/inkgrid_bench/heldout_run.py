@@ -26,7 +26,7 @@ from inkgrid_bench.tables import NDocument, NTable
 type Stage = Callable[[Path, str, dict[str, Any]], None]
 HELDOUT = run.BENCH / "heldout"
 DATASET = "heldout"
-READING = "7f70dd6"  # the tuned run's commit: the reading held out (spec 16 section 6)
+READING = "1d31f4f"  # M7b's tuned runs' reading: the reading held out (spec 16 section 6)
 NOT_TRUTHS = frozenset({"glyphs.json", "review-notes.json"})
 PDFS = f"{DATASET}/candidates"  # in the cache, where the selection fetched them
 STAGES = ("prepare", "read", "verify", "score", "report")

@@ -123,6 +123,10 @@ document, as a user would; only its tables on scored pages are scored.
 - **Tools:** every tool of specs 12 and 15 (the ground truth read as a tool is a check, as on ICDAR).
 - **Frozen reading:** the run refuses to start unless `src/inkgrid` is identical to the tuned run's
   commit (`7f70dd6`), so the held-out numbers are the reading the tuned run measured.
+  - Since M7b (spec 19), the reading measured is M7b's: `src/inkgrid` as at `1d31f4f`, the reading
+    of M7b's tuned runs. No M7b fix has seen the held-out set; spec 19's rules were designed from the
+    OCR benchmarks' dev halves alone. The 0.1.0 results (`2026-10-01-fb58b0a-heldout`) stay as they
+    were, the reading at `7f70dd6`.
 - The confirmed glyph sample is `bench/heldout/glyphs.json`, exported from the review once it is
   done: each sampled cell's document, table, cell, and confirmed text.
 - `run.py --datasets heldout` reads only the held-out documents and writes

@@ -34,6 +34,10 @@ baseline dev number exactly. The 42 fee schedules were dumped with the rules and
     0.818) at precision 0.656: L8's lesson holds on one page too.
   - § 1's rule finds 213 (recall 0.451) at precision 0.973. Its 6 other lines are 4 captions or figure
     labels in small type at a page edge, and 2 browser print headers the truth labels as body.
+  - As implemented at `87093ec`, labelling each line inkgrid reads by the truth box holding most of
+    its words, S3 found 209 (recall 0.443) at precision 0.972; after the final review's fix pass
+    (`1d31f4f`), 208 (recall 0.441) at precision 0.977. The pass gave up one running head (a
+    Chinese `9` in heading type, its number among the words) and one equation ending in `C`.
   - Two benchmarks count furniture as text. DP-Bench's truth Markdown keeps 179 of its 181 headers
     and footers, and ParseBench's text rules ask for page numbers and running heads, so every piece of
     furniture § 1 finds costs those two.
@@ -286,12 +290,12 @@ Every existing case keeps passing, but `04` FU4, amended above.
 
 ## 5 · Acceptance
 
-**Measured** (2026-10-09, the three rules as written at `87093ec`, dev documents only, each
-benchmark's pinned scorer called as the run calls it):
+**Measured** (2026-10-12, the three rules as written at `1d31f4f`, after the final review's fix pass;
+dev documents only, each benchmark's pinned scorer called as the run calls it):
 
 | Dev number | 0.1.0 | Spec 19 |
 |---|---|---|
-| olmOCR headers and footers (295 tests) | 0.264 | 0.563 |
+| olmOCR headers and footers (295 tests) | 0.264 | 0.556 |
 | olmOCR multi-column (328) | 0.613 | 0.674 |
 | olmOCR tables (440) | 0.559 | 0.566 |
 | olmOCR long tiny text (51) | 0.255 | 0.392 |
@@ -300,36 +304,41 @@ benchmark's pinned scorer called as the run calls it):
 | OmniDocBench text Edit distance, simplified Chinese (primary) | 0.512 | 0.386 |
 | OmniDocBench table TEDS (primary) | 0.521 | 0.521 |
 | OmniDocBench reading-order Edit distance (primary) | 0.274 | 0.233 |
-| ParseBench GTRM | 0.496 | 0.506 |
-| ParseBench TableRecordMatch | 0.329 | 0.343 |
+| ParseBench GTRM | 0.496 | 0.504 |
+| ParseBench TableRecordMatch | 0.329 | 0.342 |
 | ParseBench content faithfulness, five tags | 0.835 | 0.832 |
 | ParseBench content faithfulness, multi-column tag | 0.747 | 0.762 |
 | ParseBench content faithfulness, multilingual | 0.615 | 0.612 |
 | DP-Bench NID | 0.903 | 0.896 |
 | DP-Bench TEDS | 0.682 | 0.682 |
-| DP-Bench MHS | 0.694 | 0.689 |
+| DP-Bench MHS | 0.694 | 0.692 |
 
 Together the rules do better than any alone on olmOCR's multi-column tests (furniture no longer
 breaks a passage) and on OmniDocBench's text. They cost ParseBench's simple and misc text tags and
-DP-Bench's NID and MHS, whose truths count page numbers and running heads as text. Leaving a section
-that holds a value as 0.1.0 read it, and measuring width and fill only in wide script, gave back
-some Latin pages (olmOCR multi-column 0.695 and OmniDocBench English text 0.217 without either), to
-keep every table the fee schedules' look-back found read apart. These are dev numbers: the tuned
-run's test half is the measure of whether the rules carry.
+DP-Bench's NID, whose truths count page numbers and running heads as text. Leaving a section that
+holds a value as 0.1.0 read it, and measuring width and fill only in wide script, gave back some
+Latin pages (olmOCR multi-column 0.695 and OmniDocBench English text 0.217 without either), to keep
+every table the fee schedules' look-back found read apart. The final review's fix pass cost olmOCR's
+headers and footers 0.563 to 0.556 (running heads in heading type with their number among their
+words, `Beijing Language And Culture University 11`, which S3 now leaves as titles) and ParseBench's GTRM 0.506 to 0.504 (H1 no longer makes a 10-K's one-row statement a
+table); every other dev number is as at `87093ec`. These are dev numbers: the tuned run's test half
+is the measure of whether the rules carry.
 
 - [x] Every case above has a test named `test_<CaseId>_<slug>`, and it failed before its code. The
       cases that guard what must not change (FP5, FP6, FP9, FP10, FP13, FP14, FP15, FU4, PC2, PC4,
       PC5, PC8, HR2 to HR6) passed before it; PC12 to PC16 also pass on 0.1.0's own layout code;
       HR2 to HR6, FP11's note mark, and PC7 and PC9's busy share each failed with its clause removed.
+      The final review's cases (FP17 to FP20, FP23, HR8) failed before the fix pass; FP21 and FP22,
+      which guard what it must not take, passed before it, and FP8 was amended to set its page
+      number apart.
 - [x] The dev numbers above are the rules as written, scored as the run scores them.
-- [x] The fixture suite passes (`scripts/dev.sh`: 2,116 tests, coverage 98%, every floor met), and
-      every `OPENABLE` fixture, the four new ones among them, builds a valid document.
-- [x] The 42 fee schedules (2026-10-09, `87093ec`): 974 pages, all 1,817,075 characters owned, none
-      lost, the same 8 defects as 0.1.0. Three read differently, each by H1 reading a small table
-      whose header is set in other type as a table: Nasdaq Copenhagen's and Helsinki's
-      `INSTRUMENT TYPE | DKK` (`EUR`) over `Warrants and certificates | 0.25` (`0.03`), and Nasdaq
-      Stockholm's `TRANSACTION BASED FEE PER EXECUTED ORDER (SEK) | VALUE BASED FEE` over `- |
-      0.204 bps`, where 0.1.0 read headings and a list item.
+- [x] The fixture suite passes (`scripts/dev.sh` at `1d31f4f`: 2,152 tests, coverage 98%, every
+      floor met), and every `OPENABLE` fixture, the five new ones among them, builds a valid document.
+- [x] The 42 fee schedules (2026-10-12, `1d31f4f`): 974 pages, all 1,817,075 characters owned, none
+      lost, the same 8 defects as 0.1.0, and every dump byte-identical to 0.1.0's. At `87093ec` three
+      had read differently, H1 making a table of a header over one value row (Nasdaq Copenhagen's and
+      Helsinki's `INSTRUMENT TYPE | DKK` over `Warrants and certificates | 0.25`, Nasdaq Stockholm's
+      `VALUE BASED FEE` over `- | 0.204 bps`); since `ba0aa41` H1 makes no table of one row.
 - [ ] Spec 12's ICDAR-2013 and olmOCR table sets and the held-out fee set run at the final commit, and
       each change in them is explained.
 - [ ] The tuned run reports the dev and test halves apart, labelled tuned.

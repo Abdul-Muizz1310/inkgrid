@@ -511,6 +511,14 @@ def test_FP21_a_number_set_apart_from_a_head_in_larger_type_still_prints_its_rol
     ]
 
 
+@pytest.mark.parametrize("text", ["Page 2 of 28", "1 of 14", "- Page 5 of 5 -"])
+def test_FP23_a_page_count_in_heading_type_is_furniture(text: str) -> None:
+    foot = text_line(text.split(), x=72, y=750, size=10)
+    assert marked(find_furniture(one_page(*prose(120, size=8), *foot), PROFILE)) == [
+        (1, "footer", text)
+    ]
+
+
 def test_FP22_a_footer_in_three_parts_under_prose_is_furniture() -> None:
     parts = [
         P("Acme", 72, 750, size=8),

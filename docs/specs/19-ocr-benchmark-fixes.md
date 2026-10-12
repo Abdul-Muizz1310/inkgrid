@@ -123,9 +123,11 @@ fee schedules' look-back found Latin tables read apart (§ 2's rejected options)
        whole line (`xii`, `- iv -`): beside words it is as often a letter, a unit or a degree
        (`Appendix C`, `120 cm`, `Jane Doe, MD`, `I certify`).
      - In heading type (`heading_size_ratio` × the body size or more), the page number must stand
-       apart: the whole line, or a fragment of its own at the line's start or end. A title sets its
-       number among its words (`Homework 3`, `Form 1040`, `Chapter 3`); a running head sets it
-       apart.
+       apart, the whole line or a fragment of its own at the line's start or end, or come with the
+       page count: two numbers joined by a word of at most `MAX_JOINT` (3) letters at the line's
+       start or end (`Page 2 of 28`, `1 of 14`). A title sets its one number among its words
+       (`Homework 3`, `Form 1040`, `Chapter 3`); a running head sets it apart, and a foot counts
+       the pages.
      - So `- 7 -`, `Page 2 of 5`, `1 / 1`, `Vacuum 83` and `34 Observer #7` print their role, and
        any line in smaller type does.
   6. It lies in no ruled table (S1), and it is no row of an unruled one: it and the next line toward
@@ -253,6 +255,7 @@ fee schedules' look-back found Latin tables read apart (§ 2's rejected options)
 | FP20 | one page: `Jane Doe, MD` (16 pt), `Appendix C` (14 pt), `Office of the Mayor, Washington, DC`, `Homework 3` (16 pt), `Form 1040` (14 pt), `12 March 2024` at the top; `Overall width 120 cm`, `I certify that the statements above are true` at the foot | no furniture (item 5) |
 | FP21 | one page: `Annals of Things` in 12 pt over a 10 pt body, `153` set apart at the right margin | `header` |
 | FP22 | one page: an 8 pt footer in three parts, `Acme`, `Confidential`, `Page 3`, under prose | `footer`: its parts line up with no table row |
+| FP23 | one page: `Page 2 of 28`, `1 of 14`, `- Page 5 of 5 -` in 10 pt at the foot of an 8 pt body | `footer` |
 | FU4 (amended) | one page: `Acme Fee Guide` at the foot, body size, no number, set apart | no furniture: recurrence needs 2 pages |
 | PC1 | two columns of Chinese prose, 8 lines each, each line one word of 20 characters | two `prose` regions, left then right |
 | PC2 | a table of 8 rows of one-word cells in three narrow columns | one `rows` region, as before |

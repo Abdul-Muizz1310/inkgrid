@@ -37,6 +37,8 @@ ONE_PAGE_MIN_LINES = 4  # fewer, and a page has no body for S3 to set furniture 
 EDGE_MARKS = "-\u2013\u2014()[]|.:"  # dashes, brackets, bars, dots and colons around a page number
 PAGE_DIGITS = re.compile(r"\d{1,4}(?:/\d{1,4})?")  # `7`, `0004`, `2/5`
 DATE_TOKENS = 3  # a number, a word and a year: `12 March 2024`
+COUNT_TOKENS = 3  # a page, a joint and the count: `2 of 28`
+MAX_JOINT = 3  # the longest word joining a page to its count
 
 
 @dataclass(frozen=True, slots=True)
@@ -346,6 +348,20 @@ def prints_page_number(line: Line) -> bool:
     return _page_digits(tokens[0]) or _page_digits(tokens[-1])
 
 
+def _page_count(tokens: Sequence[str]) -> bool:
+    """The line opens or ends with a page and the page count: two numbers joined by a short word.
+
+    `Page 2 of 28`, `1 of 14`: a title holds one number, never a count.
+    """
+    if len(tokens) < COUNT_TOKENS:
+        return False
+    for a, joint, b in (tokens[:COUNT_TOKENS], tokens[-COUNT_TOKENS:]):
+        short = len(joint) <= MAX_JOINT and not any(ch.isdigit() for ch in joint)
+        if short and _page_digits(a) and _page_digits(b):
+            return True
+    return False
+
+
 def _prints_role(line: Line, body: float, profile: Profile) -> bool:
     """S3 item 5: smaller type, or a page number; in heading type, one standing apart.
 
@@ -357,7 +373,7 @@ def _prints_role(line: Line, body: float, profile: Profile) -> bool:
         return True
     if not prints_page_number(line):
         return False
-    if size < profile.heading_size_ratio * body:
+    if size < profile.heading_size_ratio * body or _page_count(_tokens(line)):
         return True
     parts = fragments(line, profile)
     return any(

@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 from heldout_data import fee_table, truth_json
 
-from inkgrid_bench import fetch, heldout_run, report, run
+from inkgrid_bench import fetch, heldout_run, report, run, tables
 from inkgrid_bench.heldout import GlyphCell, load_truth
 from inkgrid_bench.scores import icdar
 from inkgrid_bench.tables import NCell, NTable
@@ -105,3 +105,28 @@ def test_EN1_the_region_scorer_opens_an_encrypted_pdf() -> None:
     )
     assert str(Path("t") / "bcprov-jdk15-1.44.jar") in cmd[3].split(os.pathsep)
     assert "tools/bcprov-jdk15-1.44.jar" in {s.file for s in fetch.sources().values()}
+
+
+def test_TT1_the_held_out_run_reads_and_reports_only_the_table_tools(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    truths = [load_truth(truth_json([fee_table()]))]
+    doc = run.Doc(truths[0].id, tmp_path / "x.pdf")
+    monkeypatch.setattr(heldout_run, "check", lambda _dir: (truths, []))
+    monkeypatch.setattr(heldout_run, "docs", lambda _truths: [doc])
+    monkeypatch.setattr(
+        heldout_run, "_truth_reading", lambda _truth, _doc: tables.NDocument("t", "v", "0", ())
+    )
+    asked: list[str] = []
+
+    def readings(tool: run.Tool, _cmd: object, _ver: str, _todo: object) -> list[object]:
+        asked.append(tool.name)
+        return []
+
+    monkeypatch.setattr(run, "tool_readings", readings)
+    monkeypatch.setattr(run, "command", lambda _tool: [])
+    monkeypatch.setattr(run, "version", lambda _tool, _head: "v")
+    heldout_run.read(tmp_path, "abc", run.config())
+    table_tools = [t.name for t in run.table_tools(run.config())]
+    assert asked == [t for t in table_tools if t != report.CHECK]
+    assert heldout_run._names(run.config()) == table_tools  # noqa: SLF001 - what score and report use

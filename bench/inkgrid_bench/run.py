@@ -494,6 +494,15 @@ def environment(tool: Tool) -> list[str]:
     return isolated([tool.package], index=tool.index, exclude_newer=tool.exclude_newer)
 
 
+def table_tools(cfg: dict[str, Any]) -> list[Tool]:
+    """The tools that read tables: spec 12's and 15's, the ground truth among them.
+
+    The OCR benchmarks' whole-page converters read none of spec 12's datasets (spec 18 section 3),
+    so neither spec 12's stages nor the held-out run read, score or record them.
+    """
+    return [tool for tool in tools(cfg) if tool.datasets]
+
+
 def command(tool: Tool) -> list[str]:
     """The adapter's command line, before its arguments."""
     module = ["-m", f"inkgrid_bench.adapters.{tool.module}"]
@@ -758,7 +767,7 @@ def score_soric(run: Path, cfg: dict[str, Any]) -> None:
     """Soric et al.'s protocol on the competition set, and their released predictions re-scored."""
     docs = datasets()["competition"]
     gt = soric.gt_counts(SORIC_DATA)
-    for tool in tools(cfg):
+    for tool in table_tools(cfg):
         out = run / "soric" / tool.name / "counts.json"
         if out.exists():
             continue
@@ -856,7 +865,7 @@ def score_binding(run: Path, cfg: dict[str, Any]) -> None:
         )
         xml = doc.pdf.with_name(f"{doc.id}-str.xml").read_text(encoding="utf-8")
         gt = binding.gt_tables(xml, pages.frames(doc.pdf))
-        for tool in tools(cfg):
+        for tool in table_tools(cfg):
             reading = NDocument.from_json(reading_path(run, tool.name, "practice", doc).read_text())
             counts = binding.binding_counts(gt, paths, reading.tables)
             save(run / "binding" / tool.name / f"{doc.id}.json", counts)

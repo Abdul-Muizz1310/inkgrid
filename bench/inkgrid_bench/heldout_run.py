@@ -102,7 +102,7 @@ def read(run_dir: Path, head: str, cfg: dict[str, Any]) -> None:
         out = run.reading_path(run_dir, report.CHECK, DATASET, doc)
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_text(_truth_reading(truth, doc).to_json(), encoding="utf-8")
-    for tool in run.tools(cfg):
+    for tool in run.table_tools(cfg):
         if tool.name == report.CHECK:
             continue
         cmd, ver = run.command(tool), run.version(tool, head)
@@ -181,7 +181,7 @@ def _icdar(work: Path, doc: run.Doc, truth: Truth, readings: dict[str, NDocument
 
 
 def _names(cfg: dict[str, Any]) -> list[str]:
-    return [t.name for t in run.tools(cfg)]
+    return [t.name for t in run.table_tools(cfg)]
 
 
 def score(run_dir: Path, _head: str, cfg: dict[str, Any]) -> None:

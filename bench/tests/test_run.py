@@ -366,3 +366,55 @@ def test_DS2_spec_12_scores_olmocr_tables_in_a_view_holding_only_its_own_files(
     assert sorted(p.name for p in view.iterdir()) == ["pdfs", "table_tests.jsonl"]
     assert (view / "pdfs" / "tables" / "b.pdf").read_bytes() == b"b"
     assert (view / "table_tests.jsonl").read_text() == '{"pdf": "tables/a.pdf"}\n'
+
+
+# --- Spec 12's stages and the held-out run take only the tools that read tables (spec 18, TT1) ----
+
+TABLE_TOOLS = [
+    "inkgrid", "pdfplumber", "pymupdf", "camelot", "ground-truth",
+    "docling", "docling-ocr", "marker", "unstructured", "inkgrid-ocr",
+]  # fmt: skip
+
+
+def _empty_readings(run_dir: Path, doc: run.Doc, datasets: tuple[str, ...]) -> None:
+    """A table reading by every table tool, as spec 12's read stage writes them; none by another."""
+    for tool in TABLE_TOOLS:
+        for dataset in datasets:
+            path = run.reading_path(run_dir, tool, dataset, doc)
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(NDocument(tool, "v", "0", ()).to_json(), encoding="utf-8")
+
+
+def test_TT1_the_table_tools_are_spec_12s_and_15s_never_the_whole_page_converters() -> None:
+    assert [t.name for t in run.table_tools(run.config())] == TABLE_TOOLS
+
+
+def test_TT1_soric_and_binding_score_only_the_table_tools(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    doc = run.Doc("d", tmp_path / "d.pdf")
+    monkeypatch.setattr(run, "datasets", lambda: {"competition": [doc], "practice": [doc]})
+    _empty_readings(tmp_path, doc, ("competition", "practice"))
+
+    def evaluate(_cfg: object, _model: str, _pred: Path, results: Path) -> Path:
+        results.mkdir(parents=True, exist_ok=True)
+        (results / "r.json").write_text("{}")
+        return results / "r.json"
+
+    monkeypatch.setattr(run, "_soric_eval", evaluate)
+    monkeypatch.setattr(run, "SORIC_MODELS", ())
+    monkeypatch.setattr(run.soric, "gt_counts", lambda _data: {})
+    monkeypatch.setattr(run.soric, "result_counts", lambda _result, _gt: {})
+    run.score_soric(tmp_path, run.config())
+    assert sorted(p.parent.name for p in (tmp_path / "soric").glob("*/counts.json")) == sorted(
+        TABLE_TOOLS
+    )
+
+    (tmp_path / "d-fnc.csv").write_text("")
+    (tmp_path / "d-str.xml").write_text("<document/>")
+    monkeypatch.setattr(run.binding, "parse_fnc", lambda _text: [])
+    monkeypatch.setattr(run.binding, "gt_tables", lambda _xml, _frames: [])
+    monkeypatch.setattr(run.binding, "binding_counts", lambda *_args: {})
+    monkeypatch.setattr(run.pages, "frames", lambda _pdf: ())
+    run.score_binding(tmp_path, run.config())
+    assert sorted(p.name for p in (tmp_path / "binding").iterdir()) == sorted(TABLE_TOOLS)

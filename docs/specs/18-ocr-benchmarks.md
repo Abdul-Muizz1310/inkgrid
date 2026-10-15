@@ -221,6 +221,7 @@ baseline is labelled `baseline`, later runs `tuned` (`--label tuned`).
 | RR1 | the readings of a run at another commit; that commit's reading code, tool pins or `src/inkgrid` changed since | every tool's readings are linked when nothing changed, all but inkgrid's and inkgrid on Tesseract's words when `src/inkgrid` changed, a reading already made here kept; a change to the reading code or a pin is refused; `--readings-from` only with `--datasets ocr`; the report names the tools carried over |
 | RD1 | the read stage; prepare | tools read with `UV_OFFLINE=1`, restored after; a heavy tool's documents in batches of at most 100; a half-written reading never stands as one; prepare builds every tool's and scorer's environment and refuses one that does not start |
 | RN2 | a run labelled baseline whose `src/inkgrid` differs from v0.1.0's | its read and report stages refuse: the baseline is 0.1.0's reading, and a run after a fix is labelled tuned |
+| TT1 | spec 12's stages and the held-out run, with pymupdf4llm, MarkItDown and LiteParse among the tools | they read, score and report only the tools that read tables (`run.table_tools`): the whole-page converters read no dataset of spec 12's. Found at M7b's spec 12 run, whose Soric scorer looked for pymupdf4llm's reading of an ICDAR page |
 
 ## 9 · Acceptance
 

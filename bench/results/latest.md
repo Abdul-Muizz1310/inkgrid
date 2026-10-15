@@ -1,9 +1,9 @@
-<!-- the newest report: bench/results/2026-10-02-bea4c95-tuned/report.md -->
+<!-- the newest report: bench/results/2026-10-15-f434a55-tuned/report.md -->
 # inkgrid benchmark: tuned on these documents (M5c)
 
-Measured on 2026-10-02 at commit `bea4c95` by `bench/inkgrid_bench/run.py`, under the pre-registered protocol of `docs/specs/12-benchmark.md`. **inkgrid's numbers are tuned on these documents**: its reading after the fixes M5c designed while looking at these datasets' failures (specs 13 and 14, DR-0023), so they overstate how it reads documents no fix has seen. The baseline run is the untuned reading; M5d's held-out fee set is the test no fix has seen. The other tools are measured again, at their pinned versions. docling-ocr, unstructured, and inkgrid-ocr read the pages with OCR; docling OCRs only a page's regions without text, a page with no text layer included; marker reads with OCR off, its tables built from the text layer; every other tool reads the PDF's text layer. `inkgrid-ocr` is inkgrid with Tesseract's words for its own. The heavy tools' seconds are a warm process's, its models loaded, and a document that timed out has no seconds.
+Measured on 2026-10-15 at commit `f434a55` by `bench/inkgrid_bench/run.py`, under the pre-registered protocol of `docs/specs/12-benchmark.md`. **inkgrid's numbers are tuned on these documents**: its reading after the fixes M5c designed while looking at these datasets' failures (specs 13 and 14, DR-0023), so they overstate how it reads documents no fix has seen. The baseline run is the untuned reading; M5d's held-out fee set is the test no fix has seen. The other tools are measured again, at their pinned versions. docling-ocr, unstructured, and inkgrid-ocr read the pages with OCR; docling OCRs only a page's regions without text, a page with no text layer included; marker reads with OCR off, its tables built from the text layer; every other tool reads the PDF's text layer. `inkgrid-ocr` is inkgrid with Tesseract's words for its own. The heavy tools' seconds are a warm process's, its models loaded, and a document that timed out has no seconds.
 
-Each cell is the point estimate and its 95% interval from 10,000 resamples of documents (seed 20260928). A difference marked `*` has an interval that excludes 0; only those are findings. `ground-truth` is the ICDAR ground truth read as a tool: a check on the pipeline and on each metric's ceiling, not a competitor.
+Each cell is the point estimate and its 95% interval from 10,000 resamples of documents (seed 20260928). A difference marked `*` has an interval that excludes 0; only those are findings. `ground-truth` is the dataset's ground truth read as a tool: a check on the pipeline and on each metric's ceiling, not a competitor.
 
 ## ICDAR-2013 competition (67 documents)
 
@@ -18,7 +18,7 @@ Each cell is the point estimate and its 95% interval from 10,000 resamples of do
 | docling | 0.902 [0.858, 0.939] | 0.900 [0.856, 0.937] | 0.901 [0.857, 0.937] | 0.863 [0.799, 0.932] | 0.851 [0.788, 0.923] |
 | docling-ocr | 0.887 [0.835, 0.931] | 0.873 [0.819, 0.919] | 0.880 [0.827, 0.924] | 0.877 [0.832, 0.929] | 0.839 [0.791, 0.899] |
 | marker | 0.813 [0.747, 0.875] | 0.727 [0.649, 0.800] | 0.768 [0.697, 0.833] | 0.895 [0.836, 0.932] | 0.821 [0.733, 0.880] |
-| unstructured | 0.595 [0.521, 0.666] | 0.385 [0.317, 0.454] | 0.467 [0.398, 0.534] | 0.620 [0.498, 0.724] | 0.491 [0.377, 0.583] |
+| unstructured | 0.589 [0.516, 0.660] | 0.384 [0.315, 0.453] | 0.465 [0.395, 0.532] | 0.623 [0.501, 0.726] | 0.491 [0.376, 0.583] |
 | inkgrid-ocr | 0.480 [0.402, 0.558] | 0.280 [0.210, 0.354] | 0.354 [0.280, 0.428] | 0.547 [0.312, 0.708] | 0.325 [0.145, 0.481] |
 
 | Difference | Structure P | Structure R | Structure F | Structure P (pooled) | Structure R (pooled) |
@@ -29,10 +29,10 @@ Each cell is the point estimate and its 95% interval from 10,000 resamples of do
 | inkgrid - docling | -0.064 [-0.137, +0.006] | -0.156 [-0.244, -0.074] * | -0.113 [-0.190, -0.039] * | -0.062 [-0.169, +0.030] | -0.220 [-0.343, -0.118] * |
 | inkgrid - docling-ocr | -0.050 [-0.130, +0.029] | -0.129 [-0.226, -0.034] * | -0.092 [-0.179, -0.008] * | -0.075 [-0.191, +0.021] | -0.208 [-0.339, -0.095] * |
 | inkgrid - marker | +0.024 [-0.070, +0.118] | +0.017 [-0.096, +0.128] | +0.020 [-0.081, +0.119] | -0.093 [-0.222, +0.058] | -0.190 [-0.325, -0.029] * |
-| inkgrid - unstructured | +0.243 [+0.135, +0.348] * | +0.359 [+0.233, +0.484] * | +0.321 [+0.205, +0.434] * | +0.182 [+0.063, +0.355] * | +0.140 [+0.011, +0.309] * |
+| inkgrid - unstructured | +0.249 [+0.142, +0.355] * | +0.361 [+0.235, +0.485] * | +0.324 [+0.208, +0.438] * | +0.179 [+0.062, +0.352] * | +0.140 [+0.011, +0.309] * |
 | inkgrid - inkgrid-ocr | +0.357 [+0.273, +0.445] * | +0.465 [+0.372, +0.557] * | +0.435 [+0.350, +0.522] * | +0.255 [+0.146, +0.469] * | +0.306 [+0.191, +0.483] * |
 
-Check, the ICDAR ground truth read as a tool:
+Check, the ground truth read as a tool:
 
 | Tool | Structure P | Structure R | Structure F | Structure P (pooled) | Structure R (pooled) |
 | --- | --- | --- | --- | --- | --- |
@@ -49,7 +49,7 @@ Check, the ICDAR ground truth read as a tool:
 | docling | 0.987 [0.967, 0.999] | 0.992 [0.977, 1.000] | 0.990 [0.972, 0.999] | 0.989 [0.966, 0.999] | 0.992 [0.969, 1.000] |
 | docling-ocr | 0.986 [0.967, 0.998] | 0.992 [0.977, 1.000] | 0.989 [0.972, 0.999] | 0.989 [0.966, 0.999] | 0.992 [0.969, 1.000] |
 | marker | 0.976 [0.952, 0.996] | 0.916 [0.856, 0.965] | 0.945 [0.910, 0.974] | 0.974 [0.943, 0.995] | 0.953 [0.905, 0.983] |
-| unstructured | 0.977 [0.953, 0.995] | 0.978 [0.956, 0.996] | 0.978 [0.957, 0.993] | 0.980 [0.953, 0.997] | 0.954 [0.920, 0.984] |
+| unstructured | 0.977 [0.952, 0.995] | 0.958 [0.917, 0.988] | 0.967 [0.941, 0.988] | 0.980 [0.953, 0.997] | 0.942 [0.904, 0.977] |
 | inkgrid-ocr | 0.887 [0.832, 0.935] | 0.804 [0.724, 0.878] | 0.843 [0.781, 0.898] | 0.772 [0.642, 0.905] | 0.685 [0.556, 0.819] |
 
 | Difference | Regions P | Regions R | Regions F | Regions P (pooled) | Regions R (pooled) |
@@ -60,10 +60,10 @@ Check, the ICDAR ground truth read as a tool:
 | inkgrid - docling | -0.063 [-0.108, -0.023] * | -0.103 [-0.163, -0.051] * | -0.083 [-0.130, -0.044] * | -0.182 [-0.309, -0.043] * | -0.226 [-0.352, -0.089] * |
 | inkgrid - docling-ocr | -0.062 [-0.108, -0.022] * | -0.103 [-0.163, -0.051] * | -0.083 [-0.130, -0.044] * | -0.181 [-0.309, -0.042] * | -0.226 [-0.352, -0.089] * |
 | inkgrid - marker | -0.052 [-0.096, -0.015] * | -0.026 [-0.098, +0.045] | -0.038 [-0.090, +0.008] | -0.167 [-0.297, -0.023] * | -0.188 [-0.322, -0.031] * |
-| inkgrid - unstructured | -0.053 [-0.102, -0.008] * | -0.088 [-0.150, -0.037] * | -0.071 [-0.119, -0.029] * | -0.172 [-0.301, -0.030] * | -0.189 [-0.319, -0.056] * |
+| inkgrid - unstructured | -0.052 [-0.101, -0.008] * | -0.068 [-0.135, -0.004] * | -0.060 [-0.112, -0.015] * | -0.172 [-0.301, -0.030] * | -0.177 [-0.310, -0.039] * |
 | inkgrid - inkgrid-ocr | +0.037 [+0.016, +0.063] * | +0.086 [+0.043, +0.138] * | +0.064 [+0.033, +0.100] * | +0.036 [+0.010, +0.067] * | +0.081 [+0.042, +0.132] * |
 
-Check, the ICDAR ground truth read as a tool:
+Check, the ground truth read as a tool:
 
 | Tool | Regions P | Regions R | Regions F | Regions P (pooled) | Regions R (pooled) |
 | --- | --- | --- | --- | --- | --- |
@@ -80,7 +80,7 @@ Check, the ICDAR ground truth read as a tool:
 | docling | 0.987 [0.961, 1.000] | 0.966 [0.934, 0.989] | 0.900 [0.852, 0.938] | 0.894 [0.846, 0.934] |
 | docling-ocr | 0.987 [0.961, 1.000] | 0.962 [0.929, 0.986] | 0.883 [0.832, 0.926] | 0.881 [0.829, 0.923] |
 | marker | 0.943 [0.897, 0.977] | 0.865 [0.808, 0.912] | 0.783 [0.706, 0.848] | 0.759 [0.682, 0.827] |
-| unstructured | 0.964 [0.925, 0.994] | 0.805 [0.739, 0.861] | 0.608 [0.531, 0.680] | 0.585 [0.510, 0.654] |
+| unstructured | 0.954 [0.912, 0.987] | 0.804 [0.738, 0.862] | 0.610 [0.532, 0.680] | 0.586 [0.511, 0.655] |
 | inkgrid-ocr | 0.642 [0.469, 0.826] | 0.584 [0.419, 0.758] | 0.320 [0.230, 0.425] | 0.341 [0.245, 0.446] |
 
 | Difference | F1-bbox | F1-GriTS-Top | F1-GriTS-Con | F1-TEDS |
@@ -91,10 +91,10 @@ Check, the ICDAR ground truth read as a tool:
 | inkgrid - docling | -0.225 [-0.404, -0.059] * | -0.262 [-0.430, -0.102] * | -0.253 [-0.400, -0.108] * | -0.266 [-0.411, -0.120] * |
 | inkgrid - docling-ocr | -0.225 [-0.404, -0.059] * | -0.258 [-0.426, -0.097] * | -0.236 [-0.387, -0.087] * | -0.252 [-0.401, -0.104] * |
 | inkgrid - marker | -0.180 [-0.366, -0.007] * | -0.161 [-0.333, +0.003] | -0.136 [-0.304, +0.028] | -0.131 [-0.304, +0.039] |
-| inkgrid - unstructured | -0.202 [-0.382, -0.035] * | -0.100 [-0.264, +0.063] | +0.039 [-0.134, +0.212] | +0.043 [-0.126, +0.211] |
+| inkgrid - unstructured | -0.192 [-0.373, -0.023] * | -0.100 [-0.264, +0.064] | +0.037 [-0.135, +0.211] | +0.042 [-0.127, +0.210] |
 | inkgrid - inkgrid-ocr | +0.121 [+0.062, +0.181] * | +0.121 [+0.066, +0.179] * | +0.328 [+0.228, +0.427] * | +0.288 [+0.200, +0.374] * |
 
-Check, the ICDAR ground truth read as a tool:
+Check, the ground truth read as a tool:
 
 | Tool | F1-bbox | F1-GriTS-Top | F1-GriTS-Con | F1-TEDS |
 | --- | --- | --- | --- | --- |
@@ -104,32 +104,32 @@ Check, the ICDAR ground truth read as a tool:
 
 | Tool | Seconds per page |
 | --- | --- |
-| inkgrid | 0.382 [0.332, 0.440] |
-| pdfplumber | 0.090 [0.079, 0.104] |
-| pymupdf | 0.085 [0.073, 0.097] |
-| camelot | 0.299 [0.282, 0.316] |
-| docling | 11.274 [8.803, 14.176] |
-| docling-ocr | 14.959 [12.934, 17.235] |
-| marker | 0.434 [0.421, 0.446] |
-| unstructured | 5.232 [4.909, 5.590] |
-| inkgrid-ocr | 2.090 [1.943, 2.241] |
+| inkgrid | 0.599 [0.528, 0.682] |
+| pdfplumber | 0.140 [0.125, 0.160] |
+| pymupdf | 0.130 [0.114, 0.149] |
+| camelot | 0.447 [0.422, 0.474] |
+| docling | 14.812 [11.742, 18.461] |
+| docling-ocr | 23.997 [21.424, 26.676] |
+| marker | 2.204 [1.699, 2.840] |
+| unstructured | 18.122 [16.686, 19.661] |
+| inkgrid-ocr | 8.605 [7.953, 9.246] |
 
 | Difference | Seconds per page |
 | --- | --- |
-| inkgrid - pdfplumber | +0.291 [+0.248, +0.344] * |
-| inkgrid - pymupdf | +0.297 [+0.251, +0.351] * |
-| inkgrid - camelot | +0.082 [+0.036, +0.135] * |
-| inkgrid - docling | -10.892 [-13.802, -8.419] * |
-| inkgrid - docling-ocr | -14.577 [-16.863, -12.538] * |
-| inkgrid - marker | -0.052 [-0.101, +0.006] |
-| inkgrid - unstructured | -4.850 [-5.215, -4.522] * |
-| inkgrid - inkgrid-ocr | -1.708 [-1.863, -1.550] * |
+| inkgrid - pdfplumber | +0.458 [+0.394, +0.533] * |
+| inkgrid - pymupdf | +0.469 [+0.405, +0.542] * |
+| inkgrid - camelot | +0.151 [+0.080, +0.230] * |
+| inkgrid - docling | -14.213 [-17.878, -11.128] * |
+| inkgrid - docling-ocr | -23.398 [-26.063, -20.827] * |
+| inkgrid - marker | -1.605 [-2.228, -1.105] * |
+| inkgrid - unstructured | -17.523 [-19.061, -16.097] * |
+| inkgrid - inkgrid-ocr | -8.006 [-8.631, -7.353] * |
 
-Check, the ICDAR ground truth read as a tool:
+Check, the ground truth read as a tool:
 
 | Tool | Seconds per page |
 | --- | --- |
-| ground-truth | 0.006 [0.006, 0.008] |
+| ground-truth | 0.009 [0.008, 0.011] |
 
 ## ICDAR-2013 practice (58 documents)
 
@@ -145,7 +145,7 @@ Check, the ICDAR ground truth read as a tool:
 | docling-ocr | 0.850 [0.790, 0.902] | 0.810 [0.735, 0.876] | 0.829 [0.763, 0.888] | 0.884 [0.843, 0.919] | 0.756 [0.604, 0.872] |
 | marker | 0.817 [0.747, 0.880] | 0.751 [0.667, 0.828] | 0.783 [0.708, 0.850] | 0.876 [0.827, 0.915] | 0.805 [0.725, 0.864] |
 | unstructured | 0.564 [0.492, 0.637] | 0.401 [0.329, 0.476] | 0.468 [0.397, 0.541] | 0.636 [0.519, 0.735] | 0.400 [0.293, 0.510] |
-| inkgrid-ocr | 0.437 [0.363, 0.515] | 0.262 [0.192, 0.338] | 0.328 [0.253, 0.404] | 0.502 [0.363, 0.634] | 0.196 [0.115, 0.308] |
+| inkgrid-ocr | 0.436 [0.363, 0.513] | 0.263 [0.193, 0.340] | 0.328 [0.254, 0.405] | 0.502 [0.363, 0.634] | 0.196 [0.116, 0.308] |
 
 | Difference | Structure P | Structure R | Structure F | Structure P (pooled) | Structure R (pooled) |
 | --- | --- | --- | --- | --- | --- |
@@ -156,9 +156,9 @@ Check, the ICDAR ground truth read as a tool:
 | inkgrid - docling-ocr | -0.115 [-0.182, -0.050] * | -0.164 [-0.265, -0.066] * | -0.142 [-0.224, -0.064] * | -0.039 [-0.111, +0.016] | -0.202 [-0.426, +0.064] |
 | inkgrid - marker | -0.082 [-0.163, -0.001] * | -0.105 [-0.224, +0.010] | -0.095 [-0.194, -0.001] * | -0.030 [-0.097, +0.019] | -0.251 [-0.415, -0.074] * |
 | inkgrid - unstructured | +0.171 [+0.073, +0.270] * | +0.245 [+0.118, +0.371] * | +0.219 [+0.108, +0.332] * | +0.209 [+0.119, +0.310] * | +0.153 [+0.014, +0.303] * |
-| inkgrid - inkgrid-ocr | +0.298 [+0.217, +0.382] * | +0.384 [+0.296, +0.477] * | +0.360 [+0.277, +0.446] * | +0.344 [+0.197, +0.498] * | +0.358 [+0.223, +0.509] * |
+| inkgrid - inkgrid-ocr | +0.299 [+0.219, +0.383] * | +0.383 [+0.294, +0.476] * | +0.359 [+0.276, +0.446] * | +0.343 [+0.197, +0.497] * | +0.358 [+0.223, +0.509] * |
 
-Check, the ICDAR ground truth read as a tool:
+Check, the ground truth read as a tool:
 
 | Tool | Structure P | Structure R | Structure F | Structure P (pooled) | Structure R (pooled) |
 | --- | --- | --- | --- | --- | --- |
@@ -176,7 +176,7 @@ Check, the ICDAR ground truth read as a tool:
 | docling-ocr | 0.980 [0.963, 0.994] | 0.961 [0.915, 0.993] | 0.970 [0.943, 0.992] | 0.986 [0.968, 0.997] | 0.897 [0.747, 0.993] |
 | marker | 0.961 [0.930, 0.987] | 0.917 [0.850, 0.973] | 0.939 [0.895, 0.974] | 0.970 [0.935, 0.992] | 0.944 [0.891, 0.983] |
 | unstructured | 0.947 [0.909, 0.978] | 0.942 [0.901, 0.975] | 0.944 [0.905, 0.976] | 0.954 [0.913, 0.983] | 0.936 [0.891, 0.970] |
-| inkgrid-ocr | 0.859 [0.795, 0.916] | 0.793 [0.704, 0.874] | 0.825 [0.753, 0.887] | 0.897 [0.813, 0.958] | 0.827 [0.712, 0.925] |
+| inkgrid-ocr | 0.859 [0.795, 0.916] | 0.796 [0.708, 0.876] | 0.826 [0.755, 0.889] | 0.897 [0.813, 0.958] | 0.828 [0.712, 0.926] |
 
 | Difference | Regions P | Regions R | Regions F | Regions P (pooled) | Regions R (pooled) |
 | --- | --- | --- | --- | --- | --- |
@@ -187,9 +187,9 @@ Check, the ICDAR ground truth read as a tool:
 | inkgrid - docling-ocr | -0.086 [-0.133, -0.047] * | -0.068 [-0.145, +0.005] | -0.077 [-0.129, -0.029] * | -0.045 [-0.079, -0.021] * | +0.028 [-0.109, +0.191] |
 | inkgrid - marker | -0.067 [-0.121, -0.015] * | -0.024 [-0.119, +0.071] | -0.045 [-0.111, +0.019] | -0.029 [-0.074, +0.012] | -0.019 [-0.109, +0.057] |
 | inkgrid - unstructured | -0.052 [-0.107, +0.000] | -0.049 [-0.123, +0.018] | -0.051 [-0.107, +0.004] | -0.013 [-0.052, +0.024] | -0.011 [-0.091, +0.046] |
-| inkgrid - inkgrid-ocr | +0.036 [-0.005, +0.083] | +0.100 [+0.047, +0.162] * | +0.069 [+0.027, +0.121] * | +0.043 [-0.013, +0.125] | +0.097 [+0.028, +0.188] * |
+| inkgrid - inkgrid-ocr | +0.036 [-0.005, +0.083] | +0.097 [+0.045, +0.158] * | +0.068 [+0.025, +0.119] * | +0.043 [-0.013, +0.125] | +0.097 [+0.027, +0.188] * |
 
-Check, the ICDAR ground truth read as a tool:
+Check, the ground truth read as a tool:
 
 | Tool | Regions P | Regions R | Regions F | Regions P (pooled) | Regions R (pooled) |
 | --- | --- | --- | --- | --- | --- |
@@ -207,7 +207,7 @@ Check, the ICDAR ground truth read as a tool:
 | docling-ocr | 0.473 [0.314, 0.672] | 0.518 [0.355, 0.721] | 0.842 [0.667, 0.961] |
 | marker | 0.303 [0.183, 0.464] | 0.454 [0.316, 0.600] | 0.890 [0.814, 0.943] |
 | unstructured | 0.074 [0.035, 0.131] | 0.153 [0.073, 0.262] | 0.548 [0.431, 0.655] |
-| inkgrid-ocr | 0.065 [0.024, 0.126] | 0.108 [0.038, 0.210] | 0.260 [0.159, 0.394] |
+| inkgrid-ocr | 0.066 [0.026, 0.128] | 0.109 [0.039, 0.211] | 0.259 [0.159, 0.394] |
 
 | Difference | Bound | Leaf-bound | Value recall |
 | --- | --- | --- | --- |
@@ -218,9 +218,9 @@ Check, the ICDAR ground truth read as a tool:
 | inkgrid - docling-ocr | -0.150 [-0.279, -0.049] * | -0.152 [-0.281, -0.049] * | -0.263 [-0.530, +0.050] |
 | inkgrid - marker | +0.019 [-0.097, +0.134] | -0.088 [-0.239, +0.066] | -0.311 [-0.507, -0.100] * |
 | inkgrid - unstructured | +0.249 [+0.130, +0.403] * | +0.213 [+0.090, +0.370] * | +0.032 [-0.140, +0.216] |
-| inkgrid - inkgrid-ocr | +0.257 [+0.132, +0.417] * | +0.258 [+0.131, +0.418] * | +0.320 [+0.186, +0.468] * |
+| inkgrid - inkgrid-ocr | +0.256 [+0.131, +0.415] * | +0.257 [+0.130, +0.417] * | +0.320 [+0.186, +0.469] * |
 
-Check, the ICDAR ground truth read as a tool:
+Check, the ground truth read as a tool:
 
 | Tool | Bound | Leaf-bound | Value recall |
 | --- | --- | --- | --- |
@@ -230,32 +230,32 @@ Check, the ICDAR ground truth read as a tool:
 
 | Tool | Seconds per page |
 | --- | --- |
-| inkgrid | 0.427 [0.374, 0.486] |
-| pdfplumber | 0.105 [0.083, 0.137] |
-| pymupdf | 0.086 [0.074, 0.098] |
-| camelot | 0.325 [0.314, 0.339] |
-| docling | 8.254 [6.876, 9.904] |
-| docling-ocr | 13.525 [12.634, 14.583] |
-| marker | 0.451 [0.440, 0.464] |
-| unstructured | 5.186 [4.962, 5.443] |
-| inkgrid-ocr | 2.226 [2.070, 2.391] |
+| inkgrid | 0.637 [0.563, 0.722] |
+| pdfplumber | 0.169 [0.131, 0.226] |
+| pymupdf | 0.141 [0.120, 0.165] |
+| camelot | 0.499 [0.471, 0.533] |
+| docling | 12.190 [10.271, 14.500] |
+| docling-ocr | 14.610 [13.630, 15.782] |
+| marker | 2.493 [2.259, 2.757] |
+| unstructured | 17.534 [15.473, 21.202] |
+| inkgrid-ocr | 9.684 [8.643, 10.831] |
 
 | Difference | Seconds per page |
 | --- | --- |
-| inkgrid - pdfplumber | +0.322 [+0.278, +0.373] * |
-| inkgrid - pymupdf | +0.341 [+0.290, +0.397] * |
-| inkgrid - camelot | +0.102 [+0.056, +0.152] * |
-| inkgrid - docling | -7.827 [-9.443, -6.484] * |
-| inkgrid - docling-ocr | -13.098 [-14.139, -12.217] * |
-| inkgrid - marker | -0.025 [-0.074, +0.031] |
-| inkgrid - unstructured | -4.759 [-5.008, -4.535] * |
-| inkgrid - inkgrid-ocr | -1.799 [-1.958, -1.642] * |
+| inkgrid - pdfplumber | +0.468 [+0.407, +0.538] * |
+| inkgrid - pymupdf | +0.496 [+0.424, +0.572] * |
+| inkgrid - camelot | +0.138 [+0.071, +0.211] * |
+| inkgrid - docling | -11.553 [-13.812, -9.679] * |
+| inkgrid - docling-ocr | -13.973 [-15.126, -13.004] * |
+| inkgrid - marker | -1.856 [-2.101, -1.628] * |
+| inkgrid - unstructured | -16.897 [-20.551, -14.836] * |
+| inkgrid - inkgrid-ocr | -9.047 [-10.161, -8.028] * |
 
-Check, the ICDAR ground truth read as a tool:
+Check, the ground truth read as a tool:
 
 | Tool | Seconds per page |
 | --- | --- |
-| ground-truth | 0.006 [0.005, 0.007] |
+| ground-truth | 0.009 [0.008, 0.011] |
 
 ## olmOCR-bench tables, all PDFs (188 documents)
 
@@ -263,7 +263,7 @@ Check, the ICDAR ground truth read as a tool:
 
 | Tool | All tests | Heading tests | Neighbour tests |
 | --- | --- | --- | --- |
-| inkgrid | 0.486 [0.415, 0.558] | 0.435 [0.351, 0.520] | 0.508 [0.433, 0.584] |
+| inkgrid | 0.492 [0.421, 0.564] | 0.445 [0.358, 0.532] | 0.513 [0.437, 0.588] |
 | pdfplumber | 0.294 [0.231, 0.361] | 0.263 [0.191, 0.341] | 0.308 [0.239, 0.381] |
 | pymupdf | 0.321 [0.256, 0.390] | 0.299 [0.223, 0.380] | 0.330 [0.258, 0.405] |
 | camelot | 0.273 [0.213, 0.338] | 0.237 [0.169, 0.312] | 0.288 [0.223, 0.357] |
@@ -271,43 +271,43 @@ Check, the ICDAR ground truth read as a tool:
 | docling-ocr | 0.736 [0.683, 0.787] | 0.714 [0.646, 0.779] | 0.746 [0.688, 0.800] |
 | marker | 0.460 [0.397, 0.521] | 0.432 [0.353, 0.510] | 0.472 [0.404, 0.540] |
 | unstructured | 0.413 [0.359, 0.468] | 0.305 [0.240, 0.373] | 0.459 [0.400, 0.518] |
-| inkgrid-ocr | 0.303 [0.252, 0.358] | 0.247 [0.192, 0.305] | 0.327 [0.270, 0.388] |
+| inkgrid-ocr | 0.305 [0.254, 0.359] | 0.250 [0.195, 0.309] | 0.329 [0.272, 0.390] |
 
 | Difference | All tests | Heading tests | Neighbour tests |
 | --- | --- | --- | --- |
-| inkgrid - pdfplumber | +0.192 [+0.125, +0.260] * | +0.172 [+0.101, +0.248] * | +0.201 [+0.124, +0.277] * |
-| inkgrid - pymupdf | +0.166 [+0.099, +0.232] * | +0.136 [+0.062, +0.215] * | +0.178 [+0.104, +0.254] * |
-| inkgrid - camelot | +0.214 [+0.155, +0.276] * | +0.198 [+0.132, +0.270] * | +0.221 [+0.156, +0.289] * |
-| inkgrid - docling | -0.258 [-0.328, -0.183] * | -0.308 [-0.395, -0.217] * | -0.236 [-0.311, -0.158] * |
-| inkgrid - docling-ocr | -0.250 [-0.326, -0.169] * | -0.279 [-0.373, -0.177] * | -0.237 [-0.318, -0.155] * |
-| inkgrid - marker | +0.026 [-0.037, +0.091] | +0.003 [-0.086, +0.093] | +0.037 [-0.028, +0.102] |
-| inkgrid - unstructured | +0.074 [-0.012, +0.159] | +0.130 [+0.022, +0.239] * | +0.049 [-0.038, +0.137] |
-| inkgrid - inkgrid-ocr | +0.183 [+0.130, +0.238] * | +0.188 [+0.123, +0.256] * | +0.181 [+0.125, +0.240] * |
+| inkgrid - pdfplumber | +0.198 [+0.129, +0.267] * | +0.182 [+0.107, +0.261] * | +0.205 [+0.128, +0.282] * |
+| inkgrid - pymupdf | +0.172 [+0.104, +0.239] * | +0.146 [+0.067, +0.229] * | +0.183 [+0.108, +0.259] * |
+| inkgrid - camelot | +0.220 [+0.159, +0.283] * | +0.208 [+0.138, +0.283] * | +0.225 [+0.160, +0.294] * |
+| inkgrid - docling | -0.252 [-0.323, -0.177] * | -0.299 [-0.388, -0.206] * | -0.232 [-0.307, -0.154] * |
+| inkgrid - docling-ocr | -0.244 [-0.321, -0.163] * | -0.269 [-0.365, -0.169] * | -0.233 [-0.314, -0.150] * |
+| inkgrid - marker | +0.032 [-0.030, +0.096] | +0.013 [-0.076, +0.102] | +0.041 [-0.023, +0.106] |
+| inkgrid - unstructured | +0.079 [-0.006, +0.165] | +0.140 [+0.032, +0.248] * | +0.053 [-0.034, +0.141] |
+| inkgrid - inkgrid-ocr | +0.187 [+0.133, +0.242] * | +0.195 [+0.127, +0.264] * | +0.184 [+0.127, +0.242] * |
 
 ### Speed
 
 | Tool | Seconds per page |
 | --- | --- |
-| inkgrid | 0.598 [0.526, 0.669] |
-| pdfplumber | 0.134 [0.111, 0.163] |
-| pymupdf | 0.105 [0.091, 0.120] |
-| camelot | 0.389 [0.364, 0.417] |
-| docling | 16.157 [14.562, 17.957] |
-| docling-ocr | 17.604 [16.241, 19.161] |
-| marker | 0.513 [0.497, 0.530] |
-| unstructured | 6.283 [6.024, 6.575] |
-| inkgrid-ocr | 2.487 [2.359, 2.617] |
+| inkgrid | 0.891 [0.785, 0.999] |
+| pdfplumber | 0.222 [0.182, 0.275] |
+| pymupdf | 0.177 [0.154, 0.202] |
+| camelot | 0.499 [0.464, 0.537] |
+| docling | 22.795 [20.526, 25.401] |
+| docling-ocr | 18.906 [17.458, 20.536] |
+| marker | 3.228 [2.954, 3.520] |
+| unstructured | 22.081 [19.376, 25.820] |
+| inkgrid-ocr | 11.408 [10.679, 12.164] |
 
 | Difference | Seconds per page |
 | --- | --- |
-| inkgrid - pdfplumber | +0.464 [+0.399, +0.529] * |
-| inkgrid - pymupdf | +0.493 [+0.427, +0.559] * |
-| inkgrid - camelot | +0.208 [+0.146, +0.271] * |
-| inkgrid - docling | -15.559 [-17.343, -13.962] * |
-| inkgrid - docling-ocr | -17.006 [-18.558, -15.638] * |
-| inkgrid - marker | +0.085 [+0.014, +0.156] * |
-| inkgrid - unstructured | -5.686 [-5.964, -5.434] * |
-| inkgrid - inkgrid-ocr | -1.889 [-2.000, -1.783] * |
+| inkgrid - pdfplumber | +0.669 [+0.575, +0.765] * |
+| inkgrid - pymupdf | +0.715 [+0.617, +0.812] * |
+| inkgrid - camelot | +0.392 [+0.298, +0.485] * |
+| inkgrid - docling | -21.904 [-24.500, -19.631] * |
+| inkgrid - docling-ocr | -18.014 [-19.633, -16.566] * |
+| inkgrid - marker | -2.336 [-2.644, -2.038] * |
+| inkgrid - unstructured | -21.190 [-24.909, -18.499] * |
+| inkgrid - inkgrid-ocr | -10.517 [-11.247, -9.827] * |
 
 ## olmOCR-bench tables, PDFs with a text layer (173 documents)
 
@@ -315,7 +315,7 @@ Check, the ICDAR ground truth read as a tool:
 
 | Tool | All tests | Heading tests | Neighbour tests |
 | --- | --- | --- | --- |
-| inkgrid | 0.530 [0.454, 0.603] | 0.470 [0.381, 0.559] | 0.556 [0.477, 0.633] |
+| inkgrid | 0.536 [0.460, 0.612] | 0.481 [0.389, 0.572] | 0.561 [0.482, 0.638] |
 | pdfplumber | 0.321 [0.252, 0.393] | 0.284 [0.207, 0.371] | 0.336 [0.264, 0.414] |
 | pymupdf | 0.349 [0.278, 0.422] | 0.323 [0.240, 0.410] | 0.361 [0.285, 0.438] |
 | camelot | 0.297 [0.230, 0.366] | 0.256 [0.182, 0.335] | 0.315 [0.244, 0.387] |
@@ -323,18 +323,18 @@ Check, the ICDAR ground truth read as a tool:
 | docling-ocr | 0.746 [0.691, 0.797] | 0.716 [0.646, 0.783] | 0.759 [0.701, 0.814] |
 | marker | 0.501 [0.437, 0.565] | 0.467 [0.384, 0.550] | 0.516 [0.445, 0.586] |
 | unstructured | 0.424 [0.368, 0.483] | 0.309 [0.241, 0.383] | 0.475 [0.412, 0.536] |
-| inkgrid-ocr | 0.323 [0.268, 0.379] | 0.263 [0.204, 0.327] | 0.349 [0.287, 0.413] |
+| inkgrid-ocr | 0.325 [0.271, 0.381] | 0.267 [0.208, 0.330] | 0.350 [0.289, 0.414] |
 
 | Difference | All tests | Heading tests | Neighbour tests |
 | --- | --- | --- | --- |
-| inkgrid - pdfplumber | +0.209 [+0.138, +0.282] * | +0.186 [+0.110, +0.267] * | +0.220 [+0.137, +0.300] * |
-| inkgrid - pymupdf | +0.181 [+0.110, +0.253] * | +0.147 [+0.066, +0.232] * | +0.195 [+0.115, +0.275] * |
-| inkgrid - camelot | +0.233 [+0.170, +0.298] * | +0.214 [+0.143, +0.288] * | +0.241 [+0.171, +0.312] * |
-| inkgrid - docling | -0.217 [-0.292, -0.142] * | -0.270 [-0.363, -0.178] * | -0.194 [-0.272, -0.118] * |
-| inkgrid - docling-ocr | -0.216 [-0.297, -0.135] * | -0.246 [-0.344, -0.145] * | -0.203 [-0.287, -0.119] * |
-| inkgrid - marker | +0.029 [-0.040, +0.099] | +0.004 [-0.093, +0.101] | +0.040 [-0.032, +0.111] |
-| inkgrid - unstructured | +0.106 [+0.012, +0.198] * | +0.161 [+0.045, +0.275] * | +0.081 [-0.014, +0.175] |
-| inkgrid - inkgrid-ocr | +0.207 [+0.151, +0.266] * | +0.207 [+0.137, +0.279] * | +0.207 [+0.147, +0.269] * |
+| inkgrid - pdfplumber | +0.216 [+0.143, +0.289] * | +0.196 [+0.116, +0.282] * | +0.224 [+0.141, +0.306] * |
+| inkgrid - pymupdf | +0.187 [+0.115, +0.260] * | +0.158 [+0.073, +0.247] * | +0.200 [+0.119, +0.280] * |
+| inkgrid - camelot | +0.239 [+0.175, +0.305] * | +0.225 [+0.149, +0.303] * | +0.246 [+0.175, +0.317] * |
+| inkgrid - docling | -0.210 [-0.286, -0.135] * | -0.260 [-0.353, -0.167] * | -0.189 [-0.267, -0.113] * |
+| inkgrid - docling-ocr | -0.209 [-0.291, -0.127] * | -0.235 [-0.335, -0.135] * | -0.198 [-0.283, -0.114] * |
+| inkgrid - marker | +0.035 [-0.033, +0.104] | +0.014 [-0.082, +0.111] | +0.045 [-0.027, +0.115] |
+| inkgrid - unstructured | +0.112 [+0.019, +0.204] * | +0.172 [+0.056, +0.284] * | +0.086 [-0.011, +0.179] |
+| inkgrid - inkgrid-ocr | +0.212 [+0.154, +0.270] * | +0.214 [+0.141, +0.288] * | +0.210 [+0.149, +0.273] * |
 
 ## Soric et al.'s released predictions, re-scored here
 

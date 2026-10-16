@@ -6,6 +6,34 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-16
+
+### Added
+
+- The OCR benchmarks (M7a): `run.py --datasets ocr` measures inkgrid against Docling (by default and
+  on an image-only copy), marker (OCR off), unstructured `hi_res`, inkgrid on Tesseract's words,
+  pymupdf4llm, MarkItDown and LiteParse on the born-digital text and table parts of olmOCR-bench,
+  OmniDocBench v1.0, ParseBench and DP-Bench. A census taken before any tool read a page fixes the
+  2,238 scored documents and splits each benchmark into a dev half and a test half; every scorer runs
+  unmodified at its pin, in its own environment, checked against its source first. The baseline and
+  the tuned run are in `bench/results/`.
+
+### Changed
+
+- A one-page document's running header, footer and page number are furniture when the page marks
+  them so: the outermost line of the top or bottom band, set apart from the body by a line's height,
+  in smaller type or carrying a page number at an end, and neither a footnote nor a row of a table.
+  A title in larger type, a date or a closing line is not (`Form 1040`, `12 March 2024`,
+  `Jane Doe, MD`).
+  Documents of two or more pages are read as before (spec 19 § 1).
+- Prose columns: a column of Chinese, Japanese or Korean text, whose lines set no space between
+  words, is prose when it is wide and its lines fill it; a column read across several columns is
+  laid out again in its own width, as are a stray mark in the margin and a newspaper's columns under a
+  spanning headline. A section holding a value reads as 0.1.0 read it (spec 19 § 2).
+- A table's header set in smaller type directly above it, such as a row of years, is its header row
+  when the rows below already make a table; a smaller line over a single row stays text
+  (spec 19 § 3).
+
 ## [0.1.0] - 2026-10-02
 
 ### Added
@@ -102,5 +130,6 @@ All notable changes to this project are documented here. The format follows
     running box repeated page after page, and furniture runs from the page's edge, so a table's
     spanning header or stub banner in the page band stays in its table.
 
-[Unreleased]: https://github.com/Abdul-Muizz1310/inkgrid/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/Abdul-Muizz1310/inkgrid/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/Abdul-Muizz1310/inkgrid/releases/tag/v0.2.0
 [0.1.0]: https://github.com/Abdul-Muizz1310/inkgrid/releases/tag/v0.1.0

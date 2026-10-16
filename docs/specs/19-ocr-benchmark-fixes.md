@@ -339,8 +339,18 @@ is the measure of whether the rules carry.
       had read differently, H1 making a table of a header over one value row (Nasdaq Copenhagen's and
       Helsinki's `INSTRUMENT TYPE | DKK` over `Warrants and certificates | 0.25`, Nasdaq Stockholm's
       `VALUE BASED FEE` over `- | 0.204 bps`); since `ba0aa41` H1 makes no table of one row.
-- [ ] Spec 12's ICDAR-2013 and olmOCR table sets and the held-out fee set run at the final commit, and
-      each change in them is explained.
+- [x] Spec 12's ICDAR-2013 and olmOCR table sets and the held-out fee set run at the final commit, and
+      each change in them is explained (`src/inkgrid` as at `1d31f4f`).
+      - Spec 12 (`bench/results/2026-10-15-f434a55-tuned/`, against `2026-10-02-bea4c95-tuned`):
+        inkgrid's ICDAR-2013 numbers are unchanged, every table read alike. olmOCR-bench's table tests
+        rise from 0.486 to 0.492, from six pages: three tables gain their header rows (H1), a page
+        number's junk row is gone and the caption `Table 23` is furniture (S3), and one table loses its
+        header row when the running head above it becomes furniture (S3; row folding then splits its
+        body rows). inkgrid's seconds per page rise by half because it read beside another run's
+        Docling; read alternately on the practice PDFs, this code takes 0.99 to 1.06 times 0.1.0's.
+      - The held-out fee set (`bench/results/2026-10-16-f434a55-heldout/`, against
+        `2026-10-01-fb58b0a-heldout`): every score is 0.1.0's, inkgrid's tables and the verifier's
+        output identical on all 11 documents; only the seconds per page moved, every tool's.
 - [x] The tuned run reports the dev and test halves apart, labelled tuned
       (`bench/results/2026-10-16-dbc66fc-ocr/`, at `dbc66fc`, src as at `1d31f4f`; the other seven
       tools' readings carried over from the baseline). Whether the rules carry, inkgrid's tuned counts

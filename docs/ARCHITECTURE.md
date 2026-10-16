@@ -96,10 +96,19 @@ PyMuPDF is not thread-safe, so parallelize across processes.
    footer, or page-number furniture, one line at a time. A line inside a table the lattice stage
    reads is content (unless the table is a box repeated on every page), and furniture runs from the
    page's edge: a table row breaks the run
-   ([`specs/14-tables-and-furniture.md`](specs/14-tables-and-furniture.md) § 8).
+   ([`specs/14-tables-and-furniture.md`](specs/14-tables-and-furniture.md) § 8). A document of one
+   page has nothing to recur, so there a band's outermost line is furniture when the page marks it:
+   set apart from the body by a line's height, in smaller type or carrying a page number or a page
+   count, and neither a footnote nor a row of a table
+   ([`specs/19-ocr-benchmark-fixes.md`](specs/19-ocr-benchmark-fixes.md) § 1).
 2. **Layout** (per page). Lines cluster by vertical overlap and split into fragments at wide gaps.
    A gutter that persists over at least three lines, with prose on both sides, makes columns, read
-   left to right. Any other column-shaped run keeps row order, as a table candidate for M2b.
+   left to right. Any other column-shaped run keeps row order, as a table candidate for M2b. In a
+   section holding no value, a column of Chinese, Japanese or Korean text is prose when it is wide and
+   its lines fill it, and what sits beside prose columns (a stray mark, a column read across several,
+   a newspaper's columns under a spanning headline) is laid out again in its own width; a section
+   holding a value reads as before ([`specs/19-ocr-benchmark-fixes.md`](specs/19-ocr-benchmark-fixes.md)
+   § 2).
    Before layout, **ruled tables** claim their words ([`specs/06-ruled-tables.md`](specs/06-ruled-tables.md)):
    Camelot reads the pages with rules both ways, the reader hands over cell rectangles in unrotated
    page coordinates, and the core rebuilds rows, columns, and spans in the frame it reads the page
@@ -109,7 +118,8 @@ PyMuPDF is not thread-safe, so parallelize across processes.
    for it; an accepted grid splits at the page's own drawn rules; and a grid holding a chart (bars in
    proportion to their labels, or a ticked numeric axis, `core/tables/chart.py`) is no table (spec 14).
    After layout, **unruled tables** claim theirs ([`specs/07-unruled-tables.md`](specs/07-unruled-tables.md)):
-   each run of stacked regions is split by type size, lines fold into rows anchored on their value
+   each run of stacked regions is split by type size (a short header run in smaller type directly
+   above joins the run below when that run already holds a table, spec 19 § 3), lines fold into rows anchored on their value
    lines (a drawn rule always ends a row, and a piece), columns come from the value rows' pieces, every row votes
    on the boundaries, and cells are cut at the boundaries, never holding two values. A table ends
    before the rows that would fuse two values; rows that read as a table but that no grid holds

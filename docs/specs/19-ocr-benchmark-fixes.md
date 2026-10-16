@@ -341,4 +341,34 @@ is the measure of whether the rules carry.
       `VALUE BASED FEE` over `- | 0.204 bps`); since `ba0aa41` H1 makes no table of one row.
 - [ ] Spec 12's ICDAR-2013 and olmOCR table sets and the held-out fee set run at the final commit, and
       each change in them is explained.
-- [ ] The tuned run reports the dev and test halves apart, labelled tuned.
+- [x] The tuned run reports the dev and test halves apart, labelled tuned
+      (`bench/results/2026-10-16-dbc66fc-ocr/`, at `dbc66fc`, src as at `1d31f4f`; the other seven
+      tools' readings carried over from the baseline). Whether the rules carry, inkgrid's tuned counts
+      against 0.1.0's, paired by document with the report's own code over both runs' committed counts
+      (`ocr_report.document`, 0.1.0's inkgrid read as a second tool; a `✱` marks an interval that
+      excludes 0):
+
+      | Metric | Dev half: 0.1.0 → tuned | Difference | Test half: 0.1.0 → tuned | Difference |
+      |---|---|---|---|---|
+      | olmOCR-bench headers and footers | 0.264 → 0.556 | +0.292 [+0.222, +0.370] ✱ | 0.304 → 0.606 | +0.302 [+0.235, +0.375] ✱ |
+      | olmOCR-bench multi-column | 0.613 → 0.674 | +0.061 [+0.015, +0.115] ✱ | 0.617 → 0.651 | +0.034 [+0.009, +0.063] ✱ |
+      | olmOCR-bench tables | 0.559 → 0.566 | +0.007 [+0.000, +0.023] | 0.535 → 0.542 | +0.007 [+0.000, +0.023] |
+      | olmOCR-bench born-digital macro | 0.479 → 0.599 | +0.120 [+0.091, +0.151] ✱ | 0.486 → 0.600 | +0.114 [+0.090, +0.141] ✱ |
+      | OmniDocBench text Edit distance, English ↓ | 0.293 → 0.235 | -0.058 [-0.092, -0.030] ✱ | 0.302 → 0.246 | -0.056 [-0.094, -0.025] ✱ |
+      | OmniDocBench text Edit distance, Chinese ↓ | 0.512 → 0.386 | -0.126 [-0.179, -0.078] ✱ | 0.507 → 0.440 | -0.067 [-0.108, -0.031] ✱ |
+      | OmniDocBench table TEDS | 0.521 → 0.521 | +0.000 [+0.000, +0.000] | 0.563 → 0.563 | +0.000 [+0.000, +0.000] |
+      | OmniDocBench reading-order Edit distance ↓ | 0.274 → 0.233 | -0.041 [-0.069, -0.015] ✱ | 0.274 → 0.262 | -0.012 [-0.031, +0.004] |
+      | ParseBench GTRM | 0.496 → 0.504 | +0.009 [+0.001, +0.019] ✱ | 0.535 → 0.544 | +0.009 [+0.003, +0.016] ✱ |
+      | ParseBench TableRecordMatch | 0.329 → 0.342 | +0.013 [+0.002, +0.027] ✱ | 0.357 → 0.373 | +0.016 [+0.005, +0.029] ✱ |
+      | ParseBench content faithfulness | 0.835 → 0.832 | -0.003 [-0.011, +0.006] | 0.858 → 0.855 | -0.003 [-0.010, +0.006] |
+      | ParseBench text correctness | 0.879 → 0.869 | -0.009 [-0.014, -0.004] ✱ | 0.901 → 0.889 | -0.011 [-0.017, -0.006] ✱ |
+      | ParseBench multilingual faithfulness | 0.614 → 0.612 | -0.003 [-0.011, +0.004] | 0.712 → 0.701 | -0.011 [-0.023, -0.002] ✱ |
+      | DP-Bench NID | 0.903 → 0.896 | -0.007 [-0.016, +0.003] | 0.906 → 0.901 | -0.005 [-0.007, -0.003] ✱ |
+      | DP-Bench TEDS | 0.682 → 0.682 | +0.000 [+0.000, +0.000] | 0.610 → 0.610 | +0.000 [+0.000, +0.000] |
+      | DP-Bench MHS | 0.694 → 0.692 | -0.002 [-0.025, +0.027] | 0.657 → 0.639 | -0.018 [-0.048, +0.006] |
+
+      Every dev-half gain recurs on the test half, which no rule was designed from, and so do the
+      dev half's costs, the text the benchmarks count and inkgrid now leaves out as furniture:
+      ParseBench's text correctness, DP-Bench's NID, and on the test half ParseBench's multilingual
+      faithfulness. OmniDocBench's reading order, better on the dev half, is not distinguishable from
+      0.1.0's on the test half.

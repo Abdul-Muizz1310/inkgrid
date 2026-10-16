@@ -77,10 +77,10 @@ def test_RN1_a_data_file_that_is_not_the_pinned_one_is_refused_naming_it(tmp_pat
     listing.write_text(f"{sha(b'{}\n')}  tests.jsonl\n{sha(b'pdf')}  pdfs/a.pdf\n")
     ocr_run.verify_listing(listing, root)
     (root / "pdfs" / "a.pdf").write_bytes(b"other")
-    with pytest.raises(RuntimeError, match=r"pdfs/a\.pdf"):
+    with pytest.raises(RuntimeError, match=r"pdfs[\\/]a\.pdf"):
         ocr_run.verify_listing(listing, root)
     (root / "pdfs" / "a.pdf").unlink()
-    with pytest.raises(RuntimeError, match=r"pdfs/a\.pdf"):
+    with pytest.raises(RuntimeError, match=r"pdfs[\\/]a\.pdf"):
         ocr_run.verify_listing(listing, root)
 
 

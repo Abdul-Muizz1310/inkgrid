@@ -1,170 +1,140 @@
-<h1 align="center">inkgrid</h1>
+# 📐 `inkgrid`
 
-<p align="center">Exact tables and text from born-digital PDFs, read from the text layer and the drawn rules, and checked by a second PDF engine.</p>
+> 🧾 **Exact tables and text from born-digital PDFs, read from the text layer and checked by a second engine.**
+> Every character is one the PDF encodes; every word is owned exactly once; nothing degrades silently.
 
-<p align="center">
-  <a href="https://github.com/Abdul-Muizz1310/inkgrid/blob/v0.1.0/WHY.md">Why</a> •
-  <a href="https://github.com/Abdul-Muizz1310/inkgrid/blob/v0.1.0/docs/ARCHITECTURE.md">Architecture</a> •
-  <a href="https://github.com/Abdul-Muizz1310/inkgrid/blob/v0.1.0/docs/DEMO.md">Demo Script</a> •
-  <a href="https://github.com/Abdul-Muizz1310/inkgrid/blob/v0.1.0/docs/specs/00-design.md">Design</a>
-</p>
+[📦 PyPI](https://pypi.org/project/inkgrid/) · [📖 Why](https://github.com/Abdul-Muizz1310/inkgrid/blob/v0.2.0/WHY.md) · [🏗️ Architecture](https://github.com/Abdul-Muizz1310/inkgrid/blob/v0.2.0/docs/ARCHITECTURE.md) · [🎬 Demo](https://github.com/Abdul-Muizz1310/inkgrid/blob/v0.2.0/docs/DEMO.md) · [📐 Design](https://github.com/Abdul-Muizz1310/inkgrid/blob/v0.2.0/docs/specs/00-design.md) · [📝 Changelog](https://github.com/Abdul-Muizz1310/inkgrid/blob/v0.2.0/CHANGELOG.md)
 
-<p align="center">
-  <a href="https://github.com/Abdul-Muizz1310/inkgrid/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/Abdul-Muizz1310/inkgrid/ci.yml?branch=main&label=ci"></a>
-  <a href="https://github.com/Abdul-Muizz1310/inkgrid/blob/v0.1.0/LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue"></a>
-</p>
+[![pypi](https://img.shields.io/pypi/v/inkgrid?style=flat-square)](https://pypi.org/project/inkgrid/)
+![python](https://img.shields.io/badge/python-3.12+-3776ab?style=flat-square&logo=python&logoColor=white)
+[![ci](https://img.shields.io/github/actions/workflow/status/Abdul-Muizz1310/inkgrid/ci.yml?branch=main&style=flat-square&label=ci)](https://github.com/Abdul-Muizz1310/inkgrid/actions/workflows/ci.yml)
+![coverage](https://img.shields.io/badge/coverage-98%25-brightgreen?style=flat-square)
+![mypy](https://img.shields.io/badge/mypy-strict-blue?style=flat-square)
+[![license](https://img.shields.io/badge/license-MIT-lightgrey?style=flat-square)](https://github.com/Abdul-Muizz1310/inkgrid/blob/v0.2.0/LICENSE)
 
-> **Status: alpha, 0.1.0 (milestones M0 to M6 complete).**
-> Today inkgrid reads a PDF into a validated `Document`: every word in exactly one block, in reading
-> order, with running headers and footers set apart, tables, ruled or not, as explicit cell grids,
-> glossaries as definitions, and footnote calls linked to their notes. Tables and sentences that run
-> onto the next page are joined. `inkgrid.verify` then grades the document against its PDF with a
-> second engine, PDFium. The roadmap is in
-> [`docs/specs/00-design.md`](https://github.com/Abdul-Muizz1310/inkgrid/blob/v0.1.0/docs/specs/00-design.md) § 14.
+---
 
-## What it does
+```console
+$ pip install inkgrid
 
-inkgrid reads born-digital PDFs, the kind produced by a word processor or a report generator, through
-their text layer and their vector drawings. It never recognizes characters from pixels, so it never
-misreads one.
+$ inkgrid read fees.pdf -o fees.json --markdown fees.md
+$ inkgrid verify fees.pdf fees.json > report.json && echo "PDFium agrees: no defect"
+PDFium agrees: no defect
 
-When complete, it returns every word of a document in exactly one block (heading, paragraph, list
-item, footnote, definition, table, or page furniture), in reading order. Tables come back as explicit
-cell grids, with merged cells as spans and headers carried across page breaks, marked as carried.
-Links record the relationships the page prints: footnote calls to their notes, and tables that
-continue onto the next page.
+$ grep -A5 "Standard tariff" fees.md
+| Standard tariff | Floor | Scale | Cap |
+| --- | --- | --- | --- |
+| a) Poster | - | 1.00 bp | - |
+| b) Aggressor | CHF 0.50 | 0.55 bp | - |
+| c) Auction | CHF 0.50 | 0.75 bp | - |
+| Commitment |  | No commitment required |  |
+```
 
-Shipped so far (M0 to M4):
+---
 
-- **Words rebuilt from characters.** A superscript marker printed tight against a value stays its own
-  word (`$0.40` and `2`, never `$0.402`). A font change in the middle of a word keeps it one word.
-- **Drawn rules** from the page's vector paths, including cell outlines drawn as rectangles.
-- **Nothing degraded silently.** Each of these comes back as a typed finding:
-  - image-only pages, and pages MuPDF cannot load or decode;
-  - text a clip path or the CropBox hides;
-  - glyphs with no Unicode mapping, and Type 3 fonts, whose glyphs are pictures;
-  - text in the layer that the page never shows: render modes 3 and 7, or fully transparent text.
-    That is the shape of an OCR layer, or of hidden prompt injection.
-- **Reading order across columns.** Two prose columns read left column, then right. A gutter alone
-  does not make columns, because the narrowest table columns sit as close as a label and its text:
-  columns need a gutter that persists over several lines and prose on both sides. Tables and
-  hanging-indent lists keep row order.
-- **Running headers, footers, and page numbers** found by recurrence across pages and set apart as
-  furniture, line by line. A line inside a ruled table is never furniture, and furniture runs from
-  the page's edge, so a table's spanning header or stub banner in the page band stays in its table.
-- **Typed blocks:** headings with their section numbers and levels, paragraphs, list items, and
-  footnotes, with every line-end hyphen join recorded so it can be undone.
-- **Ruled tables as cell grids.** Camelot's lattice parser reads the pages whose rules run both ways,
-  through its cell edge flags, never its DataFrame. A merged cell is one cell with a span, so a value
-  is never copied into the positions it covers. Leading value-free rows become header rows, and
-  full-width rows become banner rows. A box around a paragraph, a furniture label, or a frame ruled
-  around columns of running text is not a table. Nor is a grid over a table already read (a page
-  panel, an open frame), and a page border around a table reads as the table alone. The page's own
-  drawn rules, thin grey fills included, split a cell they divide.
-  Tables export as GFM Markdown, HTML with `colspan`/`rowspan`, and dense rows that flag every
-  repeated value.
-- **Unruled tables from whitespace.** Tables set without column rules (SIX, LSE, Euronext) come from
-  the whitespace between the value rows' cells, which stays put however a column is aligned. Every row
-  votes on where each boundary sits, wrapped lines join their row, a drawn rule ends a row or a cell,
-  and two values never share a cell: rows that could only be read by fusing two values stay text,
-  with a `table_left_as_text` warning.
-- **Charts are not tables.** Bars whose lengths are in one proportion to the numbers they carry, or a
-  numeric axis with a tick at every label, keep a chart's labels as text (`chart_left_as_text`),
-  in either table reader. A diagonal watermark is no cell's.
-- **Glossaries and note lists.** Inside a definitions section, an entry that opens with a term becomes
-  a definition block with its `term` and `body`: a quoted term (`“ABBO” means …`), a bold one
-  (`Available for Distribution:`), or one set in a column of its own (SIX's glossary). Outside such a
-  section only a quoted term with a defining verb counts. A two-column grid of note labels beside prose
-  becomes footnotes (`X2 | Connection rebate: …`, where a table prints `EMDI^X2`), and inside a
-  section, or under its own `Legend` banner, a grid of terms beside prose becomes definitions.
-- **Footnote calls linked to their notes.** Notes are found in every form the measured documents print
-  them: small type opening with a number, a number or mark opening its note at the text's own size
-  (`^ Contra to …`, `2 Each month …`), a raised number glued to its first word (`1A surcharge`), and
-  ruled tables titled `Footnotes`. A note must be called somewhere in the document, so numbered
-  clauses are never read as notes. Calls come as superscripts, as parenthesised numbers at body size
-  (`Customer (2)(8)(9)`), and as named references (`see footnote 27`). Each call ends resolved to its
-  note, unresolved (with a `call_unresolved` warning), or rejected by a named drafting convention:
-  `five (5)`, `Section 202(a)(11)`, `except (1)`, and `; (2) if …` are never calls.
-- **Tables and sentences across pages.** A table that runs onto the next page without its header
-  carries the header as cells that own no words, linked to the part it continues. A reprinted header
-  links the parts without carrying. A sentence broken by the page joins into one paragraph with a
-  region on each page.
-- **Markdown and an HTML inspector.** The inspector draws every block over its rendered page, for
-  looking at a reading rather than trusting it, and a verification report's defects over the page.
-- **An independent verifier.** `inkgrid verify` re-reads the PDF with PDFium and grades the document
-  character by character: nothing lost, invented, or doubled; every cell holding the ink inside it;
-  no drawn rule dividing a cell; every value bound to one cell. It exits 1 on any defect. On the 42
-  measured fee schedules it accounts for all 1,817,075 characters and reports 8 cells, among them two
-  values from two columns read as one word, and a note mark in the column after its word. On
-  ICDAR-2013 and olmOCR-bench's table pages it names the ways the two engines read a page
-  differently (ligatures, unmappable glyphs, overprinted titles), so what it still reports there is
-  inkgrid's own errors: [`docs/specs/11-verify-on-public-corpora.md`](https://github.com/Abdul-Muizz1310/inkgrid/blob/v0.1.0/docs/specs/11-verify-on-public-corpora.md) § 5 lists them.
-- **The full output contract,** `inkgrid.document/1`, with its invariants enforced: every word owned
-  exactly once, cells that tile their grid exactly, and block text spelled from its own words in
-  their order.
+## 💡 Why this exists
 
-### Known limitations
+The usual way to pull tables out of a PDF is to render each page and hand the pixels to a vision
+model. It works surprisingly well, and it fails quietly: a vision reader can turn a superscript
+asterisk into a plus-minus sign or drop a value from a cell, and nothing downstream can tell. A
+born-digital PDF already states every character exactly, so inkgrid reads that statement instead,
+through the text layer and the drawn rules, and never recognises a glyph from pixels.
 
-- **Text is judged hidden from the text layer alone.** Text covered by an opaque shape or image,
-  white text on a white page, and text too small to read all read as visible. The verifier reads the
-  text layer too, so it does not catch them either.
-- **Errors the verifier finds on public corpora.** On the 31 ICDAR-2013 and olmOCR-bench documents
-  where the verifier found inkgrid's own errors, 25 defects remain of the baseline's 316. One is a
-  table title straddling Camelot's header-row edge (practice us-008). The other 24 are places where
-  the two engines read the text layer differently and the verifier has no benign class for yet: a
-  symbol font's glyphs, dashes and tildes on one old page, a word PDFium does not show, a run of
-  digits it reads as one value. The baseline run above counts all 316. The fixes since it
-  (overprinted text, Type 3 and Dingbats glyphs, thin rules drawn as fills, grids over frames and
-  charts, table text taken as furniture) were designed while looking at those documents, so the run
-  after them is labelled as tuned on them.
-- **Left-to-right scripts only.** Right-to-left and bidirectional text is not reordered in v0.1.
-- **Unruled tables have no row spans.** A label centred beside several rows splits across them
-  (`Charge per` / `executed order`), and a label whose value is centred beside it needs the rows to be
-  set apart by more than the label's own line pitch. A fee set on two lines around a one-line label
-  (`€10 per million on the value` / `above €20,000`) splits from it, never into another fee's cell.
-- **A table needs a value.** A table of text alone with no ruled grid reads as paragraphs, and a
-  caption set directly above a table can join it as its first row.
-- **A table beside a prose column can come apart.** Lines are grouped across the whole page before
-  columns are found, so on a two-column page a prose line level with two table rows can chain them
-  into one line. Those rows read as interleaved text, and the unruled stage reports them with
-  `table_left_as_text`.
-- **A call resolves forward only**, and a label the document prints on several notes resolves only
-  on its own page or the next (for a table that continues, from its last part). A note printed before
-  its call, or far from a numbering that restarts, leaves the call unresolved, with a warning. A
-  parenthesised number anchored on a capitalised noun is a call by the drafting conventions, so an
-  in-text reference like `Criteria (2)` can link to note 2.
-- **Only page breaks join.** A paragraph continued in the next column, and list items or notes that
-  continue on the next page, stay separate blocks.
-- **Lists set in the Symbol font read as paragraphs.** Their bullet is a private-use character, which
-  the reader drops as invisible.
-- **Untrusted PDFs belong in a separate process.** MuPDF parses in memory, and a library cannot bound
-  its memory or time. Read hostile input in a worker process with resource limits.
+It makes correctness a property of the design:
 
-## The unique angle
+- **No invented text.** Every output character is a codepoint the PDF encodes.
+- **No lost or doubled text.** Each document carries a proof that every word is owned exactly once.
+- **Independently verified structure.** A verifier re-reads the PDF with a different engine, PDFium,
+  and cannot import the code that built the document.
+- **Never silent.** Anything degraded (an image-only page, clipped text, an unmapped glyph) becomes a
+  typed finding on the result.
 
-Vision and OCR parsers read pixels, so they can misread a glyph or drop a value, and nothing downstream
-can tell. inkgrid commits to four guarantees instead:
+What it gives up is pixels: a scanned page has no text layer, and inkgrid reports it
+(`no_text_layer`) rather than guessing. On born-digital pages it is measured against OCR and layout
+tools on recognised benchmarks below, and it is not the strongest at everything.
 
-1. **No invented text.** Every output character is a codepoint the PDF encodes.
-2. **No lost or doubled text.** Each document carries a proof that every word is owned exactly once.
-3. **Independently verified structure.** A verifier re-reads the PDF with a different engine,
-   PDFium, without importing the code that built the document. Every character PDFium reads must
-   belong to exactly one word that holds it, every cell must hold the ink inside its rectangle, no
-   drawn rule may divide a cell, and every value must be bound to one cell. On the 42 fee schedules
-   of the look-back corpus, all 1,817,075 characters are accounted for, and 8 cells are reported
-   (`docs/specs/10-verify.md` § 0); re-checked for 0.1.0 on 2026-10-02, with the same result.
-4. **Never silent.** Anything degraded becomes a typed finding on the result.
+## ✨ Features
 
-Whether this beats OCR and vision parsers at *table structure* was an open question, and the public
-evidence favored the vision hybrids. The benchmark (below) bears that out for Docling, the strongest
-hybrid measured. On 11 fee schedules no fix has seen, no difference between inkgrid's table structure
-and Docling's is distinguishable from 0, but Docling places tables better, finds more of their values,
-and misreads fewer glyphs; on the public sets, where inkgrid is tuned, Docling is ahead on every
-headline score. inkgrid is ahead of unstructured on both, of marker on the held-out set, and of the
-other text-layer readers on the scores the tables below mark. It does not beat Docling; what it offers
-instead is the four guarantees, in a 20th to a 35th of Docling's time per page.
+- 🧱 **Every word in one block** — heading, paragraph, list item, footnote, definition, table or
+  furniture, in reading order, with exact coordinates; a proof checks the partition at the end
+- 🔤 **Words rebuilt from characters** — a superscript marker against a value stays its own word
+  (`$0.40` and `2`, never `$0.402`)
+- 📏 **Ruled tables as cell grids** — Camelot's lattice read through its cell edge flags, never its
+  DataFrame; a merged cell is one span, so no value is ever copied into the cells it covers
+- 🌫️ **Unruled tables from whitespace** — columns from the corridors between value rows; a header set
+  in smaller type directly above a table is its header row, and never makes a table of one row
+- 📰 **Reading order across columns** — prose columns read one after another, Chinese text included;
+  a newspaper's columns under a spanning headline are laid out again in their own width
+- 🔁 **Running headers, footers and page numbers** set apart as furniture: by recurrence across pages,
+  and on a one-page document by what the page prints (a page number or a page count, or smaller type
+  set apart), never a footnote, a table row, a title or a date
+- 🔗 **Footnote calls linked to their notes**, and tables and sentences joined across pages
+- 📚 **Glossaries and note lists** read as definitions and footnotes
+- 📈 **Charts are not tables** — bars proportional to their labels keep the labels as text
+- 🧪 **An independent verifier** — `inkgrid verify` grades a reading character by character with
+  PDFium: nothing lost, invented or doubled, every cell holding the ink inside it
+- 🖼️ **An HTML inspector** that draws every block over its rendered page, defects included
+- 🧾 **Exports** — Markdown, HTML with `colspan`/`rowspan`, CSV, and dense rows that flag every
+  repeated value; a published JSON Schema for the output contract `inkgrid.document/1`
 
-## Quick start
+## 🏗️ Architecture
+
+```mermaid
+flowchart TD
+    PDF[PDF] --> R1["read/pymupdf<br/>words · rules · fills · findings"]
+    PDF --> R2["read/camelot<br/>lattice grids (ruled pages only)"]
+    R1 --> F["1 · furniture<br/>recurrence; a one-page document's own marks"]
+    R2 --> T
+    F --> L["2 · layout<br/>lines · gutters · prose columns · reading order"]
+    L --> T["3 · tables<br/>lattice grids · whitespace corridors"]
+    T --> P["4 · prose<br/>headings · paragraphs · lists · footnotes"]
+    P --> J["5 · joins<br/>tables and paragraphs across pages"]
+    J --> N["6 · links<br/>footnote register and calls"]
+    N --> A["7 · assemble<br/>ids · text from words · partition proof"]
+    A --> D[("Document<br/>inkgrid.document/1")]
+    D --> V["verify/<br/>PDFium re-read, its own rules"]
+    D --> X["model/export<br/>Markdown · HTML · CSV · rows"]
+    D --> I["render/<br/>inspector HTML"]
+
+    style F fill:#4A90D9,color:#fff
+    style L fill:#4A90D9,color:#fff
+    style T fill:#7B68EE,color:#fff
+    style A fill:#27AE60,color:#fff
+    style V fill:#E67E22,color:#fff
+```
+
+A pure core sits between two thin shells. Only `inkgrid.read` touches MuPDF and Camelot, and only
+the verifier's reader touches PDFium; a test walks the import graph and fails on any edge the layer
+table does not allow, so the verifier's independence is structural. Details:
+[`docs/ARCHITECTURE.md`](https://github.com/Abdul-Muizz1310/inkgrid/blob/v0.2.0/docs/ARCHITECTURE.md).
+
+## 📁 Project structure
+
+```
+inkgrid/
+├── src/inkgrid/
+│   ├── api.py               # read(), read_pages(), verify(): where the shell meets the core
+│   ├── cli.py               # inkgrid read | verify | words
+│   ├── model/               # frozen Pydantic models: Document, Block, Grid, Finding, Ledger, ...
+│   │   └── export.py        # pure Markdown / HTML / CSV / dense-row rendering
+│   ├── read/                # the only modules that import PyMuPDF or Camelot
+│   ├── core/                # the pipeline: pure functions over typed values
+│   │   ├── furniture.py     # running headers, footers, page numbers
+│   │   ├── layout.py        # gutters, prose columns, reading order
+│   │   ├── tables/          # lattice and corridor gridders, charts, the grid
+│   │   ├── prose.py · notes.py · glossary.py · joins.py
+│   │   └── assemble.py      # ids, text from words, the partition proof
+│   ├── verify/              # PDFium reader and checks; never imports core or read
+│   └── render/inspector.py  # the HTML inspector
+├── tests/                   # unit, property and integration tests; fixtures built in the test run
+├── bench/                   # the benchmark harness (not shipped): datasets, adapters, scorers
+│   ├── inkgrid_bench/       # spec 12's tables, the held-out fee set, the OCR benchmarks
+│   └── results/             # every run's report, committed
+├── docs/specs/              # 20 specs, cases enumerated before code
+└── typings/                 # local stubs for PyMuPDF, Camelot and pypdfium2
+```
+
+## 🚀 Quick start
 
 ```bash
 pip install inkgrid              # or, in a uv project: uv add inkgrid
@@ -172,9 +142,6 @@ inkgrid read path/to/file.pdf -o doc.json --markdown out.md --inspector out.html
 inkgrid verify path/to/file.pdf doc.json --inspector checked.html   # exit 1 on any defect
 inkgrid words path/to/file.pdf --pretty    # the raw page model, for debugging a reading
 ```
-
-To work on inkgrid itself, from a clone: `uv sync --all-groups`, then the same commands under
-`uv run`.
 
 From Python:
 
@@ -184,46 +151,198 @@ import inkgrid
 doc = inkgrid.read("fees.pdf")                  # a path, bytes, or a binary stream
 for block in doc.blocks:
     print(block.id, block.kind, block.text)
-for finding in doc.findings:
+for finding in doc.findings:                    # e.g. no_text_layer on a scanned page
     print(finding.severity, finding.code, finding.detail)
-print(doc.to_markdown())
-
-doc = inkgrid.read("fees.pdf", strict=True)     # raises StrictModeError on an error finding
+for table in doc.tables():
+    print(table.to_html())                      # spans as colspan/rowspan, headers in <thead>
+print(doc.to_markdown())                        # furniture left out
 
 report = inkgrid.verify(doc, "fees.pdf")        # PDFium's reading against the document's
-for defect in report.defects:                   # lost, invented, text, vrule, value, ...
-    print(defect.page, defect.code, defect.block, defect.cell, defect.detail)
-print(report.ok)
+print(report.ok, [d.code for d in report.defects])
 ```
 
-`inkgrid.read_pages()` returns the raw page model (words, rules, measurements) for debugging. An
-encrypted PDF takes `password=`. On the command line, the password is read from stdin with
-`--password-stdin`, never from arguments, because arguments show up in the process list.
+To work on inkgrid itself, from a clone: `uv sync --all-groups`, then the same commands under
+`uv run`.
 
-## Benchmarks / Evals
+## 💻 CLI reference
 
-**The headline: 11 fee schedules no fix has seen** (M5d). Fee schedules from 11 exchange groups that
-none of inkgrid's 42 tuning documents comes from, chosen by a rule fixed before any tool read them,
-three seeded pages each: 31 pages and 53 tables. Each table's grid was drafted from the page's
-rendering, never from any tool's reading; each cell's text is the PDF's own words; and every table,
-with 200 cells glyph by glyph, was checked by hand. inkgrid reads them as it read the tuned run below.
-Every tool reads each whole document (146 pages); only its tables on the scored pages count. Eleven
-documents give wide intervals. The protocol:
-[`docs/specs/16-held-out-fee-set.md`](https://github.com/Abdul-Muizz1310/inkgrid/blob/v0.1.0/docs/specs/16-held-out-fee-set.md); the full report, with every
-metric and paired difference:
-[`bench/results/2026-10-01-fb58b0a-heldout/report.md`](https://github.com/Abdul-Muizz1310/inkgrid/blob/v0.1.0/bench/results/2026-10-01-fb58b0a-heldout/report.md).
+| Command | Purpose |
+|---|---|
+| `inkgrid read PDF [-o OUT] [--markdown MD] [--inspector HTML] [--strict] [--lattice MODE]` | Read a PDF into a `Document` as JSON; `--strict` exits 1 on an error finding |
+| `inkgrid verify PDF DOC [-o OUT] [--inspector HTML]` | Grade a `Document` against its PDF with PDFium; exit 1 on any defect |
+| `inkgrid words PDF [-o OUT]` | Print the raw page model: words, rules, measurements |
+| `--pretty`, `--password-stdin` | Indent the JSON; read an encrypted PDF's password from stdin, never from arguments |
+
+## ⚙️ Configuration
+
+`inkgrid.read(source, *, password=None, lexicon=None, profile=None, lattice="combined", strict=False)`
+
+| Argument | Default | What it sets |
+|---|---|---|
+| `lexicon` | `Lexicon.default()`, id `generic/1` | Token classes: numbers, money, percent, ranges, placeholders, enumerators, bullets. It never decides structure |
+| `profile` | `Profile.default()`, id `default/1` | Geometry tolerances, as ratios of each page's own measurements |
+| `lattice` | `"combined"` | Camelot's engine for ruled grids: `"combined"`, `"vector"` (about twice as fast) or `"raster"` |
+| `strict` | `False` | Raise `StrictModeError` on an error-severity finding |
+| `password` | `None` | An encrypted PDF's password |
+
+A changed lexicon or profile must carry a new id, which the output's `producer` records, so a
+document never claims a configuration that did not run.
+
+## 🧱 Stack
+
+| Concern | Choice |
+|---|---|
+| Text layer and drawings | **PyMuPDF** 1.28 |
+| Ruled tables | **Camelot** 2.0 (`lattice="combined"`) |
+| Independent verifier | **pypdfium2** 5.13 (PDFium) |
+| Models and contract | **Pydantic v2**, frozen, with a published JSON Schema |
+| Packaging | **uv** with the `uv_build` backend |
+| Lint / Types | **Ruff** + **mypy `--strict`** |
+| Tests | **pytest** 9 + **Hypothesis** |
+| CI | GitHub Actions: Linux (3.12–3.14), Windows (3.12), macOS (3.14) |
+
+## 🧪 Testing
+
+```bash
+uv run pytest                      # unit, property and integration tests, with coverage
+uv run pytest -m slow --no-cov     # build the wheel and sdist, smoke-test them
+uv run pytest -m heavy --no-cov    # the benchmark tools and scorers, in their pinned environments
+scripts/dev.sh                     # every CI gate, in CI's order
+```
+
+| Metric | Value |
+|---|---|
+| **Tests** | 1,952 library tests and 204 harness tests in CI; 11 heavy and 4 slow tests run before a release |
+| **Coverage** | 98% line and branch on `src/`, with per-module floors |
+| **Specs** | 20 specs under `docs/specs/`, every case a test named after it |
+| **Fixtures** | PDFs generated in the test run with exact ground truth, none committed |
+| **CI** | ruff → format → mypy → pytest on Linux (3.12–3.14), Windows (3.12), macOS (3.14) |
+
+## 📊 Benchmarks
+
+Every number below is a point estimate with its 95% interval from 10,000 resamples of documents,
+under a protocol fixed before anything was scored. **Baseline** is inkgrid as released in 0.1.0, before
+any fix designed from that benchmark's failures; **tuned** is its reading after fixes that were. A
+held-out set, which no fix has seen, measures whether the fixes carry.
+
+### OCR benchmarks: born-digital text and tables (M7)
+
+Four recognised document-parsing benchmarks, olmOCR-bench, OmniDocBench v1.0, ParseBench and DP-Bench,
+score what a reader gets from a page: text, tables, reading order, running headers and footers.
+inkgrid reads only a PDF's text layer, so only their born-digital pages and their text and table tests
+are scored. A census taken before any tool read a page leaves out scans, OCR layers and pages that are
+one picture, and the formula, chart and handwriting tests are not run: 2,238 documents (603, 620, 819
+and 196), so no number here stands for a benchmark as a whole. A hash of each document's id splits
+each benchmark into a dev half and a test half, fixed before any tool read a page; 0.2.0's fixes
+(spec 19) were designed from dev-half failures alone. Every scorer runs unmodified at its pinned
+commit, in its own environment. The protocol:
+[`docs/specs/18-ocr-benchmarks.md`](https://github.com/Abdul-Muizz1310/inkgrid/blob/v0.2.0/docs/specs/18-ocr-benchmarks.md). The full reports:
+[baseline](https://github.com/Abdul-Muizz1310/inkgrid/blob/v0.2.0/bench/results/2026-10-15-00cc5ca-ocr/report.md) and
+[tuned, each half apart](https://github.com/Abdul-Muizz1310/inkgrid/blob/v0.2.0/bench/results/2026-10-16-dbc66fc-ocr/report.md).
+
+Higher is better but where a column says ↓ (an Edit distance). A † marks a tool whose paired difference
+from inkgrid has an interval excluding 0; the other tools' readings are the same in both runs.
+
+**Baseline: inkgrid 0.1.0 and eight other readers, on all 2,238 documents.**
+
+| Tool | olmOCR-bench born-digital macro | OmniDocBench text, English ↓ | OmniDocBench text, Chinese ↓ | OmniDocBench table TEDS | OmniDocBench reading order ↓ | ParseBench tables (GTRM) | ParseBench text faithfulness | DP-Bench text (NID) |
+|---|---|---|---|---|---|---|---|---|
+| **inkgrid** | 0.483 | 0.297 | 0.510 | 0.542 | 0.274 | 0.517 | 0.846 | 0.905 |
+| pymupdf4llm | 0.807 † | 0.125 † | 0.362 † | 0.786 † | 0.234 † | 0.722 † | 0.847 | 0.903 |
+| MarkItDown | 0.353 † | 0.443 † | 0.589 † | 0.103 † | 0.391 † | 0.159 † | 0.864 † | 0.849 † |
+| LiteParse | 0.615 † | 0.236 † | 0.441 † | 0.491 | 0.243 | 0.429 † | 0.860 | 0.918 † |
+| Docling | 0.818 † | 0.059 † | 0.182 † | 0.738 † | 0.152 † | 0.697 † | 0.854 | 0.912 |
+| marker | 0.735 † | 0.077 † | 0.220 † | 0.405 † | 0.228 † | 0.414 † | 0.812 † | 0.865 † |
+| Docling, image-only (OCR) | 0.800 † | 0.132 † | 0.193 † | 0.728 † | 0.215 † | 0.667 † | 0.803 † | 0.880 † |
+| unstructured `hi_res` (OCR) | 0.509 | 0.136 † | 0.415 † | 0.420 † | 0.268 | 0.363 † | 0.875 † | 0.893 |
+| inkgrid on Tesseract's words | 0.387 † | 0.339 | 0.959 † | 0.344 † | 0.380 † | 0.325 † | 0.805 † | 0.905 |
+
+**Tuned (0.2.0), on the test half no fix has seen.** inkgrid's dev-half numbers, which the fixes were
+designed on and which overstate it, are the second row.
+
+| Tool | olmOCR-bench born-digital macro | OmniDocBench text, English ↓ | OmniDocBench text, Chinese ↓ | OmniDocBench table TEDS | OmniDocBench reading order ↓ | ParseBench tables (GTRM) | ParseBench text faithfulness | DP-Bench text (NID) |
+|---|---|---|---|---|---|---|---|---|
+| **inkgrid** | 0.600 | 0.246 | 0.440 | 0.563 | 0.262 | 0.544 | 0.855 | 0.901 |
+| inkgrid, dev half (tuned on it) | 0.599 | 0.235 | 0.386 | 0.521 | 0.233 | 0.504 | 0.832 | 0.896 |
+| pymupdf4llm | 0.816 † | 0.121 † | 0.366 | 0.801 † | 0.231 | 0.738 † | 0.849 | 0.903 |
+| MarkItDown | 0.371 † | 0.440 † | 0.638 † | 0.103 † | 0.391 † | 0.159 † | 0.866 | 0.850 † |
+| LiteParse | 0.614 | 0.231 | 0.444 | 0.466 | 0.248 | 0.429 † | 0.864 | 0.928 † |
+| Docling | 0.825 † | 0.047 † | 0.181 † | 0.701 † | 0.158 † | 0.702 † | 0.860 | 0.912 |
+| marker | 0.758 † | 0.076 † | 0.223 † | 0.352 † | 0.238 | 0.409 † | 0.814 † | 0.863 † |
+| Docling, image-only (OCR) | 0.807 † | 0.110 † | 0.181 † | 0.702 † | 0.214 | 0.686 † | 0.818 † | 0.869 † |
+| unstructured `hi_res` (OCR) | 0.511 † | 0.120 † | 0.440 | 0.394 † | 0.247 | 0.373 † | 0.881 | 0.894 |
+| inkgrid on Tesseract's words | 0.503 † | 0.293 | 0.963 † | 0.377 † | 0.397 † | 0.361 † | 0.816 † | 0.903 |
+
+**What the fixes did, half by half:** inkgrid 0.2.0 against 0.1.0, paired by document (✱: the
+difference's interval excludes 0). It is the report's own code over both runs' committed counts, with
+0.1.0's inkgrid read as a second tool.
+
+| Metric | Dev half: 0.1.0 → tuned | Difference | Test half: 0.1.0 → tuned | Difference |
+|---|---|---|---|---|
+| olmOCR-bench headers and footers | 0.264 → 0.556 | +0.292 [+0.222, +0.370] ✱ | 0.304 → 0.606 | +0.302 [+0.235, +0.375] ✱ |
+| olmOCR-bench multi-column | 0.613 → 0.674 | +0.061 [+0.015, +0.115] ✱ | 0.617 → 0.651 | +0.034 [+0.009, +0.063] ✱ |
+| olmOCR-bench tables | 0.559 → 0.566 | +0.007 [+0.000, +0.023] | 0.535 → 0.542 | +0.007 [+0.000, +0.023] |
+| olmOCR-bench born-digital macro | 0.479 → 0.599 | +0.120 [+0.091, +0.151] ✱ | 0.486 → 0.600 | +0.114 [+0.090, +0.141] ✱ |
+| OmniDocBench text Edit distance, English ↓ | 0.293 → 0.235 | -0.058 [-0.092, -0.030] ✱ | 0.302 → 0.246 | -0.056 [-0.094, -0.025] ✱ |
+| OmniDocBench text Edit distance, Chinese ↓ | 0.512 → 0.386 | -0.126 [-0.179, -0.078] ✱ | 0.507 → 0.440 | -0.067 [-0.108, -0.031] ✱ |
+| OmniDocBench table TEDS | 0.521 → 0.521 | +0.000 [+0.000, +0.000] | 0.563 → 0.563 | +0.000 [+0.000, +0.000] |
+| OmniDocBench reading-order Edit distance ↓ | 0.274 → 0.233 | -0.041 [-0.069, -0.015] ✱ | 0.274 → 0.262 | -0.012 [-0.031, +0.004] |
+| ParseBench GTRM | 0.496 → 0.504 | +0.009 [+0.001, +0.019] ✱ | 0.535 → 0.544 | +0.009 [+0.003, +0.016] ✱ |
+| ParseBench TableRecordMatch | 0.329 → 0.342 | +0.013 [+0.002, +0.027] ✱ | 0.357 → 0.373 | +0.016 [+0.005, +0.029] ✱ |
+| ParseBench content faithfulness | 0.835 → 0.832 | -0.003 [-0.011, +0.006] | 0.858 → 0.855 | -0.003 [-0.010, +0.006] |
+| ParseBench text correctness | 0.879 → 0.869 | -0.009 [-0.014, -0.004] ✱ | 0.901 → 0.889 | -0.011 [-0.017, -0.006] ✱ |
+| ParseBench multilingual faithfulness | 0.614 → 0.612 | -0.003 [-0.011, +0.004] | 0.712 → 0.701 | -0.011 [-0.023, -0.002] ✱ |
+| DP-Bench NID | 0.903 → 0.896 | -0.007 [-0.016, +0.003] | 0.906 → 0.901 | -0.005 [-0.007, -0.003] ✱ |
+| DP-Bench TEDS | 0.682 → 0.682 | +0.000 [+0.000, +0.000] | 0.610 → 0.610 | +0.000 [+0.000, +0.000] |
+| DP-Bench MHS | 0.694 → 0.692 | -0.002 [-0.025, +0.027] | 0.657 → 0.639 | -0.018 [-0.048, +0.006] |
+
+- **The fixes carry to the test half.** Every dev-half gain recurs there: one-page furniture doubles
+  olmOCR-bench's headers-and-footers rate (0.304 to 0.606), prose columns lift its multi-column tests
+  and cut OmniDocBench's text error (English 0.302 to 0.246, Chinese 0.507 to 0.440), and header rows
+  lift ParseBench's table scores by about 0.01. So do the costs: ParseBench's text correctness falls by
+  0.011 and DP-Bench's NID by 0.005, because both benchmarks count running heads and page numbers as
+  text, which inkgrid leaves out.
+- **Docling, its image-only run, and pymupdf4llm are ahead of inkgrid** on olmOCR-bench, OmniDocBench's
+  English text and both benchmarks' tables. pymupdf4llm reads the text layer through PyMuPDF Layout's
+  models. On ParseBench's text and DP-Bench's NID, no difference from Docling or pymupdf4llm is
+  distinguishable, and inkgrid is ahead of Docling's image-only run.
+- **Against marker and unstructured:** inkgrid's tables are ahead of both (TEDS 0.563 against 0.352 and
+  0.394, GTRM 0.544 against 0.409 and 0.373), as are its ParseBench text and DP-Bench NID against
+  marker's and its olmOCR-bench rate against unstructured's (0.600 against 0.511). marker is ahead on
+  olmOCR-bench and on OmniDocBench's text, and unstructured on OmniDocBench's English text.
+- **Against the other text-layer converters:** inkgrid is ahead of MarkItDown on every measure but
+  ParseBench's text; against LiteParse it is ahead on ParseBench's tables (0.544 against 0.429), behind
+  on DP-Bench's NID (0.901 against 0.928), and otherwise not distinguishable.
+- **inkgrid crashed on none** of the 2,238. MarkItDown fails on 7 olmOCR-bench pages; unstructured and
+  inkgrid on Tesseract's words pass the 300-second limit on 54 and 59 OmniDocBench newspaper pages,
+  most of them again on a second reading. Each scores as an empty page.
+- **Speed is not compared here:** the heavy tools read several at a time on one 8-core laptop. The
+  held-out fee set below gives each tool's seconds per page, read alone.
+
+### The held-out fee set: 11 fee schedules no fix has seen (M5d)
+
+Fee schedules from 11 exchange groups that none of inkgrid's 42 tuning documents comes from, chosen by
+a rule fixed before any tool read them, three seeded pages each: 31 pages and 53 tables. Each table's
+grid was drafted from the page's rendering, never from any tool's reading; each cell's text is the
+PDF's own words; and every table, with 200 cells glyph by glyph, was checked by hand. Every tool reads
+each whole document (146 pages); only its tables on the scored pages count. Eleven documents give wide
+intervals. Read again with 0.2.0, inkgrid's tables and the verifier's findings are identical on all 11
+documents, so every score is 0.1.0's; this run read each tool alone, so its seconds per page are the
+ones to compare. The protocol:
+[`docs/specs/16-held-out-fee-set.md`](https://github.com/Abdul-Muizz1310/inkgrid/blob/v0.2.0/docs/specs/16-held-out-fee-set.md); the report:
+[`bench/results/2026-10-16-f434a55-heldout/report.md`](https://github.com/Abdul-Muizz1310/inkgrid/blob/v0.2.0/bench/results/2026-10-16-f434a55-heldout/report.md).
 
 | Tool | Structure F | Table regions F | Values bound to all labels | Values found | Cell CER (lower is better) | Seconds per page |
 |---|---|---|---|---|---|---|
-| **inkgrid** | 0.647 [0.418, 0.849] | 0.818 [0.655, 0.945] | 0.579 [0.363, 0.793] | 0.704 [0.451, 0.899] | 0.098 [0.029, 0.240] | 0.294 [0.211, 0.434] |
-| Docling | 0.708 [0.521, 0.867] | 0.895 [0.747, 1.000] † | 0.743 [0.593, 0.865] | 0.932 [0.834, 0.988] † | 0.024 [0.003, 0.055] † | 10.158 [9.054, 11.836] † |
-| Docling, image-only (OCR) | 0.707 [0.519, 0.862] | 0.862 [0.661, 1.000] | 0.772 [0.592, 0.892] | 0.923 [0.817, 0.983] † | 0.035 [0.011, 0.083] | 18.404 [12.969, 22.064] † |
-| marker | 0.234 [0.114, 0.364] † | 0.850 [0.709, 0.953] | 0.153 [0.047, 0.272] † | 0.459 [0.249, 0.647] | 0.465 [0.273, 0.618] † | 0.566 [0.489, 0.732] † |
-| unstructured `hi_res` (OCR) | 0.336 [0.206, 0.473] † | 0.905 [0.839, 0.962] | 0.082 [0.017, 0.175] † | 0.612 [0.388, 0.810] | 0.259 [0.147, 0.352] | 5.327 [4.824, 6.194] † |
-| Camelot | 0.476 [0.202, 0.725] | 0.725 [0.496, 0.900] | 0.350 [0.114, 0.627] † | 0.357 [0.115, 0.641] † | 0.308 [0.097, 0.635] † | 0.284 [0.263, 0.326] |
-| PyMuPDF | 0.490 [0.259, 0.711] | 0.776 [0.558, 0.939] | 0.320 [0.105, 0.592] † | 0.343 [0.113, 0.622] † | 0.477 [0.222, 0.703] † | 0.070 [0.058, 0.086] † |
-| pdfplumber | 0.498 [0.263, 0.711] | 0.714 [0.480, 0.900] | 0.320 [0.105, 0.592] † | 0.343 [0.113, 0.622] † | 0.520 [0.241, 0.760] † | 0.096 [0.080, 0.113] † |
-| inkgrid on Tesseract's words | 0.368 [0.218, 0.532] † | 0.809 [0.673, 0.928] | 0.136 [0.028, 0.305] † | 0.468 [0.291, 0.650] † | 0.144 [0.071, 0.265] | 1.681 [1.575, 1.912] † |
+| **inkgrid** | 0.647 [0.418, 0.849] | 0.818 [0.655, 0.945] | 0.579 [0.363, 0.793] | 0.704 [0.451, 0.899] | 0.098 [0.029, 0.240] | 0.265 [0.198, 0.374] |
+| Docling | 0.708 [0.521, 0.867] | 0.895 [0.747, 1.000] † | 0.743 [0.593, 0.865] | 0.932 [0.834, 0.988] † | 0.024 [0.003, 0.055] † | 8.718 [8.052, 9.824] † |
+| Docling, image-only (OCR) | 0.707 [0.519, 0.862] | 0.862 [0.661, 1.000] | 0.772 [0.592, 0.892] | 0.923 [0.817, 0.983] † | 0.035 [0.011, 0.083] | 14.435 [10.092, 17.316] † |
+| marker | 0.234 [0.114, 0.364] † | 0.850 [0.709, 0.953] | 0.153 [0.047, 0.272] † | 0.459 [0.249, 0.647] | 0.465 [0.273, 0.618] † | 0.474 [0.386, 0.609] † |
+| unstructured `hi_res` (OCR) | 0.336 [0.206, 0.473] † | 0.905 [0.839, 0.962] | 0.082 [0.017, 0.175] † | 0.612 [0.388, 0.810] | 0.259 [0.147, 0.352] | 4.461 [4.105, 5.036] † |
+| Camelot | 0.476 [0.202, 0.725] | 0.725 [0.496, 0.900] | 0.350 [0.114, 0.627] † | 0.357 [0.115, 0.641] † | 0.308 [0.097, 0.635] † | 0.274 [0.260, 0.301] |
+| PyMuPDF | 0.490 [0.259, 0.711] | 0.776 [0.558, 0.939] | 0.320 [0.105, 0.592] † | 0.343 [0.113, 0.622] † | 0.477 [0.222, 0.703] † | 0.062 [0.051, 0.086] † |
+| pdfplumber | 0.498 [0.263, 0.711] | 0.714 [0.480, 0.900] | 0.320 [0.105, 0.592] † | 0.343 [0.113, 0.622] † | 0.520 [0.241, 0.760] † | 0.077 [0.064, 0.099] † |
+| inkgrid on Tesseract's words | 0.368 [0.218, 0.532] † | 0.809 [0.673, 0.928] | 0.136 [0.028, 0.305] † | 0.468 [0.291, 0.650] † | 0.144 [0.071, 0.265] | 1.731 [1.603, 1.956] † |
 
 A † marks a tool whose paired difference from inkgrid on that metric has an interval excluding 0.
 "Values bound to all labels" and "values found" score the truth's access paths (each value with its row
@@ -231,7 +350,7 @@ and column labels); cell CER counts glyph errors on the 200 checked cells, each 
 cell of the tool's matching table, so a missed table costs all its glyphs. Docling reads the text layer
 through its layout and table models, with OCR only where a page has none; its image-only run, and
 unstructured, read every page with OCR; marker reads with OCR off. The heavy tools' seconds are a warm
-process's on a 16-thread CPU, their models loaded.
+process's on an 8-core laptop, their models loaded.
 
 - **Against the other text-layer readers** (Camelot, PyMuPDF, pdfplumber): inkgrid files more values
   under all their labels (0.579 against 0.320 to 0.350) and finds more of them (0.704 against 0.343 to
@@ -240,14 +359,14 @@ process's on a 16-thread CPU, their models loaded.
 - **Against Docling:** no difference in structure (F 0.647 against 0.708) or in values bound to all
   their labels (0.579 against 0.743) is distinguishable from 0. Docling places tables better (regions F
   0.895 against 0.818), finds more values (0.932 against 0.704), and misreads fewer glyphs (0.024
-  against 0.098), at 10.2 seconds a page to inkgrid's 0.29. On the image-only copy, Docling finds more
-  values (0.923); no other difference from inkgrid is distinguishable, at 18.4 seconds a page.
+  against 0.098), at 8.7 seconds a page to inkgrid's 0.27. On the image-only copy, Docling finds more
+  values (0.923); no other score's difference from inkgrid is distinguishable, at 14.4 seconds a page.
 - **Against marker and unstructured `hi_res`:** inkgrid's structure (F 0.647 against 0.234 and 0.336)
   and values bound to all their labels (0.579 against 0.153 and 0.082) are higher, and marker misreads
   more glyphs (0.465); no difference in table regions is distinguishable.
 - **What the text layer gives inkgrid:** fed Tesseract's words instead of the PDF's, inkgrid's
   structure F falls from 0.647 to 0.368 and its values bound to all their labels from 0.579 to 0.136,
-  and it runs 5.7 times slower.
+  and it runs 6.5 times slower.
 - **Where inkgrid fails:** on three of the 11 documents (Borsa Istanbul's data fees, JPX's participant
   fees, LuxSE's listing fees) it binds no value to all its labels and gets few of the tables' cell
   relations right; they hold 283 of its 407 misread glyphs.
@@ -258,110 +377,109 @@ process's on a 16-thread CPU, their models loaded.
   text-layer readers also read, so an OCR tool can misread a glyph where they cannot. Values found and
   cell CER compare the two kinds of tool on those terms.
 
-**Two runs against other text-layer readers** (pdfplumber 0.11.10, PyMuPDF 1.28.2's
-`find_tables()`, and Camelot 2.0.0's lattice, each with its defaults). The **baseline** is inkgrid's
-reading before any fix for the reading errors its verifier found on these same documents; the one
-change since M4 stops a crash on a Camelot table with no cells. The **tuned** run is its reading after
-the M5c fixes, which were designed while looking at those errors, so it overstates how inkgrid reads
-documents no fix has seen (DR-0023). The peers are measured again in each run, and their numbers are
-identical. Each number is a point estimate with its 95% interval from 10,000 resamples of documents.
-The protocol was fixed before anything was scored:
-[`docs/specs/12-benchmark.md`](https://github.com/Abdul-Muizz1310/inkgrid/blob/v0.1.0/docs/specs/12-benchmark.md). The full reports, with every metric and
-every paired difference, are [`bench/results/latest.md`](https://github.com/Abdul-Muizz1310/inkgrid/blob/v0.1.0/bench/results/latest.md) (tuned, with the
-heavy tools below) and
-[`bench/results/2026-09-29-b33b3cb/report.md`](https://github.com/Abdul-Muizz1310/inkgrid/blob/v0.1.0/bench/results/2026-09-29-b33b3cb/report.md) (baseline).
+### Spec 12's table sets: ICDAR-2013 and olmOCR-bench's tables (M5)
 
-| Dataset (documents) | Metric | inkgrid, tuned | inkgrid, baseline | Camelot | PyMuPDF | pdfplumber |
+inkgrid against pdfplumber 0.11.10, PyMuPDF 1.28.2's `find_tables()` and Camelot 2.0.0's lattice, each
+with its defaults. **Baseline** is 0.1.0's reading before the M5c fixes for the errors its verifier
+found on these same documents; **0.2.0** is its reading after them and after spec 19, so it is tuned
+on these documents (DR-0023). 0.2.0 reads the ICDAR-2013 sets exactly as the M5c tuned run did; on
+olmOCR-bench's tables, six pages read differently: three tables gain their header rows, a page
+number's junk row is gone, a caption reads as furniture, and a running head read as furniture costs
+the table under it its header row. A bold number is ahead of all three peers, every
+paired difference's interval excluding 0. The protocol:
+[`docs/specs/12-benchmark.md`](https://github.com/Abdul-Muizz1310/inkgrid/blob/v0.2.0/docs/specs/12-benchmark.md); the reports:
+[`bench/results/latest.md`](https://github.com/Abdul-Muizz1310/inkgrid/blob/v0.2.0/bench/results/latest.md) (0.2.0, the heavy tools below included) and
+[`bench/results/2026-09-29-b33b3cb/report.md`](https://github.com/Abdul-Muizz1310/inkgrid/blob/v0.2.0/bench/results/2026-09-29-b33b3cb/report.md)
+(baseline).
+
+| Dataset (documents) | Metric | inkgrid 0.2.0 | inkgrid, baseline | Camelot | PyMuPDF | pdfplumber |
 |---|---|---|---|---|---|---|
 | ICDAR-2013 competition (67) | Structure F, the competition's scorer | **0.788** [0.711, 0.861] | **0.777** [0.700, 0.850] | 0.637 [0.531, 0.735] | 0.611 [0.512, 0.702] | 0.591 [0.493, 0.683] |
 | ICDAR-2013 competition (67) | F1-TEDS, Soric et al.'s protocol | 0.628 [0.466, 0.788] | 0.612 [0.455, 0.767] | 0.624 [0.494, 0.735] | 0.519 [0.384, 0.639] | 0.416 [0.287, 0.545] |
 | ICDAR-2013 practice (58) | Structure F, the competition's scorer | **0.688** [0.596, 0.776] | **0.664** [0.569, 0.756] | 0.499 [0.381, 0.611] | 0.457 [0.346, 0.568] | 0.420 [0.314, 0.527] |
 | ICDAR-2013 practice (58) | Values filed under their labels | **0.323** [0.199, 0.488] | **0.309** [0.188, 0.469] | 0.251 [0.142, 0.393] | 0.239 [0.135, 0.382] | 0.172 [0.093, 0.280] |
-| olmOCR-bench tables (188) | Table tests passed | **0.486** [0.415, 0.558] | **0.481** [0.410, 0.552] | 0.273 [0.213, 0.338] | 0.321 [0.256, 0.390] | 0.294 [0.231, 0.361] |
+| olmOCR-bench tables (188) | Table tests passed | **0.492** [0.421, 0.564] | **0.481** [0.410, 0.552] | 0.273 [0.213, 0.338] | 0.321 [0.256, 0.390] | 0.294 [0.231, 0.361] |
 
-A bold number is ahead of all three peers in its run, with every paired difference's interval
-excluding 0.
-
-- **Where inkgrid is ahead, in both runs:** table structure by the ICDAR competition's own scorer, on
-  both sets, mostly through recall; the olmOCR-bench table tests, on all 188 PDFs and on the 173 with
-  a text layer; and values filed under their row and column labels (the practice set's 5,603
-  checkable access paths). That last metric tops out at 0.868 even when the ground truth itself is
-  read as a tool, partly because some labels sit outside the value's row and column.
+- **Where inkgrid is ahead:** table structure by the ICDAR competition's own scorer, on both sets,
+  mostly through recall; olmOCR-bench's table tests; and values filed under their row and column labels
+  (the practice set's 5,603 checkable access paths). That last metric tops out at 0.868 even when the
+  ground truth itself is read as a tool, partly because some labels sit outside the value's row and
+  column.
 - **Where it is not:** under Soric et al.'s protocol no difference from Camelot or PyMuPDF is
-  distinguishable from 0 in either run, and inkgrid is ahead of pdfplumber on the three structure
-  scores but not on table boxes. At the baseline, its pooled structure precision on the competition
-  set was below Camelot's (0.794 against 0.934), and so was its region precision on the practice set
-  (0.873 against 0.940); in the tuned run neither difference is distinguishable from 0 (0.802, and
-  0.895).
-- **Tuned against baseline:** every tuned number in the table is higher, but the two runs are not
-  paired here and each row's intervals overlap, so this benchmark does not show that the fixes
-  raised these scores. What they did remove, by design, is what the verifier finds on these
-  documents: 323 defects on 34 of the 313 at the baseline, 32 on 7 in the tuned run.
-- **It is the slowest:** 0.35 to 0.53 seconds per page in the tuned run (0.34 to 0.55 at the
-  baseline), against 0.28 to 0.36 for Camelot and 0.07 to 0.12 for PyMuPDF and pdfplumber (timings
-  move about 10% between two runs of the same code). inkgrid runs Camelot's lattice for ruled grids,
-  so its comparison with Camelot measures what inkgrid adds on top of it.
-- **No tool crashed** on any of the 313 documents in either run. Soric et al.'s own released
-  predictions, re-scored here with their evaluator, reproduce their results within 0.01 on 15 of 16
-  numbers (PyMuPDF's F1-TEDS misses by 0.00002).
+  distinguishable from 0, and inkgrid is ahead of pdfplumber on the structure scores but not on table
+  boxes.
+- **Baseline against 0.2.0:** every 0.2.0 number is higher, but the runs are not paired here and each
+  row's intervals overlap, so this benchmark does not show that the fixes raised these scores. What the
+  M5c fixes did remove, by design, is what the verifier finds on these documents: 323 defects on 34 of
+  the 313 at the baseline, 32 on 7 after.
+- **No table tool crashed** on any of the 313 documents. Soric et al.'s own released predictions,
+  re-scored with their evaluator, reproduce their results within 0.01 on 15 of 16 numbers.
 
-**OCR, vision, and hybrid parsers on the public sets** (M5d-1). The tuned run again, at `bea4c95`,
-with Docling (by default and on an image-only copy of each PDF), marker (OCR off), unstructured
-`hi_res` (Tesseract), and inkgrid on Tesseract's words added; inkgrid's and the three peers' counts are
-identical to the first tuned run's. inkgrid is tuned on these documents and the heavy tools are not,
-so the comparison flatters inkgrid. A † marks a tool whose paired difference from inkgrid has an
-interval excluding 0. The full report is [`bench/results/latest.md`](https://github.com/Abdul-Muizz1310/inkgrid/blob/v0.1.0/bench/results/latest.md).
+**OCR, vision and hybrid parsers on the same sets** (M5d-1, measured again at 0.2.0): Docling (by
+default and on an image-only copy of each PDF), marker (OCR off), unstructured `hi_res` (Tesseract), and
+inkgrid on Tesseract's words. inkgrid is tuned on these documents and they are not, so the comparison
+flatters inkgrid. A † marks a tool whose paired difference from inkgrid has an interval excluding 0.
 
-| Dataset (documents) | Metric | inkgrid, tuned | Docling | Docling, image-only (OCR) | marker | unstructured `hi_res` (OCR) | inkgrid on Tesseract's words |
+| Dataset (documents) | Metric | inkgrid 0.2.0 | Docling | Docling, image-only (OCR) | marker | unstructured `hi_res` (OCR) | inkgrid on Tesseract's words |
 |---|---|---|---|---|---|---|---|
-| ICDAR-2013 competition (67) | Structure F, the competition's scorer | 0.788 [0.711, 0.861] | 0.901 [0.857, 0.937] † | 0.880 [0.827, 0.924] † | 0.768 [0.697, 0.833] | 0.467 [0.398, 0.534] † | 0.354 [0.280, 0.428] † |
-| ICDAR-2013 competition (67) | F1-TEDS, Soric et al.'s protocol | 0.628 [0.466, 0.788] | 0.894 [0.846, 0.934] † | 0.881 [0.829, 0.923] † | 0.759 [0.682, 0.827] | 0.585 [0.510, 0.654] | 0.341 [0.245, 0.446] † |
-| ICDAR-2013 practice (58) | Structure F, the competition's scorer | 0.688 [0.596, 0.776] | 0.847 [0.775, 0.910] † | 0.829 [0.763, 0.888] † | 0.783 [0.708, 0.850] † | 0.468 [0.397, 0.541] † | 0.328 [0.253, 0.404] † |
-| ICDAR-2013 practice (58) | Values filed under their labels | 0.323 [0.199, 0.488] | 0.494 [0.329, 0.708] † | 0.473 [0.314, 0.672] † | 0.303 [0.183, 0.464] | 0.074 [0.035, 0.131] † | 0.065 [0.024, 0.126] † |
-| olmOCR-bench tables (188) | Table tests passed | 0.486 [0.415, 0.558] | 0.744 [0.692, 0.792] † | 0.736 [0.683, 0.787] † | 0.460 [0.397, 0.521] | 0.413 [0.359, 0.468] | 0.303 [0.252, 0.358] † |
-| ICDAR-2013 practice (58) | Seconds per page | 0.427 [0.374, 0.486] | 8.254 [6.876, 9.904] † | 13.525 [12.634, 14.583] † | 0.451 [0.440, 0.464] | 5.186 [4.962, 5.443] † | 2.226 [2.070, 2.391] † |
+| ICDAR-2013 competition (67) | Structure F, the competition's scorer | 0.788 [0.711, 0.861] | 0.901 [0.857, 0.937] † | 0.880 [0.827, 0.924] † | 0.768 [0.697, 0.833] | 0.465 [0.395, 0.532] † | 0.354 [0.280, 0.428] † |
+| ICDAR-2013 competition (67) | F1-TEDS, Soric et al.'s protocol | 0.628 [0.466, 0.788] | 0.894 [0.846, 0.934] † | 0.881 [0.829, 0.923] † | 0.759 [0.682, 0.827] | 0.586 [0.511, 0.655] | 0.341 [0.245, 0.446] † |
+| ICDAR-2013 practice (58) | Structure F, the competition's scorer | 0.688 [0.596, 0.776] | 0.847 [0.775, 0.910] † | 0.829 [0.763, 0.888] † | 0.783 [0.708, 0.850] † | 0.468 [0.397, 0.541] † | 0.328 [0.254, 0.405] † |
+| ICDAR-2013 practice (58) | Values filed under their labels | 0.323 [0.199, 0.488] | 0.494 [0.329, 0.708] † | 0.473 [0.314, 0.672] † | 0.303 [0.183, 0.464] | 0.074 [0.035, 0.131] † | 0.066 [0.026, 0.128] † |
+| olmOCR-bench tables (188) | Table tests passed | 0.492 [0.421, 0.564] | 0.744 [0.692, 0.792] † | 0.736 [0.683, 0.787] † | 0.460 [0.397, 0.521] | 0.413 [0.359, 0.468] | 0.305 [0.254, 0.359] † |
 
-- **Docling is ahead of inkgrid on every one of these**, in both its runs: structure F by 0.09 to
-  0.16, F1-TEDS by 0.25 to 0.27, values filed under their labels by 0.15 to 0.17, and olmOCR-bench's
-  table tests by 0.25 to 0.26, at 8.3 and 13.5 seconds a page on the practice set to inkgrid's 0.43.
-- **marker** is ahead on the practice set's structure (0.783 against 0.688); no other difference
-  from inkgrid is distinguishable, its speed included. On the held-out fee set it is far behind.
-- **unstructured `hi_res`** trails inkgrid on structure, on both sets, and on values filed under
-  their labels; on F1-TEDS and olmOCR-bench no difference is distinguishable.
-- **On Tesseract's words**, inkgrid trails itself on every metric (structure F 0.354 and 0.328,
-  against 0.788 and 0.688): the text layer, not the gridders alone, is what puts inkgrid where it is.
-- No heavy tool crashed or timed out on any of the 313 documents.
+- **Docling is ahead of inkgrid on every one of these**, in both its runs: structure F by 0.09 to 0.16,
+  F1-TEDS by 0.25 to 0.27, values filed under their labels by 0.15 to 0.17, and olmOCR-bench's table
+  tests by 0.24 to 0.25.
+- **marker** is ahead on the practice set's structure (0.783 against 0.688); no other difference from
+  inkgrid is distinguishable. **unstructured `hi_res`** trails inkgrid on structure, on both sets, and on
+  values filed under their labels.
+- **On Tesseract's words**, inkgrid trails itself on every metric (structure F 0.354 and 0.328, against
+  0.788 and 0.688): the text layer, not the gridders alone, is what puts inkgrid where it is.
 
 Not measured: FinTabNet, of which no official source of the PDFs remains.
 
-## Architecture
+## 🧭 Engineering philosophy
 
-A pure core sits between two thin shells. Only `inkgrid.read` touches MuPDF and Camelot, and only
-`inkgrid.verify`'s reader touches PDFium; a test enforces the layer table on the import graph. The
-verifier cannot import the code that builds the output, so its independence is structural. Details:
-[`docs/ARCHITECTURE.md`](https://github.com/Abdul-Muizz1310/inkgrid/blob/v0.1.0/docs/ARCHITECTURE.md).
+| Principle | How it shows up |
+|---|---|
+| 🔴 **Spec-TDD** | Every milestone starts as a spec with enumerated cases; each case is a test named after it, watched failing before its code |
+| 🚫 **Negative-space programming** | A `Document` that exists satisfies its invariants: the partition, cells that tile their grid, links to blocks that exist |
+| 🧊 **Pure core, imperative shell** | Only `read/` touches MuPDF and Camelot, only `verify/`'s reader PDFium; every pipeline stage is a pure function |
+| 🔒 **Typed everything** | `mypy --strict`, frozen Pydantic models, closed enums for findings and defects, local stubs for untyped libraries |
+| 📏 **Measure before building** | Every rule was traced on real documents first; benchmark claims come from a pre-registered protocol with intervals |
+| 🧪 **Honest numbers** | Baseline before any fix, fixes labelled tuned, and a held-out half no fix has seen |
 
-## Tech stack
+## ⚠️ Scope & limitations
 
-Python 3.12+, PyMuPDF 1.28 (text layer and drawings), Pydantic v2 (frozen, validated models), uv
-with the `uv_build` backend, Ruff, mypy `--strict`, pytest 9 with Hypothesis, and GitHub Actions.
-Camelot 2.0 reads ruled tables. The default engine is `lattice="combined"`, because it never fused or
-split a cell across 42 measured fee schedules. `"vector"` is about twice as fast end to end, but it
-malformed cells on 3% of their ruled pages, mostly tables drawn as Word draws borders. `"raster"` is
-also available. pypdfium2 5.13 (PDFium) powers the independent verifier.
+- **Born-digital PDFs only.** A scanned page has no text layer: inkgrid reports `no_text_layer` and
+  reads nothing there. Math formulas, charts and pictures are read as their text, if any.
+- **Text is judged hidden from the text layer alone.** Text under an opaque shape or white on white
+  reads as visible, to the verifier too.
+- **Left-to-right scripts only.** Right-to-left and bidirectional text is not reordered.
+- **Unruled tables have no row spans,** and a table needs a value: a table of text alone with no
+  ruled grid reads as paragraphs.
+- **One-page furniture is read from the page's own marks**, so a few lines at a one-page document's
+  edge read as running heads or feet, their words kept as furniture and out of the Markdown: a
+  numbered heading that opens it (`1 Introduction`), a title or caption in body type ending in a
+  number (`Table 23`), a two-column table's last row ending in an integer, and the last line of a
+  double-spaced page ending in a number.
+- **A call resolves forward only,** and only page breaks join a paragraph.
+- **Untrusted PDFs belong in a separate process** with resource limits: MuPDF parses in memory.
 
-## Deployment
+## 🚦 Status
 
-inkgrid is a library, so there is nothing to deploy. A release is a version tag: `release.yml` checks
-that the tag is the project's final version with a dated changelog section, runs the lint, type, and
-test gates and the distribution smoke tests on Linux (CI on `main` covers the other platforms), builds
-the sdist and wheel, and uploads those files to PyPI with the repository's API token; a `testpypi-v`
-tag rehearses the same on TestPyPI (`docs/specs/17-release.md`). Versions are bumped with
-`uv version --bump`.
+| Milestone | Status |
+|---|---|
+| 0.2.0 on [PyPI](https://pypi.org/project/inkgrid/) | ✅ 2026-10-16 |
+| M0–M6: the reader, tables, links, verifier, benchmark, release | ✅ |
+| M7: OCR benchmarks on born-digital pages, and the fixes they showed | ✅ |
+| CI on Linux, Windows and macOS | ✅ |
 
-## License
+## 📜 License
 
-inkgrid's own code is MIT; see [LICENSE](https://github.com/Abdul-Muizz1310/inkgrid/blob/v0.1.0/LICENSE).
+inkgrid's own code is MIT; see
+[LICENSE](https://github.com/Abdul-Muizz1310/inkgrid/blob/v0.2.0/LICENSE).
 
 **Read this before you ship inkgrid in a product.** inkgrid requires
 [PyMuPDF](https://pymupdf.readthedocs.io/en/latest/about.html#license-and-copyright), which Artifex
@@ -372,3 +490,7 @@ commercial license. This is not legal advice.
 The other dependencies are permissively licensed: Camelot (MIT), Pydantic (MIT), OpenCV (Apache-2.0),
 pypdfium2 (Apache-2.0 or BSD-3-Clause), pandas and NumPy (BSD-3-Clause). OpenCV is pinned away from
 5.0.0.93, whose bundled FFmpeg lacks the CVE-2026-8461 fix.
+
+---
+
+> 📐 *Read what the page states; prove you read all of it.*

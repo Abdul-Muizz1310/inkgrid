@@ -122,7 +122,7 @@ may import pypdfium2). This keeps `words.py`, `rules.py`, and the verifier's che
 ## 4 · Packaging and tooling
 
 - **`pyproject.toml`:**
-  - build backend `uv_build>=0.12.18,<0.13` and `[tool.uv] required-version = ">=0.12.18,<0.13"`
+  - build backend `uv_build>=0.12.18,<0.14` and `[tool.uv] required-version = ">=0.12.18,<0.13"`
     (amended 2026-10-20: Dependabot's `uv` updater runs uv 0.12.18 and refuses a project whose
     floor is above it, so the floor is 0.12.18; CI's setup-uv takes the newest uv inside
     `required-version`); `requires-python = ">=3.12"`;

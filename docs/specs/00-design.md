@@ -587,7 +587,7 @@ Datasets are fetched by script and never redistributed.
 
 ## 13 · Repository, tooling, release
 
-- **Build:** uv with `uv_build>=0.12.18,<0.13` (floor 0.12.18, Dependabot's uv), `src/` layout, `py.typed`, and PEP 639 metadata:
+- **Build:** uv with `uv_build>=0.12.18,<0.14` (floor 0.12.18, Dependabot's uv), `src/` layout, `py.typed`, and PEP 639 metadata:
   `license = "MIT"` with `license-files`, and no license classifiers.
 - **Dependencies:** `pymupdf>=1.28.2`, `camelot-py>=2.0.0` (which brings pypdfium2, OpenCV, pandas,
   NumPy, and playa-pdf), and `pydantic>=2`. Development tools live in PEP 735 dependency groups.

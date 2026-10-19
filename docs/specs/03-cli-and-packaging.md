@@ -122,7 +122,10 @@ may import pypdfium2). This keeps `words.py`, `rules.py`, and the verifier's che
 ## 4 · Packaging and tooling
 
 - **`pyproject.toml`:**
-  - build backend `uv_build>=0.12.19,<0.13`; `requires-python = ">=3.12"`;
+  - build backend `uv_build>=0.12.18,<0.13` and `[tool.uv] required-version = ">=0.12.18,<0.13"`
+    (amended 2026-10-20: Dependabot's `uv` updater runs uv 0.12.18 and refuses a project whose
+    floor is above it, so the floor is 0.12.18; CI's setup-uv takes the newest uv inside
+    `required-version`); `requires-python = ">=3.12"`;
   - `license = "MIT"` with `license-files = ["LICENSE"]`, and no license classifiers;
   - dependencies `pymupdf>=1.28.2,<2` and `pydantic>=2.11,<3`; Camelot and pypdfium2 are added by the
     milestones that use them (`camelot-py>=2.0.0,<3` in M2, `pypdfium2>=5.13.0,<6` in M4);
@@ -172,6 +175,7 @@ may import pypdfium2). This keeps `words.py`, `rules.py`, and the verifier's che
 | K4 | `scripts/check_coverage_floors.py` on a report where one `src/` file is below 80% | exit 1 naming the file |
 | K5 | `scripts/export_schemas.py` then `git diff --exit-code docs/schema` | no diff |
 | K6 | `uv run pip-audit` against the locked environment | no known vulnerabilities (or a documented, justified exception) |
+| K7 | `pyproject.toml`'s `[tool.uv] required-version` and `build-system.requires` | both admit uv 0.12.18 (Dependabot's) and 0.12.19 (the release workflow's pin); `required-version` admits no 0.13 |
 
 ---
 

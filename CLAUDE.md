@@ -22,7 +22,7 @@ wins.
 ## Commands
 
 ```bash
-uv sync --all-groups                    # uv >= 0.12.19
+uv sync --all-groups                    # uv >= 0.12.18, < 0.13
 scripts/dev.sh                          # every CI gate, in CI's order
 uv run pytest                           # unit + integration; coverage report
 uv run pytest -m slow --no-cov          # build the wheel and sdist, smoke-test them
